@@ -1,6 +1,6 @@
 # Environment Context – VS Code Extension
 
-> **Distilled technical context** for LLMs implementing features in `markdown-for-humans`.
+> **Distilled technical context** for LLMs implementing features in `gpt-ai-markdown-editor`.
 >
 > This file is intentionally lean (~80 lines). For deep dives, see `docs/ARCHITECTURE.md`.
 >

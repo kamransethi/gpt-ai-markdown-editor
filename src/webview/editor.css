@@ -429,7 +429,7 @@ body.vscode-dark {
 
 .ProseMirror p {
   margin-top: 0;
-  margin-bottom: var(--md4h-paragraph-spacing);
+  margin-bottom: var(--gptai-paragraph-spacing);
 }
 
 /* Headings */
@@ -460,13 +460,13 @@ body.vscode-dark {
 }
 
 :root {
-  --md4h-header-spacing: 1.5;
+  --gptai-header-spacing: 1.5;
 
   /* Configurable spacing variables with fallbacks */
-  --md4h-line-spacing: 1;
-  --md4h-paragraph-spacing: 1em;
-  --md4h-table-cell-spacing: 0.1em;
-  --md4h-table-cell-horizontal-spacing: 0.2em;
+  --gptai-line-spacing: 1;
+  --gptai-paragraph-spacing: 1em;
+  --gptai-table-cell-spacing: 0.1em;
+  --gptai-table-cell-horizontal-spacing: 0.2em;
 }
 
 body {
@@ -480,7 +480,7 @@ body {
     Arial,
     sans-serif;
   font-size: var(--vscode-editor-font-size);
-  line-height: var(--md4h-line-spacing);
+  line-height: var(--gptai-line-spacing);
   color: var(--vscode-editor-foreground);
 }
 
@@ -662,7 +662,7 @@ body {
   border-left: none;
   border-right: none;
   border-top: none;
-  padding: var(--md4h-table-cell-spacing, 0.1em) var(--md4h-table-cell-horizontal-spacing, 0.2em);
+  padding: var(--gptai-table-cell-spacing, 0.1em) var(--gptai-table-cell-horizontal-spacing, 0.2em);
   margin: 0;
   box-sizing: border-box;
   position: relative;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -107,7 +107,7 @@ const IMAGE_PATH_REGEX = /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i;
 export function setupImageDragDrop(editor: Editor, vscodeApi: VsCodeApi): void {
   const editorElement = document.querySelector('.ProseMirror');
   if (!editorElement) {
-    console.warn('[MD4H] Editor element not found for image drag-drop setup');
+    console.warn('[GPT-AI] Editor element not found for image drag-drop setup');
     return;
   }
 
@@ -208,7 +208,7 @@ async function handleWorkspaceImageDrop(
   e?: DragEvent,
   insertPosOverride?: number
 ): Promise<void> {
-  console.log('[MD4H] Handling workspace image drop:', uriOrPath);
+  console.log('[GPT-AI] Handling workspace image drop:', uriOrPath);
 
   // Clean up the path - could be file:// URI or absolute path
   let filePath = uriOrPath.trim();
@@ -226,9 +226,9 @@ async function handleWorkspaceImageDrop(
     insertPosOverride ??
     (e
       ? editor.view.posAtCoords({
-          left: e.clientX,
-          top: e.clientY,
-        })?.pos
+        left: e.clientX,
+        top: e.clientY,
+      })?.pos
       : editor.state.selection.from);
 
   // For workspace images, we ask the extension to handle the copy/link
@@ -254,7 +254,7 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
 
   // Case 1: Check for actual File objects (from desktop/finder)
   const files = getImageFiles(dt);
-  console.log('[MD4H] Drop payload types:', {
+  console.log('[GPT-AI] Drop payload types:', {
     types: Array.from(dt.types || []),
     fileCount: dt.files?.length || 0,
     hasImageFiles: files.length > 0,
@@ -268,7 +268,7 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
       await handleWorkspaceImageDrop(imagePath, editor, vscodeApi, e);
       return;
     }
-    console.log('[MD4H] Drop ignored: no image files or image paths detected');
+    console.log('[GPT-AI] Drop ignored: no image files or image paths detected');
     return; // No images to process
   }
 
@@ -471,36 +471,36 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
     message.type === 'imageError' ||
     message.type === 'insertWorkspaceImage'
   ) {
-    console.log('[MD4H] Received message from extension:', message.type, message);
+    console.log('[GPT-AI] Received message from extension:', message.type, message);
   }
 
   switch (message.type) {
     case 'imageSaved': {
       // Update placeholder with final path
       console.log(
-        `[MD4H] Processing imageSaved: placeholderId=${message.placeholderId}, newSrc=${message.newSrc}`
+        `[GPT-AI] Processing imageSaved: placeholderId=${message.placeholderId}, newSrc=${message.newSrc}`
       );
       updateImageSrc(message.placeholderId, message.newSrc, editor);
       // Remove from pending saves
       pendingImageSaves.delete(message.placeholderId);
-      console.log(`[MD4H] Removed from pending saves. Remaining: ${pendingImageSaves.size}`);
+      console.log(`[GPT-AI] Removed from pending saves. Remaining: ${pendingImageSaves.size}`);
       break;
     }
     case 'imageError': {
       // Remove placeholder on error
-      console.error('[MD4H] Image save failed:', message.error);
+      console.error('[GPT-AI] Image save failed:', message.error);
       removeImagePlaceholder(message.placeholderId, editor);
       // Remove from pending saves
       pendingImageSaves.delete(message.placeholderId);
       console.log(
-        `[MD4H] Removed from pending saves (error). Remaining: ${pendingImageSaves.size}`
+        `[GPT-AI] Removed from pending saves (error). Remaining: ${pendingImageSaves.size}`
       );
       break;
     }
     case 'insertWorkspaceImage': {
       // Insert image from workspace with relative path
       console.log(
-        `[MD4H] Inserting workspace image: ${message.relativePath}, alt: ${message.altText}`
+        `[GPT-AI] Inserting workspace image: ${message.relativePath}, alt: ${message.altText}`
       );
       insertWorkspaceImage(editor, message.relativePath, message.altText, message.insertPosition);
       break;
@@ -517,7 +517,7 @@ function insertWorkspaceImage(
   altText: string,
   pos?: number
 ): void {
-  console.log(`[MD4H] insertWorkspaceImage called with:`, {
+  console.log(`[GPT-AI] insertWorkspaceImage called with:`, {
     relativePath,
     altText,
     pos,
@@ -538,15 +538,15 @@ function insertWorkspaceImage(
       })
       .run();
 
-    console.log(`[MD4H] Inserted workspace image: ${relativePath}, success: ${result}`);
+    console.log(`[GPT-AI] Inserted workspace image: ${relativePath}, success: ${result}`);
 
     // Verify the image was actually inserted
     setTimeout(() => {
       const images = document.querySelectorAll(`img[src="${relativePath}"]`);
-      console.log(`[MD4H] Verification: Found ${images.length} images with src="${relativePath}"`);
+      console.log(`[GPT-AI] Verification: Found ${images.length} images with src="${relativePath}"`);
     }, 100);
   } catch (error) {
-    console.error(`[MD4H] Failed to insert workspace image:`, error);
+    console.error(`[GPT-AI] Failed to insert workspace image:`, error);
   }
 }
 
@@ -680,7 +680,7 @@ export async function insertImage(
 
     // Add to pending saves to prevent document sync race condition
     pendingImageSaves.add(placeholderId);
-    console.log(`[MD4H] Added to pending saves. Total pending: ${pendingImageSaves.size}`);
+    console.log(`[GPT-AI] Added to pending saves. Total pending: ${pendingImageSaves.size}`);
 
     // Generate filename with source type and dimensions
     const imageName = generateImageName(file.name, source, finalDimensions);
@@ -688,7 +688,7 @@ export async function insertImage(
     // Send to extension to save to workspace
     const buffer = await imageFile.arrayBuffer();
     console.log(
-      `[MD4H] Sending saveImage message: placeholderId=${placeholderId}, name=${imageName}, targetFolder=${targetFolder}`
+      `[GPT-AI] Sending saveImage message: placeholderId=${placeholderId}, name=${imageName}, targetFolder=${targetFolder}`
     );
 
     vscodeApi.postMessage({
@@ -700,7 +700,7 @@ export async function insertImage(
       targetFolder, // User-selected folder
     });
   } catch (error) {
-    console.error('[MD4H] Failed to insert image:', error);
+    console.error('[GPT-AI] Failed to insert image:', error);
   }
 }
 
@@ -708,35 +708,35 @@ export async function insertImage(
  * Update image src after save (replace base64 with file path)
  */
 function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): void {
-  console.log(`[MD4H] updateImageSrc called: looking for placeholder ${placeholderId}`);
+  console.log(`[GPT-AI] updateImageSrc called: looking for placeholder ${placeholderId}`);
 
   const img = document.querySelector(
     `img[data-placeholder-id="${placeholderId}"]`
   ) as HTMLImageElement | null;
 
   if (!img) {
-    console.warn(`[MD4H] Image with placeholder ${placeholderId} not found in DOM`);
+    console.warn(`[GPT-AI] Image with placeholder ${placeholderId} not found in DOM`);
     // Try to find any images and log their attributes for debugging
     const allImages = document.querySelectorAll('.markdown-image');
-    console.log(`[MD4H] Found ${allImages.length} images in document`);
+    console.log(`[GPT-AI] Found ${allImages.length} images in document`);
     allImages.forEach((imgEl, i) => {
       console.log(
-        `[MD4H] Image ${i}: data-placeholder-id="${imgEl.getAttribute('data-placeholder-id')}"`
+        `[GPT-AI] Image ${i}: data-placeholder-id="${imgEl.getAttribute('data-placeholder-id')}"`
       );
     });
     return;
   }
 
-  console.log(`[MD4H] Found image element, updating src...`);
+  console.log(`[GPT-AI] Found image element, updating src...`);
 
   // Find the position of this image node in the editor
   const pos = editor.view.posAtDOM(img, 0);
-  console.log(`[MD4H] Image position in editor: ${pos}`);
+  console.log(`[GPT-AI] Image position in editor: ${pos}`);
 
   if (pos !== undefined && pos !== null) {
     // Update the TipTap node's src attribute
     const node = editor.state.doc.nodeAt(pos);
-    console.log(`[MD4H] Node at position: ${node?.type.name}`);
+    console.log(`[GPT-AI] Node at position: ${node?.type.name}`);
 
     if (node && node.type.name === 'image') {
       editor
@@ -748,12 +748,12 @@ function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): 
         })
         .run();
 
-      console.log(`[MD4H] Successfully updated image src to: ${newSrc}`);
+      console.log(`[GPT-AI] Successfully updated image src to: ${newSrc}`);
     } else {
-      console.warn(`[MD4H] Node at position ${pos} is not an image: ${node?.type.name}`);
+      console.warn(`[GPT-AI] Node at position ${pos} is not an image: ${node?.type.name}`);
     }
   } else {
-    console.warn(`[MD4H] Could not find position for image in editor`);
+    console.warn(`[GPT-AI] Could not find position for image in editor`);
   }
 }
 

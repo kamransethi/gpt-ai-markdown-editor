@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT-AI Markdown Editor Demo</title>
+    <!-- Use character entities for forward slashes to avoid issues in some environments -->
+    <link rel="stylesheet" href="./dist/webview.css">
+    <style>
+        body { 
+            padding: 0; 
+            margin: 0; 
+            background-color: #1e1e1e; 
+            color: #d4d4d4; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+        }
+        #editor-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        #editor {
+            min-height: 500px;
+            outline: none;
+        }
+        .vscode-dark { background-color: #1e1e1e; }
+        
+        /* Mock some VS Code variables that might be missing */
+        :root {
+            --vscode-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --vscode-font-size: 13px;
+            --vscode-editor-foreground: #d4d4d4;
+            --vscode-editor-background: #1e1e1e;
+            --vscode-button-background: #0e639c;
+            --vscode-button-foreground: #ffffff;
+            --vscode-button-hoverBackground: #1177bb;
+            --vscode-input-background: #3c3c3c;
+            --vscode-input-foreground: #cccccc;
+            --vscode-focusBorder: #007fd4;
+        }
+    </style>
+    <script>
+        // Mock VS Code API before loading webview.js
+        window.acquireVsCodeApi = function() {
+            return {
+                postMessage: function(msg) { 
+                    console.log("VSCode Message:", msg);
+                    // Mock responses for certain messages
+                    if (msg.type === 'ready') {
+                        // Responding with init content
+                    }
+                },
+                getState: function() { return {}; },
+                setState: function(s) { }
+            };
+        };
+        // Mock other globals
+        window.resolveImagePath = (p) => Promise.resolve(p);
+    </script>
+</head>
+<body class="vscode-dark">
+    <div id="editor-container">
+        <div id="editor"></div>
+    </div>
+    <script src="./dist/webview.js"></script>
+    <script>
+        // Send initial content after a short delay
+        window.onload = () => {
+            setTimeout(() => {
+                window.postMessage({
+                    type: 'init',
+                    content: '# GPT-AI Markdown Editor\n\nWelcome to the demo! Start typing below...',
+                    settings: {
+                        mediaPath: 'media',
+                        mediaPathBase: 'sameNameFolder',
+                        lineSpacing: 1.5,
+                        paragraphSpacing: 1,
+                        tableCellSpacing: 0.1,
+                        tableCellHorizontalSpacing: 0.2,
+                        themeOverride: 'dark',
+                        developerMode: true
+                    }
+                }, '*');
+            }, 500);
+        };
+    </script>
+</body>
+</html>

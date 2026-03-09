@@ -213,9 +213,9 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 
 ## Runtime Error Policy (Developer Mode)
 
-- Config key: `markdownForHumans.developerMode` (boolean, default `true`).
+- Config key: `gptAiMarkdownEditor.developerMode` (boolean, default `true`).
 - For runtime failures that risk data loss (serialization/sync/save), always:
-    - log with `[MD4H]` context,
+    - log with `[GPT-AI]` context,
     - surface a user-visible error notification,
     - include technical details in notifications only when Developer Mode is enabled.
 - Throttle repeated notifications to avoid user spam loops.

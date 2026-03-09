@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -982,7 +982,7 @@ async function parseParagraphChildren(
               // security concerns with fetching arbitrary remote resources.
               // Workaround: Download images locally before exporting to Word.
               // TODO: Consider adding a user-facing warning when document contains remote images.
-              console.warn(`[MD4H] Word export: Skipping remote image: ${resolvableSrc}`);
+              console.warn(`[GPT-AI] Word export: Skipping remote image: ${resolvableSrc}`);
             } else {
               // Local file or vscode-webview://
               let absolutePath = resolvableSrc;
@@ -1024,7 +1024,7 @@ async function parseParagraphChildren(
                   }
                 }
               } catch (e) {
-                console.warn('[MD4H] Failed to get image dimensions:', e);
+                console.warn('[GPT-AI] Failed to get image dimensions:', e);
               }
 
               runs.push(
@@ -1035,7 +1035,7 @@ async function parseParagraphChildren(
               );
             }
           } catch (e) {
-            console.error('[MD4H] Failed to process image in paragraph:', e);
+            console.error('[GPT-AI] Failed to process image in paragraph:', e);
           }
         }
       } else if (tagName === 'strong' || tagName === 'b') {

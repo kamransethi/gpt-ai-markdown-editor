@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  *
@@ -63,11 +63,11 @@ function setCodeBlockNormalized(editor: Editor, language: string): void {
       attrs: { language },
       content: plainText
         ? [
-            {
-              type: 'text',
-              text: plainText,
-            },
-          ]
+          {
+            type: 'text',
+            text: plainText,
+          },
+        ]
         : undefined,
     })
     .run();
@@ -685,11 +685,11 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         const vscodeApi = window.vscode;
         if (vscodeApi && editor) {
           showImageInsertDialog(editor, vscodeApi).catch(error => {
-            console.error('[MD4H] Failed to show image insert dialog:', error);
+            console.error('[GPT-AI] Failed to show image insert dialog:', error);
           });
         } else {
           console.warn(
-            '[MD4H] Cannot show image insert dialog: vscode API or editor not available'
+            '[GPT-AI] Cannot show image insert dialog: vscode API or editor not available'
           );
         }
       },
@@ -1040,41 +1040,41 @@ export function createTableMenu(editor: Editor): HTMLElement {
   const items: Array<
     | { separator: true }
     | {
-        label: string;
-        action: () => void;
-      }
+      label: string;
+      action: () => void;
+    }
   > = [
-    {
-      label: 'Add Row Before',
-      action: () => editor.chain().focus().addRowBefore().run(),
-    },
-    {
-      label: 'Add Row After',
-      action: () => editor.chain().focus().addRowAfter().run(),
-    },
-    {
-      label: 'Delete Row',
-      action: () => editor.chain().focus().deleteRow().run(),
-    },
-    { separator: true },
-    {
-      label: 'Add Column Before',
-      action: () => editor.chain().focus().addColumnBefore().run(),
-    },
-    {
-      label: 'Add Column After',
-      action: () => editor.chain().focus().addColumnAfter().run(),
-    },
-    {
-      label: 'Delete Column',
-      action: () => editor.chain().focus().deleteColumn().run(),
-    },
-    { separator: true },
-    {
-      label: 'Delete Table',
-      action: () => editor.chain().focus().deleteTable().run(),
-    },
-  ];
+      {
+        label: 'Add Row Before',
+        action: () => editor.chain().focus().addRowBefore().run(),
+      },
+      {
+        label: 'Add Row After',
+        action: () => editor.chain().focus().addRowAfter().run(),
+      },
+      {
+        label: 'Delete Row',
+        action: () => editor.chain().focus().deleteRow().run(),
+      },
+      { separator: true },
+      {
+        label: 'Add Column Before',
+        action: () => editor.chain().focus().addColumnBefore().run(),
+      },
+      {
+        label: 'Add Column After',
+        action: () => editor.chain().focus().addColumnAfter().run(),
+      },
+      {
+        label: 'Delete Column',
+        action: () => editor.chain().focus().deleteColumn().run(),
+      },
+      { separator: true },
+      {
+        label: 'Delete Table',
+        action: () => editor.chain().focus().deleteTable().run(),
+      },
+    ];
 
   items.forEach(item => {
     if ('separator' in item) {

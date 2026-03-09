@@ -129,7 +129,7 @@ const CRITICAL_FEATURES = {
 npm run package:release
 
 # Install and test locally
-code --install-extension markdown-for-humans-0.1.0.vsix
+code --install-extension gpt-ai-markdown-editor-0.1.0.vsix
 ```
 
 **Note:** `npm run package:release` always creates a **release build** via the `vscode:prepublish` hook. This ensures:
@@ -143,7 +143,7 @@ code --install-extension markdown-for-humans-0.1.0.vsix
 **Recommended approach (auto-bumps version):**
 ```bash
 # Login to marketplace (one-time per session)
-vsce login concretio
+vsce login gpt-ai
 
 # Choose version type and publish
 vsce publish patch  # Bug fixes: 0.1.0 → 0.1.1
@@ -174,7 +174,7 @@ npm install -g ovsx
 # Get personal access token from https://open-vsx.org/user-settings/tokens
 
 # Create namespace (first publish only)
-ovsx create-namespace concretio -p <your-token>
+ovsx create-namespace gpt-ai -p <your-token>
 ```
 
 **Publish:**
@@ -183,7 +183,7 @@ ovsx create-namespace concretio -p <your-token>
 ovsx publish -p <your-token>
 
 # Verify
-# https://open-vsx.org/extension/concretio/markdown-for-humans
+# https://open-vsx.org/extension/gpt-ai/gpt-ai-markdown-editor
 ```
 
 **Result:** Extension becomes available in:
@@ -512,7 +512,7 @@ ls -lh dist/
 1. Always test the actual .vsix file before publishing:
    ```bash
    npm run package:release
-   code --install-extension markdown-for-humans-0.1.0.vsix
+   code --install-extension gpt-ai-markdown-editor-0.1.0.vsix
    ```
 
 2. Check browser console in webview (Help > Toggle Developer Tools)
@@ -525,7 +525,7 @@ ls -lh dist/
 ```bash
 # Download your published .vsix
 # Extract and check bundle
-unzip markdown-for-humans-0.1.0.vsix
+unzip gpt-ai-markdown-editor-0.1.0.vsix
 grep "myBrokenFeature" extension/dist/webview.js
 ```
 
@@ -541,7 +541,7 @@ npm version patch
 
 # Package and test locally
 npm run package:release
-code --install-extension markdown-for-humans-0.1.1.vsix
+code --install-extension gpt-ai-markdown-editor-0.1.1.vsix
 
 # Test thoroughly, then publish
 npm run publish:release
@@ -639,7 +639,7 @@ npm test              # Run all tests
 **Option B: Package Testing (Final verification before release)**
 ```bash
 npm run package:release  # Creates release .vsix (via vscode:prepublish hook)
-code --install-extension markdown-for-humans-X.Y.Z.vsix
+code --install-extension gpt-ai-markdown-editor-X.Y.Z.vsix
 ```
 
 Test these features manually:
@@ -654,7 +654,7 @@ Test these features manually:
 ### 4. Publish
 ```bash
 # Login to marketplace
-vsce login concretio
+vsce login gpt-ai
 
 # Publish with automatic version bump (recommended)
 vsce publish patch  # or minor/major
@@ -707,7 +707,7 @@ npm run package:release    # Release package (via vscode:prepublish hook)
 vsce publish patch         # Publish to VS Code Marketplace (auto-bumps version)
 npm run publish:release    # Or use: npm run publish:release (runs vsce publish)
 npm run publish:ovsx:release  # Publish to Open VSX (for Cursor & Windsurf)
-                           # First time: ovsx create-namespace concretio -p <token>
+                           # First time: ovsx create-namespace gpt-ai -p <token>
 ```
 
 ### Expected Bundle Sizes

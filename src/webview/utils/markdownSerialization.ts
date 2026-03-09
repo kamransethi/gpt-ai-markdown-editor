@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -88,12 +88,12 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     try {
       const value = fn();
       if (typeof value !== 'string') {
-        console.error(`[MD4H] ${label} returned non-string output`);
+        console.error(`[GPT-AI] ${label} returned non-string output`);
         return null;
       }
       return value;
     } catch (error) {
-      console.error(`[MD4H] ${label} failed:`, error);
+      console.error(`[GPT-AI] ${label} failed:`, error);
       return null;
     }
   };
@@ -109,13 +109,13 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     );
     if (fallback !== null) {
       console.warn(
-        '[MD4H] Serialization manager not found, using fallback. Output len:',
+        '[GPT-AI] Serialization manager not found, using fallback. Output len:',
         fallback.length
       );
       return sanitizeSerialized(fallback);
     }
     console.error(
-      '[MD4H] Serialization manager missing and fallback failed; returning empty output'
+      '[GPT-AI] Serialization manager missing and fallback failed; returning empty output'
     );
     return '';
   }
@@ -138,7 +138,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   );
   if (normalizedSerialized !== null && (normalizedSerialized.length > 0 || !nonEmptyDoc)) {
     console.log(
-      '[MD4H] Serialization successful (normalized). JSON nodes:',
+      '[GPT-AI] Serialization successful (normalized). JSON nodes:',
       parsedJson.content?.length,
       'Serialized len:',
       normalizedSerialized.length
@@ -147,7 +147,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   }
 
   if (normalizedSerialized !== null && normalizedSerialized.length === 0 && nonEmptyDoc) {
-    console.error('[MD4H] serialize(normalizedJson) returned empty string for non-empty document');
+    console.error('[GPT-AI] serialize(normalizedJson) returned empty string for non-empty document');
   }
 
   const rawSerialized = trySerialize('serialize(rawJson)', () =>
@@ -155,7 +155,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   );
   if (rawSerialized !== null && (rawSerialized.length > 0 || !nonEmptyDoc)) {
     console.warn(
-      '[MD4H] Used raw JSON serializer fallback. JSON nodes:',
+      '[GPT-AI] Used raw JSON serializer fallback. JSON nodes:',
       parsedJson.content?.length,
       'Serialized len:',
       rawSerialized.length
@@ -164,20 +164,20 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   }
 
   if (rawSerialized !== null && rawSerialized.length === 0 && nonEmptyDoc) {
-    console.error('[MD4H] serialize(rawJson) returned empty string for non-empty document');
+    console.error('[GPT-AI] serialize(rawJson) returned empty string for non-empty document');
   }
 
   const fallback = trySerialize('fallback getMarkdown', getFallbackMarkdown);
   if (fallback !== null && (fallback.length > 0 || !nonEmptyDoc)) {
     console.warn(
-      '[MD4H] Using getMarkdown fallback after serializer failures. Output len:',
+      '[GPT-AI] Using getMarkdown fallback after serializer failures. Output len:',
       fallback.length
     );
     return sanitizeSerialized(fallback);
   }
 
   console.error(
-    '[MD4H] All serialization strategies failed for non-empty document; returning empty output'
+    '[GPT-AI] All serialization strategies failed for non-empty document; returning empty output'
   );
   return '';
 }

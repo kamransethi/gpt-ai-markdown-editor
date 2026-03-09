@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -197,7 +197,7 @@ function focusEditor(editor: Editor | null) {
       maybeFocused.run();
     }
   } catch (error) {
-    console.warn('[MD4H] Failed to restore focus to editor after link dialog', error);
+    console.warn('[GPT-AI] Failed to restore focus to editor after link dialog', error);
   }
 }
 
@@ -206,7 +206,7 @@ const setSelectionHighlight = (range: Range | null) => {
   try {
     currentEditor.commands.setTextSelection({ from: range.from, to: range.to });
   } catch (error) {
-    console.warn('[MD4H] Failed to set selection highlight for link dialog', error);
+    console.warn('[GPT-AI] Failed to set selection highlight for link dialog', error);
   }
 };
 
@@ -476,7 +476,7 @@ function handleFileSearch(query: string): void {
     const requestId = ++fileSearchRequestId;
     const vscode = (window as any).vscode;
     if (vscode && typeof vscode.postMessage === 'function') {
-      console.log('[MD4H] Sending file search request:', {
+      console.log('[GPT-AI] Sending file search request:', {
         query: trimmedQuery,
         requestId,
       });
@@ -486,7 +486,7 @@ function handleFileSearch(query: string): void {
         requestId,
       });
     } else {
-      console.warn('[MD4H] vscode API not available for file search');
+      console.warn('[GPT-AI] vscode API not available for file search');
     }
   }, 300);
 }
@@ -506,10 +506,10 @@ function handleHeadingExtraction(editor: Editor, query: string, urlInput: HTMLIn
 
     const filtered = query.trim()
       ? headingResults.filter(
-          h =>
-            h.text.toLowerCase().includes(query.toLowerCase()) ||
-            h.slug.toLowerCase().includes(query.toLowerCase())
-        )
+        h =>
+          h.text.toLowerCase().includes(query.toLowerCase()) ||
+          h.slug.toLowerCase().includes(query.toLowerCase())
+      )
       : headingResults;
 
     const limited = filtered.slice(0, 20);
@@ -518,7 +518,7 @@ function handleHeadingExtraction(editor: Editor, query: string, urlInput: HTMLIn
       updateAutocompleteDropdown(autocompleteDropdown, limited, urlInput);
     }
   } catch (error) {
-    console.error('[MD4H] Failed to extract headings', error);
+    console.error('[GPT-AI] Failed to extract headings', error);
     closeAutocomplete();
   }
 }
@@ -1001,7 +1001,7 @@ export function hideLinkDialog(): void {
         to: originalSelection.to,
       });
     } catch (error) {
-      console.warn('[MD4H] Failed to restore selection after link dialog', error);
+      console.warn('[GPT-AI] Failed to restore selection after link dialog', error);
     }
   }
 
@@ -1024,28 +1024,28 @@ export function isLinkDialogVisible(): boolean {
  * Handle file search results from extension
  */
 export function handleFileSearchResults(results: FileSearchResult[], requestId: number): void {
-  console.log('[MD4H] Received file search results:', {
+  console.log('[GPT-AI] Received file search results:', {
     resultsCount: results.length,
     requestId,
     currentRequestId: fileSearchRequestId,
   });
 
   if (requestId !== fileSearchRequestId) {
-    console.log('[MD4H] Ignoring outdated search results (requestId mismatch)');
+    console.log('[GPT-AI] Ignoring outdated search results (requestId mismatch)');
     return;
   }
 
   if (!autocompleteDropdown || !linkDialogElement) {
-    console.warn('[MD4H] Autocomplete dropdown or dialog element not available');
+    console.warn('[GPT-AI] Autocomplete dropdown or dialog element not available');
     return;
   }
 
   const urlInput = linkDialogElement.querySelector('#link-url-input') as HTMLInputElement;
   if (!urlInput) {
-    console.warn('[MD4H] URL input not found');
+    console.warn('[GPT-AI] URL input not found');
     return;
   }
 
-  console.log('[MD4H] Updating autocomplete dropdown with', results.length, 'results');
+  console.log('[GPT-AI] Updating autocomplete dropdown with', results.length, 'results');
   updateAutocompleteDropdown(autocompleteDropdown, results, urlInput);
 }

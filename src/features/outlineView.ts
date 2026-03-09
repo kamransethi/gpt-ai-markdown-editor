@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -32,9 +32,9 @@ class OutlineTreeItem extends vscode.TreeItem {
         ? { label: labelText, highlights: [[0, labelText.length]] }
         : labelText,
       collapsible ??
-      (node.children.length
-        ? vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.None)
+        (node.children.length
+          ? vscode.TreeItemCollapsibleState.Collapsed
+          : vscode.TreeItemCollapsibleState.None)
     );
     this.description = `H${node.level}`;
     this.command = {

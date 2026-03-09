@@ -194,7 +194,6 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
-      skipResizeWarning: false,
       mediaPath: 'media',
       mediaPathBase: 'sameNameFolder',
       lineSpacing: 1,
@@ -202,6 +201,7 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       tableCellSpacing: 0.1,
       tableCellHorizontalSpacing: 0.5,
       themeOverride: 'system',
+      developerMode: true,
     });
   });
 });

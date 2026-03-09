@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -224,7 +224,7 @@ type VsCodeApi = {
 
 declare const acquireVsCodeApi: () => VsCodeApi;
 
-// Extended window interface for MD4H globals
+// Extended window interface for GPT-AI globals
 declare global {
   interface Window {
     vscode?: VsCodeApi;
@@ -241,7 +241,7 @@ declare global {
     imagePathBase?: string;
     _imageCacheBust?: Map<string, number>;
     _workspaceCheckCallbacks?: Map<string, (result: unknown) => void>;
-    md4hDeveloperMode?: boolean;
+    gptaiDeveloperMode?: boolean;
   }
 }
 
@@ -262,7 +262,7 @@ function reportWebviewIssue(level: 'error' | 'warn' | 'info', message: string, d
       details,
     });
   } catch (error) {
-    console.error('[MD4H] Failed to forward webview issue to extension host:', error);
+    console.error('[GPT-AI] Failed to forward webview issue to extension host:', error);
   }
 }
 
@@ -270,7 +270,7 @@ const userErrorCooldownMs = 5000;
 const lastUserErrorAt = new Map<string, number>();
 
 function isDeveloperModeEnabled(): boolean {
-  return window.md4hDeveloperMode !== false;
+  return window.gptaiDeveloperMode !== false;
 }
 
 function showRuntimeErrorToUser(code: string, baseMessage: string, error?: unknown) {
@@ -349,7 +349,7 @@ const signalReady = () => {
  * Used as a recovery path when webview is visible but editor DOM is blank.
  */
 function requestHostResync(reason: string) {
-  console.warn('[MD4H][RECOVERY] Requesting host resync:', reason);
+  console.warn('[GPT-AI][RECOVERY] Requesting host resync:', reason);
   vscode.postMessage({ type: 'ready' });
 }
 
@@ -367,7 +367,7 @@ function scheduleBlankEditorRecovery(trigger: string) {
     if (document.visibilityState !== 'visible') return;
     if (!isEditorDomBlank()) return;
 
-    console.warn('[MD4H][RECOVERY] Blank editor detected after', trigger);
+    console.warn('[GPT-AI][RECOVERY] Blank editor detected after', trigger);
     requestHostResync(`blank-editor-${trigger}`);
   }, 120);
 }
@@ -386,7 +386,7 @@ const pushOutlineUpdate = () => {
     const outline = buildOutlineFromEditor(editor);
     vscode.postMessage({ type: 'outlineUpdated', outline });
   } catch (error) {
-    console.warn('[MD4H] Failed to build outline:', error);
+    console.warn('[GPT-AI] Failed to build outline:', error);
   }
 };
 
@@ -433,7 +433,7 @@ function saveDocument() {
         plainTextLength,
         docSize: editor.state.doc.content.size,
       };
-      console.error('[MD4H] Serialization produced empty markdown for non-empty document', details);
+      console.error('[GPT-AI] Serialization produced empty markdown for non-empty document', details);
       reportWebviewIssue(
         'error',
         '[SAVE] Serialization produced empty markdown for non-empty document; save blocked to prevent data loss',
@@ -441,7 +441,7 @@ function saveDocument() {
       );
       showRuntimeErrorToUser(
         'save-serialization-empty',
-        'Save blocked: serialization returned empty output for a non-empty document. Please share MD4H logs with support.'
+        'Save blocked: serialization returned empty output for a non-empty document. Please share GPT-AI logs with support.'
       );
       return;
     }
@@ -449,7 +449,7 @@ function saveDocument() {
     trackSentContent(markdown);
 
     console.log(
-      `[MD4H][SAVE][${saveRequestId}] Dispatching saveAndEdit (len=${markdown.length}, hash=${contentHash})`
+      `[GPT-AI][SAVE][${saveRequestId}] Dispatching saveAndEdit (len=${markdown.length}, hash=${contentHash})`
     );
 
     // Send combined edit and save to avoid race conditions
@@ -460,7 +460,7 @@ function saveDocument() {
     });
     // Let the VS Code side send the 'saved' event to clear the dirty state
   } catch (error) {
-    console.error('[MD4H] Error saving document:', error);
+    console.error('[GPT-AI] Error saving document:', error);
     reportWebviewIssue('error', '[SAVE] Exception while preparing save payload', {
       error: error instanceof Error ? error.message : String(error),
     });
@@ -486,14 +486,14 @@ function debouncedUpdate(markdown: string) {
 
   updateTimeout = window.setTimeout(() => {
     try {
-      console.log(`[MD4H] debouncedUpdate firing for ${markdown.length} chars...`);
+      console.log(`[GPT-AI] debouncedUpdate firing for ${markdown.length} chars...`);
       if (editor && markdown.length === 0 && editor.getText().trim().length > 0) {
         const details = {
           plainTextLength: editor.getText().trim().length,
           docSize: editor.state.doc.content.size,
         };
         console.error(
-          '[MD4H] Debounced sync produced empty markdown for non-empty document',
+          '[GPT-AI] Debounced sync produced empty markdown for non-empty document',
           details
         );
         reportWebviewIssue(
@@ -511,7 +511,7 @@ function debouncedUpdate(markdown: string) {
       // Check if any images are currently being saved
       if (hasPendingImageSaves()) {
         const count = getPendingImageCount();
-        console.log(`[MD4H] Delaying document sync - ${count} image(s) still being saved`);
+        console.log(`[GPT-AI] Delaying document sync - ${count} image(s) still being saved`);
         // Re-queue the update
         debouncedUpdate(markdown);
         return;
@@ -524,7 +524,7 @@ function debouncedUpdate(markdown: string) {
       updateTimeout = null;
       trackSentContent(markdown);
     } catch (error) {
-      console.error('[MD4H] Error in debounced update:', error);
+      console.error('[GPT-AI] Error in debounced update:', error);
     }
   }, 300);
 }
@@ -562,17 +562,17 @@ function setupCodeBlockLanguageBadges(editorInstance: Editor) {
 function initializeEditor(initialContent: string) {
   try {
     if (editor) {
-      console.warn('[MD4H] Editor already initialized, skipping re-init');
+      console.warn('[GPT-AI] Editor already initialized, skipping re-init');
       return;
     }
 
     const editorElement = document.querySelector('#editor') as HTMLElement;
     if (!editorElement) {
-      console.error('[MD4H] Editor element not found');
+      console.error('[GPT-AI] Editor element not found');
       return;
     }
 
-    console.log('[MD4H] Initializing editor...');
+    console.log('[GPT-AI] Initializing editor...');
 
     const editorInstance = new Editor({
       element: editorElement,
@@ -704,7 +704,7 @@ function initializeEditor(initialContent: string) {
             });
 
             if (hasTable) {
-              console.log('[MD4H] Prevented table drag to avoid structure corruption');
+              console.log('[GPT-AI] Prevented table drag to avoid structure corruption');
               return true; // Prevent default
             }
           }
@@ -749,10 +749,10 @@ function initializeEditor(initialContent: string) {
           scheduleOutlineUpdate();
 
           const markdown = getEditorMarkdownForSync(_editor);
-          console.log(`[MD4H] onUpdate: markdown serialized (len=${markdown.length})`);
+          console.log(`[GPT-AI] onUpdate: markdown serialized (len=${markdown.length})`);
           debouncedUpdate(markdown);
         } catch (error) {
-          console.error('[MD4H] Error in onUpdate:', error);
+          console.error('[GPT-AI] Error in onUpdate:', error);
         }
       },
       onSelectionUpdate: ({ editor }) => {
@@ -760,7 +760,7 @@ function initializeEditor(initialContent: string) {
           const { from } = editor.state.selection;
           vscode.postMessage({ type: 'selectionChange', pos: from });
         } catch (error) {
-          console.warn('[MD4H] Selection update failed:', error);
+          console.warn('[GPT-AI] Selection update failed:', error);
         }
       },
       onFocus: () => {
@@ -771,10 +771,10 @@ function initializeEditor(initialContent: string) {
         // Focus change is handled via relatedTarget in editorDom listener to allow toolbar interaction
       },
       onCreate: () => {
-        console.log('[MD4H] Editor created successfully');
+        console.log('[GPT-AI] Editor created successfully');
       },
       onDestroy: () => {
-        console.log('[MD4H] Editor destroyed');
+        console.log('[GPT-AI] Editor destroyed');
       },
     });
 
@@ -833,7 +833,7 @@ function initializeEditor(initialContent: string) {
       const { from } = editorInstance.state.selection;
       vscode.postMessage({ type: 'selectionChange', pos: from });
     } catch (error) {
-      console.warn('[MD4H] Initial selection sync failed:', error);
+      console.warn('[GPT-AI] Initial selection sync failed:', error);
     }
 
     // Setup code block language badges
@@ -856,7 +856,7 @@ function initializeEditor(initialContent: string) {
           tableMenu.style.display = 'none';
         }
       } catch (error) {
-        console.error('[MD4H] Error in context menu:', error);
+        console.error('[GPT-AI] Error in context menu:', error);
       }
     };
 
@@ -870,12 +870,12 @@ function initializeEditor(initialContent: string) {
 
       // Log ALL modifier key presses for debugging
       if (isMod) {
-        console.log(`[MD4H] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
+        console.log(`[GPT-AI] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
       }
 
       // Save shortcut - immediate save
       if (isSaveShortcut(e)) {
-        console.log('[MD4H] *** SAVE SHORTCUT TRIGGERED ***');
+        console.log('[GPT-AI] *** SAVE SHORTCUT TRIGGERED ***');
         e.preventDefault();
         e.stopPropagation();
         immediateUpdate();
@@ -899,7 +899,7 @@ function initializeEditor(initialContent: string) {
 
       if (isMod && formattingShortcuts.includes(e.key.toLowerCase())) {
         e.stopPropagation(); // Stop event from reaching VS Code
-        console.log(`[MD4H] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
+        console.log(`[GPT-AI] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
         // TipTap will handle the formatting
         return;
       }
@@ -908,7 +908,7 @@ function initializeEditor(initialContent: string) {
       if (isMod && e.key === 'k') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[MD4H] Link shortcut');
+        console.log('[GPT-AI] Link shortcut');
         if (editor) {
           showLinkDialog(editor);
         }
@@ -919,7 +919,7 @@ function initializeEditor(initialContent: string) {
       if (isMod && e.key === 'f') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[MD4H] Search shortcut');
+        console.log('[GPT-AI] Search shortcut');
         if (editor) {
           toggleSearchOverlay(editor);
         }
@@ -939,10 +939,10 @@ function initializeEditor(initialContent: string) {
       if (!link) return;
 
       const href = link.getAttribute('href');
-      console.log('[MD4H Webview] Link clicked:', href);
+      console.log('[GPT-AI Webview] Link clicked:', href);
 
       if (!href) {
-        console.warn('[MD4H Webview] Link has no href attribute');
+        console.warn('[GPT-AI Webview] Link has no href attribute');
         return;
       }
 
@@ -951,7 +951,7 @@ function initializeEditor(initialContent: string) {
 
       // External URLs
       if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:')) {
-        console.log('[MD4H Webview] Sending openExternalLink message');
+        console.log('[GPT-AI Webview] Sending openExternalLink message');
         const vscode = (window as any).vscode;
         if (vscode && typeof vscode.postMessage === 'function') {
           vscode.postMessage({
@@ -959,14 +959,14 @@ function initializeEditor(initialContent: string) {
             url: href,
           });
         } else {
-          console.warn('[MD4H Webview] vscode.postMessage not available');
+          console.warn('[GPT-AI Webview] vscode.postMessage not available');
         }
         return;
       }
 
       // Anchor links (heading links)
       if (href.startsWith('#')) {
-        console.log('[MD4H Webview] Handling anchor link:', href);
+        console.log('[GPT-AI Webview] Handling anchor link:', href);
         const slug = href.slice(1);
         if (editorInstance) {
           // Find heading by slug
@@ -981,10 +981,10 @@ function initializeEditor(initialContent: string) {
 
           const headingPos = headingMap.get(slug);
           if (headingPos !== undefined) {
-            console.log('[MD4H Webview] Scrolling to heading at position:', headingPos);
+            console.log('[GPT-AI Webview] Scrolling to heading at position:', headingPos);
             scrollToHeading(editorInstance, headingPos);
           } else {
-            console.warn('[MD4H Webview] Heading not found for slug:', slug);
+            console.warn('[GPT-AI Webview] Heading not found for slug:', slug);
           }
         }
         return;
@@ -995,7 +995,7 @@ function initializeEditor(initialContent: string) {
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('[MD4H Webview] Image link clicked, sending openImage message');
+        console.log('[GPT-AI Webview] Image link clicked, sending openImage message');
         const vscode = (window as any).vscode;
         if (vscode && typeof vscode.postMessage === 'function') {
           vscode.postMessage({
@@ -1003,13 +1003,13 @@ function initializeEditor(initialContent: string) {
             path: href,
           });
         } else {
-          console.warn('[MD4H Webview] vscode.postMessage not available');
+          console.warn('[GPT-AI Webview] vscode.postMessage not available');
         }
         return;
       }
 
       // Local file links (non-image)
-      console.log('[MD4H Webview] Sending openFileLink message');
+      console.log('[GPT-AI Webview] Sending openFileLink message');
       const vscode = (window as any).vscode;
       if (vscode && typeof vscode.postMessage === 'function') {
         vscode.postMessage({
@@ -1017,7 +1017,7 @@ function initializeEditor(initialContent: string) {
           path: href,
         });
       } else {
-        console.warn('[MD4H Webview] vscode.postMessage not available');
+        console.warn('[GPT-AI Webview] vscode.postMessage not available');
       }
     };
 
@@ -1044,12 +1044,12 @@ function initializeEditor(initialContent: string) {
       document.removeEventListener('click', documentClickHandler);
       document.removeEventListener('keydown', keydownHandler);
       editorInstance.view.dom.removeEventListener('click', handleLinkClick);
-      console.log('[MD4H] Editor destroyed, global listeners cleaned up');
+      console.log('[GPT-AI] Editor destroyed, global listeners cleaned up');
     });
 
-    console.log('[MD4H] Editor initialization complete');
+    console.log('[GPT-AI] Editor initialization complete');
   } catch (error) {
-    console.error('[MD4H] Fatal error initializing editor:', error);
+    console.error('[GPT-AI] Fatal error initializing editor:', error);
     showRuntimeErrorToUser('editor-init-fatal', 'Editor failed to initialize.', error);
     const editorElement = document.querySelector('#editor') as HTMLElement;
     if (editorElement) {
@@ -1084,32 +1084,32 @@ function applyWebviewSettings(message: any) {
     (window as any).imagePathBase = message.imagePathBase;
   }
   if (typeof message.developerMode === 'boolean') {
-    window.md4hDeveloperMode = message.developerMode;
+    window.gptaiDeveloperMode = message.developerMode;
   }
 
   // Apply spacing variables
   const root = document.documentElement;
   if (typeof message.lineSpacing === 'number') {
-    root.style.setProperty('--md4h-line-spacing', message.lineSpacing.toString());
+    root.style.setProperty('--gptai-line-spacing', message.lineSpacing.toString());
   }
   if (typeof message.paragraphSpacing === 'number') {
-    root.style.setProperty('--md4h-paragraph-spacing', `${message.paragraphSpacing}em`);
+    root.style.setProperty('--gptai-paragraph-spacing', `${message.paragraphSpacing}em`);
   }
   if (typeof message.tableCellSpacing === 'number') {
-    root.style.setProperty('--md4h-table-cell-spacing', `${message.tableCellSpacing}em`);
+    root.style.setProperty('--gptai-table-cell-spacing', `${message.tableCellSpacing}em`);
   }
   if (typeof message.tableCellHorizontalSpacing === 'number') {
     root.style.setProperty(
-      '--md4h-table-cell-horizontal-spacing',
+      '--gptai-table-cell-horizontal-spacing',
       `${message.tableCellHorizontalSpacing}em`
     );
   }
 
   if (message.themeOverride) {
-    (window as any).md4hCurrentThemeOverride = message.themeOverride;
-    console.warn('[MD4H][THEME] settingsUpdate received', { themeOverride: message.themeOverride });
-    if (typeof (window as any).md4hApplyTheme === 'function') {
-      (window as any).md4hApplyTheme(message.themeOverride);
+    (window as any).gptaiCurrentThemeOverride = message.themeOverride;
+    console.warn('[GPT-AI][THEME] settingsUpdate received', { themeOverride: message.themeOverride });
+    if (typeof (window as any).gptaiApplyTheme === 'function') {
+      (window as any).gptaiApplyTheme(message.themeOverride);
     }
     window.dispatchEvent(new CustomEvent('themeChange'));
   }
@@ -1166,9 +1166,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'saved':
         if (typeof message.requestId === 'string') {
-          console.log(`[MD4H][SAVE][${message.requestId}] Received "saved" signal from extension`);
+          console.log(`[GPT-AI][SAVE][${message.requestId}] Received "saved" signal from extension`);
         } else {
-          console.log('[MD4H] Received "saved" signal from extension');
+          console.log('[GPT-AI] Received "saved" signal from extension');
         }
         setDocDirty(false);
         break;
@@ -1176,10 +1176,10 @@ window.addEventListener('message', (event: MessageEvent) => {
         // Handled by the custom image message plugin; ignore here to avoid log noise.
         break;
       default:
-        console.warn('[MD4H] Unknown message type:', message.type);
+        console.warn('[GPT-AI] Unknown message type:', message.type);
     }
   } catch (error) {
-    console.error('[MD4H] Error handling message:', error);
+    console.error('[GPT-AI] Error handling message:', error);
   }
 });
 
@@ -1188,7 +1188,7 @@ window.addEventListener('message', (event: MessageEvent) => {
  */
 function updateEditorContent(markdown: string) {
   if (!editor) {
-    console.error('[MD4H] Editor not initialized');
+    console.error('[GPT-AI] Editor not initialized');
     return;
   }
 
@@ -1199,7 +1199,7 @@ function updateEditorContent(markdown: string) {
       // Also check timestamp to allow legitimate identical content after a delay
       const timeSinceLastSend = Date.now() - lastSentTimestamp;
       if (timeSinceLastSend < 2000) {
-        console.log('[MD4H] Ignoring update (matches content we just sent)');
+        console.log('[GPT-AI] Ignoring update (matches content we just sent)');
         return;
       }
     }
@@ -1207,7 +1207,7 @@ function updateEditorContent(markdown: string) {
     // Don't update if user edited recently (within 2 seconds)
     const timeSinceLastEdit = Date.now() - lastUserEditTime;
     if (timeSinceLastEdit < 2000) {
-      console.log(`[MD4H] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
+      console.log(`[GPT-AI] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
       return;
     }
 
@@ -1216,18 +1216,18 @@ function updateEditorContent(markdown: string) {
     const startTime = performance.now();
     const docSize = markdown.length;
 
-    console.log(`[MD4H] Updating content (${docSize} chars)...`);
+    console.log(`[GPT-AI] Updating content (${docSize} chars)...`);
 
     // Skip if content is already in sync
     const currentMarkdown = getEditorMarkdownForSync(editor);
     if (currentMarkdown === markdown) {
-      console.log('[MD4H] Update skipped (content unchanged)');
+      console.log('[GPT-AI] Update skipped (content unchanged)');
       return;
     }
 
     // Save cursor position
     const { from, to } = editor.state.selection;
-    console.log(`[MD4H] Saving cursor position: ${from}-${to}`);
+    console.log(`[GPT-AI] Saving cursor position: ${from}-${to}`);
 
     // Set content
     editor.commands.setContent(preprocessMarkdownContent(markdown), { contentType: 'markdown' });
@@ -1235,9 +1235,9 @@ function updateEditorContent(markdown: string) {
     // Restore cursor position
     try {
       editor.commands.setTextSelection({ from, to });
-      console.log(`[MD4H] Restored cursor position: ${from}-${to}`);
+      console.log(`[GPT-AI] Restored cursor position: ${from}-${to}`);
     } catch {
-      console.log('[MD4H] Could not restore cursor position (document too short)');
+      console.log('[GPT-AI] Could not restore cursor position (document too short)');
       // If exact position fails, move to end of document
       const endPos = editor.state.doc.content.size;
       editor.commands.setTextSelection(Math.min(from, endPos));
@@ -1246,14 +1246,14 @@ function updateEditorContent(markdown: string) {
     pushOutlineUpdate();
 
     const duration = performance.now() - startTime;
-    console.log(`[MD4H] Content updated in ${duration.toFixed(2)}ms`);
+    console.log(`[GPT-AI] Content updated in ${duration.toFixed(2)}ms`);
 
     if (duration > 1000) {
-      console.warn(`[MD4H] Slow update: ${duration.toFixed(2)}ms for ${docSize} chars`);
+      console.warn(`[GPT-AI] Slow update: ${duration.toFixed(2)}ms for ${docSize} chars`);
     }
   } catch (error) {
-    console.error('[MD4H] Error updating content:', error);
-    console.error('[MD4H] Document size:', markdown.length, 'chars');
+    console.error('[GPT-AI] Error updating content:', error);
+    console.error('[GPT-AI] Document size:', markdown.length, 'chars');
   } finally {
     isUpdating = false;
   }
@@ -1309,7 +1309,7 @@ window.addEventListener('copyAsMarkdown', () => {
 
 // Handle open source view from toolbar button
 window.addEventListener('openSourceView', () => {
-  console.log('[MD4H] Opening source view...');
+  console.log('[GPT-AI] Opening source view...');
   vscode.postMessage({ type: 'openSourceView' });
 });
 
@@ -1330,7 +1330,7 @@ window.addEventListener('exportDocument', async (event: Event) => {
   const customEvent = event as CustomEvent;
   const format = customEvent.detail?.format || 'pdf';
 
-  console.log(`[MD4H] Exporting document as ${format}...`);
+  console.log(`[GPT-AI] Exporting document as ${format}...`);
 
   try {
     // Collect content and convert Mermaid to PNG
@@ -1346,7 +1346,7 @@ window.addEventListener('exportDocument', async (event: Event) => {
       title,
     });
   } catch (error) {
-    console.error('[MD4H] Export failed:', error);
+    console.error('[GPT-AI] Export failed:', error);
     vscode.postMessage({
       type: 'showError',
       message: 'Failed to prepare document for export. See console for details.',
@@ -1401,11 +1401,11 @@ document.addEventListener(
 
 // Global error handler
 window.addEventListener('error', event => {
-  console.error('[MD4H] Uncaught error:', event.error);
+  console.error('[GPT-AI] Uncaught error:', event.error);
 });
 
 window.addEventListener('unhandledrejection', event => {
-  console.error('[MD4H] Unhandled promise rejection:', event.reason);
+  console.error('[GPT-AI] Unhandled promise rejection:', event.reason);
 });
 
 // Testing hooks (not used in production UI)

@@ -48,7 +48,7 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   promises: {
-    mkdtemp: jest.fn().mockResolvedValue('/tmp/md4h-export-123'),
+    mkdtemp: jest.fn().mockResolvedValue('/tmp/gpt-ai-export-123'),
     writeFile: jest.fn().mockResolvedValue(undefined),
     rm: jest.fn().mockResolvedValue(undefined),
   },
@@ -64,7 +64,7 @@ describe.skip('Document Export Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     // Setup mock document and editor
     mockDocument = {
@@ -106,7 +106,7 @@ describe.skip('Document Export Integration', () => {
       expect.any(String),
       expect.arrayContaining([
         expect.stringContaining('/test/output.pdf'),
-        expect.stringContaining('file:///tmp/md4h-export-123/export.html'),
+        expect.stringContaining('file:///tmp/gpt-ai-export-123/export.html'),
       ]),
       expect.objectContaining({ stdio: 'ignore' })
     );
@@ -528,7 +528,7 @@ describe.skip('Document Export Integration', () => {
         'Cancel'
       );
 
-      const config = vscode.workspace.getConfiguration('markdownForHumans');
+      const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
       expect(config.update).toHaveBeenCalledWith(
         'chromePath',
         expect.stringContaining('Chrome'),
@@ -558,7 +558,7 @@ describe.skip('Document Export Integration', () => {
         expect.any(String)
       );
 
-      const config = vscode.workspace.getConfiguration('markdownForHumans');
+      const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
       expect(config.update).not.toHaveBeenCalled();
     });
 

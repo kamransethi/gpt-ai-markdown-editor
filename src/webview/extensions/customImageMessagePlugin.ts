@@ -99,8 +99,8 @@ export function createCustomImageMessagePlugin(editor: Editor) {
               const cachedMetadata = imagePath ? getCachedImageMetadata(imagePath) : null;
               const preservedDimensions =
                 cachedMetadata &&
-                cachedMetadata.dimensions.width > 0 &&
-                cachedMetadata.dimensions.height > 0
+                  cachedMetadata.dimensions.width > 0 &&
+                  cachedMetadata.dimensions.height > 0
                   ? cachedMetadata.dimensions
                   : null;
 
@@ -169,7 +169,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
               imgElement.setAttribute('src', relativePath);
               delete (imgElement as any)._pendingDownloadPlaceholderId;
             } catch (error) {
-              console.error('[MD4H] Failed to update image node after copy:', error);
+              console.error('[GPT-AI] Failed to update image node after copy:', error);
             }
             break;
           }

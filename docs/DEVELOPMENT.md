@@ -614,7 +614,7 @@ Contributors using any AI coding assistant can benefit from:
 
 - **GitHub Discussions**: General questions, ideas
 - **GitHub Issues**: Bug reports, feature requests
-- **Email**: support@concret.io
+- **Email**: support@GPT-AI
 
 ### For Users
 

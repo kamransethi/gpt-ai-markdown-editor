@@ -23,8 +23,8 @@ Welcome! This guide will help you set up the project, understand its architectur
 
 ```bash
 # Clone the repository
-git clone https://github.com/concretios/markdown-for-humans.git
-cd markdown-for-humans
+git clone https://github.com/concretios/gpt-ai-markdown-editor.git
+cd gpt-ai-markdown-editor
 
 # Install dependencies
 npm install
@@ -63,8 +63,8 @@ code --version   # Should be 1.85+
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/concretios/markdown-for-humans.git
-cd markdown-for-humans
+git clone https://github.com/concretios/gpt-ai-markdown-editor.git
+cd gpt-ai-markdown-editor
 npm install
 ```
 
@@ -258,7 +258,7 @@ After packaging, install the `.vsix` file locally to test:
 
 **Via Command Line:**
 ```bash
-code --install-extension markdown-for-humans-0.1.0.vsix
+code --install-extension gpt-ai-markdown-editor-0.1.0.vsix
 ```
 
 **Via VS Code UI:**
@@ -420,7 +420,7 @@ See [roadmap/README.md](./roadmap/README.md) for detailed planning workflow.
 
 - **GitHub Discussions**: [Ask questions](https://github.com/concretios/markdown-for-humans/discussions)
 - **Issue Tracker**: [Report bugs](https://github.com/concretios/markdown-for-humans/issues)
-- **Email**: support@concret.io
+- **Email**: support@GPT-AI
 
 ### Useful Resources
 

@@ -2,7 +2,7 @@
 
 **Seamless WYSIWYG markdown editing for VS Code** — Write markdown the way humans think.
 
-> **Note:** This project is a community-maintained fork of the excellent [Markdown for Humans](https://github.com/concretios/markdown-for-humans) by Concretios. It has been forked to build and maintain advanced features (like drag handles, text highlighting, font colors, and modular table support) while keeping the extension fully open and free.
+> **Note:** This project is a community-maintained fork of the excellent [GPT-AI Markdown Editor](https://github.com/kamransethi/gpt-ai-markdown-editor) by Concretios. It has been forked to build and maintain advanced features (like drag handles, text highlighting, font colors, and modular table support) while keeping the extension fully open and free.
 
 ![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/kamransethi.gpt-ai-markdown-editor?label=VS%20Code%20Marketplace&logo=visual-studio-code) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
@@ -256,19 +256,11 @@ Countless hours went into vibe-coded wireframes, user experience design, and pol
 
 ## License
 
-MIT © [Concret.io](https://concret.io)
+MIT © GPT-AI
 
 ---
 
 ## Credits
 
-Built with:
+Built with ❤️ for Markdown lovers, by Team GPT-AI
 
-- [TipTap](https://tiptap.dev/) - Headless editor framework
-- [KaTeX](https://katex.org/) - Fast math rendering
-- [Mermaid](https://mermaid.js.org/) - Diagram generation
-- [VS Code Extension API](https://code.visualstudio.com/api)
-
----
-
-**Made with ❤️ for Markdown lovers, by Team [Concret.io**](https://concret.io)

@@ -78,7 +78,7 @@ jest.mock('vscode', () => ({
     constructor(
       public label: string | vscode.TreeItemLabel,
       public collapsibleState?: vscode.TreeItemCollapsibleState
-    ) {}
+    ) { }
   },
   TreeItemCollapsibleState: {
     None: 0,
@@ -89,14 +89,14 @@ jest.mock('vscode', () => ({
     constructor(
       public id: string,
       public color?: vscode.ThemeColor
-    ) {}
+    ) { }
   },
   ThemeColor: class ThemeColor {
-    constructor(public id: string) {}
+    constructor(public id: string) { }
   },
   EventEmitter: class EventEmitter<T> {
     public event = jest.fn();
-    fire = jest.fn((_data?: T) => {});
+    fire = jest.fn((_data?: T) => { });
     dispose = jest.fn();
   },
   ViewColumn: {
@@ -530,7 +530,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       });
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'markdownForHumans.mediaPathBase') return 'relativeToDocument';
+          if (key === 'gptAiMarkdownEditor.mediaPathBase') return 'relativeToDocument';
           return defaultValue;
         }),
         update: jest.fn(),
@@ -583,7 +583,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       });
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'markdownForHumans.mediaPathBase') return 'workspaceFolder';
+          if (key === 'gptAiMarkdownEditor.mediaPathBase') return 'workspaceFolder';
           return defaultValue;
         }),
         update: jest.fn(),
@@ -632,7 +632,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'markdownForHumans.mediaPathBase') return 'workspaceFolder';
+          if (key === 'gptAiMarkdownEditor.mediaPathBase') return 'workspaceFolder';
           return defaultValue;
         }),
         update: jest.fn(),
@@ -680,7 +680,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'markdownForHumans.mediaPathBase') return 'workspaceFolder';
+          if (key === 'gptAiMarkdownEditor.mediaPathBase') return 'workspaceFolder';
           return defaultValue;
         }),
         update: jest.fn(),
@@ -745,7 +745,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'markdownForHumans.mediaPathBase') return 'workspaceFolder';
+          if (key === 'gptAiMarkdownEditor.mediaPathBase') return 'workspaceFolder';
           return defaultValue;
         }),
         update: jest.fn(),
@@ -824,7 +824,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       });
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'markdownForHumans.mediaPathBase') return 'workspaceFolder';
+          if (key === 'gptAiMarkdownEditor.mediaPathBase') return 'workspaceFolder';
           return defaultValue;
         }),
         update: jest.fn(),

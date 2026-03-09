@@ -182,7 +182,7 @@ private async applyEdit(content: string, document: vscode.TextDocument): Promise
       vscode.window.showErrorMessage(
         'Failed to save changes. The file may be read-only or locked.'
       );
-      console.error('[MD4H] applyEdit failed:', { uri: document.uri.toString() });
+      console.error('[GPT-AI] applyEdit failed:', { uri: document.uri.toString() });
     }
     return success;
   } catch (error) {
@@ -190,7 +190,7 @@ private async applyEdit(content: string, document: vscode.TextDocument): Promise
       ? `Failed to save: ${error.message}`
       : 'Failed to save: Unknown error';
     vscode.window.showErrorMessage(message);
-    console.error('[MD4H] applyEdit exception:', error);
+    console.error('[GPT-AI] applyEdit exception:', error);
     return false;
   }
 }
@@ -206,7 +206,7 @@ async function updateToolbarState() {
   try {
     await fetchToolbarData();
   } catch (error) {
-    console.error('[MD4H] Failed to update toolbar:', error);
+    console.error('[GPT-AI] Failed to update toolbar:', error);
     // Continue without toolbar update - not critical
   }
 }

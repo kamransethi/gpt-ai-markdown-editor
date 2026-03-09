@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -303,7 +303,7 @@ export const Mermaid = Node.create({
       const themeChangeListener = () => {
         renderDiagram(currentContent);
       };
-      window.addEventListener('md4hThemeChanged', themeChangeListener);
+      window.addEventListener('gptAiThemeChanged', themeChangeListener);
 
       renderDiagram(currentContent);
 
@@ -339,7 +339,7 @@ export const Mermaid = Node.create({
         destroy: () => {
           renderVersion++;
           if (debounceTimer) clearTimeout(debounceTimer);
-          window.removeEventListener('md4hThemeChanged', themeChangeListener);
+          window.removeEventListener('gptAiThemeChanged', themeChangeListener);
         },
       };
     };

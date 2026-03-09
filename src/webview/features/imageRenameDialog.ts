@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -52,7 +52,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
     imagePath.startsWith('https://') ||
     imagePath.startsWith('data:')
   ) {
-    console.warn('[MD4H] Cannot rename external images');
+    console.warn('[GPT-AI] Cannot rename external images');
     return;
   }
 
@@ -538,7 +538,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         }
       })
       .catch(error => {
-        console.warn('[MD4H] Failed to fetch image references:', error);
+        console.warn('[GPT-AI] Failed to fetch image references:', error);
         impactLoading.textContent = 'References unavailable';
       });
   } else {

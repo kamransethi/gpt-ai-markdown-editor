@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -51,6 +51,7 @@ export function createImageMenu(isLocal: boolean = true): HTMLElement {
 
   // Build menu HTML
   let menuHTML = `
+
     <div class="menu-item" role="menuitem" tabindex="0" data-action="revert">
       <span class="codicon codicon-refresh menu-icon"></span>
       <span class="menu-label">Revert to original size</span>

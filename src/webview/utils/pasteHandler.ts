@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 Concret.io
+ * Copyright (c) 2025-2026 GPT-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -114,7 +114,7 @@ export function htmlToMarkdown(html: string): string {
         .trim()
     );
   } catch (error) {
-    console.error('[MD4H] Error converting HTML to markdown:', error);
+    console.error('[GPT-AI] Error converting HTML to markdown:', error);
     // Return empty string on error - caller should fall back to plain text
     throw error;
   }

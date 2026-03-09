@@ -4,11 +4,11 @@
 
 ## Agreement to Terms
 
-By installing, copying, or using the Markdown for Humans extension ("Extension") for Visual Studio Code, you agree to be bound by the terms of this End User License Agreement ("Agreement"). If you do not agree to these terms, do not install or use the Extension.
+By installing, copying, or using the GPT-AI Markdown Editor extension ("Extension") for Visual Studio Code, you agree to be bound by the terms of this End User License Agreement ("Agreement"). If you do not agree to these terms, do not install or use the Extension.
 
 ## License Grant
 
-Concret.io ("Licensor") grants you a non-exclusive, non-transferable, revocable license to use the Extension in accordance with the MIT License (see LICENSE file) and the terms of this Agreement.
+GPT-AI ("Licensor") grants you a non-exclusive, non-transferable, revocable license to use the Extension in accordance with the MIT License (see LICENSE file) and the terms of this Agreement.
 
 ## Permitted Uses
 
@@ -50,7 +50,7 @@ You may not:
 
 ## Limitation of Liability
 
-**TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL CONCRET.IO, ITS AFFILIATES, DIRECTORS, OFFICERS, EMPLOYEES, AGENTS, CONTRIBUTORS, OR LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, FILES, CONTENT, OR PROFITS; BUSINESS INTERRUPTION; LOSS OF BUSINESS OPPORTUNITIES; LOSS OF REVENUE; LOSS OF REPUTATION; OR ANY OTHER PECUNIARY LOSS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE, INABILITY TO USE, OR MISUSE OF THIS EXTENSION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.**
+**TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL GPT-AI, ITS AFFILIATES, DIRECTORS, OFFICERS, EMPLOYEES, AGENTS, CONTRIBUTORS, OR LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, FILES, CONTENT, OR PROFITS; BUSINESS INTERRUPTION; LOSS OF BUSINESS OPPORTUNITIES; LOSS OF REVENUE; LOSS OF REPUTATION; OR ANY OTHER PECUNIARY LOSS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE, INABILITY TO USE, OR MISUSE OF THIS EXTENSION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.**
 
 **WITHOUT LIMITING THE FOREGOING, THE LICENSOR SHALL NOT BE LIABLE FOR:**
 - Any data loss, file corruption, or content modification
@@ -85,7 +85,7 @@ This license is effective until terminated. Your rights under this license will 
 
 ## Updates and Modifications
 
-Concret.io reserves the right to:
+GPT-AI reserves the right to:
 - Modify, update, or discontinue the Extension at any time, with or without notice
 - Release updates that may add, modify, or remove features, which may affect existing functionality
 - Change the terms of this Agreement at any time (with notice via repository or Extension update)
@@ -111,19 +111,19 @@ If any provision of this Agreement is found to be unenforceable or invalid, that
 
 ## Entire Agreement
 
-This Agreement, together with the MIT License (LICENSE file), constitutes the entire agreement between you and Concret.io regarding the Extension and supersedes all prior agreements and understandings.
+This Agreement, together with the MIT License (LICENSE file), constitutes the entire agreement between you and GPT-AI regarding the Extension and supersedes all prior agreements and understandings.
 
 ## Contact Information
 
 For questions about this EULA, please contact:
 
-**Concret.io**  
-**Email:** legal@concret.io  
-**Website:** https://concret.io
+**GPT-AI**  
+**Email:** kamransethi@hotmail.com  
+**Website:** https://github.com/kamransethi/gpt-ai-markdown-editor
 
 ---
 
 **By using the Extension, you acknowledge that you have read this Agreement, understand it, and agree to be bound by its terms.**
 
-**Concret.io**  
-© 2025-2026 Concret.io. All rights reserved.
+**GPT-AI**  
+© 2025-2026 GPT-AI. All rights reserved.

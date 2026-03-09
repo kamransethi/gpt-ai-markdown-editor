@@ -33,6 +33,7 @@ test-docs/**
 coverage/**
 *.log
 *.vsix
+dist/**/*.vsix
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
@@ -83,3 +84,7 @@ Desktop.ini
 !package.json
 !CHANGELOG.md
 !icon.png
+
+# Exclude VSIX from package even if in dist/
+dist/**/*.vsix
+*.vsix
