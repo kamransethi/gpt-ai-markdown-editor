@@ -12,8 +12,10 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { TableKit, Table } from '@tiptap/extension-table';
+import { TableOfContents, type TableOfContentData } from '@tiptap/extension-table-of-contents';
 import { ListKit } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
+import { BubbleMenu as BubbleMenuExtension } from '@tiptap/extension-bubble-menu';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Highlight from '@tiptap/extension-highlight';
 import DragHandle from '@tiptap/extension-drag-handle';
@@ -31,7 +33,12 @@ import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { TableCellEnterHandler } from './extensions/tableCellEnterHandler';
 import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservation';
 import { LivePreview } from './extensions/livePreview';
-import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
+import {
+  createFloatingFormattingBar,
+  createFormattingToolbar,
+  createTableMenu,
+  updateToolbarStates,
+} from './BubbleMenuView';
 import { TextColorMark, CustomTextStyle } from './extensions/textColor';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
 import {
@@ -40,8 +47,8 @@ import {
   getPendingImageCount,
 } from './features/imageDragDrop';
 import { renderTableToMarkdownWithBreaks } from './utils/tableMarkdownSerializer';
-import { toggleTocOverlay } from './features/tocOverlay';
 import { toggleSearchOverlay } from './features/searchOverlay';
+import { createTocPane, type TocPaneAnchor } from './features/tocPane';
 import { showLinkDialog } from './features/linkDialog';
 import { processPasteContent, parseFencedCode } from './utils/pasteHandler';
 import { copySelectionAsMarkdown } from './utils/copyMarkdown';
@@ -299,9 +306,64 @@ function showRuntimeErrorToUser(code: string, baseMessage: string, error?: unkno
 let editor: Editor | null = null;
 let isUpdating = false; // Prevent feedback loops
 let formattingToolbar: HTMLElement;
+let floatingFormattingBar: HTMLElement | null = null;
+let floatingBarController: ReturnType<typeof createFloatingFormattingBar> | null = null;
 let tableMenu: HTMLElement;
+let tocPaneController: ReturnType<typeof createTocPane> | null = null;
+let tocAnchors: TocPaneAnchor[] = [];
+let tocScrollRaf: number | null = null;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
+
+function getActiveTocHeadingId(anchors: TocPaneAnchor[]): string | null {
+  if (anchors.length === 0) {
+    return null;
+  }
+
+  // Keep marker below the sticky top toolbar for expected active heading behavior.
+  const scrollMarker = window.scrollY + 72;
+  let activeId: string | null = null;
+
+  for (const anchor of anchors) {
+    const headingElement = document.getElementById(anchor.id);
+    if (!headingElement) {
+      continue;
+    }
+
+    if (headingElement.offsetTop <= scrollMarker) {
+      activeId = anchor.id;
+    } else {
+      break;
+    }
+  }
+
+  return activeId ?? anchors[0].id;
+}
+
+function refreshTocPaneSelection() {
+  if (!tocPaneController) {
+    return;
+  }
+
+  const activeId = getActiveTocHeadingId(tocAnchors);
+  tocPaneController.update(
+    tocAnchors.map(anchor => ({
+      ...anchor,
+      isActive: activeId !== null && anchor.id === activeId,
+    }))
+  );
+}
+
+function scheduleTocPaneSelectionRefresh() {
+  if (tocScrollRaf !== null) {
+    cancelAnimationFrame(tocScrollRaf);
+  }
+
+  tocScrollRaf = requestAnimationFrame(() => {
+    refreshTocPaneSelection();
+    tocScrollRaf = null;
+  });
+}
 
 function setDocDirty(dirty: boolean) {
   docDirty = dirty;
@@ -575,6 +637,32 @@ function initializeEditor(initialContent: string) {
       return;
     }
 
+    const body = document.body;
+    let layout = body.querySelector('.editor-layout') as HTMLElement | null;
+    if (!layout) {
+      layout = document.createElement('div');
+      layout.className = 'editor-layout';
+
+      const tocMount = document.createElement('div');
+      tocMount.className = 'toc-pane-mount';
+
+      const editorSurface = document.createElement('div');
+      editorSurface.className = 'editor-surface';
+
+      body.appendChild(layout);
+      layout.appendChild(tocMount);
+      layout.appendChild(editorSurface);
+      editorSurface.appendChild(editorElement);
+    }
+
+    const tocMount = layout.querySelector('.toc-pane-mount') as HTMLElement;
+
+    if (!floatingBarController) {
+      floatingBarController = createFloatingFormattingBar(() => editor);
+      floatingFormattingBar = floatingBarController.element;
+      document.body.appendChild(floatingFormattingBar);
+    }
+
     console.log('[GPT-AI] Initializing editor...');
 
     const editorInstance = new Editor({
@@ -681,6 +769,38 @@ function initializeEditor(initialContent: string) {
             class: 'markdown-image',
           },
         }),
+        BubbleMenuExtension.configure({
+          element: floatingFormattingBar as HTMLElement,
+          shouldShow: ({ editor: currentEditor, state }) => {
+            const { from, to } = state.selection;
+            return currentEditor.isEditable && from !== to;
+          },
+          tippyOptions: {
+            placement: 'top',
+            offset: [0, 10],
+            maxWidth: 'none',
+            duration: 120,
+          },
+        }),
+        TableOfContents.configure({
+          anchorTypes: ['heading'],
+          scrollParent: () => window,
+          onUpdate: (anchors: TableOfContentData) => {
+            if (!tocPaneController) return;
+
+            const normalizedAnchors: TocPaneAnchor[] = anchors.map(anchor => ({
+              id: anchor.id,
+              textContent: anchor.textContent,
+              level: anchor.originalLevel || anchor.level,
+              itemIndex: anchor.itemIndex,
+              pos: anchor.pos,
+              isActive: anchor.isActive,
+            }));
+
+            tocAnchors = normalizedAnchors;
+            scheduleTocPaneSelectionRefresh();
+          },
+        }),
       ],
       // Don't pass content here - we'll set it after init with contentType: 'markdown'
       editorProps: {
@@ -782,6 +902,26 @@ function initializeEditor(initialContent: string) {
     });
 
     editor = editorInstance;
+    floatingBarController?.refresh();
+
+    tocPaneController = createTocPane({
+      mount: tocMount,
+      onNavigate: anchor => {
+        scrollToHeading(editorInstance, anchor.pos);
+        scheduleTocPaneSelectionRefresh();
+      },
+    });
+
+    const onWindowScroll = () => {
+      scheduleTocPaneSelectionRefresh();
+    };
+
+    const onWindowResize = () => {
+      scheduleTocPaneSelectionRefresh();
+    };
+
+    window.addEventListener('scroll', onWindowScroll, { passive: true });
+    window.addEventListener('resize', onWindowResize);
 
     // Set initial content as markdown (Tiptap v3 requires explicit contentType)
     if (initialContent) {
@@ -796,7 +936,7 @@ function initializeEditor(initialContent: string) {
 
     // Create and insert formatting toolbar at top
     formattingToolbar = createFormattingToolbar(editorInstance);
-    const editorContainer = document.querySelector('#editor') as HTMLElement;
+    const editorContainer = document.querySelector('.editor-layout') as HTMLElement;
     if (editorContainer && editorContainer.parentElement) {
       editorContainer.parentElement.insertBefore(formattingToolbar, editorContainer);
     }
@@ -1047,6 +1187,19 @@ function initializeEditor(initialContent: string) {
       document.removeEventListener('click', documentClickHandler);
       document.removeEventListener('keydown', keydownHandler);
       editorInstance.view.dom.removeEventListener('click', handleLinkClick);
+      window.removeEventListener('scroll', onWindowScroll);
+      window.removeEventListener('resize', onWindowResize);
+      if (tocScrollRaf !== null) {
+        cancelAnimationFrame(tocScrollRaf);
+        tocScrollRaf = null;
+      }
+      tocAnchors = [];
+      floatingBarController?.destroy();
+      floatingFormattingBar?.remove();
+      floatingBarController = null;
+      floatingFormattingBar = null;
+      tocPaneController?.destroy();
+      tocPaneController = null;
       console.log('[GPT-AI] Editor destroyed, global listeners cleaned up');
     });
 
@@ -1300,12 +1453,24 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Handle custom event for TOC toggle from toolbar button
-window.addEventListener('toggleTocOutline', () => {
-  if (editor) {
-    toggleTocOverlay(editor);
-    updateToolbarStates();
+// Handle custom event for TOC pane toggle from toolbar button
+window.addEventListener('toggleTocPane', () => {
+  if (!editor || !tocPaneController) {
+    return;
   }
+
+  tocPaneController.toggle();
+  updateToolbarStates();
+});
+
+// Backward compatibility for older toolbar event name
+window.addEventListener('toggleTocOutline', () => {
+  if (!editor || !tocPaneController) {
+    return;
+  }
+
+  tocPaneController.toggle();
+  updateToolbarStates();
 });
 
 // Handle copy as markdown from toolbar button

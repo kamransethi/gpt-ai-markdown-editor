@@ -179,7 +179,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     return providerRegistration;
   }
 
-  constructor(private readonly context: vscode.ExtensionContext) { }
+  constructor(private readonly context: vscode.ExtensionContext) {}
 
   /**
    * Get the document directory for file-based documents, or workspace folder for untitled files
@@ -483,7 +483,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle messages from webview
    */
   private handleWebviewMessage(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ) {
@@ -795,7 +795,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle document export request from webview
    */
   private async handleExportDocument(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument
   ): Promise<void> {
     const format = message.format as string;
@@ -816,7 +816,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * so that images with spaces or special characters in filenames work correctly.
    */
   private handleResolveImageUri(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): void {
@@ -894,7 +894,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Computes relative path from document to the image, or copies image if outside workspace
    */
   private async handleWorkspaceImage(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1052,7 +1052,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Saves the image to the workspace and returns the relative path
    */
   private async handleSaveImage(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1168,7 +1168,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * - otherFiles: list of other markdown files referencing the same image (with line numbers)
    */
   private async handleGetImageReferences(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1397,7 +1397,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   }
 
   private async handleCheckImageRename(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1464,7 +1464,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Renames the file and updates references in markdown files across workspace
    */
   private async handleRenameImage(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1597,7 +1597,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Check if image is in workspace
    */
   private async handleCheckImageInWorkspace(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1672,7 +1672,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Get image metadata (file size, dimensions, last modified, etc.)
    */
   private async handleGetImageMetadata(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -1744,7 +1744,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle reveal image in OS file manager (Finder/Explorer)
    */
   private async handleRevealImageInOS(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument
   ): Promise<void> {
     const imagePath = message.imagePath as string;
@@ -1792,7 +1792,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle reveal image in VS Code Explorer
    */
   private async handleRevealImageInExplorer(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument
   ): Promise<void> {
     const imagePath = message.imagePath as string;
@@ -1840,7 +1840,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle file search request from webview
    */
   private async handleSearchFiles(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     webview: vscode.Webview
   ): Promise<void> {
     try {
@@ -2036,7 +2036,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle image link navigation (open image in VS Code preview)
    */
   private async handleOpenImage(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument
   ): Promise<void> {
     const imagePath = String(message.path || '');
@@ -2117,7 +2117,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle file link navigation (open file in VS Code)
    */
   private async handleOpenFileLink(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument
   ): Promise<void> {
     try {
@@ -2237,7 +2237,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Copy local image (outside workspace) to workspace
    */
   private async handleCopyLocalImageToWorkspace(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
@@ -2344,7 +2344,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Handle setting update request from webview
    */
   private async handleUpdateSetting(
-    message: { type: string;[key: string]: unknown },
+    message: { type: string; [key: string]: unknown },
     webview: vscode.Webview
   ): Promise<void> {
     const key = message.key as string;

@@ -51,20 +51,21 @@ body {
     --md-button-hover-bg: var(--vscode-button-hoverBackground);
     --md-subtle-bg: var(--vscode-editorWidget-background);
     --md-focus: var(--vscode-focusBorder);
+    --md-heading-primary-color: var(--vscode-textLink-foreground);
 
     /* Forced Dark Mode Syntax Highlighting */
-    --hljs-color-default: #c9d1d9;
-    --hljs-color-keyword: #ff7b72;
-    --hljs-color-title: #d2a8ff;
-    --hljs-color-literal: #79c0ff;
-    --hljs-color-string: #a5d6ff;
-    --hljs-color-symbol: #ffa657;
-    --hljs-color-comment: #8b949e;
-    --hljs-color-tag: #7ee787;
-    --hljs-color-subst: #c9d1d9;
-    --hljs-color-bullet: #f2cc60;
-    --hljs-color-addition-fg: #aff5b4;
-    --hljs-color-addition-bg: #033a16;
-    --hljs-color-deletion-fg: #ffdcd7;
-    --hljs-color-deletion-bg: #67060c;
+    --hljs-color-default: var(--vscode-editor-foreground);
+    --hljs-color-keyword: var(--vscode-terminal-ansiMagenta, var(--vscode-textLink-foreground));
+    --hljs-color-title: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
+    --hljs-color-literal: var(--vscode-terminal-ansiCyan, var(--vscode-textLink-foreground));
+    --hljs-color-string: var(--vscode-terminal-ansiGreen, var(--vscode-textLink-foreground));
+    --hljs-color-symbol: var(--vscode-terminal-ansiYellow, var(--vscode-textLink-foreground));
+    --hljs-color-comment: var(--vscode-descriptionForeground);
+    --hljs-color-tag: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
+    --hljs-color-subst: var(--vscode-editor-foreground);
+    --hljs-color-bullet: var(--vscode-terminal-ansiYellow, var(--vscode-textLink-foreground));
+    --hljs-color-addition-fg: var(--vscode-terminal-ansiGreen, var(--vscode-editor-foreground));
+    --hljs-color-addition-bg: color-mix(in srgb, var(--vscode-terminal-ansiGreen, #2ea043) 18%, transparent);
+    --hljs-color-deletion-fg: var(--vscode-terminal-ansiRed, var(--vscode-editor-foreground));
+    --hljs-color-deletion-bg: color-mix(in srgb, var(--vscode-terminal-ansiRed, #f85149) 18%, transparent);
 }

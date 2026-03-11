@@ -33,6 +33,7 @@ const createMockEditor = () => {
   const editor = {
     chain: () => chainProxy,
     isActive,
+    getAttributes: jest.fn(() => ({})),
     on: jest.fn(),
   } as unknown as Editor;
 

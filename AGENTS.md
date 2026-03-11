@@ -42,6 +42,12 @@
 - Follow VS Code keyboard conventions
 - Inherit theme colors (no hard-coded values)
 
+### 4.1 Toolbar Order Parity (MANDATORY)
+- Keep the shared control order identical between the header formatting toolbar and the floating selection toolbar.
+- Shared controls include: **Bold, Italic, Highlight, Text Color, Strikethrough, Inline Code, Heading controls**.
+- If one toolbar reorders shared controls, the other must be updated in the same change.
+- Prefer a single shared ordering source/constant in `src/webview/BubbleMenuView.ts` when refactoring.
+
 ### 5. Git & File Rules
 - **Never commit or push** — User must review first
 - **Use `git mv`** for renaming/moving tracked files (preserves history)

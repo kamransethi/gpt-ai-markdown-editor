@@ -63,11 +63,11 @@ function setCodeBlockNormalized(editor: Editor, language: string): void {
       attrs: { language },
       content: plainText
         ? [
-            {
-              type: 'text',
-              text: plainText,
-            },
-          ]
+          {
+            type: 'text',
+            text: plainText,
+          },
+        ]
         : undefined,
     })
     .run();
@@ -114,9 +114,66 @@ type ToolbarDropdown = {
   isEnabled?: () => boolean;
 };
 
+type ToolbarColorPicker = {
+  type: 'colorPicker';
+  label: string;
+  title?: string;
+  icon: ToolbarIcon;
+  requiresFocus?: boolean;
+  isEnabled?: () => boolean;
+};
+
 type ToolbarSeparator = { type: 'separator' };
 
-type ToolbarItem = ToolbarActionButton | ToolbarDropdown | ToolbarSeparator;
+type ToolbarItem = ToolbarActionButton | ToolbarDropdown | ToolbarColorPicker | ToolbarSeparator;
+
+type TextColorOption = {
+  label: string;
+  value: string;
+};
+
+const FLOATING_COLOR_STORAGE_KEY = 'gptai-floating-font-color';
+const DEFAULT_FLOATING_TEXT_COLOR = '#0078d4';
+const TEXT_COLOR_OPTIONS: TextColorOption[] = [
+  { label: 'Default', value: '' },
+  { label: 'Red', value: '#e81123' },
+  { label: 'Orange', value: '#ea5a00' },
+  { label: 'Yellow', value: '#fce100' },
+  { label: 'Green', value: '#107c10' },
+  { label: 'Blue', value: '#0078d4' },
+  { label: 'Purple', value: '#8e562e' },
+  { label: 'Pink', value: '#c239b3' },
+];
+
+function normalizeColor(value: string | null | undefined): string {
+  return (value || '').trim().toLowerCase();
+}
+
+function getPreferredTextColor(): string {
+  const stored = localStorage.getItem(FLOATING_COLOR_STORAGE_KEY);
+  const normalizedStored = normalizeColor(stored);
+  const isKnown = TEXT_COLOR_OPTIONS.some(option => normalizeColor(option.value) === normalizedStored);
+  return isKnown && stored ? stored : DEFAULT_FLOATING_TEXT_COLOR;
+}
+
+function setPreferredTextColor(value: string): void {
+  if (value) {
+    localStorage.setItem(FLOATING_COLOR_STORAGE_KEY, value);
+  }
+}
+
+function getEditorTextColor(editor: Editor): string {
+  const attrs = editor.getAttributes('textStyle') as { color?: string };
+  return attrs?.color || '';
+}
+
+function applyTextColor(editor: Editor, value: string): void {
+  if (!value) {
+    editor.chain().focus().unsetColor().run();
+    return;
+  }
+  editor.chain().focus().setColor(value).run();
+}
 
 let codiconCheckScheduled = false;
 
@@ -177,6 +234,10 @@ function closeAllDropdowns() {
     (menu as HTMLElement).style.display = 'none';
   });
 
+  document.querySelectorAll('.toolbar-color-menu').forEach(menu => {
+    (menu as HTMLElement).style.display = 'none';
+  });
+
   document.querySelectorAll('.toolbar-dropdown button[aria-expanded="true"]').forEach(btn => {
     (btn as HTMLElement).setAttribute('aria-expanded', 'false');
   });
@@ -189,6 +250,386 @@ export function updateToolbarStates() {
   if (toolbarRefreshFunction) {
     toolbarRefreshFunction();
   }
+}
+
+/**
+ * Create compact floating formatting bar used by TipTap BubbleMenu.
+ */
+export function createFloatingFormattingBar(getEditor: () => Editor | null): {
+  element: HTMLElement;
+  refresh: () => void;
+  destroy: () => void;
+} {
+  ensureCodiconFont();
+
+  let preservedSelection: { from: number; to: number } | null = null;
+
+  const rememberSelection = () => {
+    const activeEditor = getEditor();
+    if (!activeEditor) return;
+    const { from, to, empty } = activeEditor.state.selection;
+    if (!empty) {
+      preservedSelection = { from, to };
+    }
+  };
+
+  const buildSelectionChain = (activeEditor: Editor) => {
+    const { empty } = activeEditor.state.selection;
+    let chain = activeEditor.chain();
+    if (empty && preservedSelection) {
+      chain = chain.setTextSelection(preservedSelection);
+    }
+    return chain.focus();
+  };
+
+  const container = document.createElement('div');
+  container.className = 'floating-formatting-bar';
+  container.setAttribute('role', 'toolbar');
+  container.setAttribute('aria-label', 'Selection formatting');
+
+  const createDivider = () => {
+    const divider = document.createElement('div');
+    divider.className = 'floating-toolbar-separator';
+    return divider;
+  };
+
+  const createButton = (options: {
+    className: string;
+    title: string;
+    icon: ToolbarIcon;
+    action: () => void;
+    isActive?: () => boolean;
+  }) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `floating-toolbar-button ${options.className}`;
+    button.title = options.title;
+    button.setAttribute('aria-label', options.title);
+    button.append(createIconElement(options.icon, 'toolbar-icon'));
+
+    button.onmousedown = e => {
+      // Keep selection stable while formatting from bubble UI.
+      rememberSelection();
+      e.preventDefault();
+    };
+
+    button.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      options.action();
+      refresh();
+    };
+
+    return {
+      element: button,
+      isActive: options.isActive,
+    };
+  };
+
+  const headingMenu = document.createElement('div');
+  headingMenu.className = 'floating-toolbar-menu';
+
+  const colorMenu = document.createElement('div');
+  colorMenu.className = 'floating-toolbar-color-menu';
+  const colorSwatches: Array<{ value: string; element: HTMLButtonElement }> = [];
+
+  const getStoredColor = () => getPreferredTextColor();
+
+  const getSelectionColor = () => {
+    const activeEditor = getEditor();
+    if (!activeEditor) return '';
+    return getEditorTextColor(activeEditor);
+  };
+
+  const applyFontColor = (value: string) => {
+    const activeEditor = getEditor();
+    if (!activeEditor) return;
+
+    rememberSelection();
+
+    setPreferredTextColor(value);
+
+    const chain = buildSelectionChain(activeEditor);
+    if (!value) {
+      chain.unsetColor().run();
+      return;
+    }
+    chain.setColor(value).run();
+  };
+
+  const colorGroup = document.createElement('div');
+  colorGroup.className = 'floating-toolbar-color-group';
+
+  const colorPrimary = document.createElement('button');
+  colorPrimary.type = 'button';
+  colorPrimary.className = 'floating-toolbar-button color-primary';
+  colorPrimary.title = 'Toggle font color';
+  colorPrimary.setAttribute('aria-label', 'Toggle font color');
+  const colorPrimaryIcon = createIconElement({ name: 'symbol-color', fallback: 'A' }, 'toolbar-icon');
+  const colorPrimaryUnderline = document.createElement('span');
+  colorPrimaryUnderline.className = 'floating-color-underline';
+  colorPrimary.append(colorPrimaryIcon, colorPrimaryUnderline);
+
+  colorPrimary.onmousedown = e => {
+    rememberSelection();
+    e.preventDefault();
+  };
+  colorPrimary.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const activeEditor = getEditor();
+    if (!activeEditor) return;
+
+    rememberSelection();
+    const currentColor = normalizeColor(getSelectionColor());
+    const selectedColor = normalizeColor(getStoredColor());
+    if (currentColor && currentColor === selectedColor) {
+      buildSelectionChain(activeEditor).unsetColor().run();
+    } else {
+      applyFontColor(selectedColor);
+    }
+    refresh();
+  };
+
+  const colorToggle = document.createElement('button');
+  colorToggle.type = 'button';
+  colorToggle.className = 'floating-toolbar-button color-toggle';
+  colorToggle.title = 'Font color options';
+  colorToggle.setAttribute('aria-label', 'Font color options');
+  colorToggle.append(createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret'));
+  colorToggle.onmousedown = e => {
+    rememberSelection();
+    e.preventDefault();
+  };
+  colorToggle.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const open = colorMenu.style.display === 'flex';
+    headingMenu.style.display = 'none';
+    colorMenu.style.display = open ? 'none' : 'flex';
+  };
+
+  TEXT_COLOR_OPTIONS.forEach(option => {
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'floating-color-swatch';
+    swatch.title = option.label;
+    swatch.setAttribute('aria-label', option.label);
+    swatch.onmousedown = e => {
+      rememberSelection();
+      e.preventDefault();
+    };
+
+    if (option.value) {
+      swatch.style.backgroundColor = option.value;
+    } else {
+      swatch.classList.add('default-swatch');
+      swatch.textContent = 'A';
+    }
+
+    swatch.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      applyFontColor(option.value);
+      colorMenu.style.display = 'none';
+      refresh();
+    };
+
+    colorMenu.appendChild(swatch);
+    colorSwatches.push({ value: option.value, element: swatch });
+  });
+
+  colorGroup.append(colorPrimary, colorToggle, colorMenu);
+
+  const styleButton = document.createElement('button');
+  styleButton.type = 'button';
+  styleButton.className = 'floating-toolbar-button style-button';
+  styleButton.title = 'Text style';
+  styleButton.setAttribute('aria-label', 'Text style');
+  styleButton.append(
+    createIconElement({ name: 'text-size', fallback: 'A' }, 'toolbar-icon'),
+    createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
+  );
+
+  const setHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => {
+    const activeEditor = getEditor();
+    if (!activeEditor) return;
+    activeEditor.chain().focus().setHeading({ level }).run();
+  };
+
+  const setParagraph = () => {
+    const activeEditor = getEditor();
+    if (!activeEditor) return;
+    activeEditor.chain().focus().setParagraph().run();
+  };
+
+  const styleItems = [
+    { label: 'Paragraph', action: () => setParagraph() },
+    { label: 'Heading 1', action: () => setHeading(1) },
+    { label: 'Heading 2', action: () => setHeading(2) },
+    { label: 'Heading 3', action: () => setHeading(3) },
+  ];
+
+  styleItems.forEach(item => {
+    const itemButton = document.createElement('button');
+    itemButton.type = 'button';
+    itemButton.className = 'floating-toolbar-menu-item';
+    itemButton.textContent = item.label;
+    itemButton.title = item.label;
+    itemButton.onmousedown = e => {
+      rememberSelection();
+      e.preventDefault();
+    };
+    itemButton.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      item.action();
+      headingMenu.style.display = 'none';
+      refresh();
+    };
+    headingMenu.appendChild(itemButton);
+  });
+
+  styleButton.onmousedown = e => {
+    rememberSelection();
+    e.preventDefault();
+  };
+  styleButton.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const open = headingMenu.style.display === 'block';
+    colorMenu.style.display = 'none';
+    headingMenu.style.display = open ? 'none' : 'block';
+  };
+
+  const styleWrapper = document.createElement('div');
+  styleWrapper.className = 'floating-toolbar-dropdown';
+  styleWrapper.append(styleButton, headingMenu);
+
+  const boldButton = createButton({
+    className: 'bold',
+    title: 'Bold',
+    icon: { name: 'bold', fallback: 'B' },
+    action: () => getEditor()?.chain().focus().toggleBold().run(),
+    isActive: () => Boolean(getEditor()?.isActive('bold')),
+  });
+
+  const italicButton = createButton({
+    className: 'italic',
+    title: 'Italic',
+    icon: { name: 'italic', fallback: 'I' },
+    action: () => getEditor()?.chain().focus().toggleItalic().run(),
+    isActive: () => Boolean(getEditor()?.isActive('italic')),
+  });
+
+  const highlightButton = createButton({
+    className: 'highlight',
+    title: 'Toggle highlight',
+    icon: { name: 'paintcan', fallback: 'Hl' },
+    action: () => getEditor()?.chain().focus().toggleHighlight().run(),
+    isActive: () => Boolean(getEditor()?.isActive('highlight')),
+  });
+
+  const strikeButton = createButton({
+    className: 'strike',
+    title: 'Strikethrough',
+    icon: { name: 'strikethrough', fallback: 'S' },
+    action: () => getEditor()?.chain().focus().toggleStrike().run(),
+    isActive: () => Boolean(getEditor()?.isActive('strike')),
+  });
+
+  const inlineCodeButton = createButton({
+    className: 'inline-code',
+    title: 'Inline code',
+    icon: { name: 'code', fallback: '<>' },
+    action: () => getEditor()?.chain().focus().toggleCode().run(),
+    isActive: () => Boolean(getEditor()?.isActive('code')),
+  });
+
+  const linkButton = createButton({
+    className: 'link',
+    title: 'Insert link',
+    icon: { name: 'link', fallback: 'Link' },
+    action: () => {
+      const activeEditor = getEditor();
+      if (!activeEditor) return;
+      showLinkDialog(activeEditor);
+    },
+    isActive: () => Boolean(getEditor()?.isActive('link')),
+  });
+
+  const clearFormattingButton = createButton({
+    className: 'clear-formatting',
+    title: 'Clear formatting',
+    icon: { name: 'clear-all', fallback: 'Clr' },
+    action: () => {
+      const activeEditor = getEditor();
+      if (!activeEditor) return;
+      activeEditor.chain().focus().unsetAllMarks().run();
+    },
+  });
+
+  // Keep shared control order aligned with the header toolbar:
+  // Bold -> Italic -> Highlight -> Text Color -> Strike -> Inline Code -> Headings
+  container.appendChild(boldButton.element);
+  container.appendChild(italicButton.element);
+  container.appendChild(highlightButton.element);
+  container.appendChild(colorGroup);
+  container.appendChild(strikeButton.element);
+  container.appendChild(inlineCodeButton.element);
+  container.appendChild(styleWrapper);
+  container.appendChild(createDivider());
+  container.appendChild(linkButton.element);
+  container.appendChild(clearFormattingButton.element);
+
+  const buttons = [
+    boldButton,
+    italicButton,
+    highlightButton,
+    strikeButton,
+    inlineCodeButton,
+    linkButton,
+    clearFormattingButton,
+  ];
+
+  const closeMenuOnOutsideClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (!target || !container.contains(target)) {
+      headingMenu.style.display = 'none';
+      colorMenu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', closeMenuOnOutsideClick);
+
+  const refresh = () => {
+    const currentColor = normalizeColor(getSelectionColor());
+    const selectedColor = getStoredColor();
+    colorPrimaryUnderline.style.backgroundColor = currentColor || selectedColor;
+    colorPrimary.classList.toggle('active', Boolean(currentColor));
+
+    colorSwatches.forEach(({ value, element }) => {
+      const normalized = normalizeColor(value);
+      const isSelected = (currentColor || normalizeColor(selectedColor)) === normalized;
+      element.classList.toggle('active', isSelected);
+    });
+
+    buttons.forEach(({ element, isActive }) => {
+      if (!isActive) {
+        element.classList.remove('active');
+        return;
+      }
+      element.classList.toggle('active', Boolean(isActive()));
+    });
+  };
+
+  return {
+    element: container,
+    refresh,
+    destroy: () => {
+      document.removeEventListener('click', closeMenuOnOutsideClick);
+    },
+  };
 }
 
 /**
@@ -305,7 +746,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: 'Save',
-      title: `Save document (${modKeyLabel}+S)`,
+      title: `Save document ${modKeyLabel}+S`,
       icon: { name: 'save', fallback: 'Save' },
       action: () => {
         if ((window as any).saveDocument) {
@@ -343,7 +784,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: 'Highlight',
-      title: 'Toggle highlight',
+      title: 'Toggle text highlight',
       icon: { name: 'paintcan', fallback: 'Hl' },
       action: () => editor.chain().focus().toggleHighlight().run(),
       isActive: () => editor.isActive('highlight'),
@@ -351,21 +792,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       requiresFocus: true,
     },
     {
-      type: 'dropdown',
+      type: 'colorPicker',
       label: 'Text Color',
       title: 'Choose text color',
       icon: { name: 'symbol-color', fallback: 'A' },
       requiresFocus: true,
-      items: [
-        { label: 'Default', action: () => editor.chain().focus().unsetColor().run() },
-        { label: 'Red', action: () => editor.chain().focus().setColor('#e81123').run() },
-        { label: 'Orange', action: () => editor.chain().focus().setColor('#ea5a00').run() },
-        { label: 'Yellow', action: () => editor.chain().focus().setColor('#fce100').run() },
-        { label: 'Green', action: () => editor.chain().focus().setColor('#107c10').run() },
-        { label: 'Blue', action: () => editor.chain().focus().setColor('#0078d4').run() },
-        { label: 'Purple', action: () => editor.chain().focus().setColor('#8e562e').run() },
-        { label: 'Pink', action: () => editor.chain().focus().setColor('#c239b3').run() },
-      ],
+      isEnabled: () => true,
     },
     {
       type: 'button',
@@ -453,7 +885,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: 'Table Bullet',
-      title: 'Toggle text bullet list in table cell',
+      title: 'Toggle table cell bullets',
       icon: { name: 'list-unordered', fallback: '•' },
       action: () => toggleTableBullet(editor),
       isActive: () => isTableBulletActive(editor),
@@ -719,10 +1151,10 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: 'Outline',
-      title: 'Toggle Document Outline (TOC)',
+      title: 'Toggle outline pane',
       icon: { name: 'list-tree', fallback: 'TOC' },
       action: () => {
-        window.dispatchEvent(new CustomEvent('toggleTocOutline'));
+        window.dispatchEvent(new CustomEvent('toggleTocPane'));
       },
       isActive: () => false,
       className: 'toc-button',
@@ -742,7 +1174,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: 'Copy MD',
-      title: 'Copy selection as Markdown',
+      title: 'Copy selection markdown',
       icon: { name: 'copy', fallback: 'Copy' },
       action: () => {
         window.dispatchEvent(new CustomEvent('copyAsMarkdown'));
@@ -774,7 +1206,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: 'Export settings',
-      title: 'Export settings',
+      title: 'Open export settings',
       icon: { name: 'gear', fallback: '⚙' },
       action: () => {
         window.dispatchEvent(new CustomEvent('openExtensionSettings'));
@@ -787,6 +1219,14 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   const actionButtons: Array<{ config: ToolbarActionButton; element: HTMLButtonElement }> = [];
   const dropdownButtons: Array<{ config: ToolbarDropdown; element: HTMLButtonElement }> = [];
   const dropdownItems: Array<{ config: ToolbarDropdownItem; element: HTMLButtonElement }> = [];
+  const colorPickers: Array<{
+    config: ToolbarColorPicker;
+    root: HTMLDivElement;
+    primary: HTMLButtonElement;
+    toggle: HTMLButtonElement;
+    underline: HTMLSpanElement;
+    swatches: Array<{ value: string; element: HTMLButtonElement }>;
+  }> = [];
 
   const refreshActiveStates = () => {
     // Update action buttons active and enabled states
@@ -806,9 +1246,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
       // Update title to explain why disabled
       if (!enabled && config.requiresFocus && !isEditorFocused) {
-        element.title = (config.title || config.label) + ' (Click in document to edit)';
+        element.title = 'Focus editor first';
       } else if (!enabled) {
-        element.title = (config.title || config.label) + ' (Not available here)';
+        element.title = 'Not available here';
       } else {
         element.title = config.title || config.label;
       }
@@ -830,9 +1270,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
       // Update title to explain why disabled
       if (!enabled && config.requiresFocus && !isEditorFocused) {
-        element.title = (config.title || config.label) + ' (Click in document to edit)';
+        element.title = 'Focus editor first';
       } else if (!enabled) {
-        element.title = (config.title || config.label) + ' (Not available here)';
+        element.title = 'Not available here';
       } else {
         element.title = config.title || config.label;
       }
@@ -844,6 +1284,31 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       element.disabled = !enabled;
       element.classList.toggle('disabled', !enabled);
       element.setAttribute('aria-disabled', String(!enabled));
+    });
+
+    // Update color pickers
+    colorPickers.forEach(({ config, root, primary, toggle, underline, swatches }) => {
+      let enabled = config.requiresFocus ? isEditorFocused : true;
+      if (enabled && config.isEnabled) {
+        enabled = config.isEnabled();
+      }
+
+      root.classList.toggle('disabled', !enabled);
+      primary.disabled = !enabled;
+      toggle.disabled = !enabled;
+      primary.classList.toggle('disabled', !enabled);
+      toggle.classList.toggle('disabled', !enabled);
+
+      const currentColor = normalizeColor(getEditorTextColor(editor));
+      const preferredColor = getPreferredTextColor();
+      underline.style.backgroundColor = currentColor || preferredColor;
+      primary.classList.toggle('active', Boolean(currentColor));
+
+      swatches.forEach(({ value, element }) => {
+        const normalized = normalizeColor(value);
+        const isSelected = (currentColor || normalizeColor(preferredColor)) === normalized;
+        element.classList.toggle('active', isSelected);
+      });
     });
   };
 
@@ -866,6 +1331,10 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       button.setAttribute('aria-label', btn.title || btn.label);
       button.setAttribute('aria-haspopup', 'true');
       button.setAttribute('aria-expanded', 'false');
+      button.onmousedown = e => {
+        // Keep editor selection when using toolbar controls.
+        e.preventDefault();
+      };
 
       const icon = createIconElement(btn.icon, 'toolbar-icon');
 
@@ -878,6 +1347,10 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         menuItem.className = 'toolbar-dropdown-item';
         menuItem.title = item.label;
         menuItem.setAttribute('aria-label', item.label);
+        menuItem.onmousedown = e => {
+          // Prevent focus from leaving editor before action runs.
+          e.preventDefault();
+        };
 
         const text = document.createElement('span');
         text.textContent = item.label;
@@ -941,11 +1414,110 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       return;
     }
 
+    if (btn.type === 'colorPicker') {
+      const root = document.createElement('div');
+      root.className = 'toolbar-color-group';
+
+      const primary = document.createElement('button');
+      primary.type = 'button';
+      primary.className = 'toolbar-button toolbar-color-primary';
+      primary.title = btn.title || btn.label;
+      primary.setAttribute('aria-label', btn.title || btn.label);
+      primary.onmousedown = e => {
+        e.preventDefault();
+      };
+
+      const underline = document.createElement('span');
+      underline.className = 'toolbar-color-underline';
+      primary.append(createIconElement(btn.icon, 'toolbar-icon'), underline);
+
+      const menu = document.createElement('div');
+      menu.className = 'toolbar-color-menu';
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'toolbar-button toolbar-color-toggle';
+      toggle.title = 'Font color options';
+      toggle.setAttribute('aria-label', 'Font color options');
+      toggle.onmousedown = e => {
+        e.preventDefault();
+      };
+      toggle.append(createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret'));
+
+      const swatches: Array<{ value: string; element: HTMLButtonElement }> = [];
+      TEXT_COLOR_OPTIONS.forEach(option => {
+        const swatch = document.createElement('button');
+        swatch.type = 'button';
+        swatch.className = 'toolbar-color-swatch';
+        swatch.title = option.label;
+        swatch.setAttribute('aria-label', option.label);
+        swatch.onmousedown = e => {
+          e.preventDefault();
+        };
+
+        if (option.value) {
+          swatch.style.backgroundColor = option.value;
+        } else {
+          swatch.classList.add('default-swatch');
+          swatch.textContent = 'A';
+        }
+
+        swatch.onclick = e => {
+          e.preventDefault();
+          e.stopPropagation();
+          applyTextColor(editor, option.value);
+          setPreferredTextColor(option.value);
+          menu.style.display = 'none';
+          refreshActiveStates();
+        };
+
+        menu.appendChild(swatch);
+        swatches.push({ value: option.value, element: swatch });
+      });
+
+      primary.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (primary.disabled) {
+          return;
+        }
+        const currentColor = normalizeColor(getEditorTextColor(editor));
+        const preferredColor = normalizeColor(getPreferredTextColor());
+        if (currentColor && currentColor === preferredColor) {
+          applyTextColor(editor, '');
+        } else {
+          applyTextColor(editor, preferredColor);
+          setPreferredTextColor(preferredColor);
+        }
+        refreshActiveStates();
+      };
+
+      toggle.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (toggle.disabled) {
+          return;
+        }
+        const isVisible = menu.style.display === 'flex';
+        closeAllDropdowns();
+        menu.style.display = isVisible ? 'none' : 'flex';
+      };
+
+      root.append(primary, toggle, menu);
+      colorPickers.push({ config: btn, root, primary, toggle, underline, swatches });
+      toolbar.appendChild(root);
+      return;
+    }
+
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'toolbar-button' + (btn.className ? ` ${btn.className}` : '');
     button.title = btn.title || btn.label;
     button.setAttribute('aria-label', btn.title || btn.label);
+    button.onmousedown = e => {
+      // Prevent focus steal to preserve current text selection.
+      e.preventDefault();
+    };
 
     const icon = createIconElement(btn.icon, 'toolbar-icon');
 
@@ -1040,41 +1612,41 @@ export function createTableMenu(editor: Editor): HTMLElement {
   const items: Array<
     | { separator: true }
     | {
-        label: string;
-        action: () => void;
-      }
+      label: string;
+      action: () => void;
+    }
   > = [
-    {
-      label: 'Add Row Before',
-      action: () => editor.chain().focus().addRowBefore().run(),
-    },
-    {
-      label: 'Add Row After',
-      action: () => editor.chain().focus().addRowAfter().run(),
-    },
-    {
-      label: 'Delete Row',
-      action: () => editor.chain().focus().deleteRow().run(),
-    },
-    { separator: true },
-    {
-      label: 'Add Column Before',
-      action: () => editor.chain().focus().addColumnBefore().run(),
-    },
-    {
-      label: 'Add Column After',
-      action: () => editor.chain().focus().addColumnAfter().run(),
-    },
-    {
-      label: 'Delete Column',
-      action: () => editor.chain().focus().deleteColumn().run(),
-    },
-    { separator: true },
-    {
-      label: 'Delete Table',
-      action: () => editor.chain().focus().deleteTable().run(),
-    },
-  ];
+      {
+        label: 'Add Row Before',
+        action: () => editor.chain().focus().addRowBefore().run(),
+      },
+      {
+        label: 'Add Row After',
+        action: () => editor.chain().focus().addRowAfter().run(),
+      },
+      {
+        label: 'Delete Row',
+        action: () => editor.chain().focus().deleteRow().run(),
+      },
+      { separator: true },
+      {
+        label: 'Add Column Before',
+        action: () => editor.chain().focus().addColumnBefore().run(),
+      },
+      {
+        label: 'Add Column After',
+        action: () => editor.chain().focus().addColumnAfter().run(),
+      },
+      {
+        label: 'Delete Column',
+        action: () => editor.chain().focus().deleteColumn().run(),
+      },
+      { separator: true },
+      {
+        label: 'Delete Table',
+        action: () => editor.chain().focus().deleteTable().run(),
+      },
+    ];
 
   items.forEach(item => {
     if ('separator' in item) {

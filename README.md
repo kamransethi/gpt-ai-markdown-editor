@@ -1,10 +1,10 @@
-# GPT-AI Markdown Editor
+# Visual Markdown Editor
 
 **Seamless WYSIWYG markdown editing for VS Code** — Write markdown the way humans think.
 
-> **Note:** This project is a community-maintained fork of the excellent [GPT-AI Markdown Editor](https://github.com/kamransethi/gpt-ai-markdown-editor) by Concretios. It has been forked to build and maintain advanced features (like drag handles, text highlighting, font colors, and modular table support) while keeping the extension fully open and free.
+> **Note:** This project is a community-maintained fork of the excellent [Markdown For Humans](https://github.com/concretios/markdown-for-humans) by Concretios. It has been forked to build and maintain advanced features (like drag handles, text highlighting, font colors, and modular table s$upport) while kee$ping the extension fully open and free.
 
-![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/kamransethi.gpt-ai-markdown-editor?label=VS%20Code%20Marketplace&logo=visual-studio-code) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![](https://img.shields.io/badge/License-MIT-yellow.svg)![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 ---
 
@@ -12,7 +12,7 @@
 
 > We also support standard shortcuts like `CTRL/CMD + B`, etc
 
-![GPT-AI Markdown Editor Overview](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/basic_overview_of_features.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/basic_overview_of_features.gif)
 
 *Experience seamless WYSIWYG markdown editing with visual table editing, image management, and more—all in VS Code.*
 
@@ -20,7 +20,7 @@
 
 ## Stop Fighting Markdown Syntax
 
-**Tired of manually writing table syntax? Struggling with image paths, resizing, renaming? Or you dont like memorising Markdown Syntax.** 
+**Tired of manually writing table syntax? Struggling with image paths, resizing, renaming? Or you dont like memorising Markdown Syntax.**
 
 Most markdown editors force you to memorize syntax, fight with split panes, or manually manage files. **GPT-AI Markdown Editor solves the biggest pain points** that make markdown editing frustrating.
 
@@ -30,9 +30,9 @@ Most markdown editors force you to memorize syntax, fight with split panes, or m
 
 ## Visual Table Editing (No More Syntax)
 
-As natural as it gets in Microsoft Word or Google Docs etc. 
+As natural as it gets in Microsoft Word or Google Docs etc.
 
-![Table Editing](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/table_operations_with_right_click_menu.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/table_operations_with_right_click_menu.gif)
 
 **Drag column borders to resize. Right-click to add rows. No syntax to memorize.**
 
@@ -49,7 +49,7 @@ As natural as it gets in Microsoft Word or Google Docs etc.
 
 > Press shift while dragging images, in case your face issues on drag drop in editor
 
-![Large Size Image Suggestion](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/large_size_image_size_suggestion.gif)
+<img src="https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/large_size_image_size_suggestion.gif" alt="" height="250" />
 
 **Drag images in. Resize with handles. Rename inline. No manual file operations.**
 
@@ -64,16 +64,17 @@ As natural as it gets in Microsoft Word or Google Docs etc.
 
 *Adjust image width with intuitive resize handles for perfect layout control.*
 
-![Image Rename Functionality](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/image_rename_functionality.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/image_rename_functionality.gif)
 
 *Rename images directly from the editor to keep your assets organized.*
 
 ---
 
 ## Built on True WYSIWYG Editing
+
 Humans work that way.
 
-![WYSIWYG Editing](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/basic_introduction.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/basic_introduction.gif)
 
 **See your formatted output as you type. No split panes. No preview mode. Just write.**
 
@@ -89,7 +90,7 @@ Built on TipTap with a **human-first design philosophy**:
 ## ✨ What Makes It Different
 
 
-| Feature                 | GPT-AI Markdown Editor          | Markdown All in One | Standard Editors  |
+| Feature                 | GPT-AI Markdown Editor       | Markdown All in One | Standard Editors  |
 | ----------------------- | ---------------------------- | ------------------- | ----------------- |
 | **WYSIWYG Editing**     | ✅ Full-screen, no split pane | ❌ Split pane only   | ❌ Plain text      |
 | **Visual Table Editor** | ✅ Drag, resize, edit cells   | ⚠️ Basic syntax     | ❌ Manual syntax   |
@@ -150,25 +151,25 @@ Built on TipTap with a **human-first design philosophy**:
 
 ### Enhanced Link Dialog
 
-![Enhanced Link Feature](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/hyperlink_feature.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/hyperlink_feature.gif)
 
 *Create links easily with support for URLs, file linking, heading links, and more—all through an intuitive dialog interface.*
 
 ### Mermaid Diagrams
 
-![Mermaid Diagrams](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/mermaid_diagram_with_one_diagram_only.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/mermaid_diagram_with_one_diagram_only.gif)
 
 *Create flowcharts, sequence diagrams, Gantt charts, and more with 15 built-in templates.*
 
 ### Document Outline
 
-![Document Outline](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/outline_feature_with_sidebar_display.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/outline_feature_with_sidebar_display.gif)
 
 *Navigate your document quickly with sidebar outline showing all headings for instant access.*
 
 ### GitHub Alerts
 
-![GitHub Alerts](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/github_alerts.gif)
+![](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/github_alerts.gif)
 
 *Create beautiful GitHub-style alert boxes for notes, warnings, tips, and important information.*
 
@@ -244,11 +245,11 @@ Ways to contribute:
 
 ## Vibe Coded its way
 
-This extension was built through AI / **vibe coding**, with minimal human effort focused on fixes and stability. The basic functional model came together in minutes, but what took days and hours was **testing each feature** to ensure everything works smoothly in real-world use. 
+This extension was built through AI / **vibe coding**, with minimal human effort focused on fixes and stability. The basic functional model came together in minutes, but what took days and hours was **testing each feature** to ensure everything works smoothly in real-world use.
 
 It's the classic 80:20 rule in action: that final 20% of polish, edge cases, and real-world testing takes 80% of the time, and that's where the real value lives.
 
-We're open-sourcing this because in AI era, **code has limited value**, the real work was in the creativity in planning, design, and relentless testing. 
+We're open-sourcing this because in AI era, **code has limited value**, the real work was in the creativity in planning, design, and relentless testing.
 
 Countless hours went into vibe-coded wireframes, user experience design, and polish to create something that feels natural and intuitive.
 
@@ -263,4 +264,3 @@ MIT © GPT-AI
 ## Credits
 
 Built with ❤️ for Markdown lovers, by Team GPT-AI
-

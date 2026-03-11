@@ -80,6 +80,7 @@ describe('BubbleMenuView', () => {
     return {
       chain,
       isActive: jest.fn().mockReturnValue(false),
+      getAttributes: jest.fn().mockReturnValue({}),
       on: jest.fn(), // Event listener registration
       off: jest.fn(), // Event listener removal
       state: {
@@ -116,6 +117,24 @@ describe('BubbleMenuView', () => {
 
       // Toolbar should register for selection updates
       expect(editor.on).toHaveBeenCalledWith('selectionUpdate', expect.any(Function));
+    });
+
+    it('dispatches toggleTocPane when Outline button is clicked', () => {
+      const editor = createMockEditor();
+      const toolbar = createFormattingToolbar(editor);
+      const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+
+      const outlineButton = toolbar.querySelector('button.toolbar-button.toc-button') as
+        | HTMLButtonElement
+        | null;
+
+      expect(outlineButton).toBeTruthy();
+
+      outlineButton!.click();
+
+      expect(dispatchSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
+      const dispatchedEvent = dispatchSpy.mock.calls[0][0] as CustomEvent;
+      expect(dispatchedEvent.type).toBe('toggleTocPane');
     });
   });
 
