@@ -124,9 +124,9 @@ describe('BubbleMenuView', () => {
       const toolbar = createFormattingToolbar(editor);
       const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
 
-      const outlineButton = toolbar.querySelector('button.toolbar-button.toc-button') as
-        | HTMLButtonElement
-        | null;
+      const outlineButton = toolbar.querySelector(
+        'button.toolbar-button.toc-button'
+      ) as HTMLButtonElement | null;
 
       expect(outlineButton).toBeTruthy();
 

@@ -63,11 +63,11 @@ function setCodeBlockNormalized(editor: Editor, language: string): void {
       attrs: { language },
       content: plainText
         ? [
-          {
-            type: 'text',
-            text: plainText,
-          },
-        ]
+            {
+              type: 'text',
+              text: plainText,
+            },
+          ]
         : undefined,
     })
     .run();
@@ -152,7 +152,9 @@ function normalizeColor(value: string | null | undefined): string {
 function getPreferredTextColor(): string {
   const stored = localStorage.getItem(FLOATING_COLOR_STORAGE_KEY);
   const normalizedStored = normalizeColor(stored);
-  const isKnown = TEXT_COLOR_OPTIONS.some(option => normalizeColor(option.value) === normalizedStored);
+  const isKnown = TEXT_COLOR_OPTIONS.some(
+    option => normalizeColor(option.value) === normalizedStored
+  );
   return isKnown && stored ? stored : DEFAULT_FLOATING_TEXT_COLOR;
 }
 
@@ -365,7 +367,10 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   colorPrimary.className = 'floating-toolbar-button color-primary';
   colorPrimary.title = 'Toggle font color';
   colorPrimary.setAttribute('aria-label', 'Toggle font color');
-  const colorPrimaryIcon = createIconElement({ name: 'symbol-color', fallback: 'A' }, 'toolbar-icon');
+  const colorPrimaryIcon = createIconElement(
+    { name: 'symbol-color', fallback: 'A' },
+    'toolbar-icon'
+  );
   const colorPrimaryUnderline = document.createElement('span');
   colorPrimaryUnderline.className = 'floating-color-underline';
   colorPrimary.append(colorPrimaryIcon, colorPrimaryUnderline);
@@ -397,7 +402,9 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   colorToggle.className = 'floating-toolbar-button color-toggle';
   colorToggle.title = 'Font color options';
   colorToggle.setAttribute('aria-label', 'Font color options');
-  colorToggle.append(createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret'));
+  colorToggle.append(
+    createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
+  );
   colorToggle.onmousedown = e => {
     rememberSelection();
     e.preventDefault();
@@ -1442,7 +1449,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       toggle.onmousedown = e => {
         e.preventDefault();
       };
-      toggle.append(createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret'));
+      toggle.append(
+        createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
+      );
 
       const swatches: Array<{ value: string; element: HTMLButtonElement }> = [];
       TEXT_COLOR_OPTIONS.forEach(option => {
@@ -1612,41 +1621,41 @@ export function createTableMenu(editor: Editor): HTMLElement {
   const items: Array<
     | { separator: true }
     | {
-      label: string;
-      action: () => void;
-    }
+        label: string;
+        action: () => void;
+      }
   > = [
-      {
-        label: 'Add Row Before',
-        action: () => editor.chain().focus().addRowBefore().run(),
-      },
-      {
-        label: 'Add Row After',
-        action: () => editor.chain().focus().addRowAfter().run(),
-      },
-      {
-        label: 'Delete Row',
-        action: () => editor.chain().focus().deleteRow().run(),
-      },
-      { separator: true },
-      {
-        label: 'Add Column Before',
-        action: () => editor.chain().focus().addColumnBefore().run(),
-      },
-      {
-        label: 'Add Column After',
-        action: () => editor.chain().focus().addColumnAfter().run(),
-      },
-      {
-        label: 'Delete Column',
-        action: () => editor.chain().focus().deleteColumn().run(),
-      },
-      { separator: true },
-      {
-        label: 'Delete Table',
-        action: () => editor.chain().focus().deleteTable().run(),
-      },
-    ];
+    {
+      label: 'Add Row Before',
+      action: () => editor.chain().focus().addRowBefore().run(),
+    },
+    {
+      label: 'Add Row After',
+      action: () => editor.chain().focus().addRowAfter().run(),
+    },
+    {
+      label: 'Delete Row',
+      action: () => editor.chain().focus().deleteRow().run(),
+    },
+    { separator: true },
+    {
+      label: 'Add Column Before',
+      action: () => editor.chain().focus().addColumnBefore().run(),
+    },
+    {
+      label: 'Add Column After',
+      action: () => editor.chain().focus().addColumnAfter().run(),
+    },
+    {
+      label: 'Delete Column',
+      action: () => editor.chain().focus().deleteColumn().run(),
+    },
+    { separator: true },
+    {
+      label: 'Delete Table',
+      action: () => editor.chain().focus().deleteTable().run(),
+    },
+  ];
 
   items.forEach(item => {
     if ('separator' in item) {
