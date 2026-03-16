@@ -11,6 +11,7 @@
 import { getMarkRange, Editor } from '@tiptap/core';
 import { TextSelection } from 'prosemirror-state';
 import { buildOutlineFromEditor } from '../utils/outline';
+import { formatFileLinkLabel } from '../utils/fileLinks';
 
 type Range = { from: number; to: number };
 type ParentContext = { parentStart: number; parentText: string };
@@ -333,6 +334,10 @@ function updateAutocompleteDropdown(
         actualLinkPath = normalizedPath;
         // Show only filename in URL input
         urlInput.value = fileResult.filename;
+        const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
+        if (textInput) {
+          textInput.value = formatFileLinkLabel(fileResult.filename);
+        }
         closeAutocomplete();
         urlInput.focus();
       };
@@ -768,6 +773,10 @@ export function createLinkDialog(): HTMLElement {
 
       actualLinkPath = normalizedPath;
       urlInput.value = message.filename;
+      const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
+      if (textInput) {
+        textInput.value = message.suggestedText || formatFileLinkLabel(message.filename);
+      }
       urlInput.focus(); // Keep focus in dialog
     }
   };
@@ -819,7 +828,9 @@ export function createLinkDialog(): HTMLElement {
   okBtn.onclick = () => {
     // Use actualLinkPath if available (from file/heading selection), otherwise use urlInput.value
     const url = actualLinkPath || urlInput.value.trim();
-    const text = textInput.value;
+    const text =
+      textInput.value ||
+      (currentMode === 'file' && urlInput.value ? formatFileLinkLabel(urlInput.value) : '');
 
     if (!url) {
       urlInput.focus();

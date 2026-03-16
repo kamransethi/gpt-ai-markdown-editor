@@ -18,6 +18,7 @@ import { showLinkDialog } from './features/linkDialog';
 import { showImageInsertDialog } from './features/imageInsertDialog';
 import type { Editor } from '@tiptap/core';
 import { getSelectedTableLines } from './utils/tableSelectionUtils';
+import { moveSelectedTableColumn, moveSelectedTableRow } from './utils/tableOperationActions';
 
 // Store reference to refresh function so it can be called externally
 let toolbarRefreshFunction: (() => void) | null = null;
@@ -546,6 +547,14 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
     isActive: () => Boolean(getEditor()?.isActive('strike')),
   });
 
+  const underlineButton = createButton({
+    className: 'underline',
+    title: 'Underline',
+    icon: { name: 'underline', fallback: 'U' },
+    action: () => getEditor()?.chain().focus().toggleUnderline().run(),
+    isActive: () => Boolean(getEditor()?.isActive('underline')),
+  });
+
   const inlineCodeButton = createButton({
     className: 'inline-code',
     title: 'Inline code',
@@ -578,12 +587,13 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   });
 
   // Keep shared control order aligned with the header toolbar:
-  // Bold -> Italic -> Highlight -> Text Color -> Strike -> Inline Code -> Headings
+  // Bold -> Italic -> Highlight -> Text Color -> Strike -> Underline -> Inline Code -> Headings
   container.appendChild(boldButton.element);
   container.appendChild(italicButton.element);
   container.appendChild(highlightButton.element);
   container.appendChild(colorGroup);
   container.appendChild(strikeButton.element);
+  container.appendChild(underlineButton.element);
   container.appendChild(inlineCodeButton.element);
   container.appendChild(styleWrapper);
   container.appendChild(createDivider());
@@ -595,6 +605,7 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
     italicButton,
     highlightButton,
     strikeButton,
+    underlineButton,
     inlineCodeButton,
     linkButton,
     clearFormattingButton,
@@ -769,34 +780,50 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       type: 'separator',
     },
     {
-      type: 'button',
-      label: 'Bold',
-      title: `Toggle bold (${modKeyLabel}+B)`,
-      icon: { name: 'bold', fallback: 'B' },
-      action: () => editor.chain().focus().toggleBold().run(),
-      isActive: () => editor.isActive('bold'),
-      className: 'bold',
+      type: 'dropdown',
+      label: 'Text',
+      title: 'Text formatting',
+      icon: { name: 'symbol-text', fallback: 'T' },
       requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Italic',
-      title: `Toggle italic (${modKeyLabel}+I)`,
-      icon: { name: 'italic', fallback: 'I' },
-      action: () => editor.chain().focus().toggleItalic().run(),
-      isActive: () => editor.isActive('italic'),
-      className: 'italic',
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Highlight',
-      title: 'Toggle text highlight',
-      icon: { name: 'paintcan', fallback: 'Hl' },
-      action: () => editor.chain().focus().toggleHighlight().run(),
-      isActive: () => editor.isActive('highlight'),
-      className: 'highlight-icon',
-      requiresFocus: true,
+      isActive: () =>
+        editor.isActive('bold') ||
+        editor.isActive('italic') ||
+        editor.isActive('highlight') ||
+        editor.isActive('strike') ||
+        editor.isActive('underline') ||
+        editor.isActive('code'),
+      items: [
+        {
+          label: `Bold (${modKeyLabel}+B)`,
+          icon: { name: 'bold', fallback: 'B' },
+          action: () => editor.chain().focus().toggleBold().run(),
+        },
+        {
+          label: `Italic (${modKeyLabel}+I)`,
+          icon: { name: 'italic', fallback: 'I' },
+          action: () => editor.chain().focus().toggleItalic().run(),
+        },
+        {
+          label: `Underline (${modKeyLabel}+U)`,
+          icon: { name: 'underline', fallback: 'U' },
+          action: () => editor.chain().focus().toggleUnderline().run(),
+        },
+        {
+          label: 'Highlight',
+          icon: { name: 'paintcan', fallback: 'Hl' },
+          action: () => editor.chain().focus().toggleHighlight().run(),
+        },
+        {
+          label: 'Strikethrough',
+          icon: { name: 'strikethrough', fallback: 'S' },
+          action: () => editor.chain().focus().toggleStrike().run(),
+        },
+        {
+          label: 'Inline code',
+          icon: { name: 'code', fallback: '<>' },
+          action: () => editor.chain().focus().toggleCode().run(),
+        },
+      ],
     },
     {
       type: 'colorPicker',
@@ -807,234 +834,129 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       isEnabled: () => true,
     },
     {
-      type: 'button',
-      label: 'Strikethrough',
-      title: 'Toggle strikethrough',
-      icon: { name: 'strikethrough', fallback: 'S' },
-      action: () => editor.chain().focus().toggleStrike().run(),
-      isActive: () => editor.isActive('strike'),
-      className: 'strike',
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Inline code',
-      title: 'Toggle inline code',
-      icon: { name: 'code', fallback: '<>' },
-      action: () => editor.chain().focus().toggleCode().run(),
-      isActive: () => editor.isActive('code'),
-      className: 'code-icon',
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Heading 1',
-      title: 'Toggle Heading 1',
-      icon: { fallback: 'H1' },
-      action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
-      isActive: () => editor.isActive('heading', { level: 1 }),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Heading 2',
-      title: 'Toggle Heading 2',
-      icon: { fallback: 'H2' },
-      action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-      isActive: () => editor.isActive('heading', { level: 2 }),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Heading 3',
-      title: 'Toggle Heading 3',
-      icon: { fallback: 'H3' },
-      action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
-      isActive: () => editor.isActive('heading', { level: 3 }),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
       type: 'dropdown',
-      label: 'More headings',
-      title: 'More heading levels',
-      icon: { name: 'text-size', fallback: 'H+' },
+      label: 'Headings',
+      title: 'Heading levels',
+      icon: { name: 'text-size', fallback: 'H' },
       requiresFocus: true,
+      isActive: () => editor.isActive('heading'),
       isEnabled: () => !editor.isActive('table'),
       items: [
         {
-          label: 'Heading 4 (H4)',
+          label: 'Heading 1',
+          action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+        },
+        {
+          label: 'Heading 2',
+          action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+        },
+        {
+          label: 'Heading 3',
+          action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+        },
+        {
+          label: 'Heading 4',
           action: () => editor.chain().focus().toggleHeading({ level: 4 }).run(),
         },
         {
-          label: 'Heading 5 (H5)',
+          label: 'Heading 5',
           action: () => editor.chain().focus().toggleHeading({ level: 5 }).run(),
         },
         {
-          label: 'Heading 6 (H6)',
+          label: 'Heading 6',
           action: () => editor.chain().focus().toggleHeading({ level: 6 }).run(),
         },
       ],
     },
-    { type: 'separator' },
-    {
-      type: 'button',
-      label: 'Bullet list',
-      title: 'Toggle bullet list',
-      icon: { name: 'list-unordered', fallback: '•' },
-      action: () => editor.chain().focus().toggleBulletList().run(),
-      isActive: () => editor.isActive('bulletList'),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Table Bullet',
-      title: 'Toggle table cell bullets',
-      icon: { name: 'list-unordered', fallback: '•' },
-      action: () => toggleTableBullet(editor),
-      isActive: () => isTableBulletActive(editor),
-      // This is a special button that ONLY shows up when inside a table
-      isEnabled: () => editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Numbered list',
-      title: 'Toggle numbered list',
-      icon: { name: 'list-ordered', fallback: '1.' },
-      action: () => editor.chain().focus().toggleOrderedList().run(),
-      isActive: () => editor.isActive('orderedList'),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Task list',
-      title: 'Toggle task list (checkboxes)',
-      icon: { name: 'tasklist', fallback: '☐' },
-      action: () => editor.chain().focus().toggleTaskList().run(),
-      isActive: () => editor.isActive('taskList'),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    { type: 'separator' },
     {
       type: 'dropdown',
-      label: 'Table',
-      title: 'Insert and edit table',
-      icon: { name: 'table', fallback: 'Tbl' },
+      label: 'Lists',
+      title: 'Lists and checklists',
+      icon: { name: 'list-unordered', fallback: 'L' },
       requiresFocus: true,
-      isActive: () => editor.isActive('table'),
+      isActive: () =>
+        editor.isActive('bulletList') ||
+        editor.isActive('orderedList') ||
+        editor.isActive('taskList') ||
+        isTableBulletActive(editor),
       items: [
         {
-          label: 'Insert Table',
-          icon: { name: 'add', fallback: '+' },
-          action: () => showTableInsertDialog(editor),
-          isEnabled: () => !editor.isActive('table'), // Only enabled when NOT in a table
+          label: 'Bullet list',
+          icon: { name: 'list-unordered', fallback: '•' },
+          action: () => editor.chain().focus().toggleBulletList().run(),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Add Column Before',
-          icon: { name: 'arrow-left', fallback: '←' },
-          action: () => editor.chain().focus().addColumnBefore().run(),
-          isEnabled: () => editor.isActive('table'), // Only enabled when in a table
+          label: 'Numbered list',
+          icon: { name: 'list-ordered', fallback: '1.' },
+          action: () => editor.chain().focus().toggleOrderedList().run(),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Add Column After',
-          icon: { name: 'arrow-right', fallback: '→' },
-          action: () => editor.chain().focus().addColumnAfter().run(),
-          isEnabled: () => editor.isActive('table'),
+          label: 'Task list',
+          icon: { name: 'tasklist', fallback: '☐' },
+          action: () => editor.chain().focus().toggleTaskList().run(),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Delete Column',
-          icon: { name: 'remove', fallback: '×' },
-          action: () => editor.chain().focus().deleteColumn().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Add Row Before',
-          icon: { name: 'arrow-up', fallback: '↑' },
-          action: () => editor.chain().focus().addRowBefore().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Add Row After',
-          icon: { name: 'arrow-down', fallback: '↓' },
-          action: () => editor.chain().focus().addRowAfter().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Delete Row',
-          icon: { name: 'trash', fallback: '–' },
-          action: () => editor.chain().focus().deleteRow().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Delete Table',
-          icon: { name: 'trash', fallback: '✕' },
-          action: () => editor.chain().focus().deleteTable().run(),
+          label: 'Table bullet',
+          icon: { name: 'list-unordered', fallback: '•' },
+          action: () => toggleTableBullet(editor),
           isEnabled: () => editor.isActive('table'),
         },
       ],
     },
     {
-      type: 'button',
-      label: 'Quote',
-      title: 'Toggle block quote',
-      icon: { name: 'quote', fallback: '"' },
-      action: () => editor.chain().focus().toggleBlockquote().run(),
-      isActive: () => editor.isActive('blockquote'),
-      isEnabled: () => !editor.isActive('table'),
-      requiresFocus: true,
-    },
-    {
       type: 'dropdown',
-      label: 'Alert',
-      title: 'Insert GitHub alert',
-      icon: { name: 'info', fallback: '!' },
+      label: 'Blocks',
+      title: 'Block formatting',
+      icon: { name: 'quote', fallback: '"' },
       requiresFocus: true,
-      isActive: () => editor.isActive('githubAlert'),
+      isActive: () => editor.isActive('blockquote') || editor.isActive('githubAlert'),
       isEnabled: () => !editor.isActive('table'),
       items: [
         {
-          label: ' Note',
+          label: 'Block quote',
+          icon: { name: 'quote', fallback: '"' },
+          action: () => editor.chain().focus().toggleBlockquote().run(),
+        },
+        {
+          label: 'Note alert',
           icon: { name: 'info', fallback: 'ℹ' },
           action: () => {
             editor.chain().focus().toggleAlert('NOTE').run();
           },
         },
         {
-          label: ' Tip',
+          label: 'Tip alert',
           icon: { name: 'lightbulb', fallback: '💡' },
           action: () => {
             editor.chain().focus().toggleAlert('TIP').run();
           },
         },
         {
-          label: ' Important',
+          label: 'Important alert',
           icon: { name: 'megaphone', fallback: '📢' },
           action: () => {
             editor.chain().focus().toggleAlert('IMPORTANT').run();
           },
         },
         {
-          label: ' Warning',
+          label: 'Warning alert',
           icon: { name: 'warning', fallback: '⚠' },
           action: () => {
             editor.chain().focus().toggleAlert('WARNING').run();
           },
         },
         {
-          label: ' Caution',
+          label: 'Caution alert',
           icon: { name: 'error', fallback: '🛑' },
           action: () => {
             editor.chain().focus().toggleAlert('CAUTION').run();
           },
         },
         {
-          label: ' No Alert',
+          label: 'Remove alert',
           icon: { name: 'close', fallback: '×' },
           action: () => {
             editor.chain().focus().lift('githubAlert').run();
@@ -1044,155 +966,199 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'dropdown',
-      label: 'Code block',
-      title: 'Insert code block',
-      icon: { name: 'code', fallback: '{}' },
+      label: 'Insert',
+      title: 'Links, images, diagrams, and code blocks',
+      icon: { name: 'add', fallback: '+' },
       requiresFocus: true,
-      isActive: () => editor.isActive('codeBlock'),
-      isEnabled: () => !editor.isActive('table'),
+      isEnabled: () => true,
       items: [
         {
-          label: 'Plain Text',
+          label: `Insert/edit link (${modKeyLabel}+K)`,
+          icon: { name: 'link', fallback: '🔗' },
+          action: () => showLinkDialog(editor),
+        },
+        {
+          label: 'Insert image',
+          icon: { name: 'file-media', fallback: '📷' },
+          action: () => {
+            const vscodeApi = window.vscode;
+            if (vscodeApi && editor) {
+              showImageInsertDialog(editor, vscodeApi).catch(error => {
+                console.error('[GPT-AI] Failed to show image insert dialog:', error);
+              });
+            } else {
+              console.warn(
+                '[GPT-AI] Cannot show image insert dialog: vscode API or editor not available'
+              );
+            }
+          },
+          isEnabled: () => true,
+        },
+        {
+          label: 'Code block: Plain text',
+          icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'plaintext'),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'JavaScript',
-          action: () => setCodeBlockNormalized(editor, 'javascript'),
-        },
-        {
-          label: 'TypeScript',
+          label: 'Code block: TypeScript',
+          icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'typescript'),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Python',
+          label: 'Code block: Python',
+          icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'python'),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Bash',
-          action: () => setCodeBlockNormalized(editor, 'bash'),
-        },
-        {
-          label: 'JSON',
+          label: 'Code block: JSON',
+          icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'json'),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Markdown',
-          action: () => setCodeBlockNormalized(editor, 'markdown'),
+          label: 'Code block: Mermaid',
+          icon: { name: 'pie-chart', fallback: 'Mer' },
+          action: () => setCodeBlockNormalized(editor, 'mermaid'),
+          isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'CSS',
-          action: () => setCodeBlockNormalized(editor, 'css'),
-        },
-        {
-          label: 'HTML',
-          action: () => setCodeBlockNormalized(editor, 'html'),
-        },
-        {
-          label: 'SQL',
-          action: () => setCodeBlockNormalized(editor, 'sql'),
-        },
-        {
-          label: 'Java',
-          action: () => setCodeBlockNormalized(editor, 'java'),
-        },
-        {
-          label: 'Go',
-          action: () => setCodeBlockNormalized(editor, 'go'),
-        },
-        {
-          label: 'Rust',
-          action: () => setCodeBlockNormalized(editor, 'rust'),
+          label: 'Mermaid: Flowchart',
+          icon: { name: 'pie-chart', fallback: 'Mer' },
+          action: () => {
+            editor
+              .chain()
+              .focus()
+              .insertContent(`\`\`\`mermaid\n${MERMAID_TEMPLATES[0]?.diagram ?? 'graph TD\nA-->B'}\n\`\`\``, {
+                contentType: 'markdown',
+              })
+              .run();
+          },
+          isEnabled: () => !editor.isActive('table'),
         },
       ],
     },
     {
-      type: 'button',
-      label: 'Link',
-      title: `Insert/edit link (${modKeyLabel}+K)`,
-      icon: { name: 'link', fallback: '🔗' },
-      action: () => showLinkDialog(editor),
-      isActive: () => editor.isActive('link'),
+      type: 'dropdown',
+      label: 'Table',
+      title: 'Insert and edit table',
+      icon: { name: 'table', fallback: 'Tbl' },
       requiresFocus: true,
+      isActive: () => editor.isActive('table'),
+      items: [
+        {
+          label: 'Insert table',
+          icon: { name: 'add', fallback: '+' },
+          action: () => showTableInsertDialog(editor),
+          isEnabled: () => !editor.isActive('table'),
+        },
+        {
+          label: 'Add row before',
+          icon: { name: 'arrow-up', fallback: '↑' },
+          action: () => editor.chain().focus().addRowBefore().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Add row after',
+          icon: { name: 'arrow-down', fallback: '↓' },
+          action: () => editor.chain().focus().addRowAfter().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Delete row',
+          icon: { name: 'trash', fallback: '–' },
+          action: () => editor.chain().focus().deleteRow().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Move row up',
+          icon: { name: 'arrow-up', fallback: '↑' },
+          action: () => moveSelectedTableRow(editor, 'up'),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Move row down',
+          icon: { name: 'arrow-down', fallback: '↓' },
+          action: () => moveSelectedTableRow(editor, 'down'),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Add column before',
+          icon: { name: 'arrow-left', fallback: '←' },
+          action: () => editor.chain().focus().addColumnBefore().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Add column after',
+          icon: { name: 'arrow-right', fallback: '→' },
+          action: () => editor.chain().focus().addColumnAfter().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Delete column',
+          icon: { name: 'remove', fallback: '×' },
+          action: () => editor.chain().focus().deleteColumn().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Move column left',
+          icon: { name: 'arrow-left', fallback: '←' },
+          action: () => moveSelectedTableColumn(editor, 'left'),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Move column right',
+          icon: { name: 'arrow-right', fallback: '→' },
+          action: () => moveSelectedTableColumn(editor, 'right'),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Export table as CSV',
+          icon: { name: 'export', fallback: 'CSV' },
+          action: () => window.dispatchEvent(new CustomEvent('exportTableCsv')),
+          isEnabled: () => editor.isActive('table'),
+        },
+        {
+          label: 'Delete table',
+          icon: { name: 'trash', fallback: '✕' },
+          action: () => editor.chain().focus().deleteTable().run(),
+          isEnabled: () => editor.isActive('table'),
+        },
+      ],
     },
-    {
-      type: 'button',
-      label: 'Image',
-      title: 'Insert image',
-      icon: { name: 'file-media', fallback: '📷' },
-      action: () => {
-        // Get vscode API from window (set in editor.ts)
-        const vscodeApi = window.vscode;
-        if (vscodeApi && editor) {
-          showImageInsertDialog(editor, vscodeApi).catch(error => {
-            console.error('[GPT-AI] Failed to show image insert dialog:', error);
-          });
-        } else {
-          console.warn(
-            '[GPT-AI] Cannot show image insert dialog: vscode API or editor not available'
-          );
-        }
-      },
-      requiresFocus: false, // Can insert images even when not focused
-    },
+    { type: 'separator' },
     {
       type: 'dropdown',
-      label: 'Mermaid',
-      title: 'Insert Mermaid diagram',
-      icon: { name: 'pie-chart', fallback: 'Mer' },
-      requiresFocus: true,
-      isEnabled: () => !editor.isActive('table'),
-      items: MERMAID_TEMPLATES.map(template => ({
-        label: template.label,
-        action: () => {
-          editor
-            .chain()
-            .focus()
-            .insertContent(`\`\`\`mermaid\n${template.diagram}\n\`\`\``, {
-              contentType: 'markdown',
-            })
-            .run();
+      label: 'View',
+      title: 'Outline, source, and copy tools',
+      icon: { name: 'layout-sidebar-right', fallback: 'View' },
+      items: [
+        {
+          label: 'Toggle outline pane',
+          action: () => {
+            window.dispatchEvent(new CustomEvent('toggleTocPane'));
+          },
         },
-      })),
-    },
-    { type: 'separator' },
-    {
-      type: 'button',
-      label: 'Outline',
-      title: 'Toggle outline pane',
-      icon: { name: 'list-tree', fallback: 'TOC' },
-      action: () => {
-        window.dispatchEvent(new CustomEvent('toggleTocPane'));
-      },
-      isActive: () => false,
-      className: 'toc-button',
-    },
-    {
-      type: 'button',
-      label: 'Source',
-      title: 'Open source view (split)',
-      icon: { name: 'split-horizontal', fallback: '</>' },
-      action: () => {
-        window.dispatchEvent(new CustomEvent('openSourceView'));
-      },
-      isActive: () => false,
-      className: 'source-button',
-    },
-    { type: 'separator' },
-    {
-      type: 'button',
-      label: 'Copy MD',
-      title: 'Copy selection markdown',
-      icon: { name: 'copy', fallback: 'Copy' },
-      action: () => {
-        window.dispatchEvent(new CustomEvent('copyAsMarkdown'));
-      },
-      isActive: () => false,
-      className: 'copy-button',
+        {
+          label: 'Open source view',
+          action: () => {
+            window.dispatchEvent(new CustomEvent('openSourceView'));
+          },
+        },
+        {
+          label: 'Copy selection as Markdown',
+          action: () => {
+            window.dispatchEvent(new CustomEvent('copyAsMarkdown'));
+          },
+        },
+      ],
     },
     {
       type: 'dropdown',
       label: 'Export',
-      title: 'Export document',
+      title: 'Export and settings',
       icon: { name: 'export', fallback: 'Export' },
       items: [
         {
@@ -1207,19 +1173,13 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             window.dispatchEvent(new CustomEvent('exportDocument', { detail: { format: 'docx' } }));
           },
         },
+        {
+          label: 'Open export settings',
+          action: () => {
+            window.dispatchEvent(new CustomEvent('openExtensionSettings'));
+          },
+        },
       ],
-    },
-    { type: 'separator' },
-    {
-      type: 'button',
-      label: 'Export settings',
-      title: 'Open export settings',
-      icon: { name: 'gear', fallback: '⚙' },
-      action: () => {
-        window.dispatchEvent(new CustomEvent('openExtensionSettings'));
-      },
-      isActive: () => false,
-      className: 'settings-button',
     },
   ];
 
@@ -1234,6 +1194,10 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     underline: HTMLSpanElement;
     swatches: Array<{ value: string; element: HTMLButtonElement }>;
   }> = [];
+
+  let currentGroup = document.createElement('div');
+  currentGroup.className = 'toolbar-group';
+  toolbar.appendChild(currentGroup);
 
   const refreshActiveStates = () => {
     // Update action buttons active and enabled states
@@ -1321,9 +1285,13 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
   buttons.forEach(btn => {
     if (btn.type === 'separator') {
-      const separator = document.createElement('div');
-      separator.className = 'toolbar-separator';
-      toolbar.appendChild(separator);
+      if (currentGroup.childElementCount === 0) {
+        return;
+      }
+
+      currentGroup = document.createElement('div');
+      currentGroup.className = 'toolbar-group';
+      toolbar.appendChild(currentGroup);
       return;
     }
 
@@ -1333,7 +1301,8 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'toolbar-button' + (btn.className ? ` ${btn.className}` : '');
+      button.className =
+        'toolbar-button toolbar-dropdown-trigger' + (btn.className ? ` ${btn.className}` : '');
       button.title = btn.title || btn.label;
       button.setAttribute('aria-label', btn.title || btn.label);
       button.setAttribute('aria-haspopup', 'true');
@@ -1344,6 +1313,13 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       };
 
       const icon = createIconElement(btn.icon, 'toolbar-icon');
+      const label = document.createElement('span');
+      label.className = 'toolbar-button-label';
+      label.textContent = btn.label;
+      const caret = createIconElement(
+        { name: 'chevron-down', fallback: 'v' },
+        'toolbar-icon menu-caret'
+      );
 
       const menu = document.createElement('div');
       menu.className = 'toolbar-dropdown-menu';
@@ -1411,13 +1387,13 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         button.setAttribute('aria-expanded', isVisible ? 'false' : 'true');
       };
 
-      button.append(icon);
+      button.append(icon, label, caret);
       container.append(button, menu);
 
       // Store dropdown button for state updates
       dropdownButtons.push({ config: btn, element: button });
 
-      toolbar.appendChild(container);
+      currentGroup.appendChild(container);
       return;
     }
 
@@ -1514,7 +1490,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
       root.append(primary, toggle, menu);
       colorPickers.push({ config: btn, root, primary, toggle, underline, swatches });
-      toolbar.appendChild(root);
+      currentGroup.appendChild(root);
       return;
     }
 
@@ -1529,8 +1505,17 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     };
 
     const icon = createIconElement(btn.icon, 'toolbar-icon');
+    const shouldShowLabel = btn.className === 'save-button';
 
-    button.append(icon);
+    if (shouldShowLabel) {
+      const label = document.createElement('span');
+      label.className = 'toolbar-button-label';
+      label.textContent = btn.label;
+      button.classList.add('toolbar-button-with-label');
+      button.append(icon, label);
+    } else {
+      button.append(icon);
+    }
 
     button.onclick = e => {
       e.preventDefault();
@@ -1540,7 +1525,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     };
 
     actionButtons.push({ config: btn, element: button });
-    toolbar.appendChild(button);
+    currentGroup.appendChild(button);
   });
 
   toolbarRefreshFunction = refreshActiveStates;
@@ -1637,6 +1622,20 @@ export function createTableMenu(editor: Editor): HTMLElement {
       label: 'Delete Row',
       action: () => editor.chain().focus().deleteRow().run(),
     },
+    {
+      label: 'Move Row Up',
+      action: () => {
+        editor.chain().focus().run();
+        moveSelectedTableRow(editor, 'up');
+      },
+    },
+    {
+      label: 'Move Row Down',
+      action: () => {
+        editor.chain().focus().run();
+        moveSelectedTableRow(editor, 'down');
+      },
+    },
     { separator: true },
     {
       label: 'Add Column Before',
@@ -1649,6 +1648,25 @@ export function createTableMenu(editor: Editor): HTMLElement {
     {
       label: 'Delete Column',
       action: () => editor.chain().focus().deleteColumn().run(),
+    },
+    {
+      label: 'Move Column Left',
+      action: () => {
+        editor.chain().focus().run();
+        moveSelectedTableColumn(editor, 'left');
+      },
+    },
+    {
+      label: 'Move Column Right',
+      action: () => {
+        editor.chain().focus().run();
+        moveSelectedTableColumn(editor, 'right');
+      },
+    },
+    { separator: true },
+    {
+      label: 'Export Table as CSV',
+      action: () => window.dispatchEvent(new CustomEvent('exportTableCsv')),
     },
     { separator: true },
     {

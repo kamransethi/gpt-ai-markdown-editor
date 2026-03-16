@@ -611,6 +611,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'exportDocument':
         this.handleExportDocument(message, document);
         break;
+      case 'exportTableCsv':
+        void this.handleExportTableCsv(message, document);
+        break;
       case 'showError':
         vscode.window.showErrorMessage(message.message as string);
         break;
@@ -676,7 +679,28 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'browseLocalFile':
         void this.handleBrowseLocalFile(document, webview);
         break;
+      case 'handleFileLinkDrop':
+        void this.handleFileLinkDrop(message, document, webview);
+        break;
     }
+  }
+
+  private formatFileLinkLabel(fileName: string): string {
+    const trimmed = fileName.trim();
+    if (!trimmed) {
+      return 'Attachment';
+    }
+
+    const extensionMatch = trimmed.match(/\.([^.]+)$/);
+    const extension = extensionMatch ? extensionMatch[1].toUpperCase() : '';
+    const baseName = extensionMatch ? trimmed.slice(0, -(extensionMatch[0].length)) : trimmed;
+    const normalizedBase = baseName
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, character => character.toUpperCase());
+
+    return extension ? `${normalizedBase} (${extension})` : normalizedBase;
   }
 
   /**
@@ -787,8 +811,97 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         type: 'localFileSelected',
         filename: pathModule.basename(finalFsPath),
         path: relativePath,
+        suggestedText: this.formatFileLinkLabel(pathModule.basename(finalFsPath)),
       });
     }
+  }
+
+  private async handleFileLinkDrop(
+    message: { type: string; [key: string]: unknown },
+    document: vscode.TextDocument,
+    webview: vscode.Webview
+  ): Promise<void> {
+    const sourcePath = typeof message.sourcePath === 'string' ? message.sourcePath : '';
+    const fileName = typeof message.fileName === 'string' ? message.fileName : path.basename(sourcePath);
+    const insertPosition = typeof message.insertPosition === 'number' ? message.insertPosition : undefined;
+
+    if (!sourcePath) {
+      vscode.window.showErrorMessage('Could not determine the dropped file path.');
+      return;
+    }
+
+    const sourceUri = sourcePath.startsWith('file://')
+      ? vscode.Uri.file(decodeURIComponent(sourcePath.replace('file://', '')))
+      : vscode.Uri.file(sourcePath);
+
+    let finalUri = sourceUri;
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+    const workspacePath = workspaceFolder?.uri.fsPath;
+    const isWithinWorkspace = workspacePath
+      ? this.isWithinWorkspace(sourceUri.fsPath, workspacePath)
+      : false;
+
+    if (!isWithinWorkspace) {
+      const config = vscode.workspace.getConfiguration();
+      const mediaFolderName = config.get<string>('gptAiMarkdownEditor.mediaPath', 'media');
+      const targetDir = this.resolveMediaTargetFolder(document, mediaFolderName);
+
+      if (!targetDir) {
+        vscode.window.showErrorMessage('Cannot determine the attachments folder for dropped files.');
+        return;
+      }
+
+      try {
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(targetDir));
+        const targetUri = await this.createUniqueTargetFile(vscode.Uri.file(targetDir), fileName);
+        await vscode.workspace.fs.copy(sourceUri, targetUri, { overwrite: false });
+        finalUri = targetUri;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(`Failed to copy dropped file: ${errorMessage}`);
+        return;
+      }
+    }
+
+    const documentDir = path.dirname(document.uri.fsPath);
+    let relativePath = path.relative(documentDir, finalUri.fsPath).replace(/\\/g, '/');
+    if (!relativePath.startsWith('..') && !relativePath.startsWith('./')) {
+      relativePath = `./${relativePath}`;
+    }
+
+    webview.postMessage({
+      type: 'insertFileLink',
+      relativePath,
+      text: this.formatFileLinkLabel(path.basename(finalUri.fsPath)),
+      insertPosition,
+    });
+  }
+
+  private async createUniqueTargetFile(directoryUri: vscode.Uri, fileName: string): Promise<vscode.Uri> {
+    const parsed = path.parse(fileName);
+    let candidate = vscode.Uri.joinPath(directoryUri, `${parsed.name}${parsed.ext}`);
+
+    const exists = async (uri: vscode.Uri): Promise<boolean> => {
+      try {
+        await vscode.workspace.fs.stat(uri);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (!(await exists(candidate))) {
+      return candidate;
+    }
+
+    for (let suffix = 2; suffix < 1000; suffix += 1) {
+      candidate = vscode.Uri.joinPath(directoryUri, `${parsed.name}-${suffix}${parsed.ext}`);
+      if (!(await exists(candidate))) {
+        return candidate;
+      }
+    }
+
+    throw new Error(`Too many files named ${fileName} in attachments folder.`);
   }
 
   /**
@@ -807,6 +920,39 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const { exportDocument } = await import('../features/documentExport');
 
     await exportDocument(format, html, mermaidImages, title, document);
+  }
+
+  private async handleExportTableCsv(
+    message: { type: string; [key: string]: unknown },
+    document: vscode.TextDocument
+  ): Promise<void> {
+    const csv = typeof message.csv === 'string' ? message.csv : '';
+    if (!csv.trim()) {
+      vscode.window.showErrorMessage('No table data available to export as CSV.');
+      return;
+    }
+
+    const documentDir = vscode.Uri.joinPath(document.uri, '..');
+    const defaultName = `${path.parse(document.uri.fsPath).name}-table.csv`;
+    const targetUri = await vscode.window.showSaveDialog({
+      defaultUri: vscode.Uri.joinPath(documentDir, defaultName),
+      filters: {
+        CSV: ['csv'],
+      },
+      saveLabel: 'Export Table as CSV',
+    });
+
+    if (!targetUri) {
+      return;
+    }
+
+    try {
+      await vscode.workspace.fs.writeFile(targetUri, Buffer.from(csv, 'utf8'));
+      vscode.window.showInformationMessage(`Table exported to ${path.basename(targetUri.fsPath)}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Failed to export CSV: ${errorMessage}`);
+    }
   }
 
   /**

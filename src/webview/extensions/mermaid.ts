@@ -36,6 +36,7 @@ function isDarkMode(): boolean {
  * Initialize mermaid with theme based on VS Code theme
  */
 function initializeMermaid() {
+  const styles = getComputedStyle(document.documentElement);
   const theme = isDarkMode() ? 'dark' : 'default';
   mermaid.initialize({
     startOnLoad: false,
@@ -43,6 +44,43 @@ function initializeMermaid() {
     securityLevel: 'strict',
     fontFamily: 'inherit',
     suppressErrorRendering: true,
+    themeVariables: {
+      background: styles.getPropertyValue('--vscode-editor-background').trim() || '#1e1e1e',
+      primaryColor:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      primaryBorderColor: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
+      primaryTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      secondaryColor:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      secondaryBorderColor:
+        styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
+      tertiaryColor:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      tertiaryBorderColor:
+        styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
+      lineColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      textColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      edgeLabelBackground:
+        styles.getPropertyValue('--vscode-editor-background').trim() || '#1e1e1e',
+      clusterBkg:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      clusterBorder: styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
+      actorBorder: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
+      actorTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      actorBkg:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      labelBoxBkg:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      labelBoxBorderColor:
+        styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
+      labelTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      signalColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      signalTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      noteBorderColor: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
+      noteBkgColor:
+        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      noteTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+    },
   });
 }
 
@@ -163,6 +201,22 @@ export const Mermaid = Node.create({
       const codeBlock = document.createElement('div');
       codeBlock.classList.add('mermaid-code-block');
 
+      const codeHeader = document.createElement('div');
+      codeHeader.classList.add('mermaid-code-header');
+
+      const codeTitle = document.createElement('div');
+      codeTitle.classList.add('mermaid-code-title');
+      codeTitle.textContent = 'Mermaid';
+
+      const closeButton = document.createElement('button');
+      closeButton.type = 'button';
+      closeButton.classList.add('mermaid-close-button');
+      closeButton.textContent = 'Close';
+
+      codeHeader.appendChild(codeTitle);
+      codeHeader.appendChild(closeButton);
+      codeBlock.appendChild(codeHeader);
+
       const textarea = document.createElement('textarea');
       textarea.classList.add('mermaid-textarea');
       textarea.spellcheck = false;
@@ -178,6 +232,12 @@ export const Mermaid = Node.create({
       let currentContent = node.textContent;
       let renderVersion = 0;
       let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      let isEditing = false;
+
+      const setEditing = (nextEditing: boolean) => {
+        isEditing = nextEditing;
+        container.classList.toggle('is-editing', nextEditing);
+      };
 
       const renderDiagram = async (code: string) => {
         const content = code.trim();
@@ -243,6 +303,19 @@ export const Mermaid = Node.create({
         editor.view.dispatch(tr);
       };
 
+      const enterEditMode = () => {
+        tooltip.style.display = 'none';
+        container.classList.remove('highlighted');
+        setEditing(true);
+        textarea.value = currentContent;
+        setTimeout(() => textarea.focus(), 10);
+      };
+
+      const exitEditMode = () => {
+        commitContent();
+        setEditing(false);
+      };
+
       // Live preview while typing in textarea
       textarea.addEventListener('input', () => {
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -251,24 +324,29 @@ export const Mermaid = Node.create({
         }, 400);
       });
 
-      // Commit on blur
-      textarea.addEventListener('blur', () => {
-        commitContent();
-      });
-
       // Stop events from bubbling to the editor
       textarea.addEventListener('keydown', e => {
         e.stopPropagation();
-        // Escape exits editing mode
+        // Escape keeps the editor open and restores focus inside the embedded textarea.
         if (e.key === 'Escape') {
-          commitContent();
-          container.classList.remove('is-editing');
-          textarea.blur();
+          e.preventDefault();
+          textarea.focus();
         }
       });
+      textarea.addEventListener('click', e => e.stopPropagation());
+      textarea.addEventListener('mousedown', e => e.stopPropagation());
+      textarea.addEventListener('focus', e => e.stopPropagation());
       textarea.addEventListener('paste', e => e.stopPropagation());
       textarea.addEventListener('copy', e => e.stopPropagation());
       textarea.addEventListener('cut', e => e.stopPropagation());
+
+      codeHeader.addEventListener('click', e => e.stopPropagation());
+      codeHeader.addEventListener('mousedown', e => e.stopPropagation());
+      closeButton.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        exitEditMode();
+      });
 
       // Tooltip for "Double-click to edit" hint
       const tooltip = document.createElement('div');
@@ -279,7 +357,7 @@ export const Mermaid = Node.create({
 
       // Manual selection on click
       container.addEventListener('click', () => {
-        if (container.classList.contains('is-editing')) return;
+        if (isEditing) return;
         const pos = getPos();
         if (typeof pos === 'number') {
           editor.commands.setNodeSelection(pos);
@@ -288,15 +366,9 @@ export const Mermaid = Node.create({
 
       // Toggle split-view on double-click (but not on textarea)
       container.addEventListener('dblclick', e => {
-        if (e.target === textarea) return;
-        tooltip.style.display = 'none';
-        container.classList.remove('highlighted');
-        const isEditing = container.classList.toggle('is-editing');
-        if (isEditing) {
-          textarea.value = currentContent;
-          setTimeout(() => textarea.focus(), 10);
-        } else {
-          commitContent();
+        if ((e.target as HTMLElement | null)?.closest('.mermaid-code-block')) return;
+        if (!isEditing) {
+          enterEditMode();
         }
       });
 
@@ -314,7 +386,7 @@ export const Mermaid = Node.create({
           if (currentContent !== updatedNode.textContent) {
             currentContent = updatedNode.textContent;
             // Only update textarea if not actively editing
-            if (document.activeElement !== textarea) {
+            if (!isEditing && document.activeElement !== textarea) {
               textarea.value = currentContent;
             }
             renderDiagram(currentContent);
@@ -330,11 +402,10 @@ export const Mermaid = Node.create({
         deselectNode: () => {
           container.classList.remove('highlighted');
           tooltip.style.display = 'none';
-
-          if (container.classList.contains('is-editing')) {
-            commitContent();
-            container.classList.remove('is-editing');
-          }
+        },
+        stopEvent: event => {
+          const target = event.target as HTMLElement | null;
+          return Boolean(target?.closest('.mermaid-code-block'));
         },
         destroy: () => {
           renderVersion++;

@@ -16,13 +16,16 @@ import { TableOfContents, type TableOfContentData } from '@tiptap/extension-tabl
 import { ListKit } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import { BubbleMenu as BubbleMenuExtension } from '@tiptap/extension-bubble-menu';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import CharacterCount from '@tiptap/extension-character-count';
+import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
+import Typography from '@tiptap/extension-typography';
 import DragHandle from '@tiptap/extension-drag-handle';
 import { marked as markedInstance } from 'marked';
 import { CustomImage } from './extensions/customImage';
 import { lowlight } from 'lowlight';
 import { Mermaid } from './extensions/mermaid';
+import { CodeBlockWithUi } from './extensions/codeBlockWithUi';
 import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
 import { SpaceFriendlyImagePaths } from './extensions/spaceFriendlyImagePaths';
 import { TabIndentation } from './extensions/tabIndentation';
@@ -32,7 +35,6 @@ import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { TableCellEnterHandler } from './extensions/tableCellEnterHandler';
 import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservation';
-import { LivePreview } from './extensions/livePreview';
 import {
   createFloatingFormattingBar,
   createFormattingToolbar,
@@ -46,17 +48,29 @@ import {
   hasPendingImageSaves,
   getPendingImageCount,
 } from './features/imageDragDrop';
+import { setupFileLinkDrop } from './features/fileLinkDrop';
 import { renderTableToMarkdownWithBreaks } from './utils/tableMarkdownSerializer';
 import { toggleSearchOverlay } from './features/searchOverlay';
 import { createTocPane, type TocPaneAnchor } from './features/tocPane';
 import { showLinkDialog } from './features/linkDialog';
 import { processPasteContent, parseFencedCode } from './utils/pasteHandler';
 import { copySelectionAsMarkdown } from './utils/copyMarkdown';
+import {
+  getCurrentTableMatrix,
+  isTableSelection,
+  parseClipboardTable,
+  renderTableMatrixAsHtml,
+  serializeTableMatrix,
+  serializeTableMatrixAsMarkdown,
+} from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
 import { isSaveShortcut } from './utils/shortcutKeys';
 import { collectExportContent, getDocumentTitle } from './utils/exportContent';
+import { findTable } from '@tiptap/pm/tables';
+import { TableInteractiveView } from './extensions/tableInteractiveView';
+import Underline from '@tiptap/extension-underline';
 
 /**
  * Tags that TipTap handles natively — never strip these.
@@ -306,6 +320,7 @@ function showRuntimeErrorToUser(code: string, baseMessage: string, error?: unkno
 let editor: Editor | null = null;
 let isUpdating = false; // Prevent feedback loops
 let formattingToolbar: HTMLElement;
+let editorMetaBar: HTMLElement | null = null;
 let floatingFormattingBar: HTMLElement | null = null;
 let floatingBarController: ReturnType<typeof createFloatingFormattingBar> | null = null;
 let tableMenu: HTMLElement;
@@ -352,6 +367,16 @@ function refreshTocPaneSelection() {
       isActive: activeId !== null && anchor.id === activeId,
     }))
   );
+}
+
+function updateEditorMetaBar(currentEditor: Editor | null) {
+  if (!editorMetaBar || !currentEditor) {
+    return;
+  }
+
+  const words = currentEditor.storage.characterCount?.words?.() ?? 0;
+  const characters = currentEditor.storage.characterCount?.characters?.() ?? 0;
+  editorMetaBar.textContent = `${words} words  •  ${characters} characters`;
 }
 
 function scheduleTocPaneSelectionRefresh() {
@@ -537,6 +562,14 @@ function saveDocument() {
   }
 }
 
+function isEmbeddedEditorTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest('.mermaid-code-block, .mermaid-textarea'));
+}
+
 // Expose saveDocument globally for toolbar button
 (window as any).saveDocument = saveDocument;
 
@@ -653,6 +686,20 @@ function initializeEditor(initialContent: string) {
       layout.appendChild(tocMount);
       layout.appendChild(editorSurface);
       editorSurface.appendChild(editorElement);
+
+      editorMetaBar = document.createElement('div');
+      editorMetaBar.className = 'editor-meta-bar';
+      editorSurface.appendChild(editorMetaBar);
+    } else if (!editorMetaBar) {
+      editorMetaBar = layout.querySelector('.editor-meta-bar') as HTMLElement | null;
+      if (!editorMetaBar) {
+        const editorSurface = layout.querySelector('.editor-surface') as HTMLElement | null;
+        if (editorSurface) {
+          editorMetaBar = document.createElement('div');
+          editorMetaBar.className = 'editor-meta-bar';
+          editorSurface.appendChild(editorMetaBar);
+        }
+      }
     }
 
     const tocMount = layout.querySelector('.toc-pane-mount') as HTMLElement;
@@ -681,9 +728,17 @@ function initializeEditor(initialContent: string) {
             class: 'highlight',
           },
         }),
+        Typography,
+        Underline,
+        Placeholder.configure({
+          placeholder: 'Start writing markdown...',
+          emptyEditorClass: 'is-editor-empty',
+          emptyNodeClass: 'is-empty',
+          showOnlyCurrent: false,
+        }),
+        CharacterCount,
         GenericHTMLInline,
         GenericHTMLBlock,
-        LivePreview,
         DragHandle.configure({
           render() {
             const element = document.createElement('div');
@@ -715,7 +770,7 @@ function initializeEditor(initialContent: string) {
           },
         }),
         MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
-        CodeBlockLowlight.configure({
+        CodeBlockWithUi.configure({
           lowlight,
           HTMLAttributes: {
             class: 'code-block-highlighted',
@@ -737,6 +792,7 @@ function initializeEditor(initialContent: string) {
           },
         }).configure({
           resizable: true,
+          View: TableInteractiveView,
           HTMLAttributes: {
             class: 'markdown-table',
           },
@@ -775,12 +831,14 @@ function initializeEditor(initialContent: string) {
             const { from, to } = state.selection;
             return currentEditor.isEditable && from !== to;
           },
-          tippyOptions: {
+          options: {
             placement: 'top',
-            offset: [0, 10],
-            maxWidth: 'none',
-            duration: 120,
+              offset: {
+                crossAxis: 0,
+                mainAxis: 10,
+              },
           },
+          updateDelay: 120,
         }),
         TableOfContents.configure({
           anchorTypes: ['heading'],
@@ -809,47 +867,25 @@ function initializeEditor(initialContent: string) {
           spellcheck: 'true',
         },
         // Prevent default image drop handling - let our custom handler manage it
-        handleDrop: (_view, event, slice, moved) => {
+        handleDrop: (_view, event, _slice, _moved) => {
           const dt = event.dataTransfer;
-
-          // Disable dragging tables - it causes erroneous rows/cols or duplication in Tiptap
-          if (moved && slice.content.childCount > 0) {
-            let hasTable = false;
-            slice.content.forEach(node => {
-              if (
-                node.type.name === 'table' ||
-                node.type.name === 'tableRow' ||
-                node.type.name === 'tableCell' ||
-                node.type.name === 'tableHeader'
-              ) {
-                hasTable = true;
-              }
-            });
-
-            if (hasTable) {
-              console.log('[GPT-AI] Prevented table drag to avoid structure corruption');
-              return true; // Prevent default
-            }
-          }
 
           if (!dt) return false;
 
           // Case 1: Actual image files (from desktop/finder)
           if (dt.files && dt.files.length > 0) {
-            const hasImages = Array.from(dt.files).some(f => f.type.startsWith('image/'));
-            if (hasImages) {
-              return true; // Prevent default, our DOM handler will manage it
-            }
+            return true; // Prevent default, our DOM handlers will manage file drops
           }
 
           // Case 2: VS Code file explorer drops (passes URI as text)
           // Check for text/uri-list or text/plain containing image paths
           const uriList = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
           if (uriList) {
-            const isImagePath = /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(uriList);
-            if (isImagePath) {
+            const isFilePath =
+              uriList.startsWith('file://') || /^(\.?\.\/|[A-Za-z]:\\|\/)/.test(uriList);
+            if (isFilePath) {
               // This is a file path drop from VS Code - prevent TipTap's default
-              // Our DOM handler will process it
+              // Our DOM handlers will process it
               return true;
             }
           }
@@ -870,6 +906,7 @@ function initializeEditor(initialContent: string) {
           }
 
           scheduleOutlineUpdate();
+          updateEditorMetaBar(_editor);
 
           const markdown = getEditorMarkdownForSync(_editor);
           console.log(`[GPT-AI] onUpdate: markdown serialized (len=${markdown.length})`);
@@ -895,6 +932,7 @@ function initializeEditor(initialContent: string) {
       },
       onCreate: () => {
         console.log('[GPT-AI] Editor created successfully');
+        updateEditorMetaBar(editorInstance);
       },
       onDestroy: () => {
         console.log('[GPT-AI] Editor destroyed');
@@ -903,6 +941,7 @@ function initializeEditor(initialContent: string) {
 
     editor = editorInstance;
     floatingBarController?.refresh();
+    updateEditorMetaBar(editorInstance);
 
     tocPaneController = createTocPane({
       mount: tocMount,
@@ -969,6 +1008,7 @@ function initializeEditor(initialContent: string) {
 
     // Setup image drag & drop handling
     setupImageDragDrop(editorInstance, vscode);
+    setupFileLinkDrop(editorInstance, vscode);
 
     // Initial outline push
     pushOutlineUpdate();
@@ -1479,6 +1519,26 @@ window.addEventListener('copyAsMarkdown', () => {
   copySelectionAsMarkdown(editor);
 });
 
+window.addEventListener('exportTableCsv', () => {
+  if (!editor) {
+    return;
+  }
+
+  const matrix = getCurrentTableMatrix(editor.state);
+  if (!matrix) {
+    vscode.postMessage({
+      type: 'showError',
+      message: 'Place the cursor inside a table before exporting CSV.',
+    });
+    return;
+  }
+
+  vscode.postMessage({
+    type: 'exportTableCsv',
+    csv: serializeTableMatrix(matrix, ','),
+  });
+});
+
 // Handle open source view from toolbar button
 window.addEventListener('openSourceView', () => {
   console.log('[GPT-AI] Opening source view...');
@@ -1529,9 +1589,34 @@ window.addEventListener('exportDocument', async (event: Event) => {
 // Handle paste - convert markdown to HTML for proper TipTap rendering
 // Must use capture phase to intercept BEFORE TipTap's default handling
 document.addEventListener(
+  'copy',
+  (event: ClipboardEvent) => {
+    if (!editor || !event.clipboardData || isEmbeddedEditorTarget(event.target)) {
+      return;
+    }
+
+    if (!isTableSelection(editor.state.selection)) {
+      return;
+    }
+
+    const matrix = getCurrentTableMatrix(editor.state);
+    if (!matrix) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.clipboardData.setData('text/plain', serializeTableMatrix(matrix, '\t'));
+    event.clipboardData.setData('text/csv', serializeTableMatrix(matrix, ','));
+    event.clipboardData.setData('text/markdown', serializeTableMatrixAsMarkdown(matrix));
+  },
+  true
+);
+
+document.addEventListener(
   'paste',
   (event: ClipboardEvent) => {
-    if (!editor) return;
+    if (!editor || isEmbeddedEditorTarget(event.target)) return;
 
     const clipboardData = event.clipboardData;
     if (!clipboardData) return;
@@ -1549,6 +1634,23 @@ document.addEventListener(
 
       // Insert as plain text (TipTap will handle it correctly in code block)
       editor.commands.insertContent(codeToInsert);
+      return;
+    }
+
+    const tableText = clipboardData.getData('text/tab-separated-values') || clipboardData.getData('text/csv') || clipboardData.getData('text/plain') || '';
+    const parsedTable = parseClipboardTable(tableText);
+    if (parsedTable) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const html = renderTableMatrixAsHtml(parsedTable);
+      const activeTable = findTable(editor.state.selection.$from);
+      if (activeTable) {
+        const insertPos = activeTable.pos + activeTable.node.nodeSize;
+        editor.chain().focus().insertContentAt(insertPos, html).run();
+      } else {
+        editor.commands.insertContent(html);
+      }
       return;
     }
 

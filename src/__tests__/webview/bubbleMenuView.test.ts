@@ -32,6 +32,14 @@ jest.mock('../../webview/features/imageInsertDialog', () => ({
   showImageInsertDialog: jest.fn().mockResolvedValue(undefined),
 }));
 
+const moveSelectedTableRowMock = jest.fn();
+const moveSelectedTableColumnMock = jest.fn();
+
+jest.mock('../../webview/utils/tableOperationActions', () => ({
+  moveSelectedTableRow: (...args: unknown[]) => moveSelectedTableRowMock(...args),
+  moveSelectedTableColumn: (...args: unknown[]) => moveSelectedTableColumnMock(...args),
+}));
+
 describe('BubbleMenuView', () => {
   let createFormattingToolbar: (editor: Editor) => HTMLElement;
   let createTableMenu: (editor: Editor) => HTMLElement;
@@ -50,6 +58,8 @@ describe('BubbleMenuView', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
+    moveSelectedTableRowMock.mockReset();
+    moveSelectedTableColumnMock.mockReset();
   });
 
   const createMockEditor = () => {
@@ -58,6 +68,7 @@ describe('BubbleMenuView', () => {
       toggleBold: jest.fn().mockReturnThis(),
       toggleItalic: jest.fn().mockReturnThis(),
       toggleStrike: jest.fn().mockReturnThis(),
+      toggleUnderline: jest.fn().mockReturnThis(),
       toggleCode: jest.fn().mockReturnThis(),
       toggleHeading: jest.fn().mockReturnThis(),
       toggleBulletList: jest.fn().mockReturnThis(),
@@ -109,6 +120,12 @@ describe('BubbleMenuView', () => {
       // Check for essential buttons
       const buttons = toolbar.querySelectorAll('button');
       expect(buttons.length).toBeGreaterThan(0);
+      expect(
+        Array.from(buttons).some(button => {
+          const ariaLabel = button.getAttribute('aria-label')?.toLowerCase();
+          return ariaLabel?.includes('underline');
+        })
+      ).toBe(true);
     });
 
     it('registers selection update listener', () => {
@@ -124,9 +141,17 @@ describe('BubbleMenuView', () => {
       const toolbar = createFormattingToolbar(editor);
       const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
 
-      const outlineButton = toolbar.querySelector(
-        'button.toolbar-button.toc-button'
-      ) as HTMLButtonElement | null;
+      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(
+        button => button.textContent?.includes('View')
+      ) as HTMLButtonElement | undefined;
+
+      expect(viewButton).toBeTruthy();
+
+      viewButton!.click();
+
+      const outlineButton = Array.from(toolbar.querySelectorAll('.toolbar-dropdown-item')).find(
+        item => item.textContent?.includes('Toggle outline pane')
+      ) as HTMLButtonElement | undefined;
 
       expect(outlineButton).toBeTruthy();
 
@@ -135,6 +160,14 @@ describe('BubbleMenuView', () => {
       expect(dispatchSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
       const dispatchedEvent = dispatchSpy.mock.calls[0][0] as CustomEvent;
       expect(dispatchedEvent.type).toBe('toggleTocPane');
+    });
+
+    it('renders grouped dropdown controls', () => {
+      const editor = createMockEditor();
+      const toolbar = createFormattingToolbar(editor);
+
+      expect(toolbar.querySelectorAll('.toolbar-group').length).toBeGreaterThan(1);
+      expect(toolbar.querySelectorAll('.toolbar-dropdown-trigger').length).toBeGreaterThan(4);
     });
   });
 
@@ -171,6 +204,32 @@ describe('BubbleMenuView', () => {
         firstItem.click();
         expect(editor.chain).toHaveBeenCalled();
       }
+    });
+
+    it('includes move row and move column actions', () => {
+      const editor = createMockEditor();
+      const menu = createTableMenu(editor);
+      const labels = Array.from(menu.querySelectorAll('.table-menu-item')).map(item => item.textContent);
+
+      expect(labels).toContain('Move Row Up');
+      expect(labels).toContain('Move Row Down');
+      expect(labels).toContain('Move Column Left');
+      expect(labels).toContain('Move Column Right');
+    });
+
+    it('calls move helpers from move menu items', () => {
+      const editor = createMockEditor();
+      const menu = createTableMenu(editor);
+      const items = Array.from(menu.querySelectorAll('.table-menu-item')) as HTMLElement[];
+
+      const moveRowUp = items.find(item => item.textContent === 'Move Row Up');
+      const moveColumnRight = items.find(item => item.textContent === 'Move Column Right');
+
+      moveRowUp?.click();
+      moveColumnRight?.click();
+
+      expect(moveSelectedTableRowMock).toHaveBeenCalledWith(editor, 'up');
+      expect(moveSelectedTableColumnMock).toHaveBeenCalledWith(editor, 'right');
     });
 
     it('hides menu after item click', () => {

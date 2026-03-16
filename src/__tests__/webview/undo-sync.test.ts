@@ -20,6 +20,8 @@ jest.mock('lowlight', () => ({ __esModule: true, lowlight: { registerLanguage: j
 jest.mock('@tiptap/extension-table', () => ({
   __esModule: true,
   TableKit: { configure: () => ({}) },
+  Table: { extend: () => ({ configure: () => ({}) }) },
+  TableView: class {},
 }));
 jest.mock('@tiptap/extension-list', () => ({
   __esModule: true,
@@ -32,12 +34,25 @@ jest.mock('@tiptap/extension-link', () => ({
 }));
 jest.mock('@tiptap/extension-code-block-lowlight', () => ({
   __esModule: true,
+  CodeBlockLowlight: { extend: () => ({}) },
   default: { configure: () => ({}) },
 }));
 jest.mock('@tiptap/extension-highlight', () => ({
   __esModule: true,
   default: { configure: () => ({}) },
   Highlight: { configure: () => ({}) },
+}));
+jest.mock('@tiptap/extension-character-count', () => ({
+  __esModule: true,
+  default: { configure: () => ({}) },
+}));
+jest.mock('@tiptap/extension-placeholder', () => ({
+  __esModule: true,
+  default: { configure: () => ({}) },
+}));
+jest.mock('@tiptap/extension-typography', () => ({
+  __esModule: true,
+  default: {},
 }));
 jest.mock('@tiptap/extension-underline', () => ({
   __esModule: true,
@@ -61,11 +76,13 @@ jest.mock('./../../webview/extensions/htmlPreservation', () => ({
   GenericHTMLInline: {},
   GenericHTMLBlock: {},
 }));
-jest.mock('./../../webview/extensions/livePreview', () => ({ LivePreview: {} }));
 jest.mock('./../../webview/BubbleMenuView', () => ({
   createFormattingToolbar: () => ({}),
   createTableMenu: () => ({}),
   updateToolbarStates: jest.fn(),
+}));
+jest.mock('./../../webview/extensions/tableInteractiveView', () => ({
+  TableInteractiveView: class {},
 }));
 jest.mock('./../../webview/features/imageDragDrop', () => ({
   setupImageDragDrop: jest.fn(),

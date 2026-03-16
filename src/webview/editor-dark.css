@@ -1,70 +1,10 @@
-:root,
-body {
-    /* VS Code variables mapping */
-    --vscode-editor-foreground: #cccccc;
-    --vscode-editor-background: #1e1e1e;
-    --vscode-editorWidget-border: #444444;
-    --vscode-descriptionForeground: #999999;
-    --vscode-editorWidget-background: #252526;
-    --vscode-list-hoverBackground: #37373d;
-    --vscode-textCodeBlock-background: #2a2d2e;
-    --vscode-textPreformat-foreground: #cccccc;
-    --vscode-textBlockQuote-border: #007acc;
-    --vscode-textBlockQuote-background: #252526;
-    --vscode-textLink-foreground: #3794ff;
-    --vscode-textLink-activeForeground: #1177aa;
-    --vscode-focusBorder: #007acc;
-    --vscode-editor-selectionBackground: #264f78;
-    --vscode-dropdown-background: #333333;
-    --vscode-dropdown-foreground: #cccccc;
-    --vscode-dropdown-border: #444444;
-    --vscode-button-background: #007acc;
-    --vscode-button-foreground: #ffffff;
-    --vscode-button-hoverBackground: #0062a3;
-    --vscode-errorForeground: #f48771;
-    --vscode-editorHoverWidget-background: #2a2d2e;
-    --vscode-editorHoverWidget-foreground: #cccccc;
-    --vscode-editorHoverWidget-border: #444444;
-
-    /* Markdown Editor variable mapping */
-    --md-foreground: var(--vscode-editor-foreground);
-    --md-background: var(--vscode-editor-background);
-    --md-border: var(--vscode-editorWidget-border);
-    --md-muted: var(--vscode-descriptionForeground);
-    --md-hover-bg: var(--vscode-list-hoverBackground);
-
-    /* Inline code in dark mode */
-    --md-code-inline-bg: #2a2d2e;
-    --md-code-inline-fg: #cccccc;
-
-    /* Mermaid editor in dark mode */
-    --md-mermaid-edit-bg: #2a2d2e;
-
-    --md-code-bg: var(--vscode-textCodeBlock-background);
-    --md-quote-bg: var(--vscode-textBlockQuote-background);
-    --md-dropdown-bg: var(--vscode-dropdown-background);
-    --md-dropdown-fg: var(--vscode-dropdown-foreground);
-    --md-dropdown-border: var(--vscode-dropdown-border);
-    --md-button-bg: var(--vscode-button-background);
-    --md-button-fg: var(--vscode-button-foreground);
-    --md-button-hover-bg: var(--vscode-button-hoverBackground);
-    --md-subtle-bg: var(--vscode-editorWidget-background);
-    --md-focus: var(--vscode-focusBorder);
-    --md-heading-primary-color: var(--vscode-textLink-foreground);
-
-    /* Highlight.js syntax highlighting colors */
-    --hljs-color-default: var(--vscode-editor-foreground);
-    --hljs-color-keyword: var(--vscode-terminal-ansiMagenta, var(--vscode-textLink-foreground));
-    --hljs-color-title: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
-    --hljs-color-literal: var(--vscode-terminal-ansiCyan, var(--vscode-textLink-foreground));
-    --hljs-color-string: var(--vscode-terminal-ansiGreen, var(--vscode-textLink-foreground));
-    --hljs-color-symbol: var(--vscode-terminal-ansiYellow, var(--vscode-textLink-foreground));
-    --hljs-color-comment: var(--vscode-descriptionForeground);
-    --hljs-color-tag: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
-    --hljs-color-subst: var(--vscode-editor-foreground);
-    --hljs-color-bullet: var(--vscode-terminal-ansiYellow, var(--vscode-textLink-foreground));
-    --hljs-color-addition-fg: var(--vscode-terminal-ansiGreen, var(--vscode-editor-foreground));
-    --hljs-color-addition-bg: color-mix(in srgb, var(--vscode-terminal-ansiGreen, #2ea043) 18%, transparent);
-    --hljs-color-deletion-fg: var(--vscode-terminal-ansiRed, var(--vscode-editor-foreground));
-    --hljs-color-deletion-bg: color-mix(in srgb, var(--vscode-terminal-ansiRed, #f85149) 18%, transparent);
+body.vscode-dark,
+body.vscode-high-contrast {
+    --md-code-inline-bg: color-mix(
+        in srgb,
+        var(--vscode-editorWidget-background, var(--vscode-editor-background)) 96%,
+        transparent
+    );
+    --md-code-inline-fg: var(--vscode-editor-foreground);
+    --md-mermaid-edit-bg: var(--vscode-editorWidget-background, var(--vscode-editor-background));
 }
