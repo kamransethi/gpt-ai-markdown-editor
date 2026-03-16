@@ -167,8 +167,12 @@ describe('TableInteractiveView', () => {
       value: jest.fn(() => targetHandle),
     });
 
-    grips[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 10, clientY: 10 }));
-    document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 30, clientY: 10 }));
+    grips[0].dispatchEvent(
+      new MouseEvent('mousedown', { bubbles: true, clientX: 10, clientY: 10 })
+    );
+    document.dispatchEvent(
+      new MouseEvent('mousemove', { bubbles: true, clientX: 30, clientY: 10 })
+    );
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 30, clientY: 10 }));
 
     expect(moveTableColumnMock).toHaveBeenCalledWith({ from: 0, to: 1, pos: 12 });
@@ -185,8 +189,12 @@ describe('TableInteractiveView', () => {
       value: jest.fn(() => targetHandle),
     });
 
-    grips[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 10, clientY: 10 }));
-    document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 10, clientY: 30 }));
+    grips[0].dispatchEvent(
+      new MouseEvent('mousedown', { bubbles: true, clientX: 10, clientY: 10 })
+    );
+    document.dispatchEvent(
+      new MouseEvent('mousemove', { bubbles: true, clientX: 10, clientY: 30 })
+    );
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 10, clientY: 30 }));
 
     expect(moveTableRowMock).toHaveBeenCalledWith({ from: 0, to: 1, pos: 12 });

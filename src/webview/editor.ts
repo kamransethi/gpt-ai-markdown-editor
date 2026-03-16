@@ -833,10 +833,10 @@ function initializeEditor(initialContent: string) {
           },
           options: {
             placement: 'top',
-              offset: {
-                crossAxis: 0,
-                mainAxis: 10,
-              },
+            offset: {
+              crossAxis: 0,
+              mainAxis: 10,
+            },
           },
           updateDelay: 120,
         }),
@@ -1637,7 +1637,11 @@ document.addEventListener(
       return;
     }
 
-    const tableText = clipboardData.getData('text/tab-separated-values') || clipboardData.getData('text/csv') || clipboardData.getData('text/plain') || '';
+    const tableText =
+      clipboardData.getData('text/tab-separated-values') ||
+      clipboardData.getData('text/csv') ||
+      clipboardData.getData('text/plain') ||
+      '';
     const parsedTable = parseClipboardTable(tableText);
     if (parsedTable) {
       event.preventDefault();

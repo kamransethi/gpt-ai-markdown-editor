@@ -24,16 +24,14 @@ export class TableInteractiveView extends TableView implements NodeView {
   private rowHandles: HTMLDivElement;
   private columnExtendHandle: HTMLDivElement;
   private rowExtendHandle: HTMLDivElement;
-  private dragState:
-    | {
-        axis: Axis;
-        index: number;
-        startX: number;
-        startY: number;
-        active: boolean;
-        targetIndex: number | null;
-      }
-    | null = null;
+  private dragState: {
+    axis: Axis;
+    index: number;
+    startX: number;
+    startY: number;
+    active: boolean;
+    targetIndex: number | null;
+  } | null = null;
   private selectionAnchor: { axis: Axis; index: number } | null = null;
   private pointerSelecting: { axis: Axis; active: boolean } | null = null;
 
@@ -96,7 +94,11 @@ export class TableInteractiveView extends TableView implements NodeView {
     this.dragState.active = true;
     this.dom.classList.add('is-reordering');
 
-    const hoveredIndex = this.getHoveredHandleIndex(this.dragState.axis, event.clientX, event.clientY);
+    const hoveredIndex = this.getHoveredHandleIndex(
+      this.dragState.axis,
+      event.clientX,
+      event.clientY
+    );
     this.updateDragTarget(hoveredIndex);
   };
 
@@ -137,7 +139,11 @@ export class TableInteractiveView extends TableView implements NodeView {
   }
 
   private onSelectorPointerEnter(axis: Axis, index: number) {
-    if (!this.pointerSelecting?.active || this.pointerSelecting.axis !== axis || !this.selectionAnchor) {
+    if (
+      !this.pointerSelecting?.active ||
+      this.pointerSelecting.axis !== axis ||
+      !this.selectionAnchor
+    ) {
       return;
     }
 
@@ -188,7 +194,10 @@ export class TableInteractiveView extends TableView implements NodeView {
   }
 
   private getHoveredHandleIndex(axis: Axis, clientX: number, clientY: number): number | null {
-    const hoveredElement = this.view.dom.ownerDocument.elementFromPoint(clientX, clientY) as HTMLElement | null;
+    const hoveredElement = this.view.dom.ownerDocument.elementFromPoint(
+      clientX,
+      clientY
+    ) as HTMLElement | null;
     const handleClass = axis === 'column' ? '.table-column-handle' : '.table-row-handle';
     const handle = hoveredElement?.closest(handleClass) as HTMLElement | null;
     if (!handle) {
@@ -218,7 +227,10 @@ export class TableInteractiveView extends TableView implements NodeView {
       return;
     }
 
-    const selector = axis === 'column' ? `.table-column-handle[data-index="${targetIndex}"]` : `.table-row-handle[data-index="${targetIndex}"]`;
+    const selector =
+      axis === 'column'
+        ? `.table-column-handle[data-index="${targetIndex}"]`
+        : `.table-row-handle[data-index="${targetIndex}"]`;
     const handle = this.dom.querySelector(selector);
     handle?.classList.add('is-drop-target');
   }
@@ -238,7 +250,9 @@ export class TableInteractiveView extends TableView implements NodeView {
       return;
     }
 
-    const dropIndex = currentDrag.targetIndex ?? (event ? this.getHoveredHandleIndex(currentDrag.axis, event.clientX, event.clientY) : null);
+    const dropIndex =
+      currentDrag.targetIndex ??
+      (event ? this.getHoveredHandleIndex(currentDrag.axis, event.clientX, event.clientY) : null);
     if (dropIndex === null || dropIndex === currentDrag.index) {
       return;
     }
@@ -314,10 +328,18 @@ export class TableInteractiveView extends TableView implements NodeView {
       grip.setAttribute('aria-label', `Move column ${columnIndex + 1}`);
       grip.textContent = '⋯';
 
-      selector.addEventListener('mousedown', event => this.onSelectorPointerDown('column', columnIndex, event));
-      selector.addEventListener('mouseenter', () => this.onSelectorPointerEnter('column', columnIndex));
-      selector.addEventListener('click', event => this.onSelectorClick('column', columnIndex, event));
-      grip.addEventListener('mousedown', event => this.startGripPointerDrag('column', columnIndex, event));
+      selector.addEventListener('mousedown', event =>
+        this.onSelectorPointerDown('column', columnIndex, event)
+      );
+      selector.addEventListener('mouseenter', () =>
+        this.onSelectorPointerEnter('column', columnIndex)
+      );
+      selector.addEventListener('click', event =>
+        this.onSelectorClick('column', columnIndex, event)
+      );
+      grip.addEventListener('mousedown', event =>
+        this.startGripPointerDrag('column', columnIndex, event)
+      );
 
       item.appendChild(selector);
       item.appendChild(grip);
@@ -353,10 +375,14 @@ export class TableInteractiveView extends TableView implements NodeView {
       grip.setAttribute('aria-label', `Move row ${rowIndex + 1}`);
       grip.textContent = '⋮';
 
-      selector.addEventListener('mousedown', event => this.onSelectorPointerDown('row', rowIndex, event));
+      selector.addEventListener('mousedown', event =>
+        this.onSelectorPointerDown('row', rowIndex, event)
+      );
       selector.addEventListener('mouseenter', () => this.onSelectorPointerEnter('row', rowIndex));
       selector.addEventListener('click', event => this.onSelectorClick('row', rowIndex, event));
-      grip.addEventListener('mousedown', event => this.startGripPointerDrag('row', rowIndex, event));
+      grip.addEventListener('mousedown', event =>
+        this.startGripPointerDrag('row', rowIndex, event)
+      );
 
       item.appendChild(selector);
       item.appendChild(grip);

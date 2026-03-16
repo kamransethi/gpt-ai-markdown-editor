@@ -11,7 +11,9 @@ function isImageFileName(fileName: string): boolean {
   return /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?)$/i.test(fileName);
 }
 
-function extractPathFromDataTransfer(dt: DataTransfer): { sourcePath: string; fileName: string } | null {
+function extractPathFromDataTransfer(
+  dt: DataTransfer
+): { sourcePath: string; fileName: string } | null {
   const uriList = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
   const firstLine = uriList
     .split(/\r?\n/)
@@ -30,7 +32,9 @@ function extractPathFromDataTransfer(dt: DataTransfer): { sourcePath: string; fi
   }
 
   const files = Array.from(dt.files || []) as FileLike[];
-  const file = files.find(candidate => !candidate.type.startsWith('image/') && !isImageFileName(candidate.name));
+  const file = files.find(
+    candidate => !candidate.type.startsWith('image/') && !isImageFileName(candidate.name)
+  );
   if (!file) {
     return null;
   }
@@ -41,7 +45,12 @@ function extractPathFromDataTransfer(dt: DataTransfer): { sourcePath: string; fi
   };
 }
 
-function insertFileLink(editor: Editor, relativePath: string, text: string, insertPosition?: number) {
+function insertFileLink(
+  editor: Editor,
+  relativePath: string,
+  text: string,
+  insertPosition?: number
+) {
   const linkHtml = `<a href="${escapeHtml(relativePath)}">${escapeHtml(text)}</a>`;
   if (typeof insertPosition === 'number') {
     editor.chain().focus().insertContentAt(insertPosition, linkHtml).run();

@@ -12,7 +12,10 @@ function normalizeCellText(cell: ProseMirrorNode | null): string {
   return cell.textBetween(0, cell.content.size, '\n', '\n').trim();
 }
 
-function getMatrixFromTable(table: ProseMirrorNode, rect?: { left: number; right: number; top: number; bottom: number }): TableMatrix {
+function getMatrixFromTable(
+  table: ProseMirrorNode,
+  rect?: { left: number; right: number; top: number; bottom: number }
+): TableMatrix {
   const map = TableMap.get(table);
   const bounds = rect ?? { left: 0, right: map.width, top: 0, bottom: map.height };
   const rows: TableMatrix = [];
@@ -79,11 +82,15 @@ export function serializeTableMatrixAsMarkdown(matrix: TableMatrix): string {
   }
 
   const columnCount = Math.max(...matrix.map(row => row.length));
-  const normalized = matrix.map(row => Array.from({ length: columnCount }, (_, index) => row[index] ?? ''));
+  const normalized = matrix.map(row =>
+    Array.from({ length: columnCount }, (_, index) => row[index] ?? '')
+  );
   const header = normalized[0];
   const divider = Array.from({ length: columnCount }, () => '---');
   const bodyRows = normalized.slice(1);
-  const lines = [header, divider, ...bodyRows].map(row => `| ${row.map(cell => cell.replace(/\n/g, '<br />')).join(' | ')} |`);
+  const lines = [header, divider, ...bodyRows].map(
+    row => `| ${row.map(cell => cell.replace(/\n/g, '<br />')).join(' | ')} |`
+  );
   return `${lines.join('\n')}\n`;
 }
 
@@ -102,7 +109,9 @@ export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
   }
 
   const columnCount = Math.max(...matrix.map(row => row.length));
-  const normalized = matrix.map(row => Array.from({ length: columnCount }, (_, index) => row[index] ?? ''));
+  const normalized = matrix.map(row =>
+    Array.from({ length: columnCount }, (_, index) => row[index] ?? '')
+  );
   const [headerRow, ...bodyRows] = normalized;
   const renderRow = (row: string[], cellTag: 'th' | 'td') =>
     `<tr>${row

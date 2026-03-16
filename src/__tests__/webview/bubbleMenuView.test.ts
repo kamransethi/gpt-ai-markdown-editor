@@ -141,8 +141,8 @@ describe('BubbleMenuView', () => {
       const toolbar = createFormattingToolbar(editor);
       const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
 
-      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(
-        button => button.textContent?.includes('View')
+      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(button =>
+        button.textContent?.includes('View')
       ) as HTMLButtonElement | undefined;
 
       expect(viewButton).toBeTruthy();
@@ -209,7 +209,9 @@ describe('BubbleMenuView', () => {
     it('includes move row and move column actions', () => {
       const editor = createMockEditor();
       const menu = createTableMenu(editor);
-      const labels = Array.from(menu.querySelectorAll('.table-menu-item')).map(item => item.textContent);
+      const labels = Array.from(menu.querySelectorAll('.table-menu-item')).map(
+        item => item.textContent
+      );
 
       expect(labels).toContain('Move Row Up');
       expect(labels).toContain('Move Row Down');

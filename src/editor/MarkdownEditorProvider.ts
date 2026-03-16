@@ -693,7 +693,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
     const extensionMatch = trimmed.match(/\.([^.]+)$/);
     const extension = extensionMatch ? extensionMatch[1].toUpperCase() : '';
-    const baseName = extensionMatch ? trimmed.slice(0, -(extensionMatch[0].length)) : trimmed;
+    const baseName = extensionMatch ? trimmed.slice(0, -extensionMatch[0].length) : trimmed;
     const normalizedBase = baseName
       .replace(/[_-]+/g, ' ')
       .replace(/\s+/g, ' ')
@@ -822,8 +822,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webview: vscode.Webview
   ): Promise<void> {
     const sourcePath = typeof message.sourcePath === 'string' ? message.sourcePath : '';
-    const fileName = typeof message.fileName === 'string' ? message.fileName : path.basename(sourcePath);
-    const insertPosition = typeof message.insertPosition === 'number' ? message.insertPosition : undefined;
+    const fileName =
+      typeof message.fileName === 'string' ? message.fileName : path.basename(sourcePath);
+    const insertPosition =
+      typeof message.insertPosition === 'number' ? message.insertPosition : undefined;
 
     if (!sourcePath) {
       vscode.window.showErrorMessage('Could not determine the dropped file path.');
@@ -847,7 +849,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const targetDir = this.resolveMediaTargetFolder(document, mediaFolderName);
 
       if (!targetDir) {
-        vscode.window.showErrorMessage('Cannot determine the attachments folder for dropped files.');
+        vscode.window.showErrorMessage(
+          'Cannot determine the attachments folder for dropped files.'
+        );
         return;
       }
 
@@ -877,7 +881,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     });
   }
 
-  private async createUniqueTargetFile(directoryUri: vscode.Uri, fileName: string): Promise<vscode.Uri> {
+  private async createUniqueTargetFile(
+    directoryUri: vscode.Uri,
+    fileName: string
+  ): Promise<vscode.Uri> {
     const parsed = path.parse(fileName);
     let candidate = vscode.Uri.joinPath(directoryUri, `${parsed.name}${parsed.ext}`);
 

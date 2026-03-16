@@ -6,7 +6,7 @@ export function formatFileLinkLabel(fileName: string): string {
 
   const extensionMatch = trimmed.match(/\.([^.]+)$/);
   const extension = extensionMatch ? extensionMatch[1].toUpperCase() : '';
-  const baseName = extensionMatch ? trimmed.slice(0, -(extensionMatch[0].length)) : trimmed;
+  const baseName = extensionMatch ? trimmed.slice(0, -extensionMatch[0].length) : trimmed;
 
   const normalizedBase = baseName
     .replace(/[_-]+/g, ' ')

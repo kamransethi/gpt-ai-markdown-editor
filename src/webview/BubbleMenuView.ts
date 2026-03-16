@@ -1031,9 +1031,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             editor
               .chain()
               .focus()
-              .insertContent(`\`\`\`mermaid\n${MERMAID_TEMPLATES[0]?.diagram ?? 'graph TD\nA-->B'}\n\`\`\``, {
-                contentType: 'markdown',
-              })
+              .insertContent(
+                `\`\`\`mermaid\n${MERMAID_TEMPLATES[0]?.diagram ?? 'graph TD\nA-->B'}\n\`\`\``,
+                {
+                  contentType: 'markdown',
+                }
+              )
               .run();
           },
           isEnabled: () => !editor.isActive('table'),

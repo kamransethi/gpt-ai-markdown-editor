@@ -46,8 +46,7 @@ function initializeMermaid() {
     suppressErrorRendering: true,
     themeVariables: {
       background: styles.getPropertyValue('--vscode-editor-background').trim() || '#1e1e1e',
-      primaryColor:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      primaryColor: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
       primaryBorderColor: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
       primaryTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
       secondaryColor:
@@ -62,23 +61,19 @@ function initializeMermaid() {
       textColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
       edgeLabelBackground:
         styles.getPropertyValue('--vscode-editor-background').trim() || '#1e1e1e',
-      clusterBkg:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      clusterBkg: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
       clusterBorder: styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
       actorBorder: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
       actorTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      actorBkg:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      labelBoxBkg:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      actorBkg: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      labelBoxBkg: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
       labelBoxBorderColor:
         styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
       labelTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
       signalColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
       signalTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
       noteBorderColor: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
-      noteBkgColor:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
+      noteBkgColor: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
       noteTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
     },
   });

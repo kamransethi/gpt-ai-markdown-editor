@@ -25,7 +25,9 @@ describe('CodeBlockWithUi node view', () => {
     const nodeViewFactory = (
       extension as unknown as {
         config?: {
-          addNodeView?: () => (args: { node: any; getPos: () => number; editor: any }) => { dom: HTMLElement };
+          addNodeView?: () => (args: { node: any; getPos: () => number; editor: any }) => {
+            dom: HTMLElement;
+          };
         };
       }
     ).config?.addNodeView?.();
@@ -57,7 +59,9 @@ describe('CodeBlockWithUi node view', () => {
     const nodeViewFactory = (
       extension as unknown as {
         config?: {
-          addNodeView?: () => (args: { node: any; getPos: () => number; editor: any }) => { dom: HTMLElement };
+          addNodeView?: () => (args: { node: any; getPos: () => number; editor: any }) => {
+            dom: HTMLElement;
+          };
         };
       }
     ).config?.addNodeView?.();
@@ -94,7 +98,9 @@ describe('CodeBlockWithUi node view', () => {
     const nodeViewFactory = (
       extension as unknown as {
         config?: {
-          addNodeView?: () => (args: { node: any; getPos: () => number; editor: any }) => { dom: HTMLElement };
+          addNodeView?: () => (args: { node: any; getPos: () => number; editor: any }) => {
+            dom: HTMLElement;
+          };
         };
       }
     ).config?.addNodeView?.();

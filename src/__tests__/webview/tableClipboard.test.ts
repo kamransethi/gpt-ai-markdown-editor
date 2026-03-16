@@ -48,7 +48,10 @@ describe('tableClipboard utilities', () => {
   it('extracts a rectangular cell selection as a matrix', () => {
     const instance = createTableEditor();
     const cellPositions = getTableCellPositions(instance);
-    instance.commands.setCellSelection({ anchorCell: cellPositions[3], headCell: cellPositions[7] });
+    instance.commands.setCellSelection({
+      anchorCell: cellPositions[3],
+      headCell: cellPositions[7],
+    });
 
     expect(getSelectedTableMatrix(instance.state)).toEqual([
       ['A1', 'B1'],
@@ -81,7 +84,15 @@ describe('tableClipboard utilities', () => {
   });
 
   it('serializes selected cells as CSV', () => {
-    expect(serializeTableMatrix([['A1', 'B,1'], ['A2', 'B2']], ',')).toBe('A1,"B,1"\nA2,B2');
+    expect(
+      serializeTableMatrix(
+        [
+          ['A1', 'B,1'],
+          ['A2', 'B2'],
+        ],
+        ','
+      )
+    ).toBe('A1,"B,1"\nA2,B2');
   });
 
   it('serializes selected cells as markdown table', () => {
