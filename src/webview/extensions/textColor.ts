@@ -43,6 +43,18 @@ const extensionConfig = {
       }),
     };
   },
+  /**
+   * Serialize textStyle mark to markdown as an inline HTML span.
+   * The TipTap Markdown extension calls this for both opening and closing:
+   * it renders a synthetic node, finds the placeholder, and splits around it.
+   */
+  renderMarkdown(node: any, helpers: any) {
+    const color = node.attrs?.color;
+    if (color) {
+      return `<span style="color: ${color}">${helpers.renderChildren()}</span>`;
+    }
+    return helpers.renderChildren();
+  },
   toMarkdown: {
     open(_state: any, mark: any, _parent: any, _index: any) {
       if (mark.attrs.color) {

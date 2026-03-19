@@ -154,4 +154,4 @@ For questions about these Terms, please contact:
 **By using the Extension, you acknowledge that you have read, understood, and agree to be bound by these Terms of Use.**
 
 **GPT-AI**  
-© 2025-2026 GPT-AI. All rights reserved.
+© 2025-2026 DK-AI. All rights reserved.

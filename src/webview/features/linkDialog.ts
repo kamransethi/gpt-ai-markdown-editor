@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -200,7 +200,7 @@ function focusEditor(editor: Editor | null) {
       maybeFocused.run();
     }
   } catch (error) {
-    console.warn('[GPT-AI] Failed to restore focus to editor after link dialog', error);
+    console.warn('[DK-AI] Failed to restore focus to editor after link dialog', error);
   }
 }
 
@@ -209,7 +209,7 @@ const setSelectionHighlight = (range: Range | null) => {
   try {
     currentEditor.commands.setTextSelection({ from: range.from, to: range.to });
   } catch (error) {
-    console.warn('[GPT-AI] Failed to set selection highlight for link dialog', error);
+    console.warn('[DK-AI] Failed to set selection highlight for link dialog', error);
   }
 };
 
@@ -495,7 +495,7 @@ function handleFileSearch(query: string): void {
     const requestId = ++fileSearchRequestId;
     const vscode = (window as any).vscode;
     if (vscode && typeof vscode.postMessage === 'function') {
-      console.log('[GPT-AI] Sending file search request:', {
+      console.log('[DK-AI] Sending file search request:', {
         query: trimmedQuery,
         requestId,
       });
@@ -505,7 +505,7 @@ function handleFileSearch(query: string): void {
         requestId,
       });
     } else {
-      console.warn('[GPT-AI] vscode API not available for file search');
+      console.warn('[DK-AI] vscode API not available for file search');
     }
   }, 300);
 }
@@ -537,7 +537,7 @@ function handleHeadingExtraction(editor: Editor, query: string, urlInput: HTMLIn
       updateAutocompleteDropdown(autocompleteDropdown, limited, urlInput);
     }
   } catch (error) {
-    console.error('[GPT-AI] Failed to extract headings', error);
+    console.error('[DK-AI] Failed to extract headings', error);
     closeAutocomplete();
   }
 }
@@ -1055,7 +1055,7 @@ export function hideLinkDialog(): void {
         to: originalSelection.to,
       });
     } catch (error) {
-      console.warn('[GPT-AI] Failed to restore selection after link dialog', error);
+      console.warn('[DK-AI] Failed to restore selection after link dialog', error);
     }
   }
 
@@ -1078,29 +1078,29 @@ export function isLinkDialogVisible(): boolean {
  * Handle file search results from extension
  */
 export function handleFileSearchResults(results: FileSearchResult[], requestId: number): void {
-  console.log('[GPT-AI] Received file search results:', {
+  console.log('[DK-AI] Received file search results:', {
     resultsCount: results.length,
     requestId,
     currentRequestId: fileSearchRequestId,
   });
 
   if (requestId !== fileSearchRequestId) {
-    console.log('[GPT-AI] Ignoring outdated search results (requestId mismatch)');
+    console.log('[DK-AI] Ignoring outdated search results (requestId mismatch)');
     return;
   }
 
   if (!autocompleteDropdown || !linkDialogElement) {
-    console.warn('[GPT-AI] Autocomplete dropdown or dialog element not available');
+    console.warn('[DK-AI] Autocomplete dropdown or dialog element not available');
     return;
   }
 
   const urlInput = linkDialogElement.querySelector('#link-url-input') as HTMLInputElement;
   if (!urlInput) {
-    console.warn('[GPT-AI] URL input not found');
+    console.warn('[DK-AI] URL input not found');
     return;
   }
 
-  console.log('[GPT-AI] Updating autocomplete dropdown with', results.length, 'results');
+  console.log('[DK-AI] Updating autocomplete dropdown with', results.length, 'results');
   updateAutocompleteDropdown(autocompleteDropdown, results, urlInput);
 }
 

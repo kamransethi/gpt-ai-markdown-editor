@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -22,7 +22,7 @@ export interface HostBridge {
 export function createVsCodeBridge(): HostBridge {
   const vscode = (window as any).acquireVsCodeApi?.();
   if (!vscode) {
-    console.warn('[GPT-AI] VS Code API not available, using no-op bridge');
+    console.warn('[DK-AI] VS Code API not available, using no-op bridge');
     return createNoOpBridge();
   }
 
@@ -47,7 +47,7 @@ export function createVsCodeBridge(): HostBridge {
 export function createNoOpBridge(): HostBridge {
   return {
     postMessage(message) {
-      console.log('[GPT-AI] Bridge message (no-op):', message.type);
+      console.log('[DK-AI] Bridge message (no-op):', message.type);
     },
     onMessage() {
       // No-op

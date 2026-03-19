@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -88,12 +88,12 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     try {
       const value = fn();
       if (typeof value !== 'string') {
-        console.error(`[GPT-AI] ${label} returned non-string output`);
+        console.error(`[DK-AI] ${label} returned non-string output`);
         return null;
       }
       return value;
     } catch (error) {
-      console.error(`[GPT-AI] ${label} failed:`, error);
+      console.error(`[DK-AI] ${label} failed:`, error);
       return null;
     }
   };
@@ -109,13 +109,13 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     );
     if (fallback !== null) {
       console.warn(
-        '[GPT-AI] Serialization manager not found, using fallback. Output len:',
+        '[DK-AI] Serialization manager not found, using fallback. Output len:',
         fallback.length
       );
       return sanitizeSerialized(fallback);
     }
     console.error(
-      '[GPT-AI] Serialization manager missing and fallback failed; returning empty output'
+      '[DK-AI] Serialization manager missing and fallback failed; returning empty output'
     );
     return '';
   }
@@ -138,7 +138,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   );
   if (normalizedSerialized !== null && (normalizedSerialized.length > 0 || !nonEmptyDoc)) {
     console.log(
-      '[GPT-AI] Serialization successful (normalized). JSON nodes:',
+      '[DK-AI] Serialization successful (normalized). JSON nodes:',
       parsedJson.content?.length,
       'Serialized len:',
       normalizedSerialized.length
@@ -148,7 +148,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
 
   if (normalizedSerialized !== null && normalizedSerialized.length === 0 && nonEmptyDoc) {
     console.error(
-      '[GPT-AI] serialize(normalizedJson) returned empty string for non-empty document'
+      '[DK-AI] serialize(normalizedJson) returned empty string for non-empty document'
     );
   }
 
@@ -157,7 +157,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   );
   if (rawSerialized !== null && (rawSerialized.length > 0 || !nonEmptyDoc)) {
     console.warn(
-      '[GPT-AI] Used raw JSON serializer fallback. JSON nodes:',
+      '[DK-AI] Used raw JSON serializer fallback. JSON nodes:',
       parsedJson.content?.length,
       'Serialized len:',
       rawSerialized.length
@@ -166,20 +166,20 @@ export function getEditorMarkdownForSync(editor: Editor): string {
   }
 
   if (rawSerialized !== null && rawSerialized.length === 0 && nonEmptyDoc) {
-    console.error('[GPT-AI] serialize(rawJson) returned empty string for non-empty document');
+    console.error('[DK-AI] serialize(rawJson) returned empty string for non-empty document');
   }
 
   const fallback = trySerialize('fallback getMarkdown', getFallbackMarkdown);
   if (fallback !== null && (fallback.length > 0 || !nonEmptyDoc)) {
     console.warn(
-      '[GPT-AI] Using getMarkdown fallback after serializer failures. Output len:',
+      '[DK-AI] Using getMarkdown fallback after serializer failures. Output len:',
       fallback.length
     );
     return sanitizeSerialized(fallback);
   }
 
   console.error(
-    '[GPT-AI] All serialization strategies failed for non-empty document; returning empty output'
+    '[DK-AI] All serialization strategies failed for non-empty document; returning empty output'
   );
   return '';
 }

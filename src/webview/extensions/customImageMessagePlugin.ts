@@ -169,7 +169,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
               imgElement.setAttribute('src', relativePath);
               delete (imgElement as any)._pendingDownloadPlaceholderId;
             } catch (error) {
-              console.error('[GPT-AI] Failed to update image node after copy:', error);
+              console.error('[DK-AI] Failed to update image node after copy:', error);
             }
             break;
           }

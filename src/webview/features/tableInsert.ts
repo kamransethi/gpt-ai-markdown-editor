@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -36,7 +36,7 @@ function focusEditor(editor: Editor | null) {
       maybeFocused.run();
     }
   } catch (error) {
-    console.warn('[GPT-AI] Failed to restore focus to editor after table dialog', error);
+    console.warn('[DK-AI] Failed to restore focus to editor after table dialog', error);
   }
 }
 

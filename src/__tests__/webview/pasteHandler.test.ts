@@ -191,7 +191,7 @@ describe('pasteHandler', () => {
   describe('processPasteContent', () => {
     it('should return empty result for null', () => {
       const result = processPasteContent(null);
-      expect(result).toEqual({ content: '', wasConverted: false, isImage: false, isHtml: false });
+      expect(result).toEqual({ content: '', wasConverted: false, isImage: false, isHtml: false, isMarkdown: false });
     });
 
     it('should detect image content', () => {
@@ -223,25 +223,26 @@ describe('pasteHandler', () => {
       expect(result.content).toBe('Just plain text');
     });
 
-    it('should convert markdown tables to HTML', () => {
+    it('should pass markdown tables as raw markdown for TipTap parser', () => {
       const mockDataTransfer = createMockDataTransfer({
         'text/plain': '| A | B |\n| --- | --- |\n| 1 | 2 |',
       });
       const result = processPasteContent(mockDataTransfer);
       expect(result.wasConverted).toBe(true);
-      expect(result.isHtml).toBe(true);
-      expect(result.content).toContain('<table>');
+      expect(result.isMarkdown).toBe(true);
+      expect(result.isHtml).toBe(false);
+      expect(result.content).toContain('| A | B |');
     });
 
-    it('should convert markdown lists to HTML', () => {
+    it('should pass markdown lists as raw markdown for TipTap parser', () => {
       const mockDataTransfer = createMockDataTransfer({
         'text/plain': '- Item 1\n- Item 2\n- Item 3',
       });
       const result = processPasteContent(mockDataTransfer);
       expect(result.wasConverted).toBe(true);
-      expect(result.isHtml).toBe(true);
-      expect(result.content).toContain('<ul>');
-      expect(result.content).toContain('<li>');
+      expect(result.isMarkdown).toBe(true);
+      expect(result.isHtml).toBe(false);
+      expect(result.content).toBe('- Item 1\n- Item 2\n- Item 3');
     });
 
     it('should use plain text when HTML is just a wrapper', () => {

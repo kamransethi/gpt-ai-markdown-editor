@@ -126,4 +126,4 @@ For questions about this EULA, please contact:
 **By using the Extension, you acknowledge that you have read this Agreement, understand it, and agree to be bound by its terms.**
 
 **GPT-AI**  
-© 2025-2026 GPT-AI. All rights reserved.
+© 2025-2026 DK-AI. All rights reserved.

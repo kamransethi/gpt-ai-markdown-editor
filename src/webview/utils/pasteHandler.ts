@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -114,7 +114,7 @@ export function htmlToMarkdown(html: string): string {
         .trim()
     );
   } catch (error) {
-    console.error('[GPT-AI] Error converting HTML to markdown:', error);
+    console.error('[DK-AI] Error converting HTML to markdown:', error);
     // Return empty string on error - caller should fall back to plain text
     throw error;
   }
@@ -302,14 +302,15 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
   wasConverted: boolean;
   isImage: boolean;
   isHtml: boolean; // If true, content is HTML ready for TipTap
+  isMarkdown: boolean; // If true, content is raw markdown for TipTap Markdown parser
 } {
   if (!clipboardData) {
-    return { content: '', wasConverted: false, isImage: false, isHtml: false };
+    return { content: '', wasConverted: false, isImage: false, isHtml: false, isMarkdown: false };
   }
 
   // Check for image first
   if (hasImageContent(clipboardData)) {
-    return { content: '', wasConverted: false, isImage: true, isHtml: false };
+    return { content: '', wasConverted: false, isImage: true, isHtml: false, isMarkdown: false };
   }
 
   // Get both HTML and plain text
@@ -324,7 +325,7 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
       if (markdown) {
         // Convert back to HTML for TipTap insertion
         const cleanHtml = markdownToHtml(markdown);
-        return { content: cleanHtml, wasConverted: true, isImage: false, isHtml: true };
+        return { content: cleanHtml, wasConverted: true, isImage: false, isHtml: true, isMarkdown: false };
       }
     } catch {
       // Fall through to plain text handling
@@ -332,11 +333,11 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
   }
 
   // Case 2: Plain text that looks like markdown (tables, lists, headers, etc.)
+  // Pass raw markdown to TipTap's Markdown parser for best fidelity
   if (plainText && looksLikeMarkdown(plainText)) {
-    const htmlContent = markdownToHtml(plainText);
-    return { content: htmlContent, wasConverted: true, isImage: false, isHtml: true };
+    return { content: plainText, wasConverted: true, isImage: false, isHtml: false, isMarkdown: true };
   }
 
   // Case 3: Plain text without markdown - let TipTap handle it
-  return { content: plainText, wasConverted: false, isImage: false, isHtml: false };
+  return { content: plainText, wasConverted: false, isImage: false, isHtml: false, isMarkdown: false };
 }

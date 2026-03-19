@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -285,7 +285,7 @@ function reportWebviewIssue(level: 'error' | 'warn' | 'info', message: string, d
       details,
     });
   } catch (error) {
-    console.error('[GPT-AI] Failed to forward webview issue to extension host:', error);
+    console.error('[DK-AI] Failed to forward webview issue to extension host:', error);
   }
 }
 
@@ -444,7 +444,7 @@ const signalReady = () => {
  * Used as a recovery path when webview is visible but editor DOM is blank.
  */
 function requestHostResync(reason: string) {
-  console.warn('[GPT-AI][RECOVERY] Requesting host resync:', reason);
+  console.warn('[DK-AI][RECOVERY] Requesting host resync:', reason);
   vscode.postMessage({ type: 'ready' });
 }
 
@@ -462,7 +462,7 @@ function scheduleBlankEditorRecovery(trigger: string) {
     if (document.visibilityState !== 'visible') return;
     if (!isEditorDomBlank()) return;
 
-    console.warn('[GPT-AI][RECOVERY] Blank editor detected after', trigger);
+    console.warn('[DK-AI][RECOVERY] Blank editor detected after', trigger);
     requestHostResync(`blank-editor-${trigger}`);
   }, 120);
 }
@@ -481,7 +481,7 @@ const pushOutlineUpdate = () => {
     const outline = buildOutlineFromEditor(editor);
     vscode.postMessage({ type: 'outlineUpdated', outline });
   } catch (error) {
-    console.warn('[GPT-AI] Failed to build outline:', error);
+    console.warn('[DK-AI] Failed to build outline:', error);
   }
 };
 
@@ -529,7 +529,7 @@ function saveDocument() {
         docSize: editor.state.doc.content.size,
       };
       console.error(
-        '[GPT-AI] Serialization produced empty markdown for non-empty document',
+        '[DK-AI] Serialization produced empty markdown for non-empty document',
         details
       );
       reportWebviewIssue(
@@ -547,7 +547,7 @@ function saveDocument() {
     trackSentContent(markdown);
 
     console.log(
-      `[GPT-AI][SAVE][${saveRequestId}] Dispatching saveAndEdit (len=${markdown.length}, hash=${contentHash})`
+      `[DK-AI][SAVE][${saveRequestId}] Dispatching saveAndEdit (len=${markdown.length}, hash=${contentHash})`
     );
 
     // Send combined edit and save to avoid race conditions
@@ -558,7 +558,7 @@ function saveDocument() {
     });
     // Let the VS Code side send the 'saved' event to clear the dirty state
   } catch (error) {
-    console.error('[GPT-AI] Error saving document:', error);
+    console.error('[DK-AI] Error saving document:', error);
     reportWebviewIssue('error', '[SAVE] Exception while preparing save payload', {
       error: error instanceof Error ? error.message : String(error),
     });
@@ -592,14 +592,14 @@ function debouncedUpdate(markdown: string) {
 
   updateTimeout = window.setTimeout(() => {
     try {
-      console.log(`[GPT-AI] debouncedUpdate firing for ${markdown.length} chars...`);
+      console.log(`[DK-AI] debouncedUpdate firing for ${markdown.length} chars...`);
       if (editor && markdown.length === 0 && editor.getText().trim().length > 0) {
         const details = {
           plainTextLength: editor.getText().trim().length,
           docSize: editor.state.doc.content.size,
         };
         console.error(
-          '[GPT-AI] Debounced sync produced empty markdown for non-empty document',
+          '[DK-AI] Debounced sync produced empty markdown for non-empty document',
           details
         );
         reportWebviewIssue(
@@ -617,7 +617,7 @@ function debouncedUpdate(markdown: string) {
       // Check if any images are currently being saved
       if (hasPendingImageSaves()) {
         const count = getPendingImageCount();
-        console.log(`[GPT-AI] Delaying document sync - ${count} image(s) still being saved`);
+        console.log(`[DK-AI] Delaying document sync - ${count} image(s) still being saved`);
         // Re-queue the update
         debouncedUpdate(markdown);
         return;
@@ -630,7 +630,7 @@ function debouncedUpdate(markdown: string) {
       updateTimeout = null;
       trackSentContent(markdown);
     } catch (error) {
-      console.error('[GPT-AI] Error in debounced update:', error);
+      console.error('[DK-AI] Error in debounced update:', error);
     }
   }, 300);
 }
@@ -641,13 +641,13 @@ function debouncedUpdate(markdown: string) {
 function initializeEditor(initialContent: string) {
   try {
     if (editor) {
-      console.warn('[GPT-AI] Editor already initialized, skipping re-init');
+      console.warn('[DK-AI] Editor already initialized, skipping re-init');
       return;
     }
 
     const editorElement = document.querySelector('#editor') as HTMLElement;
     if (!editorElement) {
-      console.error('[GPT-AI] Editor element not found');
+      console.error('[DK-AI] Editor element not found');
       return;
     }
 
@@ -691,7 +691,7 @@ function initializeEditor(initialContent: string) {
       document.body.appendChild(floatingFormattingBar);
     }
 
-    console.log('[GPT-AI] Initializing editor...');
+    console.log('[DK-AI] Initializing editor...');
 
     const editorInstance = new Editor({
       element: editorElement,
@@ -897,10 +897,10 @@ function initializeEditor(initialContent: string) {
           updateEditorMetaBar(_editor);
 
           const markdown = getEditorMarkdownForSync(_editor);
-          console.log(`[GPT-AI] onUpdate: markdown serialized (len=${markdown.length})`);
+          console.log(`[DK-AI] onUpdate: markdown serialized (len=${markdown.length})`);
           debouncedUpdate(markdown);
         } catch (error) {
-          console.error('[GPT-AI] Error in onUpdate:', error);
+          console.error('[DK-AI] Error in onUpdate:', error);
         }
       },
       onSelectionUpdate: ({ editor }) => {
@@ -908,7 +908,7 @@ function initializeEditor(initialContent: string) {
           const { from } = editor.state.selection;
           vscode.postMessage({ type: 'selectionChange', pos: from });
         } catch (error) {
-          console.warn('[GPT-AI] Selection update failed:', error);
+          console.warn('[DK-AI] Selection update failed:', error);
         }
       },
       onFocus: () => {
@@ -919,11 +919,11 @@ function initializeEditor(initialContent: string) {
         // Focus change is handled via relatedTarget in editorDom listener to allow toolbar interaction
       },
       onCreate: () => {
-        console.log('[GPT-AI] Editor created successfully');
+        console.log('[DK-AI] Editor created successfully');
         updateEditorMetaBar(editorInstance);
       },
       onDestroy: () => {
-        console.log('[GPT-AI] Editor destroyed');
+        console.log('[DK-AI] Editor destroyed');
       },
     });
 
@@ -1006,7 +1006,7 @@ function initializeEditor(initialContent: string) {
       const { from } = editorInstance.state.selection;
       vscode.postMessage({ type: 'selectionChange', pos: from });
     } catch (error) {
-      console.warn('[GPT-AI] Initial selection sync failed:', error);
+      console.warn('[DK-AI] Initial selection sync failed:', error);
     }
 
     // Store handler references for cleanup on editor destroy
@@ -1029,7 +1029,7 @@ function initializeEditor(initialContent: string) {
           textContextMenuCtrl?.show(e.clientX, e.clientY);
         }
       } catch (error) {
-        console.error('[GPT-AI] Error in context menu:', error);
+        console.error('[DK-AI] Error in context menu:', error);
       }
     };
 
@@ -1044,12 +1044,12 @@ function initializeEditor(initialContent: string) {
 
       // Log ALL modifier key presses for debugging
       if (isMod) {
-        console.log(`[GPT-AI] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
+        console.log(`[DK-AI] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
       }
 
       // Save shortcut - immediate save
       if (isSaveShortcut(e)) {
-        console.log('[GPT-AI] *** SAVE SHORTCUT TRIGGERED ***');
+        console.log('[DK-AI] *** SAVE SHORTCUT TRIGGERED ***');
         e.preventDefault();
         e.stopPropagation();
         immediateUpdate();
@@ -1073,7 +1073,7 @@ function initializeEditor(initialContent: string) {
 
       if (isMod && formattingShortcuts.includes(e.key.toLowerCase())) {
         e.stopPropagation(); // Stop event from reaching VS Code
-        console.log(`[GPT-AI] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
+        console.log(`[DK-AI] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
         // TipTap will handle the formatting
         return;
       }
@@ -1082,7 +1082,7 @@ function initializeEditor(initialContent: string) {
       if (isMod && e.key === 'k') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[GPT-AI] Link shortcut');
+        console.log('[DK-AI] Link shortcut');
         if (editor) {
           showLinkDialog(editor);
         }
@@ -1093,7 +1093,7 @@ function initializeEditor(initialContent: string) {
       if (isMod && e.key === 'f') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[GPT-AI] Search shortcut');
+        console.log('[DK-AI] Search shortcut');
         if (editor) {
           toggleSearchOverlay(editor);
         }
@@ -1215,16 +1215,16 @@ function initializeEditor(initialContent: string) {
       tableContextMenuCtrl = null;
       tocPaneController?.destroy();
       tocPaneController = null;
-      console.log('[GPT-AI] Editor destroyed, global listeners cleaned up');
+      console.log('[DK-AI] Editor destroyed, global listeners cleaned up');
     });
 
-    console.log('[GPT-AI] Editor initialization complete');
+    console.log('[DK-AI] Editor initialization complete');
     // Allow floating bar to show after init settles (prevents flash on open)
     setTimeout(() => {
       editorFullyInitialized = true;
     }, 400);
   } catch (error) {
-    console.error('[GPT-AI] Fatal error initializing editor:', error);
+    console.error('[DK-AI] Fatal error initializing editor:', error);
     showRuntimeErrorToUser('editor-init-fatal', 'Editor failed to initialize.', error);
     const editorElement = document.querySelector('#editor') as HTMLElement;
     if (editorElement) {
@@ -1356,10 +1356,10 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'saved':
         if (typeof message.requestId === 'string') {
           console.log(
-            `[GPT-AI][SAVE][${message.requestId}] Received "saved" signal from extension`
+            `[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`
           );
         } else {
-          console.log('[GPT-AI] Received "saved" signal from extension');
+          console.log('[DK-AI] Received "saved" signal from extension');
         }
         setDocDirty(false);
         break;
@@ -1372,10 +1372,10 @@ window.addEventListener('message', (event: MessageEvent) => {
         // Handled by the custom image message plugin; ignore here to avoid log noise.
         break;
       default:
-        console.warn('[GPT-AI] Unknown message type:', message.type);
+        console.warn('[DK-AI] Unknown message type:', message.type);
     }
   } catch (error) {
-    console.error('[GPT-AI] Error handling message:', error);
+    console.error('[DK-AI] Error handling message:', error);
   }
 });
 
@@ -1384,7 +1384,7 @@ window.addEventListener('message', (event: MessageEvent) => {
  */
 function updateEditorContent(markdown: string) {
   if (!editor) {
-    console.error('[GPT-AI] Editor not initialized');
+    console.error('[DK-AI] Editor not initialized');
     return;
   }
 
@@ -1395,7 +1395,7 @@ function updateEditorContent(markdown: string) {
       // Also check timestamp to allow legitimate identical content after a delay
       const timeSinceLastSend = Date.now() - lastSentTimestamp;
       if (timeSinceLastSend < 2000) {
-        console.log('[GPT-AI] Ignoring update (matches content we just sent)');
+        console.log('[DK-AI] Ignoring update (matches content we just sent)');
         return;
       }
     }
@@ -1403,7 +1403,7 @@ function updateEditorContent(markdown: string) {
     // Don't update if user edited recently (within 2 seconds)
     const timeSinceLastEdit = Date.now() - lastUserEditTime;
     if (timeSinceLastEdit < 2000) {
-      console.log(`[GPT-AI] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
+      console.log(`[DK-AI] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
       return;
     }
 
@@ -1412,18 +1412,18 @@ function updateEditorContent(markdown: string) {
     const startTime = performance.now();
     const docSize = markdown.length;
 
-    console.log(`[GPT-AI] Updating content (${docSize} chars)...`);
+    console.log(`[DK-AI] Updating content (${docSize} chars)...`);
 
     // Skip if content is already in sync
     const currentMarkdown = getEditorMarkdownForSync(editor);
     if (currentMarkdown === markdown) {
-      console.log('[GPT-AI] Update skipped (content unchanged)');
+      console.log('[DK-AI] Update skipped (content unchanged)');
       return;
     }
 
     // Save cursor position
     const { from, to } = editor.state.selection;
-    console.log(`[GPT-AI] Saving cursor position: ${from}-${to}`);
+    console.log(`[DK-AI] Saving cursor position: ${from}-${to}`);
 
     // Set content
     editor.commands.setContent(preprocessMarkdownContent(markdown), { contentType: 'markdown' });
@@ -1431,9 +1431,9 @@ function updateEditorContent(markdown: string) {
     // Restore cursor position
     try {
       editor.commands.setTextSelection({ from, to });
-      console.log(`[GPT-AI] Restored cursor position: ${from}-${to}`);
+      console.log(`[DK-AI] Restored cursor position: ${from}-${to}`);
     } catch {
-      console.log('[GPT-AI] Could not restore cursor position (document too short)');
+      console.log('[DK-AI] Could not restore cursor position (document too short)');
       // If exact position fails, move to end of document
       const endPos = editor.state.doc.content.size;
       editor.commands.setTextSelection(Math.min(from, endPos));
@@ -1442,14 +1442,14 @@ function updateEditorContent(markdown: string) {
     pushOutlineUpdate();
 
     const duration = performance.now() - startTime;
-    console.log(`[GPT-AI] Content updated in ${duration.toFixed(2)}ms`);
+    console.log(`[DK-AI] Content updated in ${duration.toFixed(2)}ms`);
 
     if (duration > 1000) {
-      console.warn(`[GPT-AI] Slow update: ${duration.toFixed(2)}ms for ${docSize} chars`);
+      console.warn(`[DK-AI] Slow update: ${duration.toFixed(2)}ms for ${docSize} chars`);
     }
   } catch (error) {
-    console.error('[GPT-AI] Error updating content:', error);
-    console.error('[GPT-AI] Document size:', markdown.length, 'chars');
+    console.error('[DK-AI] Error updating content:', error);
+    console.error('[DK-AI] Document size:', markdown.length, 'chars');
   } finally {
     isUpdating = false;
   }
@@ -1537,7 +1537,7 @@ window.addEventListener('exportTableCsv', () => {
 
 // Handle open source view from toolbar button
 window.addEventListener('openSourceView', () => {
-  console.log('[GPT-AI] Opening source view...');
+  console.log('[DK-AI] Opening source view...');
   vscode.postMessage({ type: 'openSourceView' });
 });
 
@@ -1558,7 +1558,7 @@ window.addEventListener('exportDocument', async (event: Event) => {
   const customEvent = event as CustomEvent;
   const format = customEvent.detail?.format || 'pdf';
 
-  console.log(`[GPT-AI] Exporting document as ${format}...`);
+  console.log(`[DK-AI] Exporting document as ${format}...`);
 
   try {
     // Collect content and convert Mermaid to PNG
@@ -1574,7 +1574,7 @@ window.addEventListener('exportDocument', async (event: Event) => {
       title,
     });
   } catch (error) {
-    console.error('[GPT-AI] Export failed:', error);
+    console.error('[DK-AI] Export failed:', error);
     vscode.postMessage({
       type: 'showError',
       message: 'Failed to prepare document for export. See console for details.',
@@ -1661,7 +1661,15 @@ document.addEventListener(
       return;
     }
 
-    // If we need to convert content (rich HTML or markdown), intercept early
+    // If content is raw markdown, use TipTap's Markdown parser for accurate conversion
+    if (result.wasConverted && result.content && result.isMarkdown) {
+      event.preventDefault();
+      event.stopPropagation();
+      editor.commands.insertContent(result.content, { contentType: 'markdown' });
+      return;
+    }
+
+    // If we need to convert content (rich HTML), intercept early
     if (result.wasConverted && result.content && result.isHtml) {
       event.preventDefault();
       event.stopPropagation();
@@ -1675,11 +1683,11 @@ document.addEventListener(
 
 // Global error handler
 window.addEventListener('error', event => {
-  console.error('[GPT-AI] Uncaught error:', event.error);
+  console.error('[DK-AI] Uncaught error:', event.error);
 });
 
 window.addEventListener('unhandledrejection', event => {
-  console.error('[GPT-AI] Unhandled promise rejection:', event.reason);
+  console.error('[DK-AI] Unhandled promise rejection:', event.reason);
 });
 
 // Testing hooks (not used in production UI)

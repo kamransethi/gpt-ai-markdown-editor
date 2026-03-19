@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -520,15 +520,15 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
             : 'save-unknown';
         const docUri = document.uri.toString();
         console.log(
-          `[GPT-AI][SAVE][${requestId}] Received saveAndEdit (content len: ${contentStr.length}, uri: ${docUri})`
+          `[DK-AI][SAVE][${requestId}] Received saveAndEdit (content len: ${contentStr.length}, uri: ${docUri})`
         );
         void this.enqueueEdit(document.uri.toString(), async () => {
           try {
             const success = await this.applyEdit(contentStr, document);
-            console.log(`[GPT-AI][SAVE][${requestId}] applyEdit result: ${success}`);
+            console.log(`[DK-AI][SAVE][${requestId}] applyEdit result: ${success}`);
 
             const saved = await document.save();
-            console.log(`[GPT-AI][SAVE][${requestId}] document.save() result: ${saved}`);
+            console.log(`[DK-AI][SAVE][${requestId}] document.save() result: ${saved}`);
 
             // Send signal back. We send it for 'success' (content matches) OR 'saved' (disk write).
             // This ensures the toolbar can gray out if the document state is now congruent.
@@ -541,7 +541,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
               vscode.window.setStatusBarMessage('$(circle-slash) Markdown already saved', 2000);
             }
           } catch (err) {
-            console.error(`[GPT-AI][SAVE][${requestId}] Critical error in saveAndEdit:`, err);
+            console.error(`[DK-AI][SAVE][${requestId}] Critical error in saveAndEdit:`, err);
             vscode.window.showErrorMessage(
               `Save failed: ${err instanceof Error ? err.message : String(err)}`
             );
@@ -550,18 +550,18 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       }
       case 'save':
-        console.log('[GPT-AI] Received save message');
+        console.log('[DK-AI] Received save message');
         void this.enqueueEdit(document.uri.toString(), async () => {
           try {
             const saved = await document.save();
-            console.log(`[GPT-AI] document.save() result: ${saved}`);
+            console.log(`[DK-AI] document.save() result: ${saved}`);
             webview.postMessage({ type: 'saved' });
 
             if (saved) {
               vscode.window.setStatusBarMessage('$(check) Markdown saved', 2000);
             }
           } catch (err) {
-            console.error('[GPT-AI] Critical error in save:', err);
+            console.error('[DK-AI] Critical error in save:', err);
           }
         });
         break;
@@ -627,11 +627,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         const text = typeof message.message === 'string' ? message.message : 'Unknown webview log';
         const details = message.details;
         if (level === 'error') {
-          console.error(`[GPT-AI][WEBVIEW] ${text}`, details);
+          console.error(`[DK-AI][WEBVIEW] ${text}`, details);
         } else if (level === 'warn') {
-          console.warn(`[GPT-AI][WEBVIEW] ${text}`, details);
+          console.warn(`[DK-AI][WEBVIEW] ${text}`, details);
         } else {
-          console.log(`[GPT-AI][WEBVIEW] ${text}`, details);
+          console.log(`[DK-AI][WEBVIEW] ${text}`, details);
         }
         break;
       }
@@ -1071,12 +1071,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const fileName = message.fileName as string;
     const insertPosition = message.insertPosition as number | undefined;
 
-    console.log(`[GPT-AI] Handling workspace image: ${sourcePath}`);
+    console.log(`[DK-AI] Handling workspace image: ${sourcePath}`);
 
     // Get the document base path
     const basePath = this.getImageBasePath(document);
     if (!basePath) {
-      console.error(`[GPT-AI] Cannot compute relative path: no base directory available`);
+      console.error(`[DK-AI] Cannot compute relative path: no base directory available`);
       return;
     }
 
@@ -1099,7 +1099,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     // If path is invalid or image is outside workspace, copy it to workspace
     if (!isValidPath || !withinWorkspace) {
       console.log(
-        `[GPT-AI] Image is outside workspace or has invalid path, copying to workspace...`
+        `[DK-AI] Image is outside workspace or has invalid path, copying to workspace...`
       );
 
       try {
@@ -1175,7 +1175,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           copiedRelativePath = './' + copiedRelativePath;
         }
 
-        console.log(`[GPT-AI] Image copied to workspace. Path: ${copiedRelativePath}`);
+        console.log(`[DK-AI] Image copied to workspace. Path: ${copiedRelativePath}`);
 
         // Extract alt text from filename (remove extension)
         const altText = fileName.replace(/\.[^.]+$/, '');
@@ -1190,7 +1190,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[GPT-AI] Failed to copy workspace image: ${errorMessage}`);
+        console.error(`[DK-AI] Failed to copy workspace image: ${errorMessage}`);
         vscode.window.showErrorMessage(`Failed to copy image: ${errorMessage}`);
       }
       return;
@@ -1202,7 +1202,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       relativePath = './' + relativePath;
     }
 
-    console.log(`[GPT-AI] Computed relative path: ${relativePath}`);
+    console.log(`[DK-AI] Computed relative path: ${relativePath}`);
 
     // Extract alt text from filename (remove extension)
     const altText = fileName.replace(/\.[^.]+$/, '');
@@ -1246,7 +1246,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       return;
     }
 
-    console.log(`[GPT-AI] Saving image "${name}" to folder: ${imagesDir}`);
+    console.log(`[DK-AI] Saving image "${name}" to folder: ${imagesDir}`);
 
     try {
       // Create folder if needed
@@ -1306,7 +1306,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         relativePath = './' + relativePath;
       }
 
-      console.log(`[GPT-AI] Image saved successfully. Path: ${relativePath}`);
+      console.log(`[DK-AI] Image saved successfully. Path: ${relativePath}`);
 
       webview.postMessage({
         type: 'imageSaved',
@@ -1395,7 +1395,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to compute image references: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to compute image references: ${errorMessage}`);
       webview.postMessage({
         type: 'imageReferences',
         requestId,
@@ -1434,7 +1434,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to open file: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to open file: ${errorMessage}`);
       vscode.window.showErrorMessage(`Failed to open file: ${errorMessage}`);
     }
   }
@@ -1504,7 +1504,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         }
       } catch (error) {
         // Skip files that can't be read
-        console.warn(`[GPT-AI] Failed to read file ${file.fsPath}: ${error}`);
+        console.warn(`[DK-AI] Failed to read file ${file.fsPath}: ${error}`);
       }
     }
 
@@ -1554,7 +1554,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           filesUpdated++;
         }
       } catch (error) {
-        console.warn(`[GPT-AI] Failed to update file ${file.fsPath}: ${error}`);
+        console.warn(`[DK-AI] Failed to update file ${file.fsPath}: ${error}`);
       }
     }
 
@@ -1616,7 +1616,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to check rename target: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to check rename target: ${errorMessage}`);
       webview.postMessage({
         type: 'imageRenameCheck',
         requestId,
@@ -1642,7 +1642,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const updateAllReferences = (message.updateAllReferences as boolean) ?? true;
     const allowOverwrite = (message.allowOverwrite as boolean) ?? false;
 
-    console.log(`[GPT-AI] Renaming image: ${oldPath} to ${newName}`);
+    console.log(`[DK-AI] Renaming image: ${oldPath} to ${newName}`);
 
     try {
       // Resolve the old path
@@ -1699,7 +1699,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           await vscode.workspace.fs.delete(newUri, { useTrash: true });
         } catch (error) {
           console.warn(
-            `[GPT-AI] Could not move existing file to trash, deleting directly: ${error}`
+            `[DK-AI] Could not move existing file to trash, deleting directly: ${error}`
           );
           await vscode.workspace.fs.delete(newUri);
         }
@@ -1707,7 +1707,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
       // Rename the file
       await vscode.workspace.fs.rename(oldUri, newUri);
-      console.log(`[GPT-AI] File renamed to: ${newFilename}`);
+      console.log(`[DK-AI] File renamed to: ${newFilename}`);
 
       // Calculate new relative path for markdown
       const newRelativePath = path.relative(basePath, absoluteNewPath).replace(/\\/g, '/');
@@ -1752,7 +1752,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to rename image: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to rename image: ${errorMessage}`);
       vscode.window.showErrorMessage(`Failed to rename image: ${errorMessage}`);
       webview.postMessage({
         type: 'imageRenamed',
@@ -1827,7 +1827,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to check image in workspace: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to check image in workspace: ${errorMessage}`);
       webview.postMessage({
         type: 'imageWorkspaceCheck',
         requestId,
@@ -1900,7 +1900,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to get image metadata: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to get image metadata: ${errorMessage}`);
       webview.postMessage({
         type: 'imageMetadata',
         requestId,
@@ -1952,7 +1952,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       await vscode.commands.executeCommand('revealFileInOS', fileUri);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to reveal image in OS: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to reveal image in OS: ${errorMessage}`);
       vscode.window.showErrorMessage(`Failed to reveal image: ${errorMessage}`);
     }
   }
@@ -2000,7 +2000,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       await vscode.commands.executeCommand('revealInExplorer', fileUri);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to reveal image in Explorer: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to reveal image in Explorer: ${errorMessage}`);
       vscode.window.showErrorMessage(`Failed to reveal image: ${errorMessage}`);
     }
   }
@@ -2016,10 +2016,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const query = (message.query as string) || '';
       const requestId = (message.requestId as number) || 0;
 
-      console.log('[GPT-AI] File search request:', { query, requestId });
+      console.log('[DK-AI] File search request:', { query, requestId });
 
       if (!query || query.trim().length < 1) {
-        console.log('[GPT-AI] Empty query, returning empty results');
+        console.log('[DK-AI] Empty query, returning empty results');
         webview.postMessage({
           type: 'fileSearchResults',
           results: [],
@@ -2030,7 +2030,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (!workspaceFolders || workspaceFolders.length === 0) {
-        console.warn('[GPT-AI] No workspace folders found');
+        console.warn('[DK-AI] No workspace folders found');
         webview.postMessage({
           type: 'fileSearchResults',
           results: [],
@@ -2042,11 +2042,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       // More permissive exclude pattern - only exclude truly unnecessary directories
       const excludePattern =
         '{**/node_modules/**,**/.git/**,**/.vscode/**,**/dist/**,**/build/**,**/.next/**,**/coverage/**}';
-      console.log('[GPT-AI] Searching files with pattern:', excludePattern);
+      console.log('[DK-AI] Searching files with pattern:', excludePattern);
 
       // Increase max results to ensure we have enough files to search through
       const allFiles = await vscode.workspace.findFiles('**/*', excludePattern, 10000);
-      console.log('[GPT-AI] Found', allFiles.length, 'files total');
+      console.log('[DK-AI] Found', allFiles.length, 'files total');
 
       const filteredFiles = allFiles;
 
@@ -2089,7 +2089,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         return false;
       });
 
-      console.log('[GPT-AI] Found', matchingFiles.length, 'matching files');
+      console.log('[DK-AI] Found', matchingFiles.length, 'matching files');
 
       // Sort results: exact filename matches first, then path matches, then partial matches
       const sortedFiles = matchingFiles.sort((a, b) => {
@@ -2135,14 +2135,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         };
       });
 
-      console.log('[GPT-AI] Sending', results.length, 'results to webview');
+      console.log('[DK-AI] Sending', results.length, 'results to webview');
       webview.postMessage({
         type: 'fileSearchResults',
         results,
         requestId,
       });
     } catch (error) {
-      console.error('[GPT-AI] Error searching files:', error);
+      console.error('[DK-AI] Error searching files:', error);
       const requestId = (message.requestId as number) || 0;
       webview.postMessage({
         type: 'fileSearchResults',
@@ -2234,7 +2234,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
       webview.postMessage({ type: 'fileHeadingsResult', headings, requestId });
     } catch (error) {
-      console.error('[GPT-AI] Error extracting file headings:', error);
+      console.error('[DK-AI] Error extracting file headings:', error);
       const requestId = (message.requestId as number) || 0;
       webview.postMessage({ type: 'fileHeadingsResult', headings: [], requestId });
     }
@@ -2265,25 +2265,25 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   }): Promise<void> {
     try {
       const url = (message.url as string) || '';
-      console.log('[GPT-AI] handleOpenExternalLink called with URL:', url);
+      console.log('[DK-AI] handleOpenExternalLink called with URL:', url);
 
       if (!url) {
-        console.warn('[GPT-AI] No URL provided for external link');
+        console.warn('[DK-AI] No URL provided for external link');
         return;
       }
 
       // Validate URL format
       if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('mailto:')) {
-        console.warn('[GPT-AI] Invalid external URL format:', url);
+        console.warn('[DK-AI] Invalid external URL format:', url);
         return;
       }
 
-      console.log('[GPT-AI] Opening external link:', url);
+      console.log('[DK-AI] Opening external link:', url);
       await vscode.env.openExternal(vscode.Uri.parse(url));
-      console.log('[GPT-AI] Successfully opened external link');
+      console.log('[DK-AI] Successfully opened external link');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('[GPT-AI] Failed to open external link:', errorMessage, error);
+      console.error('[DK-AI] Failed to open external link:', errorMessage, error);
       vscode.window.showErrorMessage(`Failed to open link: ${errorMessage}`);
     }
   }
@@ -2297,11 +2297,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   ): Promise<void> {
     const imagePath = String(message.path || '');
     if (!imagePath) {
-      console.warn('[GPT-AI] No image path provided');
+      console.warn('[DK-AI] No image path provided');
       return;
     }
 
-    console.log('[GPT-AI] handleOpenImage called with path:', imagePath);
+    console.log('[DK-AI] handleOpenImage called with path:', imagePath);
 
     // Normalize path: remove ./ prefix if present for path resolution
     const normalizedPath = imagePath.startsWith('./') ? imagePath.slice(2) : imagePath;
@@ -2315,23 +2315,23 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     }
 
     if (!baseDir) {
-      console.error('[GPT-AI] Cannot resolve image path: no base directory');
+      console.error('[DK-AI] Cannot resolve image path: no base directory');
       vscode.window.showWarningMessage('Cannot resolve image path');
       return;
     }
 
     let imageFullPath = path.resolve(baseDir, normalizedPath);
     let imageUri = vscode.Uri.file(imageFullPath);
-    console.log('[GPT-AI] Trying document-relative path:', imageFullPath);
+    console.log('[DK-AI] Trying document-relative path:', imageFullPath);
 
     // Check if file exists at document-relative path
     let fileExists = false;
     try {
       await vscode.workspace.fs.stat(imageUri);
       fileExists = true;
-      console.log('[GPT-AI] Image found at document-relative path');
+      console.log('[DK-AI] Image found at document-relative path');
     } catch {
-      console.log('[GPT-AI] Image not found at document-relative path, trying workspace root');
+      console.log('[DK-AI] Image not found at document-relative path, trying workspace root');
 
       // Fallback: try workspace root
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -2339,32 +2339,32 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         const workspacePath = workspaceFolder.uri.fsPath;
         imageFullPath = path.resolve(workspacePath, normalizedPath);
         imageUri = vscode.Uri.file(imageFullPath);
-        console.log('[GPT-AI] Trying workspace-relative path:', imageFullPath);
+        console.log('[DK-AI] Trying workspace-relative path:', imageFullPath);
 
         try {
           await vscode.workspace.fs.stat(imageUri);
           fileExists = true;
-          console.log('[GPT-AI] Image found at workspace-relative path');
+          console.log('[DK-AI] Image found at workspace-relative path');
         } catch {
-          console.log('[GPT-AI] Image not found at workspace-relative path either');
+          console.log('[DK-AI] Image not found at workspace-relative path either');
         }
       }
     }
 
     if (!fileExists) {
       const errorMsg = `Image not found: ${imagePath}`;
-      console.error('[GPT-AI]', errorMsg);
+      console.error('[DK-AI]', errorMsg);
       vscode.window.showErrorMessage(errorMsg);
       return;
     }
 
     try {
-      console.log('[GPT-AI] Opening image:', imageUri.fsPath);
+      console.log('[DK-AI] Opening image:', imageUri.fsPath);
       await vscode.commands.executeCommand('vscode.open', imageUri);
-      console.log('[GPT-AI] Successfully opened image');
+      console.log('[DK-AI] Successfully opened image');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error('[GPT-AI] Failed to open image:', errorMessage, err);
+      console.error('[DK-AI] Failed to open image:', errorMessage, err);
       vscode.window.showErrorMessage(`Failed to open image: ${errorMessage}`);
     }
   }
@@ -2378,10 +2378,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   ): Promise<void> {
     try {
       const filePath = (message.path as string) || '';
-      console.log('[GPT-AI] handleOpenFileLink called with path:', filePath);
+      console.log('[DK-AI] handleOpenFileLink called with path:', filePath);
 
       if (!filePath) {
-        console.warn('[GPT-AI] No path provided for file link');
+        console.warn('[DK-AI] No path provided for file link');
         return;
       }
 
@@ -2392,14 +2392,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const normalizedFilePath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
       const absolutePath = path.resolve(basePath, normalizedFilePath);
       let fileUri = vscode.Uri.file(absolutePath);
-      console.log('[GPT-AI] Resolved file URI (document-relative):', fileUri.fsPath);
+      console.log('[DK-AI] Resolved file URI (document-relative):', fileUri.fsPath);
 
       // Check if file exists
       let fileExists = false;
       try {
         await vscode.workspace.fs.stat(fileUri);
         fileExists = true;
-        console.log('[GPT-AI] File exists (document-relative):', fileUri.fsPath);
+        console.log('[DK-AI] File exists (document-relative):', fileUri.fsPath);
       } catch {
         // File doesn't exist, try to find it in workspace
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -2408,15 +2408,15 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           const workspacePath = workspaceFolders[0].uri.fsPath;
           // Use normalized path (already normalized above)
           const workspaceFileUri = vscode.Uri.file(path.resolve(workspacePath, normalizedFilePath));
-          console.log('[GPT-AI] Trying workspace-relative path:', workspaceFileUri.fsPath);
+          console.log('[DK-AI] Trying workspace-relative path:', workspaceFileUri.fsPath);
           try {
             await vscode.workspace.fs.stat(workspaceFileUri);
             fileUri = workspaceFileUri;
             fileExists = true;
-            console.log('[GPT-AI] File exists (workspace-relative):', fileUri.fsPath);
+            console.log('[DK-AI] File exists (workspace-relative):', fileUri.fsPath);
           } catch {
             // Not found in workspace either
-            console.log('[GPT-AI] File not found in workspace-relative path');
+            console.log('[DK-AI] File not found in workspace-relative path');
           }
         }
       }
@@ -2424,7 +2424,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       if (!fileExists) {
         // File not found, show error
         vscode.window.showWarningMessage(`File not found: ${filePath}`);
-        console.warn('[GPT-AI] File not found:', filePath);
+        console.warn('[DK-AI] File not found:', filePath);
         return;
       }
 
@@ -2443,38 +2443,38 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       ];
       const fileExtension = path.extname(fileUri.fsPath).toLowerCase();
       const isImage = imageExtensions.includes(fileExtension);
-      console.log('[GPT-AI] File extension:', fileExtension, '| Is image:', isImage);
+      console.log('[DK-AI] File extension:', fileExtension, '| Is image:', isImage);
 
       if (isImage) {
         // For image files, use vscode.open command directly
         // This automatically opens images in VS Code's image preview
-        console.log('[GPT-AI] Attempting to open image file with vscode.open command');
+        console.log('[DK-AI] Attempting to open image file with vscode.open command');
         try {
           await vscode.commands.executeCommand('vscode.open', fileUri);
-          console.log('[GPT-AI] Successfully opened image file:', fileUri.fsPath);
+          console.log('[DK-AI] Successfully opened image file:', fileUri.fsPath);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error('[GPT-AI] Failed to open image file:', errorMessage, error);
+          console.error('[DK-AI] Failed to open image file:', errorMessage, error);
           vscode.window.showErrorMessage(`Failed to open image file: ${errorMessage}`);
         }
       } else {
         // For text files, use openTextDocument
-        console.log('[GPT-AI] Attempting to open text file with openTextDocument');
+        console.log('[DK-AI] Attempting to open text file with openTextDocument');
         try {
           const doc = await vscode.workspace.openTextDocument(fileUri);
           await vscode.window.showTextDocument(doc);
-          console.log('[GPT-AI] Successfully opened file link:', fileUri.fsPath);
+          console.log('[DK-AI] Successfully opened file link:', fileUri.fsPath);
         } catch (error) {
           // If it's not a text file, try vscode.open command as fallback
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.log('[GPT-AI] openTextDocument failed, error:', errorMessage);
+          console.log('[DK-AI] openTextDocument failed, error:', errorMessage);
           if (errorMessage.includes('Binary') || errorMessage.includes('binary')) {
-            console.log('[GPT-AI] File is binary, trying vscode.open command as fallback');
+            console.log('[DK-AI] File is binary, trying vscode.open command as fallback');
             try {
               await vscode.commands.executeCommand('vscode.open', fileUri);
-              console.log('[GPT-AI] Opened binary file using vscode.open command');
+              console.log('[DK-AI] Opened binary file using vscode.open command');
             } catch (fallbackError) {
-              console.error('[GPT-AI] Failed to open file:', fallbackError);
+              console.error('[DK-AI] Failed to open file:', fallbackError);
               vscode.window.showErrorMessage(`Failed to open file: ${errorMessage}`);
             }
           } else {
@@ -2484,7 +2484,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('[GPT-AI] Failed to open file link:', errorMessage, error);
+      console.error('[DK-AI] Failed to open file link:', errorMessage, error);
       vscode.window.showErrorMessage(`Failed to open file: ${errorMessage}`);
     }
   }
@@ -2501,7 +2501,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const placeholderId = message.placeholderId as string;
     const targetFolder = (message.targetFolder as string) || 'images';
 
-    console.log(`[GPT-AI] Copying local image to workspace: ${absolutePath}`);
+    console.log(`[DK-AI] Copying local image to workspace: ${absolutePath}`);
 
     try {
       // Read the source image
@@ -2576,7 +2576,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         relativePath = './' + relativePath;
       }
 
-      console.log(`[GPT-AI] Local image copied successfully. Path: ${relativePath}`);
+      console.log(`[DK-AI] Local image copied successfully. Path: ${relativePath}`);
 
       webview.postMessage({
         type: 'localImageCopied',
@@ -2586,7 +2586,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to copy local image: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to copy local image: ${errorMessage}`);
       vscode.window.showErrorMessage(`Failed to copy image: ${errorMessage}`);
       webview.postMessage({
         type: 'localImageCopyError',
@@ -2609,7 +2609,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     try {
       const config = vscode.workspace.getConfiguration();
       await config.update(key, value, vscode.ConfigurationTarget.Global);
-      console.log(`[GPT-AI] Setting updated: ${key} = ${value}`);
+      console.log(`[DK-AI] Setting updated: ${key} = ${value}`);
 
       // Immediately notify webview of the setting change
       // This ensures the setting takes effect right away without waiting for next update
@@ -2621,7 +2621,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[GPT-AI] Failed to update setting: ${errorMessage}`);
+      console.error(`[DK-AI] Failed to update setting: ${errorMessage}`);
     }
   }
 
@@ -2637,7 +2637,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   private async applyEdit(content: string, document: vscode.TextDocument): Promise<boolean> {
     const unwrappedContent = this.unwrapFrontmatterFromWebview(content);
     console.log(
-      `[GPT-AI] applyEdit: rawLen=${content.length}, unwrappedLen=${unwrappedContent.length}`
+      `[DK-AI] applyEdit: rawLen=${content.length}, unwrappedLen=${unwrappedContent.length}`
     );
 
     // Normalize newlines of both strings before comparison to avoid phantom dirty states
@@ -2646,12 +2646,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const normalizedOld = document.getText().replace(/\r\n/g, '\n');
 
     if (normalizedNew === normalizedOld) {
-      console.log(`[GPT-AI] applyEdit: content already matches (length=${normalizedNew.length})`);
+      console.log(`[DK-AI] applyEdit: content already matches (length=${normalizedNew.length})`);
       return true;
     }
 
     console.log(
-      `[GPT-AI] applyEdit: content mismatch. New=${normalizedNew.length} chars, Old=${normalizedOld.length} chars`
+      `[DK-AI] applyEdit: content mismatch. New=${normalizedNew.length} chars, Old=${normalizedOld.length} chars`
     );
 
     // Mark this edit to prevent feedback loop
@@ -2674,7 +2674,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       if (!success) {
         const errorMsg = 'Failed to save changes. The file may be read-only or locked.';
         vscode.window.showErrorMessage(errorMsg);
-        console.error('[GPT-AI] applyEdit failed:', { uri: docUri });
+        console.error('[DK-AI] applyEdit failed:', { uri: docUri });
       }
       return success;
     } catch (error) {
@@ -2683,7 +2683,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           ? `Failed to save changes: ${error.message}`
           : 'Failed to save changes: Unknown error';
       vscode.window.showErrorMessage(errorMsg);
-      console.error('[GPT-AI] applyEdit exception:', error);
+      console.error('[DK-AI] applyEdit exception:', error);
       return false;
     }
   }
@@ -2756,7 +2756,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       try {
         await editFn();
       } catch (err) {
-        console.error(`[GPT-AI] Error in enqueued edit:`, err);
+        console.error(`[DK-AI] Error in enqueued edit:`, err);
       }
     });
 
@@ -2811,7 +2811,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
                 new CustomEvent('gptAiThemeChanged', { detail: { theme: resolved } })
               );
             } catch (err) {
-              console.error('[GPT-AI][THEME] Failed to apply theme:', err);
+              console.error('[DK-AI][THEME] Failed to apply theme:', err);
             }
           };
 

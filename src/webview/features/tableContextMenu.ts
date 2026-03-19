@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Google Docs-style table context menu for the WYSIWYG markdown editor.
  * Shows on right-click inside a table cell. Includes clipboard ops,
@@ -10,10 +10,7 @@
  */
 
 import type { Editor } from '@tiptap/core';
-import {
-  moveSelectedTableRow,
-  moveSelectedTableColumn,
-} from '../utils/tableOperationActions';
+import { moveSelectedTableRow, moveSelectedTableColumn } from '../utils/tableOperationActions';
 import { showLinkDialog } from './linkDialog';
 import { MenuBuilder } from '../utils/menuBuilder';
 import { modSymbol as mod } from '../utils/platform';
@@ -29,10 +26,7 @@ interface TableContextMenuController {
 
 // ── Sort helpers ────────────────────────────────────────────────────
 
-function sortTableByColumn(
-  editor: Editor,
-  ascending: boolean
-): void {
+function sortTableByColumn(editor: Editor, ascending: boolean): void {
   // Find the current column from selection
   const { $from } = editor.state.selection;
   let cellDepth = -1;
@@ -118,10 +112,7 @@ function sortTableByColumn(
 
   // Replace table content
   const schema = editor.state.schema;
-  const newTable = schema.nodes.table.create(
-    tableNode.attrs,
-    allRows
-  );
+  const newTable = schema.nodes.table.create(tableNode.attrs, allRows);
 
   tr.replaceWith(tableStart, tableEnd, newTable);
   editor.view.dispatch(tr);
@@ -170,16 +161,36 @@ export function createTableContextMenu(editor: Editor): TableContextMenuControll
   mb.addSectionLabel('Insert');
 
   // SVG icons for the 4 insert directions
-  const svgRowAbove = '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="8" width="14" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="8" x2="9" y2="16" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.2"/><path d="M9 2 L6 5 L12 5 Z" fill="currentColor"/></svg>';
-  const svgRowBelow = '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="2" x2="9" y2="10" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="6" x2="16" y2="6" stroke="currentColor" stroke-width="1.2"/><path d="M9 16 L6 13 L12 13 Z" fill="currentColor"/></svg>';
-  const svgColLeft = '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="8" y="2" width="8" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="12" y1="2" x2="12" y2="16" stroke="currentColor" stroke-width="1.2"/><path d="M2 9 L5 6 L5 12 Z" fill="currentColor"/></svg>';
-  const svgColRight = '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="2" width="8" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="6" y1="2" x2="6" y2="16" stroke="currentColor" stroke-width="1.2"/><path d="M16 9 L13 6 L13 12 Z" fill="currentColor"/></svg>';
+  const svgRowAbove =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="8" width="14" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="8" x2="9" y2="16" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.2"/><path d="M9 2 L6 5 L12 5 Z" fill="currentColor"/></svg>';
+  const svgRowBelow =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="2" x2="9" y2="10" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="6" x2="16" y2="6" stroke="currentColor" stroke-width="1.2"/><path d="M9 16 L6 13 L12 13 Z" fill="currentColor"/></svg>';
+  const svgColLeft =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="8" y="2" width="8" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="12" y1="2" x2="12" y2="16" stroke="currentColor" stroke-width="1.2"/><path d="M2 9 L5 6 L5 12 Z" fill="currentColor"/></svg>';
+  const svgColRight =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="2" width="8" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="6" y1="2" x2="6" y2="16" stroke="currentColor" stroke-width="1.2"/><path d="M16 9 L13 6 L13 12 Z" fill="currentColor"/></svg>';
 
   mb.addButtonRow([
-    { icon: svgRowAbove, title: 'Insert row above', action: () => editor.chain().focus().addRowBefore().run() },
-    { icon: svgRowBelow, title: 'Insert row below', action: () => editor.chain().focus().addRowAfter().run() },
-    { icon: svgColLeft, title: 'Insert column left', action: () => editor.chain().focus().addColumnBefore().run() },
-    { icon: svgColRight, title: 'Insert column right', action: () => editor.chain().focus().addColumnAfter().run() },
+    {
+      icon: svgRowAbove,
+      title: 'Insert row above',
+      action: () => editor.chain().focus().addRowBefore().run(),
+    },
+    {
+      icon: svgRowBelow,
+      title: 'Insert row below',
+      action: () => editor.chain().focus().addRowAfter().run(),
+    },
+    {
+      icon: svgColLeft,
+      title: 'Insert column left',
+      action: () => editor.chain().focus().addColumnBefore().run(),
+    },
+    {
+      icon: svgColRight,
+      title: 'Insert column right',
+      action: () => editor.chain().focus().addColumnAfter().run(),
+    },
   ]);
 
   mb.addSeparator();
@@ -187,10 +198,14 @@ export function createTableContextMenu(editor: Editor): TableContextMenuControll
   // ── MOVE ROW / COLUMN ──
   mb.addSectionLabel('Move');
 
-  const svgMoveUp = '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 3 L5 7 L13 7 Z" fill="currentColor"/><line x1="9" y1="7" x2="9" y2="15" stroke="currentColor" stroke-width="1.6"/></svg>';
-  const svgMoveDown = '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 15 L5 11 L13 11 Z" fill="currentColor"/><line x1="9" y1="3" x2="9" y2="11" stroke="currentColor" stroke-width="1.6"/></svg>';
-  const svgMoveLeft = '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 9 L7 5 L7 13 Z" fill="currentColor"/><line x1="7" y1="9" x2="15" y2="9" stroke="currentColor" stroke-width="1.6"/></svg>';
-  const svgMoveRight = '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M15 9 L11 5 L11 13 Z" fill="currentColor"/><line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const svgMoveUp =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 3 L5 7 L13 7 Z" fill="currentColor"/><line x1="9" y1="7" x2="9" y2="15" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const svgMoveDown =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 15 L5 11 L13 11 Z" fill="currentColor"/><line x1="9" y1="3" x2="9" y2="11" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const svgMoveLeft =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 9 L7 5 L7 13 Z" fill="currentColor"/><line x1="7" y1="9" x2="15" y2="9" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const svgMoveRight =
+    '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M15 9 L11 5 L11 13 Z" fill="currentColor"/><line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.6"/></svg>';
 
   mb.addButtonRow([
     {

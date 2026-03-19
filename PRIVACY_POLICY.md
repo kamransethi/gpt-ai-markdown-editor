@@ -94,4 +94,4 @@ The Extension is open source software. You can review the source code at: https:
 ---
 
 **GPT-AI**  
-© 2025-2026 GPT-AI. All rights reserved.
+© 2025-2026 DK-AI. All rights reserved.

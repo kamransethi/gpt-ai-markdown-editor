@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Extension-host AI text refinement using the VS Code Language Model API (vscode.lm).
  * Receives requests from the webview, calls the LM, and sends back refined text.
@@ -73,7 +73,8 @@ export async function handleAiRefineRequest(
       webview.postMessage({
         type: 'aiRefineResult',
         success: false,
-        error: 'No language model available. Please ensure GitHub Copilot is installed and signed in.',
+        error:
+          'No language model available. Please ensure GitHub Copilot is installed and signed in.',
         from,
         to,
       });
@@ -88,7 +89,11 @@ export async function handleAiRefineRequest(
     ];
 
     // Send the request
-    const response = await model.sendRequest(messages, {}, new vscode.CancellationTokenSource().token);
+    const response = await model.sendRequest(
+      messages,
+      {},
+      new vscode.CancellationTokenSource().token
+    );
 
     // Collect the streamed response
     let refinedText = '';
@@ -114,8 +119,7 @@ export async function handleAiRefineRequest(
 
     if (error instanceof vscode.LanguageModelError) {
       if (error.code === 'NoPermissions') {
-        errorMessage =
-          'Copilot access denied. Please check your GitHub Copilot subscription.';
+        errorMessage = 'Copilot access denied. Please check your GitHub Copilot subscription.';
       } else if (error.code === 'NotFound') {
         errorMessage = 'No suitable language model found.';
       } else {
@@ -125,7 +129,7 @@ export async function handleAiRefineRequest(
       errorMessage = error.message;
     }
 
-    console.error('[GPT-AI] AI Refine error:', error);
+    console.error('[DK-AI] AI Refine error:', error);
 
     webview.postMessage({
       type: 'aiRefineResult',

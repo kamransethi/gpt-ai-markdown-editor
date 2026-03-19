@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -148,7 +148,9 @@ export function activate(context: vscode.ExtensionContext) {
           }
 
           if (!docContent) {
-            stream.markdown('No markdown document is currently open in the Visual Markdown Editor.');
+            stream.markdown(
+              'No markdown document is currently open in the Visual Markdown Editor.'
+            );
             return;
           }
 
@@ -156,7 +158,9 @@ export function activate(context: vscode.ExtensionContext) {
           const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
           const model = models[0];
           if (!model) {
-            stream.markdown('No language model available. Please ensure GitHub Copilot is installed.');
+            stream.markdown(
+              'No language model available. Please ensure GitHub Copilot is installed.'
+            );
             return;
           }
 
@@ -176,7 +180,10 @@ export function activate(context: vscode.ExtensionContext) {
       context.subscriptions.push(participant);
     }
   } catch (error) {
-    console.warn('[GPT-AI] Chat participant registration failed (Copilot may not be available):', error);
+    console.warn(
+      '[DK-AI] Chat participant registration failed (Copilot may not be available):',
+      error
+    );
   }
 }
 

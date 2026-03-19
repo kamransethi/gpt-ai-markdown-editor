@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
@@ -53,7 +53,7 @@ export function getSelectionAsMarkdown(editor: Editor): string | null {
     // Fallback: Convert to basic markdown by analyzing node types
     return sliceToBasicMarkdown(editor, from, to);
   } catch (error) {
-    console.error('[GPT-AI] Error getting selection as markdown:', error);
+    console.error('[DK-AI] Error getting selection as markdown:', error);
     // Fallback to plain text
     return editor.state.doc.textBetween(from, to, '\n\n', '\n');
   }
@@ -137,7 +137,7 @@ export async function copyToClipboard(markdown: string): Promise<CopyResult> {
       await navigator.clipboard.writeText(markdown);
       return { success: true, markdown };
     } catch (err) {
-      console.warn('[GPT-AI] Clipboard API failed, trying fallback:', err);
+      console.warn('[DK-AI] Clipboard API failed, trying fallback:', err);
     }
   }
 
@@ -210,9 +210,9 @@ export async function copySelectionAsMarkdown(editor: Editor): Promise<CopyResul
   showCopyFeedback(result.success);
 
   if (result.success) {
-    console.log('[GPT-AI] Copied to clipboard:', markdown.substring(0, 100) + '...');
+    console.log('[DK-AI] Copied to clipboard:', markdown.substring(0, 100) + '...');
   } else {
-    console.error('[GPT-AI] Copy failed:', result.error);
+    console.error('[DK-AI] Copy failed:', result.error);
   }
 
   return result;

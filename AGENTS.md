@@ -235,7 +235,7 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 - Config key: `gptAiMarkdownEditor.developerMode` (boolean, default `true`).
 - For runtime failures that risk data loss (serialization/sync/save), always:
 
-  - log with `[GPT-AI]` context,
+  - log with `[DK-AI]` context,
   - surface a user-visible error notification,
   - include technical details in notifications only when Developer Mode is enabled.
 

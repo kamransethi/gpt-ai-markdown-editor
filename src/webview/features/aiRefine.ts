@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Webview-side AI text refinement module.
  * Sends selected text + mode to the extension host via postMessage,
@@ -28,7 +28,7 @@ export function requestAiRefine(
 ): void {
   const vscodeApi = (window as any).vscode;
   if (!vscodeApi) {
-    console.error('[GPT-AI] Cannot send AI refine: vscode API not available');
+    console.error('[DK-AI] Cannot send AI refine: vscode API not available');
     return;
   }
 
@@ -55,7 +55,7 @@ export function handleAiRefineResult(
   hideLoadingOverlay();
 
   if (!data.success || !data.refinedText) {
-    console.error('[GPT-AI] AI Refine failed:', data.error);
+    console.error('[DK-AI] AI Refine failed:', data.error);
     return;
   }
 
@@ -71,10 +71,12 @@ export function handleAiRefineResult(
     editor
       .chain()
       .focus()
-      .insertContentAt({ from: safeFrom, to: safeTo }, data.refinedText)
+      .insertContentAt({ from: safeFrom, to: safeTo }, data.refinedText, {
+        contentType: 'markdown',
+      })
       .run();
   } catch (error) {
-    console.error('[GPT-AI] Failed to apply AI refinement:', error);
+    console.error('[DK-AI] Failed to apply AI refinement:', error);
   }
 }
 

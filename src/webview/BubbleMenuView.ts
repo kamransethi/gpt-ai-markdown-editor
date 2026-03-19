@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  *
@@ -1101,11 +1101,11 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             const vscodeApi = window.vscode;
             if (vscodeApi && editor) {
               showImageInsertDialog(editor, vscodeApi).catch(error => {
-                console.error('[GPT-AI] Failed to show image insert dialog:', error);
+                console.error('[DK-AI] Failed to show image insert dialog:', error);
               });
             } else {
               console.warn(
-                '[GPT-AI] Cannot show image insert dialog: vscode API or editor not available'
+                '[DK-AI] Cannot show image insert dialog: vscode API or editor not available'
               );
             }
           },

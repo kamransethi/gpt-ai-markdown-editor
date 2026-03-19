@@ -84,11 +84,7 @@ export class MenuBuilder {
   }
 
   /** Add a menu item button. Returns the button element. */
-  addItem(
-    label: string,
-    action: () => void,
-    opts?: MenuItemOpts
-  ): HTMLButtonElement {
+  addItem(label: string, action: () => void, opts?: MenuItemOpts): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'context-menu-item' + (opts?.className ? ` ${opts.className}` : '');

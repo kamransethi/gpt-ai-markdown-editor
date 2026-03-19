@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025-2026 GPT-AI
+ * Copyright (c) 2025-2026 DK-AI
  *
  * Text context menu for the WYSIWYG markdown editor.
  * Shows on right-click outside of tables. Includes clipboard ops,
