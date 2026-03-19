@@ -30,11 +30,17 @@ const createMockEditor = () => {
     },
   }) as ChainProxy;
 
+  const canProxy = new Proxy({} as Record<string, unknown>, {
+    get: () => () => false,
+  });
+
   const editor = {
     chain: () => chainProxy,
+    can: () => canProxy,
     isActive,
     getAttributes: jest.fn(() => ({})),
     on: jest.fn(),
+    off: jest.fn(),
   } as unknown as Editor;
 
   return { editor, isActive, run };

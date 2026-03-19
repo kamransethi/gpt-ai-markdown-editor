@@ -668,6 +668,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'searchFiles':
         void this.handleSearchFiles(message, webview);
         break;
+      case 'getFileHeadings':
+        void this.handleGetFileHeadings(message, document, webview);
+        break;
       case 'openExternalLink':
         void this.handleOpenExternalLink(message);
         break;
@@ -2138,6 +2141,93 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         requestId,
         error: 'Failed to search files',
       });
+    }
+  }
+
+  /**
+   * Extract headings from a markdown file for cross-file heading linking.
+   * Uses regex-based extraction since TipTap is not available on the extension side.
+   */
+  private async handleGetFileHeadings(
+    message: { type: string; [key: string]: unknown },
+    document: vscode.TextDocument,
+    webview: vscode.Webview
+  ): Promise<void> {
+    try {
+      const filePath = message.filePath as string;
+      const requestId = (message.requestId as number) || 0;
+
+      if (!filePath) {
+        webview.postMessage({ type: 'fileHeadingsResult', headings: [], requestId });
+        return;
+      }
+
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders || workspaceFolders.length === 0) {
+        webview.postMessage({ type: 'fileHeadingsResult', headings: [], requestId });
+        return;
+      }
+
+      // Resolve the file path relative to the current document's directory
+      const docDir = path.dirname(document.uri.fsPath);
+      let resolvedPath: string;
+
+      if (path.isAbsolute(filePath)) {
+        resolvedPath = filePath;
+      } else {
+        // Try document-relative first
+        const docRelative = path.resolve(docDir, filePath);
+        const workspaceRelative = path.resolve(workspaceFolders[0].uri.fsPath, filePath);
+
+        const fs = await import('fs');
+        if (fs.existsSync(docRelative)) {
+          resolvedPath = docRelative;
+        } else if (fs.existsSync(workspaceRelative)) {
+          resolvedPath = workspaceRelative;
+        } else {
+          webview.postMessage({ type: 'fileHeadingsResult', headings: [], requestId });
+          return;
+        }
+      }
+
+      const fileUri = vscode.Uri.file(resolvedPath);
+      const fileContent = await vscode.workspace.fs.readFile(fileUri);
+      const text = Buffer.from(fileContent).toString('utf-8');
+
+      // Extract headings using regex (ATX-style headings: # Heading)
+      const headingRegex = /^(#{1,6})\s+(.+)$/gm;
+      const headings: Array<{ text: string; level: number; slug: string }> = [];
+      const existingSlugs = new Set<string>();
+      let match: RegExpExecArray | null;
+
+      while ((match = headingRegex.exec(text)) !== null) {
+        const level = match[1].length;
+        const headingText = match[2].replace(/\s*#+\s*$/, '').trim(); // Remove trailing # markers
+
+        // Generate GFM slug with duplicate handling
+        let slug = headingText
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^\w-]/g, '')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+
+        let finalSlug = slug;
+        let counter = 1;
+        while (existingSlugs.has(finalSlug)) {
+          finalSlug = `${slug}-${counter}`;
+          counter++;
+        }
+        existingSlugs.add(finalSlug);
+
+        headings.push({ text: headingText, level, slug: finalSlug });
+      }
+
+      webview.postMessage({ type: 'fileHeadingsResult', headings, requestId });
+    } catch (error) {
+      console.error('[GPT-AI] Error extracting file headings:', error);
+      const requestId = (message.requestId as number) || 0;
+      webview.postMessage({ type: 'fileHeadingsResult', headings: [], requestId });
     }
   }
 

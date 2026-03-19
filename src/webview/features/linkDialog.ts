@@ -46,6 +46,8 @@ let selectedAutocompleteIndex: number | null = null;
 let fileSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let fileSearchRequestId = 0;
 let actualLinkPath: string | null = null; // Store actual path separately from displayed value
+let pendingFileHeadingsRequestId = 0;
+let selectedFilePath: string | null = null; // The base file path before heading append
 
 /**
  * Generate GFM-style slug from heading text with duplicate handling
@@ -332,14 +334,21 @@ function updateAutocompleteDropdown(
 
         // Store actual path internally
         actualLinkPath = normalizedPath;
+        selectedFilePath = normalizedPath;
         // Show only filename in URL input
         urlInput.value = fileResult.filename;
         const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
         if (textInput) {
           textInput.value = formatFileLinkLabel(fileResult.filename);
         }
-        closeAutocomplete();
-        urlInput.focus();
+
+        // If it's a markdown file, request headings for cross-file heading linking
+        if (fileResult.filename.toLowerCase().endsWith('.md')) {
+          requestFileHeadings(fileResult.path);
+        } else {
+          closeAutocomplete();
+          urlInput.focus();
+        }
       };
     } else {
       const headingResult = result as HeadingResult;
@@ -534,6 +543,26 @@ function handleHeadingExtraction(editor: Editor, query: string, urlInput: HTMLIn
 }
 
 /**
+ * Request headings from an external markdown file via the extension
+ */
+function requestFileHeadings(filePath: string): void {
+  const requestId = ++pendingFileHeadingsRequestId;
+  const vscode = (window as any).vscode;
+  if (vscode && typeof vscode.postMessage === 'function') {
+    // Show loading state in autocomplete
+    if (autocompleteDropdown) {
+      autocompleteDropdown.innerHTML = '';
+      const loadingMsg = document.createElement('div');
+      loadingMsg.className = 'link-dialog-autocomplete-empty';
+      loadingMsg.textContent = 'Loading headings...';
+      autocompleteDropdown.appendChild(loadingMsg);
+      autocompleteDropdown.style.display = 'block';
+    }
+    vscode.postMessage({ type: 'getFileHeadings', filePath, requestId });
+  }
+}
+
+/**
  * Update mode and UI accordingly
  */
 function updateMode(mode: LinkMode, urlInput: HTMLInputElement): void {
@@ -574,6 +603,7 @@ function updateMode(mode: LinkMode, urlInput: HTMLInputElement): void {
 
   urlInput.value = '';
   actualLinkPath = null; // Clear stored path when mode changes
+  selectedFilePath = null;
   closeAutocomplete();
 
   // Don't show headings immediately - wait for input focus
@@ -777,12 +807,19 @@ export function createLinkDialog(): HTMLElement {
       }
 
       actualLinkPath = normalizedPath;
+      selectedFilePath = normalizedPath;
       urlInput.value = message.filename;
       const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
       if (textInput) {
         textInput.value = message.suggestedText || formatFileLinkLabel(message.filename);
       }
-      urlInput.focus(); // Keep focus in dialog
+
+      // If it's a markdown file, request headings for cross-file heading linking
+      if (message.filename.toLowerCase().endsWith('.md')) {
+        requestFileHeadings(message.path);
+      } else {
+        urlInput.focus(); // Keep focus in dialog
+      }
     }
   };
   window.addEventListener('message', messageListener);
@@ -1005,6 +1042,7 @@ export function hideLinkDialog(): void {
   closeAutocomplete();
   currentMode = 'url';
   actualLinkPath = null; // Clear stored path when dialog is hidden
+  selectedFilePath = null;
 
   linkDialogElement.classList.remove('visible');
   linkDialogElement.style.display = 'none';
@@ -1064,4 +1102,101 @@ export function handleFileSearchResults(results: FileSearchResult[], requestId: 
 
   console.log('[GPT-AI] Updating autocomplete dropdown with', results.length, 'results');
   updateAutocompleteDropdown(autocompleteDropdown, results, urlInput);
+}
+
+/**
+ * Handle headings extracted from an external markdown file
+ */
+export function handleFileHeadingsResult(
+  headings: HeadingResult[],
+  requestId: number
+): void {
+  if (requestId !== pendingFileHeadingsRequestId) {
+    return;
+  }
+
+  if (!autocompleteDropdown || !linkDialogElement) {
+    return;
+  }
+
+  const dropdown = autocompleteDropdown;
+  const urlInput = linkDialogElement.querySelector('#link-url-input') as HTMLInputElement;
+  if (!urlInput) {
+    return;
+  }
+
+  if (headings.length === 0) {
+    // No headings found — just close autocomplete, file link is already set
+    closeAutocomplete();
+    urlInput.focus();
+    return;
+  }
+
+  // Show a "skip" option first, then the headings
+  dropdown.innerHTML = '';
+  selectedAutocompleteIndex = null;
+
+  // "No heading (link to file only)" option
+  const skipItem = document.createElement('div');
+  skipItem.className = 'link-dialog-autocomplete-item link-dialog-autocomplete-item-file';
+  skipItem.setAttribute('role', 'option');
+  skipItem.setAttribute('data-index', '0');
+  skipItem.innerHTML = `
+    <div class="link-dialog-autocomplete-content">
+      <div class="link-dialog-autocomplete-filename" style="opacity: 0.7;">Link to file only (no heading)</div>
+    </div>
+  `;
+  skipItem.onclick = () => {
+    closeAutocomplete();
+    urlInput.focus();
+  };
+  skipItem.onmouseenter = () => {
+    selectedAutocompleteIndex = 0;
+    updateAutocompleteHighlight(dropdown);
+  };
+  dropdown.appendChild(skipItem);
+
+  // Individual headings
+  headings.forEach((heading, index) => {
+    const item = document.createElement('div');
+    item.className = 'link-dialog-autocomplete-item link-dialog-autocomplete-item-heading';
+    item.setAttribute('role', 'option');
+    item.setAttribute('data-index', (index + 1).toString());
+
+    const maxLen = 60;
+    const displayText =
+      heading.text.length > maxLen ? heading.text.substring(0, maxLen) + '...' : heading.text;
+
+    item.innerHTML = `
+      <div class="link-dialog-autocomplete-content">
+        <div class="link-dialog-autocomplete-filename" title="${escapeHtml(heading.text)}">
+          ${escapeHtml(displayText)}<span class="link-dialog-autocomplete-level"> : H${heading.level}</span>
+        </div>
+      </div>
+    `;
+
+    item.onclick = () => {
+      if (selectedFilePath) {
+        actualLinkPath = `${selectedFilePath}#${heading.slug}`;
+      }
+      const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
+      if (textInput && textInput.value === formatFileLinkLabel(urlInput.value)) {
+        textInput.value = heading.text;
+      }
+      closeAutocomplete();
+      urlInput.focus();
+    };
+
+    item.onmouseenter = () => {
+      selectedAutocompleteIndex = index + 1;
+      updateAutocompleteHighlight(dropdown);
+    };
+
+    dropdown.appendChild(item);
+  });
+
+  dropdown.style.display = 'block';
+  if ((dropdown as HTMLElement & { _updatePosition?: () => void })._updatePosition) {
+    (dropdown as HTMLElement & { _updatePosition: () => void })._updatePosition();
+  }
 }

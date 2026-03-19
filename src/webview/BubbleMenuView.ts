@@ -474,10 +474,26 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   };
 
   const styleItems = [
-    { label: 'Paragraph', action: () => setParagraph(), isActive: () => !Boolean(getEditor()?.isActive('heading')) },
-    { label: 'Heading 1', action: () => setHeading(1), isActive: () => Boolean(getEditor()?.isActive('heading', { level: 1 })) },
-    { label: 'Heading 2', action: () => setHeading(2), isActive: () => Boolean(getEditor()?.isActive('heading', { level: 2 })) },
-    { label: 'Heading 3', action: () => setHeading(3), isActive: () => Boolean(getEditor()?.isActive('heading', { level: 3 })) },
+    {
+      label: 'Paragraph',
+      action: () => setParagraph(),
+      isActive: () => !getEditor()?.isActive('heading'),
+    },
+    {
+      label: 'Heading 1',
+      action: () => setHeading(1),
+      isActive: () => Boolean(getEditor()?.isActive('heading', { level: 1 })),
+    },
+    {
+      label: 'Heading 2',
+      action: () => setHeading(2),
+      isActive: () => Boolean(getEditor()?.isActive('heading', { level: 2 })),
+    },
+    {
+      label: 'Heading 3',
+      action: () => setHeading(3),
+      isActive: () => Boolean(getEditor()?.isActive('heading', { level: 3 })),
+    },
   ];
 
   const styleItemButtons: Array<{ button: HTMLButtonElement; isActive: () => boolean }> = [];
@@ -759,6 +775,21 @@ function isTableBulletActive(editor: Editor): boolean {
  * @param editor - TipTap editor instance
  * @returns HTMLElement containing the toolbar
  */
+/** Current editor zoom level */
+let editorZoomLevel = 1;
+
+function setEditorZoom(level: number) {
+  editorZoomLevel = level;
+  const editorEl = document.querySelector('.markdown-editor') as HTMLElement;
+  if (editorEl) {
+    editorEl.style.zoom = String(level);
+  }
+}
+
+function getEditorZoom(): number {
+  return editorZoomLevel;
+}
+
 export function createFormattingToolbar(editor: Editor): HTMLElement {
   ensureCodiconFont();
 
@@ -1710,7 +1741,10 @@ export function createTableMenu(editor: Editor): HTMLElement {
     }
 
     const chain = editor.chain().focus();
-    if (typeof (chain as { setTextSelection?: (position: number) => unknown }).setTextSelection === 'function') {
+    if (
+      typeof (chain as { setTextSelection?: (position: number) => unknown }).setTextSelection ===
+      'function'
+    ) {
       (chain as { setTextSelection: (position: number) => { run: () => boolean } })
         .setTextSelection(pos)
         .run();

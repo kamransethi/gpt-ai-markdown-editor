@@ -231,6 +231,8 @@ body[data-theme="dark"] {
 
 .toc-pane.is-visible {
   width: 280px;
+  min-width: 180px;
+  max-width: 500px;
   opacity: 1;
   pointer-events: auto;
   border-left-width: 1px;
@@ -298,6 +300,34 @@ body[data-theme="dark"] {
 .toc-pane-level-4 { padding-left: 40px; }
 .toc-pane-level-5 { padding-left: 50px; }
 .toc-pane-level-6 { padding-left: 60px; }
+
+/* Heading-level colors to match document headings */
+.toc-pane-level-1 .toc-pane-item-text {
+  color: var(--md-heading-primary-color);
+  font-weight: 600;
+}
+
+.toc-pane-level-2 .toc-pane-item-text {
+  font-weight: 600;
+}
+
+/* Resize handle */
+.toc-pane-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  z-index: 3;
+  background: transparent;
+  transition: background-color 0.15s;
+}
+
+.toc-pane-resize-handle:hover,
+.toc-pane-resize-handle:active {
+  background-color: var(--md-focus);
+}
 
 .toc-pane-empty {
   color: var(--md-muted);
@@ -844,19 +874,19 @@ body {
 }
 
 /* Dark theme adjustments */
-:is(.vscode-dark, .vscode-high-contrast) .github-alert {
+body[data-theme="dark"] .github-alert {
   background-color: rgba(255, 255, 255, 0.05);
 }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-note { background-color: rgba(9, 105, 218, 0.15); border-left-color: #58a6ff; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-note .github-alert-label { color: #58a6ff; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-tip { background-color: rgba(26, 127, 55, 0.15); border-left-color: #3fb950; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-tip .github-alert-label { color: #3fb950; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-important { background-color: rgba(130, 80, 223, 0.15); border-left-color: #a371f7; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-important .github-alert-label { color: #a371f7; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-warning { background-color: rgba(154, 103, 0, 0.15); border-left-color: #d29922; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-warning .github-alert-label { color: #d29922; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-caution { background-color: rgba(207, 34, 46, 0.15); border-left-color: #f85149; }
-:is(.vscode-dark, .vscode-high-contrast) .github-alert-caution .github-alert-label { color: #f85149; }
+body[data-theme="dark"] .github-alert-note { background-color: rgba(9, 105, 218, 0.15); border-left-color: #58a6ff; }
+body[data-theme="dark"] .github-alert-note .github-alert-label { color: #58a6ff; }
+body[data-theme="dark"] .github-alert-tip { background-color: rgba(26, 127, 55, 0.15); border-left-color: #3fb950; }
+body[data-theme="dark"] .github-alert-tip .github-alert-label { color: #3fb950; }
+body[data-theme="dark"] .github-alert-important { background-color: rgba(130, 80, 223, 0.15); border-left-color: #a371f7; }
+body[data-theme="dark"] .github-alert-important .github-alert-label { color: #a371f7; }
+body[data-theme="dark"] .github-alert-warning { background-color: rgba(154, 103, 0, 0.15); border-left-color: #d29922; }
+body[data-theme="dark"] .github-alert-warning .github-alert-label { color: #d29922; }
+body[data-theme="dark"] .github-alert-caution { background-color: rgba(207, 34, 46, 0.15); border-left-color: #f85149; }
+body[data-theme="dark"] .github-alert-caution .github-alert-label { color: #f85149; }
 
 /* ============================================
      Horizontal Rule
@@ -1133,14 +1163,14 @@ body {
 }
 
 /* Dark theme overrides - brighter glow for better visibility */
-:is(.vscode-dark, .vscode-high-contrast) .image-wrapper:not(.image-caret-before):not(.image-caret-after):not(.image-caret-selected):not(.image-pending-delete) .markdown-image:hover {
+body[data-theme="dark"] .image-wrapper:not(.image-caret-before):not(.image-caret-after):not(.image-caret-selected):not(.image-pending-delete) .markdown-image:hover {
   box-shadow:
     0 0 0 2px var(--md-focus),
     0 0 16px var(--ui-glow),
     0 0 32px var(--ui-glow-dim);
 }
 
-:is(.vscode-dark, .vscode-high-contrast) .markdown-editor img.ProseMirror-selectednode {
+body[data-theme="dark"] .markdown-editor img.ProseMirror-selectednode {
   box-shadow:
     0 0 0 2px var(--md-focus),
     0 0 16px var(--ui-glow),
@@ -1171,14 +1201,14 @@ body {
   }
 }
 
-:is(.vscode-dark, .vscode-high-contrast) .markdown-editor img.ProseMirror-selectednode {
+body[data-theme="dark"] .markdown-editor img.ProseMirror-selectednode {
   animation: image-select-pulse-dark 0.25s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
 
-  .vscode-dark .markdown-editor img.ProseMirror-selectednode,
-  .vscode-high-contrast .markdown-editor img.ProseMirror-selectednode {
+  body[data-theme="dark"] .markdown-editor img.ProseMirror-selectednode,
+  body[data-theme="dark"] .markdown-editor img.ProseMirror-selectednode {
     animation: none;
   }
 }
@@ -1249,7 +1279,7 @@ body {
 }
 
 /* Dark theme for pending deletion */
-:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-pending-delete .markdown-image {
+body[data-theme="dark"] .image-wrapper.image-pending-delete .markdown-image {
   box-shadow:
     0 0 0 2px var(--md-error-fg),
     0 0 16px rgba(255, 100, 100, 0.6),
@@ -1298,14 +1328,14 @@ body {
     animation: none;
   }
 
-  .vscode-dark .image-wrapper.image-pending-delete .markdown-image,
-  .vscode-high-contrast .image-wrapper.image-pending-delete .markdown-image {
+  body[data-theme="dark"] .image-wrapper.image-pending-delete .markdown-image,
+  body[data-theme="dark"] .image-wrapper.image-pending-delete .markdown-image {
     animation: none;
   }
 }
 
 /* Dark theme for keyboard-selected images */
-:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-caret-selected .markdown-image {
+body[data-theme="dark"] .image-wrapper.image-caret-selected .markdown-image {
   box-shadow:
     0 0 0 2px var(--md-focus),
     0 0 16px var(--ui-glow),
@@ -1318,14 +1348,14 @@ body {
     animation: none;
   }
 
-  .vscode-dark .image-wrapper.image-caret-selected .markdown-image,
-  .vscode-high-contrast .image-wrapper.image-caret-selected .markdown-image {
+  body[data-theme="dark"] .image-wrapper.image-caret-selected .markdown-image,
+  body[data-theme="dark"] .image-wrapper.image-caret-selected .markdown-image {
     animation: none;
   }
 }
 
 /* Dark theme overrides for one-sided glows - brighter and more visible */
-:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-caret-before .markdown-image {
+body[data-theme="dark"] .image-wrapper.image-caret-before .markdown-image {
   border-left: 2px solid var(--md-focus);
   border-right: none;
   border-top: none;
@@ -1337,7 +1367,7 @@ body {
   /* Medium left glow */
 }
 
-:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-caret-after .markdown-image {
+body[data-theme="dark"] .image-wrapper.image-caret-after .markdown-image {
   border-right: 2px solid var(--md-focus);
   border-left: none;
   border-top: none;
@@ -1501,7 +1531,7 @@ figcaption {
 }
 
 /* Dark theme overrides for Mermaid highlight */
-:is(.vscode-dark, .vscode-high-contrast) .mermaid-split-wrapper.highlighted {
+body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   box-shadow:
     0 0 0 2px var(--md-focus),
     0 0 16px var(--ui-glow),
@@ -1600,53 +1630,49 @@ figcaption {
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   flex-wrap: wrap;
-  padding: 10px 12px;
+  padding: 4px 8px;
   background-color: var(--md-background);
   border-bottom: 1px solid var(--md-border);
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
 }
 
 .toolbar-group {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid color-mix(in srgb, var(--md-border) 84%, transparent);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--md-subtle-bg) 78%, transparent);
+  gap: 1px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .toolbar-button {
   background: transparent;
   border: 1px solid transparent;
   color: var(--md-foreground);
-  padding: 7px 8px;
-  border-radius: 9px;
+  padding: 4px 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 30px;
-  height: 32px;
+  transition: background-color 0.1s ease;
+  min-width: 26px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  opacity: 0.88;
+  gap: 4px;
+  opacity: 0.82;
 }
 
 .toolbar-button:hover {
   background-color: var(--md-hover-bg);
   opacity: 1;
-  transform: translateY(-1px);
 }
 
 .toolbar-button.active {
   background-color: var(--md-button-bg);
   color: var(--md-button-fg);
   opacity: 1;
-  box-shadow: 0 2px 4px var(--md-shadow-color);
 }
 
 .toolbar-button:disabled,
@@ -1658,10 +1684,10 @@ figcaption {
 
 .toolbar-separator {
   width: 1px;
-  height: 20px;
+  height: 18px;
   background-color: var(--md-border);
-  opacity: 0.5;
-  margin: 0 6px;
+  opacity: 0.4;
+  margin: 0 3px;
 }
 
 /* Toolbar Dropdown */
@@ -1684,16 +1710,16 @@ figcaption {
 }
 
 .toolbar-color-group .toolbar-button {
-  height: 32px;
+  height: 28px;
 }
 
 .toolbar-color-primary {
   position: relative;
-  width: 30px;
+  width: 26px;
 }
 
 .toolbar-color-toggle {
-  width: 22px;
+  width: 18px;
   border-left: 1px solid var(--md-border);
   border-radius: 0;
 }
@@ -1751,13 +1777,13 @@ figcaption {
 .toolbar-dropdown-menu {
   display: none;
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 4px);
   left: 0;
   background-color: var(--md-dropdown-bg);
   border: 1px solid var(--md-dropdown-border);
-  border-radius: 10px;
-  box-shadow: 0 10px 26px var(--md-shadow-color);
-  min-width: 220px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--md-shadow-color);
+  min-width: 200px;
   z-index: 1000;
   overflow: hidden;
 }
@@ -1767,13 +1793,14 @@ figcaption {
   align-items: center;
   gap: var(--ui-gap);
   width: 100%;
-  padding: 9px 12px;
+  padding: 6px 10px;
   background: transparent;
   border: none;
   color: var(--md-dropdown-fg);
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s;
+  font-size: 13px;
+  transition: background-color 0.1s;
 }
 
 .toolbar-dropdown-item:hover {
@@ -1804,11 +1831,11 @@ figcaption {
 
 .toolbar-dropdown-trigger {
   min-width: 0;
-  padding-inline: 10px;
+  padding-inline: 6px;
 }
 
 .toolbar-button-with-label {
-  padding-inline: 10px;
+  padding-inline: 6px;
 }
 
 .toolbar-button-label {
@@ -1828,8 +1855,17 @@ figcaption {
 }
 
 .toolbar-button .menu-caret {
-  min-width: 10px;
-  font-size: 10px;
+  min-width: 8px;
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.toolbar-dropdown-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  font-size: 13px;
   opacity: 0.7;
 }
 

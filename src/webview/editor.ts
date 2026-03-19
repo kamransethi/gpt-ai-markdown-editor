@@ -1324,6 +1324,14 @@ window.addEventListener('message', (event: MessageEvent) => {
         });
         break;
       }
+      case 'fileHeadingsResult': {
+        import('./features/linkDialog').then(({ handleFileHeadingsResult }) => {
+          const headings = message.headings as Array<{ text: string; level: number; slug: string }>;
+          const requestId = message.requestId as number;
+          handleFileHeadingsResult(headings, requestId);
+        });
+        break;
+      }
       case 'exportResult':
         if (message.success) {
           vscode.postMessage({ type: 'showInfo', message: 'Document exported successfully!' });

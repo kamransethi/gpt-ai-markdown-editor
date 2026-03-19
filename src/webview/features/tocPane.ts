@@ -74,6 +74,10 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
   pane.className = 'toc-pane';
   pane.setAttribute('aria-label', 'Table of contents');
 
+  // Resize handle on the left edge
+  const resizeHandle = document.createElement('div');
+  resizeHandle.className = 'toc-pane-resize-handle';
+
   const header = document.createElement('div');
   header.className = 'toc-pane-header';
   header.textContent = 'Contents';
@@ -81,9 +85,42 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
   const list = document.createElement('div');
   list.className = 'toc-pane-list';
 
+  pane.appendChild(resizeHandle);
   pane.appendChild(header);
   pane.appendChild(list);
   mount.appendChild(pane);
+
+  // Resize logic
+  let isResizing = false;
+  let startX = 0;
+  let startWidth = 0;
+
+  resizeHandle.addEventListener('mousedown', (e: MouseEvent) => {
+    e.preventDefault();
+    isResizing = true;
+    startX = e.clientX;
+    startWidth = pane.offsetWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    // Dragging left increases width, dragging right decreases
+    const delta = startX - e.clientX;
+    const newWidth = Math.max(180, Math.min(500, startWidth + delta));
+    pane.style.width = `${newWidth}px`;
+  };
+
+  const onMouseUp = () => {
+    if (!isResizing) return;
+    isResizing = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
 
   let visible = false;
 
@@ -103,6 +140,8 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
     },
     isVisible: () => visible,
     destroy: () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
       pane.remove();
     },
   };
