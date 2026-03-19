@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/core';
-import { findTable, moveTableColumn, moveTableRow, TableMap } from '@tiptap/pm/tables';
+import { findTable, moveTableColumn, moveTableRow, TableMap } from 'prosemirror-tables';
 
 function getSelectedTableCellLocation(editor: Editor): {
   tablePos: number;
@@ -58,7 +58,6 @@ export function moveSelectedTableRow(editor: Editor, direction: 'up' | 'down'): 
   return moveTableRow({
     from: location.rowIndex,
     to: targetIndex,
-    pos: location.tablePos,
   })(editor.state, editor.view.dispatch, editor.view);
 }
 
@@ -77,6 +76,5 @@ export function moveSelectedTableColumn(editor: Editor, direction: 'left' | 'rig
   return moveTableColumn({
     from: location.columnIndex,
     to: targetIndex,
-    pos: location.tablePos,
   })(editor.state, editor.view.dispatch, editor.view);
 }

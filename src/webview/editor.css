@@ -1,71 +1,187 @@
 /* ============================================
-   Theme-Aware Color System
-   All colors derive from VS Code theme
+   Deterministic Color System
+   Light theme (default) and dark theme
+   No VS Code theme dependency
    ============================================ */
 
 body {
-  /* Base colors from VS Code theme */
-  --md-foreground: var(--vscode-editor-foreground);
-  --md-background: var(--vscode-editor-background);
-  --md-border: var(--vscode-editorWidget-border);
+  /* Base colors — Light theme */
+  --md-foreground: #1a1a1a;
+  --md-background: #ffffff;
+  --md-border: #e0e0e0;
 
-  /* Derived shades - use VS Code semantic colors */
-  --md-muted: var(--vscode-descriptionForeground);
-  --md-subtle-bg: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-  --md-hover-bg: var(--vscode-list-hoverBackground);
+  /* Derived shades */
+  --md-muted: #6b6b6b;
+  --md-subtle-bg: #f7f7f7;
+  --md-hover-bg: rgba(0, 0, 0, 0.04);
 
   /* Semantic colors for markdown elements */
-  --md-code-bg: var(--vscode-textCodeBlock-background, var(--md-subtle-bg));
-  --md-code-fg: var(--vscode-textPreformat-foreground, var(--md-foreground));
-  --md-quote-border: var(--vscode-textBlockQuote-border, var(--md-muted));
-  --md-quote-bg: var(--vscode-textBlockQuote-background);
-  --md-link-fg: var(--vscode-textLink-foreground);
-  --md-link-active-fg: var(--vscode-textLink-activeForeground);
+  --md-code-bg: #f5f5f5;
+  --md-code-fg: #1a1a1a;
+  --md-code-inline-bg: #f0f0f0;
+  --md-code-inline-fg: #1a1a1a;
+  --md-quote-border: #d0d0d0;
+  --md-quote-bg: #fafafa;
+  --md-link-fg: #1a73e8;
+  --md-link-active-fg: #1558b0;
+  --md-mermaid-edit-bg: #f7f7f7;
 
   /* State colors */
-  --md-focus: var(--vscode-focusBorder);
-  --md-selection: var(--vscode-editor-selectionBackground);
+  --md-focus: #1a73e8;
+  --md-selection: rgba(26, 115, 232, 0.15);
 
   /* Dropdown UI colors */
-  --md-dropdown-bg: var(--vscode-dropdown-background);
-  --md-dropdown-fg: var(--vscode-dropdown-foreground);
-  --md-dropdown-border: var(--vscode-dropdown-border);
+  --md-dropdown-bg: #ffffff;
+  --md-dropdown-fg: #1a1a1a;
+  --md-dropdown-border: #dadce0;
 
   /* Button UI colors */
-  --md-button-bg: var(--vscode-button-background);
-  --md-button-fg: var(--vscode-button-foreground);
-  --md-button-hover-bg: var(--vscode-button-hoverBackground);
-  --md-heading-primary-color: var(--vscode-textLink-foreground);
+  --md-button-bg: #1a73e8;
+  --md-button-fg: #ffffff;
+  --md-button-hover-bg: #1558b0;
+  --md-button-secondary-bg: #f1f3f4;
+  --md-button-secondary-fg: #3c4043;
+  --md-heading-primary-color: #1a73e8;
+
+  /* Menu colors */
+  --md-menu-bg: #ffffff;
+  --md-menu-fg: #1a1a1a;
+  --md-menu-border: #dadce0;
+  --md-menu-hover-bg: #f1f3f4;
+  --md-menu-selection-bg: #e8f0fe;
+  --md-menu-selection-fg: #1a73e8;
+  --md-menu-separator: #e0e0e0;
+
+  /* Input colors */
+  --md-input-bg: #ffffff;
+  --md-input-fg: #1a1a1a;
+  --md-input-placeholder: #9aa0a6;
+
+  /* Error/status colors */
+  --md-error-fg: #d93025;
+  --md-success-fg: #188038;
+
+  /* Widget shadow */
+  --md-shadow-color: rgba(0, 0, 0, 0.12);
+
+  /* Shared disabled styling */
+  --md-disabled-opacity: 0.4;
+
+  /* UI sizing tokens */
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-font-sm: 12px;
+  --ui-font-base: 13px;
+  --ui-gap: 8px;
+
+  /* Image glow colors */
+  --ui-glow: rgba(26, 115, 232, 0.4);
+  --ui-glow-dim: rgba(26, 115, 232, 0.2);
+
+  /* Elevation shadows */
+  --ui-shadow-sm: 0 2px 8px var(--md-shadow-color);
+  --ui-shadow-lg: 0 6px 18px var(--md-shadow-color);
 
   /* Typography and layout */
-  --md-base-size: var(--vscode-editor-font-size, 14px);
+  --md-base-size: 14px;
+  --md-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --md-mono-font: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', Menlo, Courier, monospace;
 
-  /* Default Syntax Highlighting (Forced Dark) */
-  --hljs-color-default: var(--vscode-editor-foreground);
-  --hljs-color-keyword: var(--vscode-terminal-ansiMagenta, var(--vscode-textLink-foreground));
-  --hljs-color-title: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
-  --hljs-color-literal: var(--vscode-terminal-ansiCyan, var(--vscode-textLink-foreground));
-  --hljs-color-string: var(--vscode-terminal-ansiGreen, var(--vscode-textLink-foreground));
-  --hljs-color-symbol: var(--vscode-terminal-ansiYellow, var(--vscode-textLink-foreground));
-  --hljs-color-comment: var(--vscode-descriptionForeground);
-  --hljs-color-tag: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
-  --hljs-color-subst: var(--vscode-editor-foreground);
-  --hljs-color-bullet: var(--vscode-terminal-ansiYellow, var(--vscode-textLink-foreground));
-  --hljs-color-addition-fg: var(--vscode-terminal-ansiGreen, var(--vscode-editor-foreground));
-  --hljs-color-addition-bg: color-mix(in srgb, var(--vscode-terminal-ansiGreen, #2ea043) 18%, transparent);
-  --hljs-color-deletion-fg: var(--vscode-terminal-ansiRed, var(--vscode-editor-foreground));
-  --hljs-color-deletion-bg: color-mix(in srgb, var(--vscode-terminal-ansiRed, #f85149) 18%, transparent);
+  /* Syntax Highlighting */
+  --hljs-color-default: #1a1a1a;
+  --hljs-color-keyword: #d73a49;
+  --hljs-color-title: #6f42c1;
+  --hljs-color-literal: #005cc5;
+  --hljs-color-string: #22863a;
+  --hljs-color-symbol: #e36209;
+  --hljs-color-comment: #6a737d;
+  --hljs-color-tag: #22863a;
+  --hljs-color-subst: #1a1a1a;
+  --hljs-color-bullet: #e36209;
+  --hljs-color-addition-fg: #22863a;
+  --hljs-color-addition-bg: rgba(34, 134, 58, 0.15);
+  --hljs-color-deletion-fg: #d73a49;
+  --hljs-color-deletion-bg: rgba(215, 58, 73, 0.15);
 
   color: var(--md-foreground);
   background-color: var(--md-background);
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  font-family: var(--md-font-family);
 }
 
-body.vscode-dark,
-body.vscode-high-contrast {
-  --md-heading-primary-color: var(--vscode-textLink-foreground);
+/* ============================================
+   Dark Theme
+   ============================================ */
+body[data-theme="dark"] {
+  --md-foreground: #e8eaed;
+  --md-background: #1e1e1e;
+  --md-border: #3c3c3c;
+
+  --md-muted: #9aa0a6;
+  --md-subtle-bg: #252526;
+  --md-hover-bg: rgba(255, 255, 255, 0.06);
+
+  --md-code-bg: #2d2d2d;
+  --md-code-fg: #e8eaed;
+  --md-code-inline-bg: #353535;
+  --md-code-inline-fg: #e8eaed;
+  --md-quote-border: #5f6368;
+  --md-quote-bg: #252526;
+  --md-link-fg: #8ab4f8;
+  --md-link-active-fg: #aecbfa;
+  --md-mermaid-edit-bg: #252526;
+
+  --md-focus: #8ab4f8;
+  --md-selection: rgba(138, 180, 248, 0.2);
+
+  --md-dropdown-bg: #2d2d2d;
+  --md-dropdown-fg: #e8eaed;
+  --md-dropdown-border: #5f6368;
+
+  --md-button-bg: #8ab4f8;
+  --md-button-fg: #1e1e1e;
+  --md-button-hover-bg: #aecbfa;
+  --md-button-secondary-bg: #3c3c3c;
+  --md-button-secondary-fg: #e8eaed;
+  --md-heading-primary-color: #8ab4f8;
+
+  --md-menu-bg: #2d2d2d;
+  --md-menu-fg: #e8eaed;
+  --md-menu-border: #5f6368;
+  --md-menu-hover-bg: #3c3c3c;
+  --md-menu-selection-bg: rgba(138, 180, 248, 0.15);
+  --md-menu-selection-fg: #8ab4f8;
+  --md-menu-separator: #5f6368;
+
+  --md-input-bg: #3c3c3c;
+  --md-input-fg: #e8eaed;
+  --md-input-placeholder: #9aa0a6;
+
+  --md-error-fg: #f28b82;
+  --md-success-fg: #81c995;
+
+  --md-shadow-color: rgba(0, 0, 0, 0.4);
+
+  --ui-glow: rgba(138, 180, 248, 0.5);
+  --ui-glow-dim: rgba(138, 180, 248, 0.25);
+
+  /* Dark syntax highlighting */
+  --hljs-color-default: #e8eaed;
+  --hljs-color-keyword: #c792ea;
+  --hljs-color-title: #82aaff;
+  --hljs-color-literal: #89ddff;
+  --hljs-color-string: #c3e88d;
+  --hljs-color-symbol: #ffcb6b;
+  --hljs-color-comment: #676e95;
+  --hljs-color-tag: #f07178;
+  --hljs-color-subst: #e8eaed;
+  --hljs-color-bullet: #ffcb6b;
+  --hljs-color-addition-fg: #c3e88d;
+  --hljs-color-addition-bg: rgba(195, 232, 141, 0.15);
+  --hljs-color-deletion-fg: #f07178;
+  --hljs-color-deletion-bg: rgba(240, 113, 120, 0.15);
 }
 
 .editor-layout {
@@ -91,10 +207,10 @@ body.vscode-high-contrast {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-gap);
   padding: 8px 30px 16px;
   color: var(--md-muted);
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   letter-spacing: 0.01em;
 }
 
@@ -125,7 +241,7 @@ body.vscode-high-contrast {
   top: 0;
   z-index: 2;
   padding: 10px 12px;
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 600;
@@ -147,7 +263,7 @@ body.vscode-high-contrast {
   background: transparent;
   color: var(--md-foreground);
   text-align: left;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   padding: 6px 10px;
   cursor: pointer;
 }
@@ -157,8 +273,8 @@ body.vscode-high-contrast {
 }
 
 .toc-pane-item.is-active {
-  background-color: var(--vscode-list-inactiveSelectionBackground, var(--md-hover-bg));
-  color: var(--vscode-list-inactiveSelectionForeground, var(--md-foreground));
+  background-color: var(--md-hover-bg);
+  color: var(--md-foreground);
   box-shadow: inset 3px 0 0 var(--md-focus);
 }
 
@@ -173,36 +289,19 @@ body.vscode-high-contrast {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--ui-font-base);
 }
 
-.toc-pane-level-1 {
-  padding-left: 10px;
-}
-
-.toc-pane-level-2 {
-  padding-left: 20px;
-}
-
-.toc-pane-level-3 {
-  padding-left: 30px;
-}
-
-.toc-pane-level-4 {
-  padding-left: 40px;
-}
-
-.toc-pane-level-5 {
-  padding-left: 50px;
-}
-
-.toc-pane-level-6 {
-  padding-left: 60px;
-}
+.toc-pane-level-1 { padding-left: 10px; }
+.toc-pane-level-2 { padding-left: 20px; }
+.toc-pane-level-3 { padding-left: 30px; }
+.toc-pane-level-4 { padding-left: 40px; }
+.toc-pane-level-5 { padding-left: 50px; }
+.toc-pane-level-6 { padding-left: 60px; }
 
 .toc-pane-empty {
   color: var(--md-muted);
-  font-size: 13px;
+  font-size: var(--ui-font-base);
   padding: 10px;
 }
 
@@ -233,7 +332,7 @@ body.vscode-high-contrast {
   content: attr(data-placeholder);
   float: left;
   height: 0;
-  color: var(--vscode-input-placeholderForeground, var(--md-muted));
+  color: var(--md-input-placeholder);
   pointer-events: none;
 }
 
@@ -247,6 +346,7 @@ body.vscode-high-contrast {
 
 .markdown-editor :is(h1, h2, h3, h4, h5, h6) {
   line-height: 1.25;
+  margin: 0.75em 0 0.35em;
 }
 
 .markdown-editor h1 {
@@ -278,10 +378,6 @@ body.vscode-high-contrast {
 .markdown-editor h6 {
   font-size: calc(var(--md-base-size) * 1.05);
   line-height: 1.2;
-}
-
-.markdown-editor :is(h1, h2, h3, h4, h5, h6) {
-  margin: 0.75em 0 0.35em;
 }
 
 /* ============================================
@@ -389,7 +485,7 @@ body.vscode-high-contrast {
   background-color: var(--md-code-bg) !important;
   border: 1px solid var(--md-border);
   padding: 20px;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   overflow-x: auto;
   margin: 1em 0;
   line-height: 1.5;
@@ -406,11 +502,11 @@ body.vscode-high-contrast {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--ui-gap);
   padding: 8px 12px;
   border: 1px solid var(--md-border);
   border-bottom: none;
-  border-radius: 6px 6px 0 0;
+  border-radius: var(--ui-radius-md) var(--ui-radius-md) 0 0;
   background: var(--md-subtle-bg);
 }
 
@@ -420,9 +516,9 @@ body.vscode-high-contrast {
   border: 1px solid var(--md-border);
   background: var(--md-background);
   color: var(--md-foreground);
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   padding: 4px 8px;
 }
 
@@ -438,7 +534,7 @@ body.vscode-high-contrast {
 }
 
 .mermaid-code-title {
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -449,7 +545,7 @@ body.vscode-high-contrast {
   background: none;
   padding: 0;
   color: inherit;
-  font-size: calc(var(--vscode-editor-font-size, var(--md-base-size)) * 0.95);
+  font-size: calc(var(--md-base-size) * 0.95);
 
 }
 
@@ -458,7 +554,7 @@ body.vscode-high-contrast {
   position: relative;
   background-color: var(--md-code-bg) !important;
   border: 1px solid var(--md-border);
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   padding: 20px;
   margin: 1em 0;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
@@ -603,7 +699,7 @@ body.vscode-high-contrast {
   background-color: rgba(0, 0, 0, 0.05);
   padding: 16px 20px;
   margin: 1em 0;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   font-style: normal;
   color: var(--md-foreground);
   line-height: 1.58;
@@ -618,7 +714,7 @@ body.vscode-high-contrast {
 .markdown-editor .github-alert-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-gap);
   margin-bottom: 0;
   padding-bottom: 8px;
   /* Visual spacing kept inside non-editable header */
@@ -654,7 +750,7 @@ body.vscode-high-contrast {
 
 body {
   font-family:
-    var(--vscode-font-family),
+    var(--md-font-family),
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
@@ -662,9 +758,9 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-  font-size: var(--vscode-editor-font-size);
+  font-size: var(--md-base-size);
   line-height: var(--gptai-line-spacing);
-  color: var(--vscode-editor-foreground);
+  color: var(--md-foreground);
 }
 
 .markdown-editor .github-alert-content {
@@ -748,65 +844,19 @@ body {
 }
 
 /* Dark theme adjustments */
-.vscode-dark .github-alert,
-.vscode-high-contrast .github-alert {
+:is(.vscode-dark, .vscode-high-contrast) .github-alert {
   background-color: rgba(255, 255, 255, 0.05);
 }
-
-.vscode-dark .github-alert-note,
-.vscode-high-contrast .github-alert-note {
-  background-color: rgba(9, 105, 218, 0.15);
-  border-left-color: #58a6ff;
-}
-
-.vscode-dark .github-alert-note .github-alert-label,
-.vscode-high-contrast .github-alert-note .github-alert-label {
-  color: #58a6ff;
-}
-
-.vscode-dark .github-alert-tip,
-.vscode-high-contrast .github-alert-tip {
-  background-color: rgba(26, 127, 55, 0.15);
-  border-left-color: #3fb950;
-}
-
-.vscode-dark .github-alert-tip .github-alert-label,
-.vscode-high-contrast .github-alert-tip .github-alert-label {
-  color: #3fb950;
-}
-
-.vscode-dark .github-alert-important,
-.vscode-high-contrast .github-alert-important {
-  background-color: rgba(130, 80, 223, 0.15);
-  border-left-color: #a371f7;
-}
-
-.vscode-dark .github-alert-important .github-alert-label,
-.vscode-high-contrast .github-alert-important .github-alert-label {
-  color: #a371f7;
-}
-
-.vscode-dark .github-alert-warning,
-.vscode-high-contrast .github-alert-warning {
-  background-color: rgba(154, 103, 0, 0.15);
-  border-left-color: #d29922;
-}
-
-.vscode-dark .github-alert-warning .github-alert-label,
-.vscode-high-contrast .github-alert-warning .github-alert-label {
-  color: #d29922;
-}
-
-.vscode-dark .github-alert-caution,
-.vscode-high-contrast .github-alert-caution {
-  background-color: rgba(207, 34, 46, 0.15);
-  border-left-color: #f85149;
-}
-
-.vscode-dark .github-alert-caution .github-alert-label,
-.vscode-high-contrast .github-alert-caution .github-alert-label {
-  color: #f85149;
-}
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-note { background-color: rgba(9, 105, 218, 0.15); border-left-color: #58a6ff; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-note .github-alert-label { color: #58a6ff; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-tip { background-color: rgba(26, 127, 55, 0.15); border-left-color: #3fb950; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-tip .github-alert-label { color: #3fb950; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-important { background-color: rgba(130, 80, 223, 0.15); border-left-color: #a371f7; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-important .github-alert-label { color: #a371f7; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-warning { background-color: rgba(154, 103, 0, 0.15); border-left-color: #d29922; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-warning .github-alert-label { color: #d29922; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-caution { background-color: rgba(207, 34, 46, 0.15); border-left-color: #f85149; }
+:is(.vscode-dark, .vscode-high-contrast) .github-alert-caution .github-alert-label { color: #f85149; }
 
 /* ============================================
      Horizontal Rule
@@ -831,11 +881,14 @@ body {
      ============================================ */
 
 .markdown-editor table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: auto;
   max-width: 100%;
   margin: 1em 0;
   overflow: hidden;
+  border-radius: var(--ui-radius-md);
+  border: 1px solid var(--md-border);
 }
 
 .ProseMirror th,
@@ -844,11 +897,23 @@ body {
   border-bottom: 1px solid var(--md-border);
   border-left: none;
   border-right: none;
-  border-top: 1px solid var(--md-border);
+  border-top: none;
   padding: var(--gptai-table-cell-spacing, 0.1em) var(--gptai-table-cell-horizontal-spacing, 0.2em);
   margin: 0;
   box-sizing: border-box;
   position: relative;
+}
+
+/* First row has no top border (outer border handles it) */
+.ProseMirror tr:first-child > th,
+.ProseMirror tr:first-child > td {
+  border-top: none;
+}
+
+/* Last row has no bottom border (outer border handles it) */
+.ProseMirror tr:last-child > th,
+.ProseMirror tr:last-child > td {
+  border-bottom: none;
 }
 
 .ProseMirror tr > th:not(:last-child),
@@ -856,14 +921,10 @@ body {
   border-right: 1px solid var(--gptai-table-vertical-border, rgba(127, 127, 127, 0.2));
 }
 
-.ProseMirror tr > th:first-child,
-.ProseMirror tr > td:first-child {
-  border-left: 1px solid var(--gptai-table-vertical-border, rgba(127, 127, 127, 0.35));
-}
-
-.ProseMirror tr > th:last-child,
-.ProseMirror tr > td:last-child {
-  border-right: 1px solid var(--gptai-table-vertical-border, rgba(127, 127, 127, 0.35));
+/* Inner rows get top border to separate from previous row */
+.ProseMirror tr:not(:first-child) > th,
+.ProseMirror tr:not(:first-child) > td {
+  border-top: 1px solid var(--md-border);
 }
 
 .markdown-editor table th {
@@ -884,7 +945,7 @@ body {
   position: relative;
   overflow-x: auto;
   margin: 1em 0;
-  padding: 28px 0 0 34px;
+  padding: 0;
 }
 
 .markdown-editor table p {
@@ -905,168 +966,17 @@ body {
   pointer-events: none;
 }
 
-.table-wrapper-interactive .table-interaction-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.table-wrapper-interactive .table-handle-corner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 26px;
-  height: 22px;
-  border: 1px solid var(--md-border);
-  border-radius: 6px 0 0 0;
-  background: color-mix(in srgb, var(--md-subtle-bg) 88%, transparent);
-}
-
-.table-wrapper-interactive .table-column-handles {
-  position: absolute;
-  top: 0;
-  left: 26px;
-  right: 0;
-  height: 22px;
-  display: flex;
-  pointer-events: auto;
-}
-
-.table-wrapper-interactive .table-row-handles {
-  position: absolute;
-  top: 22px;
-  left: 0;
-  width: 26px;
-  display: flex;
-  flex-direction: column;
-  pointer-events: auto;
-}
-
-.table-wrapper-interactive .table-column-handle,
-.table-wrapper-interactive .table-row-handle,
-.table-wrapper-interactive .table-column-extend,
-.table-wrapper-interactive .table-row-extend {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.table-wrapper-interactive.is-reordering .table-axis-grip {
-  cursor: grabbing;
-}
-
-.table-wrapper-interactive .is-drop-target {
-  background: color-mix(in srgb, var(--md-focus) 10%, var(--md-subtle-bg));
-  box-shadow: inset 0 0 0 1px var(--md-focus);
-}
-
-.table-wrapper-interactive .table-axis-selector,
-.table-wrapper-interactive .table-axis-grip,
-.table-wrapper-interactive .table-axis-extend {
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--md-foreground);
-  border-radius: 4px;
-  font: inherit;
-  font-size: 10px;
-  line-height: 1;
-  padding: 0;
-  cursor: pointer;
-}
-
-.table-wrapper-interactive .table-axis-selector {
-  position: absolute;
-  inset: 0;
-  border-radius: 0;
-  font-size: 0;
-}
-
-.table-wrapper-interactive .table-column-handle,
-.table-wrapper-interactive .table-column-extend {
-  min-height: 22px;
-  border-bottom: 1px solid var(--md-border);
-}
-
-.table-wrapper-interactive .table-row-handle,
-.table-wrapper-interactive .table-row-extend {
-  border-right: 1px solid var(--md-border);
-}
-
-.table-wrapper-interactive .table-column-handle:hover,
-.table-wrapper-interactive .table-row-handle:hover,
-.table-wrapper-interactive .table-column-extend:hover,
-.table-wrapper-interactive .table-row-extend:hover {
-  background: color-mix(in srgb, var(--md-hover-bg) 70%, transparent);
-}
-
-.table-wrapper-interactive .table-axis-grip,
-.table-wrapper-interactive .table-axis-extend {
-  position: relative;
-  z-index: 1;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--md-border);
-  background: var(--md-background);
-  color: var(--md-muted);
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--vscode-widget-shadow, #000) 45%, transparent);
-}
-
-.table-wrapper-interactive .table-axis-grip:hover,
-.table-wrapper-interactive .table-axis-extend:hover,
-.table-wrapper-interactive .table-column-handle:hover .table-axis-grip,
-.table-wrapper-interactive .table-row-handle:hover .table-axis-grip {
-  background: var(--md-background);
-  color: var(--md-foreground);
-  border-color: color-mix(in srgb, var(--md-focus) 45%, var(--md-border));
-}
-
-.table-wrapper-interactive .table-axis-grip {
-  cursor: grab;
-  font-size: 11px;
-}
-
-.table-wrapper-interactive .table-axis-grip:active {
-  cursor: grabbing;
-}
-
-.table-wrapper-interactive .table-axis-extend {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.table-wrapper-interactive .table-column-extend {
-  width: 24px;
-  justify-content: center;
-}
-
-.table-wrapper-interactive .table-row-extend {
-  height: 24px;
-  align-items: center;
-}
-
 /* Table resize handle */
 .markdown-editor .column-resize-handle {
   position: absolute;
-  right: -6px;
-  /* Extend further right for easier hovering */
+  right: -2px;
   top: 0;
   bottom: 0;
-  width: 12px;
-  /* Increased from 4px to 12px for easier hovering */
+  width: 4px;
   cursor: col-resize !important;
-  /* Force cursor to override cell cursor */
   background-color: transparent;
-  /* Invisible by default */
   z-index: 20;
-  /* Higher z-index to ensure it's on top */
-  pointer-events: auto;
-  /* Ensure handle receives mouse events */
+  pointer-events: none;
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
@@ -1074,7 +984,10 @@ body {
   background-color: var(--md-focus);
   cursor: col-resize !important;
   opacity: 0.3;
-  /* Visible on hover for better UX */
+}
+
+.markdown-editor .ProseMirror.resize-cursor {
+  cursor: col-resize;
 }
 
 /* Row resize handle (if supported by TableKit) */
@@ -1119,7 +1032,7 @@ body {
   height: auto;
   display: block;
   margin: 0;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   cursor: pointer;
 }
 
@@ -1133,8 +1046,8 @@ body {
   outline-offset: 2px;
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 12px rgba(0, 122, 204, 0.4),
-    0 0 24px rgba(0, 122, 204, 0.2);
+    0 0 12px var(--ui-glow),
+    0 0 24px var(--ui-glow-dim);
   position: relative;
   transition: box-shadow 0.15s ease, outline 0.15s ease;
 }
@@ -1155,7 +1068,7 @@ body {
   bottom: -10px;
   left: -6px;
   right: -6px;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   background: var(--md-selection);
   opacity: 0.35;
 }
@@ -1182,8 +1095,8 @@ body {
   outline-offset: 2px;
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 12px rgba(0, 122, 204, 0.4),
-    0 0 24px rgba(0, 122, 204, 0.2);
+    0 0 12px var(--ui-glow),
+    0 0 24px var(--ui-glow-dim);
   position: relative;
   animation: image-select-pulse 0.25s ease-out;
 }
@@ -1207,8 +1120,8 @@ body {
   100% {
     box-shadow:
       0 0 0 2px var(--md-focus),
-      0 0 12px rgba(0, 122, 204, 0.4),
-      0 0 24px rgba(0, 122, 204, 0.2);
+      0 0 12px var(--ui-glow),
+      0 0 24px var(--ui-glow-dim);
   }
 }
 
@@ -1220,20 +1133,18 @@ body {
 }
 
 /* Dark theme overrides - brighter glow for better visibility */
-.vscode-dark .image-wrapper:not(.image-caret-before):not(.image-caret-after):not(.image-caret-selected):not(.image-pending-delete) .markdown-image:hover,
-.vscode-high-contrast .image-wrapper:not(.image-caret-before):not(.image-caret-after):not(.image-caret-selected):not(.image-pending-delete) .markdown-image:hover {
+:is(.vscode-dark, .vscode-high-contrast) .image-wrapper:not(.image-caret-before):not(.image-caret-after):not(.image-caret-selected):not(.image-pending-delete) .markdown-image:hover {
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 16px rgba(100, 200, 255, 0.6),
-    0 0 32px rgba(100, 200, 255, 0.3);
+    0 0 16px var(--ui-glow),
+    0 0 32px var(--ui-glow-dim);
 }
 
-.vscode-dark .markdown-editor img.ProseMirror-selectednode,
-.vscode-high-contrast .markdown-editor img.ProseMirror-selectednode {
+:is(.vscode-dark, .vscode-high-contrast) .markdown-editor img.ProseMirror-selectednode {
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 16px rgba(100, 200, 255, 0.6),
-    0 0 32px rgba(100, 200, 255, 0.3);
+    0 0 16px var(--ui-glow),
+    0 0 32px var(--ui-glow-dim);
 }
 
 /* Dark theme pulse animation */
@@ -1255,13 +1166,12 @@ body {
   100% {
     box-shadow:
       0 0 0 2px var(--md-focus),
-      0 0 16px rgba(100, 200, 255, 0.6),
-      0 0 32px rgba(100, 200, 255, 0.3);
+      0 0 16px var(--ui-glow),
+      0 0 32px var(--ui-glow-dim);
   }
 }
 
-.vscode-dark .markdown-editor img.ProseMirror-selectednode,
-.vscode-high-contrast .markdown-editor img.ProseMirror-selectednode {
+:is(.vscode-dark, .vscode-high-contrast) .markdown-editor img.ProseMirror-selectednode {
   animation: image-select-pulse-dark 0.25s ease-out;
 }
 
@@ -1285,7 +1195,7 @@ body {
   box-shadow:
     -10px 0 20px rgba(0, 122, 204, 0.6),
     /* Soft left glow - Apple-like subtlety */
-    -5px 0 10px rgba(0, 122, 204, 0.4);
+    -5px 0 10px var(--ui-glow);
   /* Medium left glow */
   position: relative;
   transition: box-shadow 0.15s ease, border-left 0.15s ease;
@@ -1303,7 +1213,7 @@ body {
   box-shadow:
     10px 0 20px rgba(0, 122, 204, 0.6),
     /* Soft right glow - Apple-like subtlety */
-    5px 0 10px rgba(0, 122, 204, 0.4);
+    5px 0 10px var(--ui-glow);
   /* Medium right glow */
   position: relative;
   transition: box-shadow 0.15s ease, border-right 0.15s ease;
@@ -1311,7 +1221,7 @@ body {
 
 .image-wrapper.image-caret-selected {
   box-shadow: 0 0 0 2px var(--md-focus);
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
 }
 
 /* Apply glow effects when image is selected via keyboard (decoration system) */
@@ -1320,18 +1230,18 @@ body {
   outline-offset: 2px;
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 12px rgba(0, 122, 204, 0.4),
-    0 0 24px rgba(0, 122, 204, 0.2);
+    0 0 12px var(--ui-glow),
+    0 0 24px var(--ui-glow-dim);
   position: relative;
   animation: image-select-pulse 0.25s ease-out;
 }
 
 /* Pending deletion state - red glowing border warning */
 .image-wrapper.image-pending-delete .markdown-image {
-  outline: 2px solid var(--vscode-errorForeground, #ff4444);
+  outline: 2px solid var(--md-error-fg);
   outline-offset: 2px;
   box-shadow:
-    0 0 0 2px var(--vscode-errorForeground, #ff4444),
+    0 0 0 2px var(--md-error-fg),
     0 0 12px rgba(255, 68, 68, 0.4),
     0 0 24px rgba(255, 68, 68, 0.2);
   position: relative;
@@ -1339,10 +1249,9 @@ body {
 }
 
 /* Dark theme for pending deletion */
-.vscode-dark .image-wrapper.image-pending-delete .markdown-image,
-.vscode-high-contrast .image-wrapper.image-pending-delete .markdown-image {
+:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-pending-delete .markdown-image {
   box-shadow:
-    0 0 0 2px var(--vscode-errorForeground, #ff6666),
+    0 0 0 2px var(--md-error-fg),
     0 0 16px rgba(255, 100, 100, 0.6),
     0 0 32px rgba(255, 100, 100, 0.3);
   animation: image-delete-pulse-dark 1s ease-in-out infinite;
@@ -1353,14 +1262,14 @@ body {
   0%,
   100% {
     box-shadow:
-      0 0 0 2px var(--vscode-errorForeground, #ff4444),
+      0 0 0 2px var(--md-error-fg),
       0 0 12px rgba(255, 68, 68, 0.4),
       0 0 24px rgba(255, 68, 68, 0.2);
   }
 
   50% {
     box-shadow:
-      0 0 0 2px var(--vscode-errorForeground, #ff4444),
+      0 0 0 2px var(--md-error-fg),
       0 0 16px rgba(255, 68, 68, 0.6),
       0 0 32px rgba(255, 68, 68, 0.4);
   }
@@ -1371,14 +1280,14 @@ body {
   0%,
   100% {
     box-shadow:
-      0 0 0 2px var(--vscode-errorForeground, #ff6666),
+      0 0 0 2px var(--md-error-fg),
       0 0 16px rgba(255, 100, 100, 0.6),
       0 0 32px rgba(255, 100, 100, 0.3);
   }
 
   50% {
     box-shadow:
-      0 0 0 2px var(--vscode-errorForeground, #ff6666),
+      0 0 0 2px var(--md-error-fg),
       0 0 20px rgba(255, 100, 100, 0.8),
       0 0 40px rgba(255, 100, 100, 0.5);
   }
@@ -1396,12 +1305,11 @@ body {
 }
 
 /* Dark theme for keyboard-selected images */
-.vscode-dark .image-wrapper.image-caret-selected .markdown-image,
-.vscode-high-contrast .image-wrapper.image-caret-selected .markdown-image {
+:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-caret-selected .markdown-image {
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 16px rgba(100, 200, 255, 0.6),
-    0 0 32px rgba(100, 200, 255, 0.3);
+    0 0 16px var(--ui-glow),
+    0 0 32px var(--ui-glow-dim);
   animation: image-select-pulse-dark 0.25s ease-out;
 }
 
@@ -1417,8 +1325,7 @@ body {
 }
 
 /* Dark theme overrides for one-sided glows - brighter and more visible */
-.vscode-dark .image-wrapper.image-caret-before .markdown-image,
-.vscode-high-contrast .image-wrapper.image-caret-before .markdown-image {
+:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-caret-before .markdown-image {
   border-left: 2px solid var(--md-focus);
   border-right: none;
   border-top: none;
@@ -1430,8 +1337,7 @@ body {
   /* Medium left glow */
 }
 
-.vscode-dark .image-wrapper.image-caret-after .markdown-image,
-.vscode-high-contrast .image-wrapper.image-caret-after .markdown-image {
+:is(.vscode-dark, .vscode-high-contrast) .image-wrapper.image-caret-after .markdown-image {
   border-right: 2px solid var(--md-focus);
   border-left: none;
   border-top: none;
@@ -1470,7 +1376,7 @@ body {
 
 .image-resize-handle:hover {
   transform: scale(1.2);
-  background-color: var(--vscode-button-hoverBackground);
+  background-color: var(--md-button-hover-bg);
 }
 
 figure {
@@ -1496,7 +1402,7 @@ figcaption {
   position: relative;
   margin: 1em 0;
   border: 1px solid var(--md-border);
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   background-color: var(--md-subtle-bg);
   overflow: hidden;
   cursor: pointer;
@@ -1511,7 +1417,7 @@ figcaption {
   display: flex;
   flex-direction: column;
   cursor: default;
-  background-color: var(--vscode-editor-background);
+  background-color: var(--md-background);
   box-shadow: 0 0 0 2px var(--md-focus);
 }
 
@@ -1523,7 +1429,7 @@ figcaption {
   border-bottom: 1px solid var(--md-border);
   background-color: var(--md-mermaid-edit-bg);
   overflow-x: auto;
-  font-family: var(--vscode-editor-font-family, monospace);
+  font-family: var(--md-mono-font);
   font-size: 0.9em;
 }
 
@@ -1537,9 +1443,9 @@ figcaption {
   border: none;
   outline: none;
   resize: none;
-  color: var(--vscode-editor-foreground, inherit);
-  font-family: var(--vscode-editor-font-family, monospace);
-  font-size: var(--vscode-editor-font-size, 13px);
+  color: var(--md-foreground);
+  font-family: var(--md-mono-font);
+  font-size: var(--md-base-size);
   line-height: 1.5;
   white-space: pre;
   tab-size: 2;
@@ -1568,7 +1474,7 @@ figcaption {
 }
 
 .mermaid-error {
-  color: var(--vscode-errorForeground);
+  color: var(--md-error-fg);
   padding: 20px;
   font-size: 0.9em;
   font-family: 'SF Mono', Monaco, Consolas, monospace;
@@ -1588,19 +1494,18 @@ figcaption {
   z-index: 10;
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 12px rgba(0, 122, 204, 0.4),
-    0 0 24px rgba(0, 122, 204, 0.2);
+    0 0 12px var(--ui-glow),
+    0 0 24px var(--ui-glow-dim);
   animation: image-select-pulse 0.25s ease-out;
   transition: box-shadow 0.2s ease, outline-color 0.2s ease;
 }
 
 /* Dark theme overrides for Mermaid highlight */
-.vscode-dark .mermaid-split-wrapper.highlighted,
-.vscode-high-contrast .mermaid-split-wrapper.highlighted {
+:is(.vscode-dark, .vscode-high-contrast) .mermaid-split-wrapper.highlighted {
   box-shadow:
     0 0 0 2px var(--md-focus),
-    0 0 16px rgba(100, 200, 255, 0.6),
-    0 0 32px rgba(100, 200, 255, 0.3);
+    0 0 16px var(--ui-glow),
+    0 0 32px var(--ui-glow-dim);
   animation: image-select-pulse-dark 0.25s ease-out;
 }
 
@@ -1609,15 +1514,15 @@ figcaption {
   position: absolute;
   top: 8px;
   right: 8px;
-  background-color: var(--vscode-editorHoverWidget-background);
-  color: var(--vscode-editorHoverWidget-foreground);
-  border: 1px solid var(--vscode-editorHoverWidget-border);
+  background-color: var(--md-dropdown-bg);
+  color: var(--md-dropdown-fg);
+  border: 1px solid var(--md-dropdown-border);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   font-size: 0.85em;
   pointer-events: none;
   z-index: 10;
-  box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+  box-shadow: var(--ui-shadow-sm);
 }
 
 
@@ -1674,15 +1579,15 @@ figcaption {
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 16px 32px;
-  background-color: var(--vscode-dropdown-background);
-  border: 1px solid var(--vscode-dropdown-border);
+  background-color: var(--md-dropdown-bg);
+  border: 1px solid var(--md-dropdown-border);
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--vscode-foreground);
+  color: var(--md-foreground);
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 4px 16px var(--vscode-widget-shadow);
+  box-shadow: 0 4px 16px var(--md-shadow-color);
 }
 
 /* ============================================
@@ -1741,12 +1646,12 @@ figcaption {
   background-color: var(--md-button-bg);
   color: var(--md-button-fg);
   opacity: 1;
-  box-shadow: 0 2px 4px var(--vscode-widget-shadow);
+  box-shadow: 0 2px 4px var(--md-shadow-color);
 }
 
 .toolbar-button:disabled,
 .toolbar-button.disabled {
-  opacity: 0.4;
+  opacity: var(--md-disabled-opacity);
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -1754,7 +1659,7 @@ figcaption {
 .toolbar-separator {
   width: 1px;
   height: 20px;
-  background-color: var(--vscode-panel-border, currentColor);
+  background-color: var(--md-border);
   opacity: 0.5;
   margin: 0 6px;
 }
@@ -1770,7 +1675,7 @@ figcaption {
   display: inline-flex;
   align-items: center;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   overflow: visible;
 }
 
@@ -1815,7 +1720,7 @@ figcaption {
   border-radius: 8px;
   border: 1px solid var(--md-dropdown-border);
   background: var(--md-dropdown-bg);
-  box-shadow: 0 6px 18px var(--vscode-widget-shadow);
+  box-shadow: var(--ui-shadow-lg);
   z-index: 1200;
 }
 
@@ -1835,12 +1740,12 @@ figcaption {
 }
 
 .toolbar-color-swatch.active {
-  outline: 2px solid var(--vscode-focusBorder, #0e639c);
+  outline: 2px solid var(--md-focus);
   outline-offset: 1px;
 }
 
 .toolbar-color-group.disabled {
-  opacity: 0.4;
+  opacity: var(--md-disabled-opacity);
 }
 
 .toolbar-dropdown-menu {
@@ -1851,7 +1756,7 @@ figcaption {
   background-color: var(--md-dropdown-bg);
   border: 1px solid var(--md-dropdown-border);
   border-radius: 10px;
-  box-shadow: 0 10px 26px var(--vscode-widget-shadow);
+  box-shadow: 0 10px 26px var(--md-shadow-color);
   min-width: 220px;
   z-index: 1000;
   overflow: hidden;
@@ -1860,7 +1765,7 @@ figcaption {
 .toolbar-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-gap);
   width: 100%;
   padding: 9px 12px;
   background: transparent;
@@ -1876,12 +1781,12 @@ figcaption {
 }
 
 .toolbar-dropdown-item:active {
-  background-color: var(--vscode-list-activeSelectionBackground);
+  background-color: var(--md-menu-selection-bg);
 }
 
 .toolbar-dropdown-item:disabled,
 .toolbar-dropdown-item.disabled {
-  opacity: 0.4;
+  opacity: var(--md-disabled-opacity);
   cursor: not-allowed;
   color: var(--md-muted);
 }
@@ -1889,6 +1794,12 @@ figcaption {
 .toolbar-dropdown-item:disabled:hover,
 .toolbar-dropdown-item.disabled:hover {
   background-color: transparent;
+}
+
+.toolbar-dropdown-item.active {
+  background-color: var(--md-button-bg);
+  color: var(--md-button-fg);
+  font-weight: 600;
 }
 
 .toolbar-dropdown-trigger {
@@ -1901,7 +1812,7 @@ figcaption {
 }
 
 .toolbar-button-label {
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   font-weight: 600;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -1912,7 +1823,7 @@ figcaption {
   align-items: center;
   justify-content: center;
   min-width: 14px;
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   line-height: 1;
 }
 
@@ -1924,6 +1835,8 @@ figcaption {
 
 /* TipTap BubbleMenu floating format bar */
 .floating-formatting-bar {
+  position: relative;
+  z-index: 1300;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -1931,7 +1844,7 @@ figcaption {
   border-radius: 10px;
   border: 1px solid var(--md-border);
   background: var(--md-background);
-  box-shadow: 0 8px 22px var(--vscode-widget-shadow);
+  box-shadow: 0 8px 22px var(--md-shadow-color);
 }
 
 .floating-toolbar-button {
@@ -2011,7 +1924,7 @@ figcaption {
   border-radius: 8px;
   border: 1px solid var(--md-dropdown-border);
   background: var(--md-dropdown-bg);
-  box-shadow: 0 6px 18px var(--vscode-widget-shadow);
+  box-shadow: var(--ui-shadow-lg);
   z-index: 1200;
 }
 
@@ -2034,7 +1947,7 @@ figcaption {
 }
 
 .floating-color-swatch.active {
-  outline: 2px solid var(--vscode-focusBorder, #0e639c);
+  outline: 2px solid var(--md-focus);
   outline-offset: 1px;
 }
 
@@ -2045,7 +1958,7 @@ figcaption {
 }
 
 .floating-toolbar-button .menu-caret {
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   opacity: 0.8;
 }
 
@@ -2058,7 +1971,7 @@ figcaption {
   border-radius: 8px;
   border: 1px solid var(--md-dropdown-border);
   background: var(--md-dropdown-bg);
-  box-shadow: 0 6px 18px var(--vscode-widget-shadow);
+  box-shadow: var(--ui-shadow-lg);
   overflow: hidden;
   z-index: 1200;
 }
@@ -2070,12 +1983,18 @@ figcaption {
   color: var(--md-dropdown-fg);
   text-align: left;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   cursor: pointer;
 }
 
 .floating-toolbar-menu-item:hover {
   background: var(--md-hover-bg);
+}
+
+.floating-toolbar-menu-item.active {
+  background-color: var(--md-button-bg);
+  color: var(--md-button-fg);
+  font-weight: 600;
 }
 
 /* Custom underline icon fallback (Codicon doesn't have one) */
@@ -2097,12 +2016,12 @@ figcaption {
 }
 
 .toolbar-button.copy-button.copied {
-  background-color: var(--vscode-terminal-ansiGreen);
+  background-color: var(--md-success-fg);
   color: white;
 }
 
 .toolbar-button.copy-button.copy-failed {
-  background-color: var(--vscode-terminal-ansiRed);
+  background-color: var(--md-error-fg);
   color: white;
 }
 
@@ -2138,10 +2057,10 @@ figcaption {
 
 .table-menu {
   position: absolute;
-  background-color: var(--vscode-menu-background);
-  border: 1px solid var(--vscode-menu-border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px var(--vscode-widget-shadow);
+  background-color: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 4px 12px var(--md-shadow-color);
   z-index: 1000;
   min-width: 180px;
   padding: 4px 0;
@@ -2150,17 +2069,17 @@ figcaption {
 .table-menu-item {
   padding: 8px 16px;
   cursor: pointer;
-  color: var(--vscode-menu-foreground);
+  color: var(--md-menu-fg);
 }
 
 .table-menu-item:hover {
-  background-color: var(--vscode-menu-selectionBackground);
-  color: var(--vscode-menu-selectionForeground);
+  background-color: var(--md-menu-selection-bg);
+  color: var(--md-menu-selection-fg);
 }
 
 .table-menu-separator {
   height: 1px;
-  background-color: var(--vscode-menu-separatorBackground);
+  background-color: var(--md-menu-separator);
   margin: 4px 0;
 }
 
@@ -2195,7 +2114,7 @@ figcaption {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--vscode-editor-background);
+  background-color: var(--md-background);
   opacity: 0.9;
   backdrop-filter: blur(2px);
 }
@@ -2203,10 +2122,10 @@ figcaption {
 .toc-overlay-panel {
   position: relative;
   z-index: 1;
-  background-color: var(--vscode-editor-background);
+  background-color: var(--md-background);
   border: 1px solid var(--md-border);
   border-radius: 12px;
-  box-shadow: 0 8px 32px var(--vscode-widget-shadow);
+  box-shadow: 0 8px 32px var(--md-shadow-color);
   max-width: 900px;
   width: min(50vw, 900px);
   max-height: 80vh;
@@ -2237,7 +2156,7 @@ figcaption {
   color: var(--md-muted);
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -2266,7 +2185,7 @@ figcaption {
   margin: 1px 0;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
   cursor: pointer;
   text-align: left;
   color: var(--md-foreground);
@@ -2279,7 +2198,7 @@ figcaption {
 
 .toc-overlay-item:focus {
   outline: none;
-  background-color: var(--vscode-list-activeSelectionBackground);
+  background-color: var(--md-menu-selection-bg);
   box-shadow: inset 0 0 0 2px var(--md-focus);
 }
 
@@ -2292,7 +2211,7 @@ figcaption {
   background-color: var(--md-subtle-bg);
   opacity: 0;
   transition: opacity 0.15s ease;
-  font-size: calc(var(--vscode-editor-font-size, 14px) * .7);
+  font-size: calc(var(--md-base-size) * .7);
 }
 
 .toc-overlay-item:is(:hover, :focus) .toc-overlay-level-indicator {
@@ -2391,13 +2310,13 @@ figcaption {
 .export-settings-overlay-panel {
   position: relative;
   z-index: 1;
-  background-color: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-  border: 2px solid var(--vscode-widget-border, var(--md-border));
+  background-color: var(--md-subtle-bg);
+  border: 2px solid var(--md-border);
   border-radius: 12px;
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 8px 32px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.3));
+    0 8px 32px var(--md-shadow-color);
   max-width: 500px;
   width: min(90vw, 500px);
   display: flex;
@@ -2410,8 +2329,8 @@ figcaption {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--vscode-widget-border, var(--md-border));
-  background-color: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  border-bottom: 1px solid var(--md-border);
+  background-color: var(--md-subtle-bg);
   flex-shrink: 0;
 }
 
@@ -2419,7 +2338,7 @@ figcaption {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--vscode-editor-foreground, var(--md-foreground));
+  color: var(--md-foreground);
 }
 
 .export-settings-overlay-close {
@@ -2430,7 +2349,7 @@ figcaption {
   color: var(--md-muted);
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -2464,10 +2383,10 @@ figcaption {
   width: 100%;
   padding: 8px 12px;
   box-sizing: border-box;
-  background-color: var(--vscode-dropdown-background);
-  color: var(--vscode-dropdown-foreground);
-  border: 1px solid var(--vscode-dropdown-border);
-  border-radius: 4px;
+  background-color: var(--md-dropdown-bg);
+  color: var(--md-dropdown-fg);
+  border: 1px solid var(--md-dropdown-border);
+  border-radius: var(--ui-radius-sm);
 }
 
 /* ============================================
@@ -2477,8 +2396,8 @@ figcaption {
 /* Radio button group for mode selection */
 .link-dialog-mode-group {
   display: flex;
-  background-color: var(--vscode-button-secondaryBackground);
-  border-radius: 6px;
+  background-color: var(--md-button-secondary-bg);
+  border-radius: var(--ui-radius-md);
   padding: 2px;
   gap: 2px;
   margin-top: 8px;
@@ -2502,16 +2421,16 @@ figcaption {
   align-items: center;
   justify-content: center;
   padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: var(--vscode-button-secondaryForeground);
+  border-radius: var(--ui-radius-sm);
+  font-size: var(--ui-font-base);
+  color: var(--md-button-secondary-fg);
   transition: all 0.2s ease;
   user-select: none;
 }
 
 .link-dialog-mode-option input:checked+span {
-  background-color: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
+  background-color: var(--md-button-bg);
+  color: var(--md-button-fg);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -2523,13 +2442,13 @@ figcaption {
 .link-dialog-inline-btn {
   background: transparent;
   border: none;
-  color: var(--vscode-errorForeground);
+  color: var(--md-error-fg);
   cursor: pointer;
   padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   transition: background-color 0.15s;
   opacity: 0.7;
 }
@@ -2558,7 +2477,7 @@ figcaption {
   cursor: pointer;
   user-select: none;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   transition: background-color 0.15s ease;
 }
 
@@ -2569,7 +2488,7 @@ figcaption {
 .link-dialog-filter-checkbox input[type="checkbox"] {
   margin: 0;
   cursor: pointer;
-  accent-color: var(--vscode-button-background);
+  accent-color: var(--md-button-bg);
 }
 
 .link-dialog-filter-checkbox input[type="checkbox"]:disabled {
@@ -2578,7 +2497,7 @@ figcaption {
 }
 
 .link-dialog-filter-checkbox span {
-  font-size: 13px;
+  font-size: var(--ui-font-base);
   color: var(--md-foreground);
 }
 
@@ -2592,10 +2511,10 @@ figcaption {
   position: absolute;
   z-index: 1001;
   /* Above input but below modal backdrop (1000) */
-  background-color: var(--vscode-editorWidget-background);
+  background-color: var(--md-subtle-bg);
   border: 1px solid var(--md-border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px var(--vscode-widget-shadow);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 4px 12px var(--md-shadow-color);
   max-height: 300px;
   /* Default max-height, will be adjusted dynamically */
   overflow-y: auto;
@@ -2607,7 +2526,7 @@ figcaption {
 .link-dialog-autocomplete-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--ui-gap);
   padding: 8px 12px;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -2632,16 +2551,16 @@ figcaption {
 }
 
 .link-dialog-autocomplete-item-file {
-  border-left: 3px solid var(--vscode-textLink-foreground, #4a9eff);
+  border-left: 3px solid var(--md-link-fg);
 }
 
 .link-dialog-autocomplete-item-heading {
-  border-left: 3px solid var(--vscode-textBlockQuote-border, #808080);
+  border-left: 3px solid var(--md-quote-border);
 }
 
 .link-dialog-autocomplete-filename {
   font-weight: 500;
-  font-size: 13px;
+  font-size: var(--ui-font-base);
   color: var(--md-foreground);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2659,7 +2578,7 @@ figcaption {
 }
 
 .link-dialog-autocomplete-item-path {
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   color: var(--md-muted);
   max-width: calc(100% - 60px);
   overflow: hidden;
@@ -2671,7 +2590,7 @@ figcaption {
   padding: 16px;
   text-align: center;
   color: var(--md-muted);
-  font-size: 13px;
+  font-size: var(--ui-font-base);
 }
 
 /* ============================================
@@ -2702,12 +2621,12 @@ figcaption {
 .search-overlay-panel {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-gap);
   padding: 8px 12px;
-  background-color: var(--vscode-editorWidget-background);
-  border: 1px solid var(--vscode-editorWidget-border);
+  background-color: var(--md-subtle-bg);
+  border: 1px solid var(--md-border);
   border-radius: 8px;
-  box-shadow: 0 4px 16px var(--vscode-widget-shadow);
+  box-shadow: 0 4px 16px var(--md-shadow-color);
   min-width: 320px;
   max-width: 500px;
 }
@@ -2716,16 +2635,16 @@ figcaption {
   display: flex;
   align-items: center;
   flex: 1;
-  gap: 8px;
-  background-color: var(--vscode-input-background);
-  border: 1px solid var(--vscode-input-border, var(--md-border));
-  border-radius: 4px;
+  gap: var(--ui-gap);
+  background-color: var(--md-input-bg);
+  border: 1px solid var(--md-border);
+  border-radius: var(--ui-radius-sm);
   padding: 4px 8px;
   transition: border-color 0.15s ease;
 }
 
 .search-overlay-input-wrapper:focus-within {
-  border-color: var(--vscode-focusBorder);
+  border-color: var(--md-focus);
 }
 
 .search-overlay-icon {
@@ -2738,22 +2657,22 @@ figcaption {
   flex: 1;
   background: transparent;
   border: none;
-  color: var(--vscode-input-foreground);
-  font-size: 13px;
+  color: var(--md-input-fg);
+  font-size: var(--ui-font-base);
   outline: none;
   min-width: 150px;
 }
 
 .search-overlay-input::placeholder {
-  color: var(--vscode-input-placeholderForeground);
+  color: var(--md-input-placeholder);
 }
 
 .search-overlay-input.no-results {
-  color: var(--vscode-errorForeground);
+  color: var(--md-error-fg);
 }
 
 .search-overlay-counter {
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
   color: var(--md-muted);
   white-space: nowrap;
   min-width: 60px;
@@ -2761,7 +2680,7 @@ figcaption {
 }
 
 .search-overlay-counter.no-results {
-  color: var(--vscode-errorForeground);
+  color: var(--md-error-fg);
 }
 
 .search-overlay-buttons {
@@ -2775,7 +2694,7 @@ figcaption {
   border: none;
   color: var(--md-foreground);
   padding: 6px;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2790,11 +2709,11 @@ figcaption {
 }
 
 .search-overlay-btn:active {
-  background-color: var(--vscode-list-activeSelectionBackground);
+  background-color: var(--md-menu-selection-bg);
 }
 
 .search-overlay-btn:focus {
-  outline: 1px solid var(--vscode-focusBorder);
+  outline: 1px solid var(--md-focus);
   outline-offset: -1px;
 }
 
@@ -2804,13 +2723,13 @@ figcaption {
 
 /* Search match highlighting */
 .search-match {
-  background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+  background-color: rgba(234, 92, 0, 0.33);
   border-radius: 2px;
 }
 
 .search-match-active {
-  background-color: var(--vscode-editor-findMatchBackground, rgba(162, 190, 100, 0.7));
-  box-shadow: 0 0 0 1px var(--vscode-editor-findMatchBorder, rgba(162, 190, 100, 0.9));
+  background-color: rgba(162, 190, 100, 0.7);
+  box-shadow: 0 0 0 1px rgba(162, 190, 100, 0.9);
 }
 
 /* ============================================
@@ -2837,9 +2756,9 @@ figcaption {
   right: 8px;
   width: 28px;
   height: 28px;
-  background: var(--vscode-editor-background);
-  border: 1px solid var(--vscode-panel-border);
-  border-radius: 4px;
+  background: var(--md-background);
+  border: 1px solid var(--md-border);
+  border-radius: var(--ui-radius-sm);
   display: none;
   align-items: center;
   justify-content: center;
@@ -2849,7 +2768,7 @@ figcaption {
   padding: 0;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  color: var(--vscode-foreground);
+  color: var(--md-foreground);
 }
 
 .image-menu-button .toolbar-icon {
@@ -2884,10 +2803,10 @@ figcaption {
 
 /* Hover state */
 .image-menu-button:hover {
-  background: var(--vscode-list-hoverBackground);
+  background: var(--md-hover-bg);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.15);
-  border-color: var(--vscode-button-background);
+  border-color: var(--md-button-bg);
   z-index: 21;
 }
 
@@ -2899,12 +2818,12 @@ figcaption {
 
 /* Focus state */
 .image-menu-button:focus {
-  outline: 1px solid var(--vscode-focusBorder);
+  outline: 1px solid var(--md-focus);
   outline-offset: 2px;
 }
 
 .image-menu-button .codicon {
-  color: var(--vscode-foreground);
+  color: var(--md-foreground);
   opacity: 0.9;
 }
 
@@ -2917,9 +2836,9 @@ figcaption {
   position: absolute;
   right: 0;
   min-width: 160px;
-  background: var(--vscode-menu-background);
-  border: 1px solid var(--vscode-menu-border);
-  border-radius: 6px;
+  background: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-md);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   z-index: 1000;
   overflow: hidden;
@@ -2928,18 +2847,18 @@ figcaption {
 .image-context-menu .menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-gap);
   padding: 8px 12px;
   cursor: pointer;
-  color: var(--vscode-menu-foreground);
-  font-size: 13px;
+  color: var(--md-menu-fg);
+  font-size: var(--ui-font-base);
   transition: background 0.1s ease;
 }
 
 .image-context-menu .menu-item:hover,
 .image-context-menu .menu-item:focus {
-  background: var(--vscode-menu-selectionBackground);
-  color: var(--vscode-menu-selectionForeground);
+  background: var(--md-menu-selection-bg);
+  color: var(--md-menu-selection-fg);
   outline: none;
 }
 
@@ -2955,7 +2874,7 @@ figcaption {
 /* Menu separator */
 .image-context-menu .menu-separator {
   height: 1px;
-  background: var(--vscode-menu-separatorBackground);
+  background: var(--md-menu-separator);
   margin: 4px 0;
 }
 
@@ -3006,7 +2925,7 @@ figcaption {
   opacity: 0;
   transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   line-height: 1.5;
-  font-family: var(--vscode-editor-font-family);
+  font-family: var(--md-mono-font);
 }
 
 .image-wrapper.image-hover-active .image-metadata-footer {
@@ -3019,12 +2938,12 @@ figcaption {
 
 /* Small images (< 200px) */
 .image-metadata-footer[data-image-size="small"] {
-  font-size: 13px;
+  font-size: var(--ui-font-base);
   padding: 12px 14px;
 }
 
 .image-metadata-footer[data-image-size="small"] .metadata-dimensions {
-  font-size: 13px;
+  font-size: var(--ui-font-base);
 }
 
 .image-metadata-footer[data-image-size="small"] .metadata-path,
@@ -3043,12 +2962,12 @@ figcaption {
 }
 
 .image-metadata-footer[data-image-size="medium"] .metadata-size {
-  font-size: 13px;
+  font-size: var(--ui-font-base);
 }
 
 .image-metadata-footer[data-image-size="medium"] .metadata-path,
 .image-metadata-footer[data-image-size="medium"] .metadata-date {
-  font-size: 12px;
+  font-size: var(--ui-font-sm);
 }
 
 /* Large images (> 600px) */
@@ -3067,14 +2986,14 @@ figcaption {
 
 .image-metadata-footer[data-image-size="large"] .metadata-path,
 .image-metadata-footer[data-image-size="large"] .metadata-date {
-  font-size: 13px;
+  font-size: var(--ui-font-base);
 }
 
 /* Metadata row styles - shared across all sizes */
 .metadata-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-gap);
   flex-wrap: wrap;
   margin-bottom: 6px;
   line-height: 1.4;
@@ -3091,7 +3010,7 @@ figcaption {
 
 .metadata-dimensions {
   color: rgba(255, 255, 255, 0.95);
-  font-family: var(--vscode-editor-font-family);
+  font-family: var(--md-mono-font);
   font-weight: 500;
   line-height: 1.4;
 }
@@ -3104,7 +3023,7 @@ figcaption {
 
 .metadata-path {
   color: rgba(255, 255, 255, 0.7);
-  font-family: var(--vscode-editor-font-family);
+  font-family: var(--md-mono-font);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3135,7 +3054,7 @@ figcaption {
   display: inline-block;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
   font-size: 0.85em;
-  color: var(--vscode-descriptionForeground, #a0a0a0);
+  color: var(--md-muted);
   background: var(--md-subtle-bg, #f0f0f0);
   border: 1px solid var(--md-border, #d0d0d0);
   border-radius: 3px;
@@ -3162,7 +3081,7 @@ figcaption {
 
 .formatting-toolbar .toolbar-btn.save-btn:not(.disabled) {
   opacity: 1;
-  color: var(--vscode-charts-blue, #3b82f6);
+  color: var(--md-link-fg);
 }
 
 /* ============================================
@@ -3172,7 +3091,7 @@ figcaption {
 .live-preview-syntax {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
   font-size: 0.85em;
-  color: var(--vscode-descriptionForeground, #888);
+  color: var(--md-muted);
   opacity: 0.6;
   pointer-events: none;
   user-select: none;
@@ -3181,7 +3100,7 @@ figcaption {
 .live-preview-syntax-block {
   margin-right: 0.25em;
   display: inline-block;
-  opacity: 0.4;
+  opacity: var(--md-disabled-opacity);
 }
 
 /* Custom Drag Handle styling */
@@ -3191,15 +3110,15 @@ figcaption {
   justify-content: center;
   width: 24px;
   height: 24px;
-  color: var(--vscode-editor-foreground);
+  color: var(--md-foreground);
   opacity: 0.3;
   cursor: grab;
-  border-radius: 4px;
+  border-radius: var(--ui-radius-sm);
   transition: background-color 0.2s, opacity 0.2s;
 }
 
 .custom-drag-handle:hover {
-  background-color: var(--vscode-list-hoverBackground);
+  background-color: var(--md-hover-bg);
   opacity: 0.8;
 }
 

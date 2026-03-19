@@ -1,10 +1,1 @@
-body.vscode-dark,
-body.vscode-high-contrast {
-    --md-code-inline-bg: color-mix(
-        in srgb,
-        var(--vscode-editorWidget-background, var(--vscode-editor-background)) 96%,
-        transparent
-    );
-    --md-code-inline-fg: var(--vscode-editor-foreground);
-    --md-mermaid-edit-bg: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-}
+/* Dark theme overrides - now defined in editor.css body[data-theme="dark"]{} block */

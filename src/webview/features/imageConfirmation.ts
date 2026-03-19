@@ -53,8 +53,8 @@ export async function confirmImageDrop(
     const dialog = document.createElement('div');
     dialog.className = 'image-drop-dialog';
     dialog.style.cssText = `
-      background: var(--vscode-editor-background);
-      border: 1px solid var(--vscode-panel-border);
+      background: var(--md-background);
+      border: 1px solid var(--md-border);
       border-radius: 6px;
       padding: 20px;
       min-width: 400px;
@@ -63,12 +63,12 @@ export async function confirmImageDrop(
     `;
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 16px 0; color: var(--vscode-foreground);">
+      <h3 style="margin: 0 0 16px 0; color: var(--md-foreground);">
         📸 Save ${fileCount} Image${fileCount > 1 ? 's' : ''}
       </h3>
 
       <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--vscode-foreground);">
+        <label style="display: block; margin-bottom: 8px; color: var(--md-foreground);">
           Save to folder:
         </label>
         <input
@@ -78,21 +78,21 @@ export async function confirmImageDrop(
           style="
             width: 100%;
             padding: 6px 8px;
-            background: var(--vscode-input-background);
-            color: var(--vscode-input-foreground);
-            border: 1px solid var(--vscode-input-border);
+            background: var(--md-input-bg);
+            color: var(--md-input-fg);
+            border: 1px solid var(--md-border);
             border-radius: 3px;
-            font-family: var(--vscode-font-family);
+            font-family: var(--md-font-family);
           "
           placeholder="e.g., images, assets/img, docs/screenshots"
         />
-        <small style="display: block; margin-top: 4px; color: var(--vscode-descriptionForeground);">
+        <small style="display: block; margin-top: 4px; color: var(--md-muted);">
           ${pathBaseLabel}
         </small>
       </div>
 
       <div style="margin-bottom: 20px;">
-        <label style="display: flex; align-items: center; color: var(--vscode-foreground); cursor: pointer;">
+        <label style="display: flex; align-items: center; color: var(--md-foreground); cursor: pointer;">
           <input type="checkbox" id="remember-choice" style="margin-right: 8px;">
           Remember for this session
         </label>
@@ -101,21 +101,21 @@ export async function confirmImageDrop(
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
         <button id="cancel-btn" style="
           padding: 6px 14px;
-          background: var(--vscode-button-secondaryBackground);
-          color: var(--vscode-button-secondaryForeground);
+          background: var(--md-button-secondary-bg);
+          color: var(--md-button-secondary-fg);
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
         ">Cancel</button>
         <button id="save-btn" style="
           padding: 6px 14px;
-          background: var(--vscode-button-background);
-          color: var(--vscode-button-foreground);
+          background: var(--md-button-bg);
+          color: var(--md-button-fg);
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
           font-weight: 500;
         ">Save Images</button>
       </div>

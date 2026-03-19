@@ -1,27 +1,30 @@
 # Instructions for AI Agents
 
 > **Project:** VS Code WYSIWYG Markdown Editor (medium.com-style reading/writing experience)
->
+> 
 > **Status:** MVP ~85% complete | **Core value:** Write markdown naturally—focus on content, not syntax
->
+> 
 > **Source of Truth (order):** Code + tests → plan file (`roadmap/pipeline/*.md` or `roadmap/shipped/*.md`) → these instructions. Prefer source over docs when in doubt.
 
 **Start here (quick boot-up):**
-1) Open the current task file in `roadmap/pipeline/` and skim sections 2–4.  
-2) Read `vibe-coding-rules/env-context.md` for architecture/perf budgets.  
-3) Scan the code/tests referenced in the task with `rg` before writing anything.
 
----
+1. Open the current task file in `roadmap/pipeline/` and skim sections 2–4.
+2. Read `vibe-coding-rules/env-context.md` for architecture/perf budgets.
+3. Scan the code/tests referenced in the task with `rg` before writing anything.
+
+***
 
 ## Critical Constraints
 
 ### 1. Reading Experience is PARAMOUNT
+
 - Typography and readability > feature completeness
 - Serif body text (prose, not code)
 - Generous spacing (white space is a feature)
 - **Test every change by reading a 3000+ word doc for 10+ minutes**
 
 ### 2. Test-Driven Development (MANDATORY)
+
 **RED → GREEN → REFACTOR → VERIFY**
 
 - Write failing tests BEFORE implementation
@@ -30,6 +33,7 @@
 - See: [vibe-coding-rules/testing.md](vibe-coding-rules/testing.md)
 
 ### 3. Performance Budgets
+
 - <500ms editor initialization
 - <16ms typing latency (keystrokes)
 - <50ms other interactions (cursor, formatting)
@@ -37,35 +41,38 @@
 - Handle 10,000+ line documents smoothly
 
 ### 4. VS Code Integration
+
 - Deep Git integration (diffs, commits work correctly)
 - Command palette commands (discoverable)
 - Follow VS Code keyboard conventions
 - Inherit theme colors (no hard-coded values)
 
 ### 4.1 Toolbar Order Parity (MANDATORY)
+
 - Keep the shared control order identical between the header formatting toolbar and the floating selection toolbar.
 - Shared controls include: **Bold, Italic, Highlight, Text Color, Strikethrough, Inline Code, Heading controls**.
 - If one toolbar reorders shared controls, the other must be updated in the same change.
 - Prefer a single shared ordering source/constant in `src/webview/BubbleMenuView.ts` when refactoring.
 
 ### 5. Git & File Rules
+
 - **Never commit or push** — User must review first
-- **Use `git mv`** for renaming/moving tracked files (preserves history)
+- **Use** **`git mv`** **git mv** for renaming/moving tracked files (preserves history)
 - **Pre-commit hook** — Automatically runs `npm run lint:fix` before each commit (see `.github/hooks/pre-commit`)
 
----
+***
 
 ## Key Technical Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Editor Provider | `CustomTextEditorProvider` | Text-based, VS Code handles save/undo, better Git |
-| Editor Framework | TipTap (over raw ProseMirror) | Easier API, rich extensions, markdown built-in |
-| Sync Debounce | 500ms | Balance responsiveness vs. performance |
-| Document Sync | Full replacement | Simpler, VS Code handles internal diffing |
-| Body Font | Serif (Charter/Georgia) | Prose, not code; matches premium editors |
+| Decision         | Choice                        | Why                                               |
+| ---------------- | ----------------------------- | ------------------------------------------------- |
+| Editor Provider  | `CustomTextEditorProvider`    | Text-based, VS Code handles save/undo, better Git |
+| Editor Framework | TipTap (over raw ProseMirror) | Easier API, rich extensions, markdown built-in    |
+| Document Sync    | Full replacement              | Simpler, VS Code handles internal diffing         |
+| Sync Debounce    | 500ms                         | Balance responsiveness vs. performance            |
+| Body Font        | Serif (Charter/Georgia)       | Prose, not code; matches premium editors          |
 
----
+***
 
 ## Detailed Guides (Load As Needed)
 
@@ -80,13 +87,13 @@
 
 Load only what the current task requires.
 
----
+***
 
 ## Plan Workflow (TDD Enforced)
 
 **For new features/plans:**
 
-1. **Create Plan** → Use [`roadmap/task-plan-template.md`](roadmap/task-plan-template.md) as starting point (can use any AI coding tool or manually)
+1. **Create Plan** → Use [roadmap/task-plan-template.md](roadmap/task-plan-template.md)[roadmap/task-plan-template.md](roadmap/task-plan-template.md) as starting point (can use any AI coding tool or manually)
 2. **Move to Pipeline** → Once plan is locked and ready: `git mv [source]/[name].plan.md roadmap/pipeline/[name].md`
 3. **Write Tests First** → Create failing tests that define expected behavior
 4. **Implement** → Write simplest clean solution to make tests pass
@@ -96,29 +103,33 @@ Load only what the current task requires.
 8. **Ship** → `git mv roadmap/pipeline/[name].md roadmap/shipped/`
 
 **Critical Rules:**
+
 - Tests MUST be written BEFORE implementation (TDD)
 - A plan is only `done` when ALL tests pass (not just new ones)
 - **Self-review before shipping** - catch overlooked issues
 - If issues found, debug/audit code - NO quick hacks or patches
 
----
+***
 
 ## Feature Checklist
 
 **Plan Management:**
+
 - [ ] Plan file created and moved to `roadmap/pipeline/[name].md` when ready
 - [ ] Update plan with implementation progress
 - [ ] Document decisions and test approach in plan
 
 **Testing (MANDATORY - TDD Required):**
+
 - [ ] **Write failing tests FIRST** (`src/__tests__/`)
 - [ ] Verify tests fail (confirms tests work)
 - [ ] **Implement feature** to make tests pass
-- [ ] **Run `npm test`** - ALL tests pass (new + existing)
+- [ ] **Run** **`npm test`** **npm test** - ALL tests pass (new + existing)
 - [ ] Cover positive, negative, edge cases
 - [ ] If bugs found: audit/debug, not quick fixes
 
 **Self-Review (Before Shipping):**
+
 - [ ] **Code quality** - TypeScript strict, meaningful names, no `any`
 - [ ] **Linting** - Pre-commit hook automatically runs `npm run lint:fix` (no manual step needed)
 - [ ] **Error handling** - All `async` functions have try/catch, critical operations show user errors (see `vibe-coding-rules/coding-standards.md#error-handling-requirements`)
@@ -131,11 +142,12 @@ Load only what the current task requires.
 - [ ] **Diff review** - Does this make sense to future you in 6 months?
 - [ ] **Manual read** - Read a 3000+ word doc in the editor for 10+ minutes (light/dark) to catch UX regressions
 
----
+***
 
 ## Code Documentation (Auto-Update)
 
 **When you change code, update its docs:**
+
 - **Modified function?** → Update JSDoc (params, returns, throws)
 - **Changed file exports?** → Update file header
 - **Removed code?** → Delete stale comments
@@ -143,11 +155,12 @@ Load only what the current task requires.
 
 See: [vibe-coding-rules/coding-standards.md#code-documentation](vibe-coding-rules/coding-standards.md)
 
----
+***
 
 ## Research Over Assumptions
 
 **Before implementing:**
+
 1. Check official docs (VS Code API, TipTap/ProseMirror) - prefer over memory
 2. Search GitHub issues for known problems
 3. Test assumptions with small examples
@@ -157,40 +170,40 @@ See: [vibe-coding-rules/coding-standards.md#code-documentation](vibe-coding-rule
 
 See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md) — **Read before sync/editor state work**
 
----
+***
 
 ## Quick Reference: File Locations
 
-| Task | File |
-|------|------|
-| Add command | `package.json` + `src/extension.ts` |
-| Add keyboard shortcut | `package.json` |
-| Add config option | `package.json` |
-| Modify editor UI | `src/webview/editor.ts` + `src/webview/editor.css` |
-| Style changes | `src/webview/editor.css` (see `vibe-coding-rules/styling.md`) |
-| Add toolbar button | `src/webview/BubbleMenuView.ts` |
-| Add TipTap extension | `src/webview/extensions/` |
-| Update document sync | `src/editor/MarkdownEditorProvider.ts` |
+| Task                  | File                                                          |
+| --------------------- | ------------------------------------------------------------- |
+| Add command           | `package.json` + `src/extension.ts`                           |
+| Add keyboard shortcut | `package.json`                                                |
+| Add config option     | `package.json`                                                |
+| Modify editor UI      | `src/webview/editor.ts` + `src/webview/editor.css`            |
+| Style changes         | `src/webview/editor.css` (see `vibe-coding-rules/styling.md`) |
+| Add toolbar button    | `src/webview/BubbleMenuView.ts`                               |
+| Add TipTap extension  | `src/webview/extensions/`                                     |
+| Update document sync  | `src/editor/MarkdownEditorProvider.ts`                        |
 
----
+***
 
 ## Documentation Update Triggers
 
 **When you change code, check these docs:**
 
-| Code Change | Docs to Check | Quick Check |
-|-------------|---------------|-------------|
-| Add/remove TipTap extension | `vibe-coding-rules/env-context.md` | Verify file paths in "Key File Locations" |
-| Change sync/debounce logic | `vibe-coding-rules/env-context.md`, `vibe-coding-rules/common-pitfalls.md` | Verify timing values match (500ms, 2s, etc.) |
-| Add/remove config option | `package.json` descriptions, README.md | Verify config exists and matches enum/defaults |
-| **Add/remove dependency** | **`THIRD_PARTY_LICENSES.md`** | **Add entry with license, copyright, repository, and license URL** |
-| Change file structure | `vibe-coding-rules/env-context.md` (Key File Locations table) | Verify all paths exist |
-| Ship new feature | `roadmap/shipped/` | Move plan from pipeline to shipped when complete |
-| Change styling patterns | `vibe-coding-rules/styling.md` | Verify examples match current CSS |
-| Change testing approach | `vibe-coding-rules/testing.md` | Verify patterns match current tests |
-| Change image/DOM handling | `vibe-coding-rules/image-and-dom-handling.md` | Verify patterns match code |
+| Code Change                 | Docs to Check                                                              | Quick Check                                                        |
+| --------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Add/remove TipTap extension | `vibe-coding-rules/env-context.md`                                         | Verify file paths in "Key File Locations"                          |
+| Change sync/debounce logic  | `vibe-coding-rules/env-context.md`, `vibe-coding-rules/common-pitfalls.md` | Verify timing values match (500ms, 2s, etc.)                       |
+| Add/remove config option    | `package.json` descriptions, README.md                                     | Verify config exists and matches enum/defaults                     |
+| **Add/remove dependency**   | **`THIRD_PARTY_LICENSES.md`** **THIRD_PARTY_LICENSES.md**                  | **Add entry with license, copyright, repository, and license URL** |
+| Change file structure       | `vibe-coding-rules/env-context.md` (Key File Locations table)              | Verify all paths exist                                             |
+| Ship new feature            | `roadmap/shipped/`                                                         | Move plan from pipeline to shipped when complete                   |
+| Change styling patterns     | `vibe-coding-rules/styling.md`                                             | Verify examples match current CSS                                  |
+| Change testing approach     | `vibe-coding-rules/testing.md`                                             | Verify patterns match current tests                                |
+| Change image/DOM handling   | `vibe-coding-rules/image-and-dom-handling.md`                              | Verify patterns match code                                         |
 
----
+***
 
 ## Documentation
 
@@ -198,15 +211,15 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 - `roadmap/shipped/` — Shipped features (detailed plan files)
 - `docs/ARCHITECTURE.md` — Deep dive (when needed)
 
----
+***
 
 ## Decision Making
 
-**For UX:** Does this improve the reading experience? ← Most important
-**For Tech:** Is this the simplest solution that works?
+**For UX:** Does this improve the reading experience? ← Most important  
+**For Tech:** Is this the simplest solution that works?  
 **For Features:** Does this align with "write markdown naturally"?
 
----
+***
 
 ## 6 Core Principles
 
@@ -221,13 +234,15 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 
 - Config key: `gptAiMarkdownEditor.developerMode` (boolean, default `true`).
 - For runtime failures that risk data loss (serialization/sync/save), always:
-    - log with `[GPT-AI]` context,
-    - surface a user-visible error notification,
-    - include technical details in notifications only when Developer Mode is enabled.
+
+  - log with `[GPT-AI]` context,
+  - surface a user-visible error notification,
+  - include technical details in notifications only when Developer Mode is enabled.
+
 - Throttle repeated notifications to avoid user spam loops.
 - Do not silently discard risky failures.
 
----
+***
 
 **Last Updated:** 2025-12-13
 
@@ -239,14 +254,19 @@ To maintain a clean and reliable editor experience, all custom functionality MUS
 
 1. **No Core Redundancy**: If `StarterKit` or an official `@tiptap/extension-*` provides it (e.g., input rules for Markdown), use the official package. Do NOT write custom input rules unless they are for our own entirely custom nodes.
 2. **Total Encapsulation**: Tiptap extensions should be completely self-sufficient.
-    - If a feature requires CSS, it hooks into an existing standardized class, or the CSS is cleanly separated in `editor.css`.
-    - If a feature requires DOM manipulation (like drag handles for images), it MUST be implemented within a `NodeView` via the `addNodeView` method of the extension, NOT via global `window.addEventListener('click')` inside `editor.ts`.
-3. **Strict Boundaries**: 
-    - Extensions reside in `src/webview/extensions/`.
-    - Extensions should export a single `Extension.create()`, `Node.create()`, or `Mark.create()` object.
-    - Extensions should only communicate with the VS Code backend via standardized `vscode.postMessage` payloads.
+
+   - If a feature requires CSS, it hooks into an existing standardized class, or the CSS is cleanly separated in `editor.css`.
+   - If a feature requires DOM manipulation (like drag handles for images), it MUST be implemented within a `NodeView` via the `addNodeView` method of the extension, NOT via global `window.addEventListener('click')` inside `editor.ts`.
+
+3. **Strict Boundaries**:
+
+   - Extensions reside in `src/webview/extensions/`.
+   - Extensions should export a single `Extension.create()`, `Node.create()`, or `Mark.create()` object.
+   - Extensions should only communicate with the VS Code backend via standardized `vscode.postMessage` payloads.
+
 
 ### Refactoring Roadmap
+
 1. Remove redundant hacks (e.g. `markdownInputRules.ts`).
 2. Migrate global DOM manipulation out of `editor.ts` and into proper ProseMirror internal `NodeView` components (e.g. Image Resizing handles).
 3. Decouple Message Handling: Move extension-specific message handling into `addProseMirrorPlugins` within the extension itself, limiting the footprint inside the main `editor.ts` switch statement.

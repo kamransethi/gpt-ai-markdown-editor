@@ -66,7 +66,7 @@
     "customEditors": [
       {
         "viewType": "gptAiMarkdownEditor.editor",
-        "displayName": "GPT-AI Visual Markdown Editor",
+        "displayName": "Visual Markdown Editor",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -107,7 +107,7 @@
       "explorer": [
         {
           "id": "gptAiMarkdownEditorOutline",
-          "name": "GPT-AI Markdown Editor: Outline",
+          "name": "Visual Markdown Editor: Outline",
           "when": "gptAiMarkdownEditor.isActive",
           "icon": "$(layout-sidebar-right)"
         }
@@ -140,7 +140,7 @@
       ]
     },
     "configuration": {
-      "title": "GPT-AI Markdown Editor",
+      "title": "Visual Markdown Editor",
       "properties": {
         "gptAiMarkdownEditor.mediaPath": {
           "type": "string",
@@ -203,12 +203,31 @@
         "gptAiMarkdownEditor.themeOverride": {
           "type": "string",
           "enum": [
-            "system",
             "light",
             "dark"
           ],
-          "default": "system",
-          "description": "Override the editor theme mode (System, Light, or Dark) manually. Choosing System will follow your VS Code theme."
+          "default": "light",
+          "description": "Editor theme mode. Light or Dark — the editor uses its own color palette, independent of VS Code theme."
+        },
+        "gptAiMarkdownEditor.tocMaxDepth": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Maximum heading depth shown in the Table of Contents pane (1 = H1 only, 3 = H1–H3, 6 = all levels)."
+        },
+        "gptAiMarkdownEditor.highlightSyntax": {
+          "type": "string",
+          "enum": [
+            "obsidian",
+            "github"
+          ],
+          "enumDescriptions": [
+            "Obsidian-style: ==highlighted text==",
+            "GitHub-flavored: <mark>highlighted text</mark>"
+          ],
+          "default": "obsidian",
+          "description": "Controls how highlighted text is saved to markdown."
         },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",
@@ -298,6 +317,7 @@
     "markdown-it": "^14.0.0",
     "markdown-it-mark": "^4.0.0",
     "mermaid": "^11.12.3",
+    "prosemirror-tables": "^1.8.5",
     "turndown": "^7.1.2"
   }
 }

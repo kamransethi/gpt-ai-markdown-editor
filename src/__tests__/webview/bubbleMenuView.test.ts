@@ -63,8 +63,9 @@ describe('BubbleMenuView', () => {
   });
 
   const createMockEditor = () => {
-    const chain = jest.fn(() => ({
+    const chainApi = {
       focus: jest.fn().mockReturnThis(),
+      setTextSelection: jest.fn().mockReturnThis(),
       toggleBold: jest.fn().mockReturnThis(),
       toggleItalic: jest.fn().mockReturnThis(),
       toggleStrike: jest.fn().mockReturnThis(),
@@ -86,10 +87,12 @@ describe('BubbleMenuView', () => {
       deleteColumn: jest.fn().mockReturnThis(),
       deleteTable: jest.fn().mockReturnThis(),
       run: jest.fn(),
-    }));
+    };
+    const chain = jest.fn(() => chainApi);
 
     return {
       chain,
+      __chainApi: chainApi,
       isActive: jest.fn().mockReturnValue(false),
       getAttributes: jest.fn().mockReturnValue({}),
       on: jest.fn(), // Event listener registration
@@ -232,6 +235,23 @@ describe('BubbleMenuView', () => {
 
       expect(moveSelectedTableRowMock).toHaveBeenCalledWith(editor, 'up');
       expect(moveSelectedTableColumnMock).toHaveBeenCalledWith(editor, 'right');
+    });
+
+    it('restores stored table position before running move actions', () => {
+      const editor = createMockEditor() as Editor & {
+        __chainApi: { setTextSelection: jest.Mock; focus: jest.Mock; run: jest.Mock };
+      };
+      const menu = createTableMenu(editor);
+      menu.dataset.contextPos = '12';
+
+      const items = Array.from(menu.querySelectorAll('.table-menu-item')) as HTMLElement[];
+      const moveColumnLeft = items.find(item => item.textContent === 'Move Column Left');
+
+      moveColumnLeft?.click();
+
+      expect(editor.__chainApi.focus).toHaveBeenCalled();
+      expect(editor.__chainApi.setTextSelection).toHaveBeenCalledWith(12);
+      expect(moveSelectedTableColumnMock).toHaveBeenCalledWith(editor, 'left');
     });
 
     it('hides menu after item click', () => {

@@ -2,7 +2,13 @@
 
 Welcome to the **Ultimate Markdown Stress Test**. This document is designed to push the boundaries of your markdown editor by combining every standard and extended element available.
 
----
+
+| 1     | 2      | 3     |
+| ----- | ------ | ----- |
+| qweqw | eqweqw | eqwe  |
+| eqw   | qweqw  | qweqe |
+| e     | qwewqe | qe    |
+
 
 ## 1. Text Formatting & Styles
 
@@ -55,7 +61,7 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 
 ### Task List
 
-- [X] Completed task
+- [x] Completed task
 - [ ] Incomplete task
 - [ ] Task with *formatting* and ==highlight==
 
@@ -64,10 +70,8 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 ## 4. Blockquotes
 
 > "The only way to do great work is to love what you do."— Steve Jobs
->
->> This is a nested blockquote.
->> It can go deeper if needed.
->>
+> > This is a nested blockquote.  
+> > It can go deeper if needed.
 
 ---
 
@@ -75,12 +79,14 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 
 This table contains cells with bullet points separated by `<br />-` elements as requested.
 
-| Feature Type         | Description / Details                                            | Status |
-| -------------------- | ---------------------------------------------------------------- | ------ |
-| **Formatting** | - Bold<br />- Italic<br />- ==Highlight==                        | ✅     |
-| **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra | 🌀     |
-| **Media**      | - Images<br />- Videos<br />- Audio files                        | 🎬     |
-| **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes          | 🚀     |
+
+| Feature Type   | Description / Details | Status |
+| -------------- | --------------------- | ------ |
+| **Formatting** | - Bold<br />- Italic<br />- ==Highlight==       | ✅      |
+| **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra   | 🌀     |
+| **Media**      | - Images<br />- Videos<br />- Audio files         | 🎬     |
+| **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes      | 🚀     |
+
 
 ---
 
@@ -176,7 +182,7 @@ gantt
 
 ## 9. Mathematical Expressions
 
-When $a \ne 0$, there are two solutions to ax^2 + bx + c = 0 and they are
+When $a \ne 0$, there are two solutions to ax^2 + bx + c = 0 and they are  
 $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 
 ---
@@ -191,7 +197,7 @@ $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 Here is a sentence with a footnote reference[^1].
 
 [^1]: This is the content of the footnote located at the bottom of the page.
-    
+
 ---
 
 ## 11. Interactive Elements
@@ -219,9 +225,11 @@ Inside this collapsible section, we can have more content:
 
 ---
 
-| Feature Type         | Description / Details | Status |
-| -------------------- | --------------------- | ------ |
-| **Formatting** | - Test ==Highlight==  | ✅     |
+
+| Feature Type   | Description / Details | Status |
+| -------------- | --------------------- | ------ |
+| **Formatting** | - Test ==Highlight==  | ✅      |
 | **Logic**      | - Logical operators   |        |
+
 
 <img src="./markdown_comprehensive_test/futuristic_landscape.png" alt="futuristic_landscape" width="392" height="392" />

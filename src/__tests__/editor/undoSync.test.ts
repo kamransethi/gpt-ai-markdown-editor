@@ -200,8 +200,10 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       paragraphSpacing: 1,
       tableCellSpacing: 0.1,
       tableCellHorizontalSpacing: 0.5,
-      themeOverride: 'system',
+      themeOverride: 'light',
       developerMode: true,
+      highlightSyntax: 'obsidian',
+      tocMaxDepth: 3,
     });
   });
 });

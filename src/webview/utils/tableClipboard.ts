@@ -1,6 +1,6 @@
 import type { EditorState, Selection } from '@tiptap/pm/state';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
-import { CellSelection, TableMap, findTable, selectedRect } from '@tiptap/pm/tables';
+import { CellSelection, TableMap, findTable, selectedRect } from 'prosemirror-tables';
 
 export type TableMatrix = string[][];
 

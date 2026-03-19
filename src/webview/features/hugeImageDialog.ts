@@ -143,8 +143,8 @@ export async function showHugeImageDialog(
     const dialog = document.createElement('div');
     dialog.className = 'huge-image-dialog';
     dialog.style.cssText = `
-      background: var(--vscode-editor-background);
-      border: 1px solid var(--vscode-panel-border);
+      background: var(--md-background);
+      border: 1px solid var(--md-border);
       border-radius: 6px;
       padding: 20px;
       min-width: 400px;
@@ -156,39 +156,39 @@ export async function showHugeImageDialog(
     `;
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 16px 0; color: var(--vscode-foreground); text-align: center;">
+      <h3 style="margin: 0 0 16px 0; color: var(--md-foreground); text-align: center;">
         Large Image Detected
       </h3>
       <div style="margin-bottom: 16px; text-align: center;">
-        <p style="margin: 0 0 8px 0; color: var(--vscode-foreground);">
+        <p style="margin: 0 0 8px 0; color: var(--md-foreground);">
           This image is very large:
         </p>
-        <p style="margin: 0 0 8px 0; color: var(--vscode-descriptionForeground); font-size: 0.9em;">
+        <p style="margin: 0 0 8px 0; color: var(--md-muted); font-size: 0.9em;">
           ${dimensions.width} × ${dimensions.height}px (${formatFileSize(file.size)})
         </p>
-        <p style="margin: 0; color: var(--vscode-descriptionForeground); font-size: 0.9em;">
+        <p style="margin: 0; color: var(--md-muted); font-size: 0.9em;">
           Suggested size: ${suggested.width} × ${suggested.height}px
         </p>
       </div>
       <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
         <button id="resize-suggested-btn" style="
           padding: 8px 16px;
-          background: var(--vscode-button-background);
-          color: var(--vscode-button-foreground);
+          background: var(--md-button-bg);
+          color: var(--md-button-fg);
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
           font-weight: 500;
         ">Resize to Suggested</button>
         <button id="use-original-btn" style="
           padding: 8px 16px;
-          background: var(--vscode-button-secondaryBackground);
-          color: var(--vscode-button-secondaryForeground);
+          background: var(--md-button-secondary-bg);
+          color: var(--md-button-secondary-fg);
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
         ">Use Original</button>
       </div>
     `;

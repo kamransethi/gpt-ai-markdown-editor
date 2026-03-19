@@ -60,8 +60,8 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
     const dialog = document.createElement('div');
     dialog.className = 'image-insert-dialog';
     dialog.style.cssText = `
-      background: var(--vscode-editor-background);
-      border: 1px solid var(--vscode-panel-border);
+      background: var(--md-background);
+      border: 1px solid var(--md-border);
       border-radius: 6px;
       padding: 20px;
       min-width: 500px;
@@ -81,13 +81,13 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
 
     dialog.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin: 0; color: var(--vscode-foreground);">
+        <h3 style="margin: 0; color: var(--md-foreground);">
           📷 Insert Image
         </h3>
         <button id="close-insert-dialog" style="
           background: transparent;
           border: none;
-          color: var(--vscode-foreground);
+          color: var(--md-foreground);
           cursor: pointer;
           padding: 4px;
           font-size: 18px;
@@ -97,63 +97,63 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
       </div>
 
       <div id="drop-zone" style="
-        border: 2px dashed var(--vscode-panel-border);
+        border: 2px dashed var(--md-border);
         border-radius: 6px;
         padding: 40px;
         text-align: center;
         margin-bottom: 20px;
-        background: var(--vscode-editorWidget-background);
+        background: var(--md-subtle-bg);
         transition: all 0.2s;
         cursor: pointer;
       ">
         <div style="font-size: 48px; margin-bottom: 12px;">📁</div>
-        <div style="color: var(--vscode-foreground); font-size: 14px; margin-bottom: 8px;">
+        <div style="color: var(--md-foreground); font-size: 14px; margin-bottom: 8px;">
           Drag & drop images here
         </div>
-        <div style="color: var(--vscode-descriptionForeground); font-size: 12px;">
+        <div style="color: var(--md-muted); font-size: 12px;">
           or click to browse
         </div>
       </div>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <span style="color: var(--vscode-descriptionForeground); font-size: 12px; margin: 0 12px;">OR</span>
+        <span style="color: var(--md-muted); font-size: 12px; margin: 0 12px;">OR</span>
       </div>
 
       <div style="margin-bottom: 20px;">
         <button id="choose-files-btn" style="
           width: 100%;
           padding: 10px 16px;
-          background: var(--vscode-button-background);
-          color: var(--vscode-button-foreground);
+          background: var(--md-button-bg);
+          color: var(--md-button-fg);
           border: none;
           border-radius: 4px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
           font-size: 13px;
           font-weight: 500;
         ">📁 Choose Files...</button>
       </div>
 
       <div id="selected-files" style="display: none; margin-bottom: 20px;">
-        <div style="font-size: 12px; color: var(--vscode-foreground); margin-bottom: 8px;">
+        <div style="font-size: 12px; color: var(--md-foreground); margin-bottom: 8px;">
           Selected: <span id="file-count"></span>
         </div>
         <div id="file-list" style="
           max-height: 150px;
           overflow-y: auto;
           padding: 8px;
-          background: var(--vscode-editorWidget-background);
+          background: var(--md-subtle-bg);
           border-radius: 4px;
           font-size: 11px;
-          color: var(--vscode-descriptionForeground);
+          color: var(--md-muted);
         "></div>
       </div>
 
-      <div style="margin-bottom: 20px; padding-top: 16px; border-top: 1px solid var(--vscode-panel-border);">
-        <div style="font-size: 12px; color: var(--vscode-foreground); margin-bottom: 8px;">
+      <div style="margin-bottom: 20px; padding-top: 16px; border-top: 1px solid var(--md-border);">
+        <div style="font-size: 12px; color: var(--md-foreground); margin-bottom: 8px;">
           💡 Tip: You can also do the following directly in the editor:
         </div>
-        <div style="font-size: 11px; color: var(--vscode-descriptionForeground); line-height: 1.6;">
+        <div style="font-size: 11px; color: var(--md-muted); line-height: 1.6;">
           • Copy & paste images (${navigator.platform.toLowerCase().includes('mac') ? 'Cmd' : 'Ctrl'}+V)<br>
           • Drag & drop from Finder/File Explorer<br>
           • Drag & drop from VS Code file explorer
@@ -163,21 +163,21 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
         <button id="cancel-insert" style="
           padding: 6px 14px;
-          background: var(--vscode-button-secondaryBackground);
-          color: var(--vscode-button-secondaryForeground);
+          background: var(--md-button-secondary-bg);
+          color: var(--md-button-secondary-fg);
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
         ">Cancel</button>
         <button id="insert-images" style="
           padding: 6px 14px;
-          background: var(--vscode-button-background);
-          color: var(--vscode-button-foreground);
+          background: var(--md-button-bg);
+          color: var(--md-button-fg);
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          font-family: var(--vscode-font-family);
+          font-family: var(--md-font-family);
           font-weight: 500;
           display: none;
         ">Insert Image<span id="insert-count"></span></button>
@@ -277,20 +277,20 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
     dropZone.addEventListener('dragover', e => {
       e.preventDefault();
       e.stopPropagation();
-      dropZone.style.borderColor = 'var(--vscode-button-background)';
-      dropZone.style.background = 'var(--vscode-list-hoverBackground)';
+      dropZone.style.borderColor = 'var(--md-button-bg)';
+      dropZone.style.background = 'var(--md-hover-bg)';
     });
 
     dropZone.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = 'var(--vscode-panel-border)';
-      dropZone.style.background = 'var(--vscode-editorWidget-background)';
+      dropZone.style.borderColor = 'var(--md-border)';
+      dropZone.style.background = 'var(--md-subtle-bg)';
     });
 
     dropZone.addEventListener('drop', async e => {
       e.preventDefault();
       e.stopPropagation();
-      dropZone.style.borderColor = 'var(--vscode-panel-border)';
-      dropZone.style.background = 'var(--vscode-editorWidget-background)';
+      dropZone.style.borderColor = 'var(--md-border)';
+      dropZone.style.background = 'var(--md-subtle-bg)';
 
       const dt = e.dataTransfer;
       if (!dt) return;
@@ -473,15 +473,15 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
         e.dataTransfer.dropEffect = 'copy';
       }
       // Show visual feedback on dropZone when dragging over dialog
-      dropZone.style.borderColor = 'var(--vscode-button-background)';
-      dropZone.style.background = 'var(--vscode-list-hoverBackground)';
+      dropZone.style.borderColor = 'var(--md-button-bg)';
+      dropZone.style.background = 'var(--md-hover-bg)';
     });
 
     dialog.addEventListener('dragleave', (e: DragEvent) => {
       // Only reset styling if leaving the dialog entirely
       if (!dialog.contains(e.relatedTarget as Node)) {
-        dropZone.style.borderColor = 'var(--vscode-panel-border)';
-        dropZone.style.background = 'var(--vscode-editorWidget-background)';
+        dropZone.style.borderColor = 'var(--md-border)';
+        dropZone.style.background = 'var(--md-subtle-bg)';
       }
     });
 

@@ -8,28 +8,10 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import mermaid from 'mermaid';
 
 /**
- * Detect if VS Code is in dark mode by checking CSS variables
+ * Detect if editor is in dark mode by checking data-theme attribute
  */
 function isDarkMode(): boolean {
-  // Check for manual theme override first
-  const override = document.body.getAttribute('data-theme-override');
-  if (override === 'dark') return true;
-  if (override === 'light') return false;
-
-  const bg = getComputedStyle(document.documentElement)
-    .getPropertyValue('--vscode-editor-background')
-    .trim();
-  if (!bg) return false;
-
-  const hex = bg.replace('#', '');
-  if (hex.length >= 6) {
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance < 0.5;
-  }
-  return false;
+  return document.body.getAttribute('data-theme') === 'dark';
 }
 
 /**
@@ -45,36 +27,30 @@ function initializeMermaid() {
     fontFamily: 'inherit',
     suppressErrorRendering: true,
     themeVariables: {
-      background: styles.getPropertyValue('--vscode-editor-background').trim() || '#1e1e1e',
-      primaryColor: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      primaryBorderColor: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
-      primaryTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      secondaryColor:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      secondaryBorderColor:
-        styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
-      tertiaryColor:
-        styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      tertiaryBorderColor:
-        styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
-      lineColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      textColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      edgeLabelBackground:
-        styles.getPropertyValue('--vscode-editor-background').trim() || '#1e1e1e',
-      clusterBkg: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      clusterBorder: styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
-      actorBorder: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
-      actorTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      actorBkg: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      labelBoxBkg: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      labelBoxBorderColor:
-        styles.getPropertyValue('--vscode-editorWidget-border').trim() || '#444444',
-      labelTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      signalColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      signalTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
-      noteBorderColor: styles.getPropertyValue('--vscode-focusBorder').trim() || '#3794ff',
-      noteBkgColor: styles.getPropertyValue('--vscode-editorWidget-background').trim() || '#252526',
-      noteTextColor: styles.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc',
+      background: styles.getPropertyValue('--md-background').trim(),
+      primaryColor: styles.getPropertyValue('--md-subtle-bg').trim(),
+      primaryBorderColor: styles.getPropertyValue('--md-focus').trim(),
+      primaryTextColor: styles.getPropertyValue('--md-foreground').trim(),
+      secondaryColor: styles.getPropertyValue('--md-subtle-bg').trim(),
+      secondaryBorderColor: styles.getPropertyValue('--md-border').trim(),
+      tertiaryColor: styles.getPropertyValue('--md-subtle-bg').trim(),
+      tertiaryBorderColor: styles.getPropertyValue('--md-border').trim(),
+      lineColor: styles.getPropertyValue('--md-foreground').trim(),
+      textColor: styles.getPropertyValue('--md-foreground').trim(),
+      edgeLabelBackground: styles.getPropertyValue('--md-background').trim(),
+      clusterBkg: styles.getPropertyValue('--md-subtle-bg').trim(),
+      clusterBorder: styles.getPropertyValue('--md-border').trim(),
+      actorBorder: styles.getPropertyValue('--md-focus').trim(),
+      actorTextColor: styles.getPropertyValue('--md-foreground').trim(),
+      actorBkg: styles.getPropertyValue('--md-subtle-bg').trim(),
+      labelBoxBkg: styles.getPropertyValue('--md-subtle-bg').trim(),
+      labelBoxBorderColor: styles.getPropertyValue('--md-border').trim(),
+      labelTextColor: styles.getPropertyValue('--md-foreground').trim(),
+      signalColor: styles.getPropertyValue('--md-foreground').trim(),
+      signalTextColor: styles.getPropertyValue('--md-foreground').trim(),
+      noteBorderColor: styles.getPropertyValue('--md-focus').trim(),
+      noteBkgColor: styles.getPropertyValue('--md-subtle-bg').trim(),
+      noteTextColor: styles.getPropertyValue('--md-foreground').trim(),
     },
   });
 }

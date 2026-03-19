@@ -101,6 +101,7 @@ type ToolbarDropdownItem = {
   action: () => void;
   icon?: ToolbarIcon;
   isEnabled?: () => boolean; // Function to check if item should be enabled
+  isActive?: () => boolean; // Function to check if item is currently active
 };
 
 type ToolbarDropdown = {
@@ -473,11 +474,13 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   };
 
   const styleItems = [
-    { label: 'Paragraph', action: () => setParagraph() },
-    { label: 'Heading 1', action: () => setHeading(1) },
-    { label: 'Heading 2', action: () => setHeading(2) },
-    { label: 'Heading 3', action: () => setHeading(3) },
+    { label: 'Paragraph', action: () => setParagraph(), isActive: () => !Boolean(getEditor()?.isActive('heading')) },
+    { label: 'Heading 1', action: () => setHeading(1), isActive: () => Boolean(getEditor()?.isActive('heading', { level: 1 })) },
+    { label: 'Heading 2', action: () => setHeading(2), isActive: () => Boolean(getEditor()?.isActive('heading', { level: 2 })) },
+    { label: 'Heading 3', action: () => setHeading(3), isActive: () => Boolean(getEditor()?.isActive('heading', { level: 3 })) },
   ];
+
+  const styleItemButtons: Array<{ button: HTMLButtonElement; isActive: () => boolean }> = [];
 
   styleItems.forEach(item => {
     const itemButton = document.createElement('button');
@@ -497,6 +500,7 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
       refresh();
     };
     headingMenu.appendChild(itemButton);
+    styleItemButtons.push({ button: itemButton, isActive: item.isActive });
   });
 
   styleButton.onmousedown = e => {
@@ -639,6 +643,10 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
       }
       element.classList.toggle('active', Boolean(isActive()));
     });
+
+    styleItemButtons.forEach(({ button, isActive }) => {
+      button.classList.toggle('active', isActive());
+    });
   };
 
   return {
@@ -774,54 +782,117 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       isActive: () => false,
       isEnabled: () => !!(window as any).__docDirty,
       className: 'save-button',
-      requiresFocus: false, // Can save even if editor lost focus
+      requiresFocus: false,
     },
     {
-      type: 'separator',
+      type: 'button',
+      label: 'Undo',
+      title: `Undo ${modKeyLabel}+Z`,
+      icon: { name: 'discard', fallback: '↩' },
+      action: () => editor.chain().focus().undo().run(),
+      isActive: () => false,
+      isEnabled: () => editor.can().undo(),
+      requiresFocus: true,
+    },
+    {
+      type: 'button',
+      label: 'Redo',
+      title: `Redo ${modKeyLabel}+Shift+Z`,
+      icon: { name: 'redo', fallback: '↪' },
+      action: () => editor.chain().focus().redo().run(),
+      isActive: () => false,
+      isEnabled: () => editor.can().redo(),
+      requiresFocus: true,
     },
     {
       type: 'dropdown',
-      label: 'Text',
-      title: 'Text formatting',
-      icon: { name: 'symbol-text', fallback: 'T' },
-      requiresFocus: true,
-      isActive: () =>
-        editor.isActive('bold') ||
-        editor.isActive('italic') ||
-        editor.isActive('highlight') ||
-        editor.isActive('strike') ||
-        editor.isActive('underline') ||
-        editor.isActive('code'),
+      label: 'Zoom',
+      title: 'Zoom level',
+      icon: { name: 'zoom-in', fallback: '100%' },
+      requiresFocus: false,
       items: [
         {
-          label: `Bold (${modKeyLabel}+B)`,
-          icon: { name: 'bold', fallback: 'B' },
-          action: () => editor.chain().focus().toggleBold().run(),
+          label: '75%',
+          action: () => setEditorZoom(0.75),
+          isActive: () => getEditorZoom() === 0.75,
         },
         {
-          label: `Italic (${modKeyLabel}+I)`,
-          icon: { name: 'italic', fallback: 'I' },
-          action: () => editor.chain().focus().toggleItalic().run(),
+          label: '100%',
+          action: () => setEditorZoom(1),
+          isActive: () => getEditorZoom() === 1,
         },
         {
-          label: `Underline (${modKeyLabel}+U)`,
-          icon: { name: 'underline', fallback: 'U' },
-          action: () => editor.chain().focus().toggleUnderline().run(),
+          label: '125%',
+          action: () => setEditorZoom(1.25),
+          isActive: () => getEditorZoom() === 1.25,
         },
         {
-          label: 'Highlight',
-          icon: { name: 'paintcan', fallback: 'Hl' },
-          action: () => editor.chain().focus().toggleHighlight().run(),
+          label: '150%',
+          action: () => setEditorZoom(1.5),
+          isActive: () => getEditorZoom() === 1.5,
         },
+      ],
+    },
+    { type: 'separator' },
+    {
+      type: 'button',
+      label: 'Bold',
+      title: `Bold ${modKeyLabel}+B`,
+      icon: { name: 'bold', fallback: 'B' },
+      action: () => editor.chain().focus().toggleBold().run(),
+      isActive: () => editor.isActive('bold'),
+      requiresFocus: true,
+      className: 'bold',
+    },
+    {
+      type: 'button',
+      label: 'Italic',
+      title: `Italic ${modKeyLabel}+I`,
+      icon: { name: 'italic', fallback: 'I' },
+      action: () => editor.chain().focus().toggleItalic().run(),
+      isActive: () => editor.isActive('italic'),
+      requiresFocus: true,
+      className: 'italic',
+    },
+    {
+      type: 'button',
+      label: 'Underline',
+      title: `Underline ${modKeyLabel}+U`,
+      icon: { name: 'underline', fallback: 'U' },
+      action: () => editor.chain().focus().toggleUnderline().run(),
+      isActive: () => editor.isActive('underline'),
+      requiresFocus: true,
+      className: 'underline',
+    },
+    {
+      type: 'button',
+      label: 'Highlight',
+      title: 'Highlight',
+      icon: { name: 'paintcan', fallback: 'Hl' },
+      action: () => editor.chain().focus().toggleHighlight().run(),
+      isActive: () => editor.isActive('highlight'),
+      requiresFocus: true,
+      className: 'highlight',
+    },
+    {
+      type: 'dropdown',
+      label: 'More',
+      title: 'More formatting',
+      icon: { name: 'ellipsis', fallback: '…' },
+      requiresFocus: true,
+      isActive: () => editor.isActive('strike') || editor.isActive('code'),
+      items: [
         {
           label: 'Strikethrough',
           icon: { name: 'strikethrough', fallback: 'S' },
           action: () => editor.chain().focus().toggleStrike().run(),
+          isActive: () => editor.isActive('strike'),
         },
         {
           label: 'Inline code',
           icon: { name: 'code', fallback: '<>' },
           action: () => editor.chain().focus().toggleCode().run(),
+          isActive: () => editor.isActive('code'),
         },
       ],
     },
@@ -845,29 +916,36 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         {
           label: 'Heading 1',
           action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+          isActive: () => editor.isActive('heading', { level: 1 }),
         },
         {
           label: 'Heading 2',
           action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+          isActive: () => editor.isActive('heading', { level: 2 }),
         },
         {
           label: 'Heading 3',
           action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+          isActive: () => editor.isActive('heading', { level: 3 }),
         },
         {
           label: 'Heading 4',
           action: () => editor.chain().focus().toggleHeading({ level: 4 }).run(),
+          isActive: () => editor.isActive('heading', { level: 4 }),
         },
         {
           label: 'Heading 5',
           action: () => editor.chain().focus().toggleHeading({ level: 5 }).run(),
+          isActive: () => editor.isActive('heading', { level: 5 }),
         },
         {
           label: 'Heading 6',
           action: () => editor.chain().focus().toggleHeading({ level: 6 }).run(),
+          isActive: () => editor.isActive('heading', { level: 6 }),
         },
       ],
     },
+    { type: 'separator' },
     {
       type: 'dropdown',
       label: 'Lists',
@@ -885,24 +963,28 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           icon: { name: 'list-unordered', fallback: '•' },
           action: () => editor.chain().focus().toggleBulletList().run(),
           isEnabled: () => !editor.isActive('table'),
+          isActive: () => editor.isActive('bulletList'),
         },
         {
           label: 'Numbered list',
           icon: { name: 'list-ordered', fallback: '1.' },
           action: () => editor.chain().focus().toggleOrderedList().run(),
           isEnabled: () => !editor.isActive('table'),
+          isActive: () => editor.isActive('orderedList'),
         },
         {
           label: 'Task list',
           icon: { name: 'tasklist', fallback: '☐' },
           action: () => editor.chain().focus().toggleTaskList().run(),
           isEnabled: () => !editor.isActive('table'),
+          isActive: () => editor.isActive('taskList'),
         },
         {
           label: 'Table bullet',
           icon: { name: 'list-unordered', fallback: '•' },
           action: () => toggleTableBullet(editor),
           isEnabled: () => editor.isActive('table'),
+          isActive: () => isTableBulletActive(editor),
         },
       ],
     },
@@ -919,6 +1001,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           label: 'Block quote',
           icon: { name: 'quote', fallback: '"' },
           action: () => editor.chain().focus().toggleBlockquote().run(),
+          isActive: () => editor.isActive('blockquote'),
         },
         {
           label: 'Note alert',
@@ -926,6 +1009,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => {
             editor.chain().focus().toggleAlert('NOTE').run();
           },
+          isActive: () => editor.isActive('githubAlert', { alertType: 'NOTE' }),
         },
         {
           label: 'Tip alert',
@@ -933,6 +1017,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => {
             editor.chain().focus().toggleAlert('TIP').run();
           },
+          isActive: () => editor.isActive('githubAlert', { alertType: 'TIP' }),
         },
         {
           label: 'Important alert',
@@ -940,6 +1025,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => {
             editor.chain().focus().toggleAlert('IMPORTANT').run();
           },
+          isActive: () => editor.isActive('githubAlert', { alertType: 'IMPORTANT' }),
         },
         {
           label: 'Warning alert',
@@ -947,6 +1033,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => {
             editor.chain().focus().toggleAlert('WARNING').run();
           },
+          isActive: () => editor.isActive('githubAlert', { alertType: 'WARNING' }),
         },
         {
           label: 'Caution alert',
@@ -954,6 +1041,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => {
             editor.chain().focus().toggleAlert('CAUTION').run();
           },
+          isActive: () => editor.isActive('githubAlert', { alertType: 'CAUTION' }),
         },
         {
           label: 'Remove alert',
@@ -1135,7 +1223,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'dropdown',
       label: 'View',
-      title: 'Outline, source, and copy tools',
+      title: 'Outline, source, and settings',
       icon: { name: 'layout-sidebar-right', fallback: 'View' },
       items: [
         {
@@ -1156,6 +1244,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             window.dispatchEvent(new CustomEvent('copyAsMarkdown'));
           },
         },
+        {
+          label: 'Configuration',
+          action: () => {
+            window.dispatchEvent(new CustomEvent('openExtensionSettings'));
+          },
+        },
       ],
     },
     {
@@ -1174,12 +1268,6 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           label: 'Export as Word',
           action: () => {
             window.dispatchEvent(new CustomEvent('exportDocument', { detail: { format: 'docx' } }));
-          },
-        },
-        {
-          label: 'Open export settings',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('openExtensionSettings'));
           },
         },
       ],
@@ -1252,12 +1340,16 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       }
     });
 
-    // Update dropdown item disabled states
+    // Update dropdown item disabled/active states
     dropdownItems.forEach(({ config, element }) => {
       const enabled = config.isEnabled ? config.isEnabled() : true;
       element.disabled = !enabled;
       element.classList.toggle('disabled', !enabled);
       element.setAttribute('aria-disabled', String(!enabled));
+
+      const active = config.isActive ? config.isActive() : false;
+      element.classList.toggle('active', Boolean(active));
+      element.setAttribute('aria-pressed', String(Boolean(active)));
     });
 
     // Update color pickers
@@ -1606,6 +1698,33 @@ export function createTableMenu(editor: Editor): HTMLElement {
   menu.className = 'table-menu';
   menu.style.display = 'none';
 
+  const restoreContextSelection = () => {
+    const rawPos = menu.dataset.contextPos;
+    if (!rawPos) {
+      return;
+    }
+
+    const pos = Number.parseInt(rawPos, 10);
+    if (!Number.isFinite(pos)) {
+      return;
+    }
+
+    const chain = editor.chain().focus();
+    if (typeof (chain as { setTextSelection?: (position: number) => unknown }).setTextSelection === 'function') {
+      (chain as { setTextSelection: (position: number) => { run: () => boolean } })
+        .setTextSelection(pos)
+        .run();
+      return;
+    }
+
+    chain.run();
+  };
+
+  menu.onmousedown = event => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const items: Array<
     | { separator: true }
     | {
@@ -1690,6 +1809,7 @@ export function createTableMenu(editor: Editor): HTMLElement {
       menuItem.title = item.label;
       menuItem.setAttribute('aria-label', item.label);
       menuItem.onclick = () => {
+        restoreContextSelection();
         item.action();
         menu.style.display = 'none';
       };

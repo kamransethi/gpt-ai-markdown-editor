@@ -81,8 +81,8 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
   dialog.className = 'rename-dialog';
   dialog.setAttribute('contenteditable', 'false');
   dialog.style.cssText = `
-    background: var(--vscode-editor-background, var(--md-background));
-    border: 1px solid var(--vscode-panel-border, var(--md-border));
+    background: var(--md-background);
+    border: 1px solid var(--md-border);
     border-radius: 8px;
     padding: 20px;
     min-width: 400px;
@@ -92,14 +92,14 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
   `;
 
   dialog.innerHTML = `
-    <h3 style="margin: 0 0 16px 0; font-size: 16px; color: var(--vscode-foreground);">
+    <h3 style="margin: 0 0 16px 0; font-size: 16px; color: var(--md-foreground);">
       Rename Image
     </h3>
 
     <div id="rename-impact" style="
       margin: -6px 0 14px 0;
       font-size: 12px;
-      color: var(--vscode-descriptionForeground);
+      color: var(--md-muted);
       line-height: 1.4;
     ">
       <div id="rename-impact-loading">Checking references…</div>
@@ -119,9 +119,9 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
               height: 18px;
               margin: 0 4px;
               border-radius: 999px;
-              border: 1px solid var(--vscode-button-background);
+              border: 1px solid var(--md-button-bg);
               background: transparent;
-              color: var(--vscode-foreground);
+              color: var(--md-foreground);
               cursor: pointer;
               font-size: 11px;
               line-height: 1;
@@ -145,8 +145,8 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         max-width: 460px;
         max-height: 240px;
         overflow: auto;
-        background: var(--vscode-editor-background);
-        border: 1px solid var(--vscode-panel-border);
+        background: var(--md-background);
+        border: 1px solid var(--md-border);
         border-radius: 8px;
         box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
         padding: 10px;
@@ -154,21 +154,21 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
     ></div>
 
     <div style="margin-bottom: 16px;">
-      <label style="display: block; margin-bottom: 8px; font-size: 13px; color: var(--vscode-descriptionForeground);">
+      <label style="display: block; margin-bottom: 8px; font-size: 13px; color: var(--md-muted);">
         New filename (without extension)
       </label>
       <input type="text" class="rename-input" value="${currentName}" style="
         width: 100%;
         padding: 8px 12px;
         font-size: 14px;
-        background: var(--vscode-input-background);
-        color: var(--vscode-input-foreground);
-        border: 1px solid var(--vscode-input-border);
+        background: var(--md-input-bg);
+        color: var(--md-input-fg);
+        border: 1px solid var(--md-border);
         border-radius: 4px;
         outline: none;
         box-sizing: border-box;
       "/>
-      <div style="margin-top: 4px; font-size: 12px; color: var(--vscode-descriptionForeground);">
+      <div style="margin-top: 4px; font-size: 12px; color: var(--md-muted);">
         Extension: .${extension}
       </div>
     </div>
@@ -178,9 +178,9 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
       margin: -6px 0 14px 0;
       padding: 10px 12px;
       border-radius: 6px;
-      border: 1px solid var(--vscode-inputValidation-warningBorder);
-      background: var(--vscode-inputValidation-warningBackground, transparent);
-      color: var(--vscode-foreground);
+      border: 1px solid var(--md-border);
+      background: transparent;
+      color: var(--md-foreground);
       font-size: 12px;
       line-height: 1.4;
     ">
@@ -194,16 +194,16 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
           padding: 6px 10px;
           font-size: 12px;
           background: transparent;
-          color: var(--vscode-foreground);
-          border: 1px solid var(--vscode-panel-border);
+          color: var(--md-foreground);
+          border: 1px solid var(--md-border);
           border-radius: 4px;
           cursor: pointer;
         ">Cancel</button>
         <button id="rename-collision-overwrite" type="button" style="
           padding: 6px 10px;
           font-size: 12px;
-          background: var(--vscode-button-background);
-          color: var(--vscode-button-foreground);
+          background: var(--md-button-bg);
+          color: var(--md-button-fg);
           border: none;
           border-radius: 4px;
           cursor: pointer;
@@ -216,16 +216,16 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         padding: 8px 16px;
         font-size: 13px;
         background: transparent;
-        color: var(--vscode-foreground, var(--md-foreground));
-        border: 1px solid var(--vscode-panel-border, var(--md-border));
+        color: var(--md-foreground);
+        border: 1px solid var(--md-border);
         border-radius: 4px;
         cursor: pointer;
       ">Cancel</button>
       <button type="button" class="rename-btn" style="
         padding: 8px 16px;
         font-size: 13px;
-        background: var(--vscode-button-background);
-        color: var(--vscode-button-foreground);
+        background: var(--md-button-bg);
+        color: var(--md-button-fg);
         border: none;
         border-radius: 4px;
         cursor: pointer;
@@ -306,7 +306,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
     title.style.cssText = `
       font-size: 12px;
       font-weight: 600;
-      color: var(--vscode-foreground);
+      color: var(--md-foreground);
     `;
 
     const close = document.createElement('button');
@@ -315,7 +315,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
     close.style.cssText = `
       background: transparent;
       border: none;
-      color: var(--vscode-foreground);
+      color: var(--md-foreground);
       cursor: pointer;
       padding: 2px 6px;
       font-size: 16px;
@@ -337,7 +337,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
       empty.textContent = 'No other references found.';
       empty.style.cssText = `
         font-size: 12px;
-        color: var(--vscode-descriptionForeground);
+        color: var(--md-muted);
       `;
       referencesPopover.appendChild(empty);
       return;
@@ -359,7 +359,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         border-radius: 6px;
       `;
       row.addEventListener('mouseenter', () => {
-        row.style.background = 'var(--vscode-list-hoverBackground)';
+        row.style.background = 'var(--md-hover-bg)';
       });
       row.addEventListener('mouseleave', () => {
         row.style.background = 'transparent';
@@ -375,7 +375,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
       pathLabel.textContent = fileRef.fsPath;
       pathLabel.style.cssText = `
         font-size: 12px;
-        color: var(--vscode-foreground);
+        color: var(--md-foreground);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -387,7 +387,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
       meta.style.cssText = `
         margin-top: 2px;
         font-size: 11px;
-        color: var(--vscode-descriptionForeground);
+        color: var(--md-muted);
       `;
 
       left.appendChild(pathLabel);
@@ -407,8 +407,8 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         btn.style.cssText = `
           padding: 2px 8px;
           font-size: 11px;
-          background: var(--vscode-button-secondaryBackground);
-          color: var(--vscode-button-secondaryForeground);
+          background: var(--md-button-secondary-bg);
+          color: var(--md-button-secondary-fg);
           border: none;
           border-radius: 4px;
           cursor: pointer;
@@ -572,7 +572,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
     const newName = input.value.trim();
 
     if (!newName) {
-      input.style.borderColor = 'var(--vscode-inputValidation-errorBorder)';
+      input.style.borderColor = 'var(--md-error-fg)';
       return;
     }
 
@@ -588,7 +588,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
       .replace(/^-|-$/g, '');
 
     if (!sanitizedName) {
-      input.style.borderColor = 'var(--vscode-inputValidation-errorBorder)';
+      input.style.borderColor = 'var(--md-error-fg)';
       return;
     }
 

@@ -75,8 +75,8 @@ export async function showMermaidEditor(initialCode: string): Promise<MermaidEdi
     const dialog = document.createElement('div');
     dialog.className = 'mermaid-editor-dialog';
     dialog.style.cssText = `
-      background: var(--vscode-editor-background);
-      border: 1px solid var(--vscode-panel-border);
+      background: var(--md-background);
+      border: 1px solid var(--md-border);
       border-radius: 6px;
       padding: 0;
       width: clamp(60%, 800px, 90vw);
@@ -90,20 +90,20 @@ export async function showMermaidEditor(initialCode: string): Promise<MermaidEdi
     const header = document.createElement('div');
     header.style.cssText = `
       padding: 12px 20px;
-      border-bottom: 1px solid var(--vscode-panel-border);
+      border-bottom: 1px solid var(--md-border);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
     `;
     header.innerHTML = `
-      <h3 style="margin: 0; color: var(--vscode-foreground); font-size: 14px; font-weight: 600;">
+      <h3 style="margin: 0; color: var(--md-foreground); font-size: 14px; font-weight: 600;">
         Edit Mermaid Diagram
       </h3>
       <button id="close-btn" style="
         background: none;
         border: none;
-        color: var(--vscode-foreground);
+        color: var(--md-foreground);
         font-size: 24px;
         line-height: 1;
         cursor: pointer;
@@ -122,8 +122,8 @@ export async function showMermaidEditor(initialCode: string): Promise<MermaidEdi
       flex: 1;
       padding: 16px 20px;
       margin: 0;
-      background: var(--vscode-editor-background);
-      color: var(--vscode-editor-foreground);
+      background: var(--md-background);
+      color: var(--md-foreground);
       border: none;
       font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
       font-size: 14px;
@@ -136,33 +136,33 @@ export async function showMermaidEditor(initialCode: string): Promise<MermaidEdi
     const footer = document.createElement('div');
     footer.style.cssText = `
       padding: 12px 20px;
-      border-top: 1px solid var(--vscode-panel-border);
+      border-top: 1px solid var(--md-border);
       display: flex;
       gap: 12px;
       justify-content: flex-end;
       align-items: center;
-      background: var(--vscode-editor-background);
+      background: var(--md-background);
       flex-shrink: 0;
     `;
     footer.innerHTML = `
       <button id="cancel-btn" style="
         padding: 8px 16px;
-        background: var(--vscode-button-secondaryBackground, #3a3d41);
-        color: var(--vscode-button-secondaryForeground, #ccc);
+        background: var(--md-button-secondary-bg);
+        color: var(--md-button-secondary-fg);
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        font-family: var(--vscode-font-family);
+        font-family: var(--md-font-family);
         font-size: 13px;
       ">Cancel</button>
       <button id="save-btn" style="
         padding: 8px 16px;
-        background: var(--vscode-button-background);
-        color: var(--vscode-button-foreground);
+        background: var(--md-button-bg);
+        color: var(--md-button-fg);
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        font-family: var(--vscode-font-family);
+        font-family: var(--md-font-family);
         font-weight: 500;
         font-size: 13px;
       ">Save</button>

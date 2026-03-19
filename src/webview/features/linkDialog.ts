@@ -367,6 +367,11 @@ function updateAutocompleteDropdown(
             ? headingResult.text.substring(0, 50) + '...'
             : headingResult.text;
         urlInput.value = displayText;
+        // Auto-populate link text from heading
+        const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
+        if (textInput && !textInput.value) {
+          textInput.value = headingResult.text;
+        }
         closeAutocomplete();
         urlInput.focus();
       };
@@ -646,7 +651,7 @@ export function createLinkDialog(): HTMLElement {
         <button
           id="link-browse-local-btn"
           class="export-settings-select"
-          style="width: 34px; height: 34px; padding: 0; display: none; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+          style="width: 34px; height: 34px; padding: 0; display: none; background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
           title="Browse for a local file..."
         >
           <span class="codicon codicon-folder"></span>
@@ -668,21 +673,21 @@ export function createLinkDialog(): HTMLElement {
       <button
         id="link-remove-btn"
         class="export-settings-select"
-        style="width: auto; padding: 6px 16px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; cursor: pointer; border-radius: 4px; margin-right: auto;"
+        style="width: auto; padding: 6px 16px; background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg); border: none; cursor: pointer; border-radius: 4px; margin-right: auto;"
       >
         Remove Link
       </button>
       <button
         id="link-cancel-btn"
         class="export-settings-select"
-        style="width: auto; padding: 6px 20px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; cursor: pointer; border-radius: 4px;"
+        style="width: auto; padding: 6px 20px; background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg); border: none; cursor: pointer; border-radius: 4px;"
       >
         Cancel
       </button>
       <button
         id="link-ok-btn"
         class="export-settings-select"
-        style="width: auto; padding: 6px 20px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; cursor: pointer; border-radius: 4px;"
+        style="width: auto; padding: 6px 20px; background: var(--md-button-bg); color: var(--md-button-fg); border: none; cursor: pointer; border-radius: 4px;"
       >
         OK
       </button>

@@ -104,14 +104,14 @@ export function createTableInsertDialog(): HTMLElement {
       <button
         id="table-cancel-btn"
         class="export-settings-select"
-        style="padding: 8px 24px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; cursor: pointer; border-radius: 4px;"
+        style="padding: 8px 24px; background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg); border: none; cursor: pointer; border-radius: 4px;"
       >
         Cancel
       </button>
       <button
         id="table-ok-btn"
         class="export-settings-select"
-        style="padding: 8px 24px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; cursor: pointer; border-radius: 4px;"
+        style="padding: 8px 24px; background: var(--md-button-bg); color: var(--md-button-fg); border: none; cursor: pointer; border-radius: 4px;"
       >
         OK
       </button>

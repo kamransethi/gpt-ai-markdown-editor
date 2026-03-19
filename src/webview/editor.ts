@@ -5,6 +5,7 @@
  */
 
 // Import CSS files (esbuild will bundle these)
+import 'prosemirror-tables/style/tables.css';
 import './editor.css';
 import './codicon.css';
 
@@ -68,8 +69,7 @@ import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
 import { isSaveShortcut } from './utils/shortcutKeys';
 import { collectExportContent, getDocumentTitle } from './utils/exportContent';
-import { findTable } from '@tiptap/pm/tables';
-import { TableInteractiveView } from './extensions/tableInteractiveView';
+import { findTable } from 'prosemirror-tables';
 import Underline from '@tiptap/extension-underline';
 
 /**
@@ -326,6 +326,8 @@ let floatingBarController: ReturnType<typeof createFloatingFormattingBar> | null
 let tableMenu: HTMLElement;
 let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
+let tocMaxDepth = 3;
+let highlightSyntax: 'obsidian' | 'github' = 'obsidian';
 let tocScrollRaf: number | null = null;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
@@ -360,9 +362,10 @@ function refreshTocPaneSelection() {
     return;
   }
 
-  const activeId = getActiveTocHeadingId(tocAnchors);
+  const filtered = tocAnchors.filter(a => a.level <= tocMaxDepth);
+  const activeId = getActiveTocHeadingId(filtered);
   tocPaneController.update(
-    tocAnchors.map(anchor => ({
+    filtered.map(anchor => ({
       ...anchor,
       isActive: activeId !== null && anchor.id === activeId,
     }))
@@ -531,7 +534,7 @@ function saveDocument() {
       );
       showRuntimeErrorToUser(
         'save-serialization-empty',
-        'Save blocked: serialization returned empty output for a non-empty document. Please share GPT-AI logs with support.'
+        'Save blocked: serialization returned empty output for a non-empty document. Please share editor logs with support.'
       );
       return;
     }
@@ -627,33 +630,6 @@ function debouncedUpdate(markdown: string) {
   }, 300);
 }
 
-// TODO: Re-implement code block language badges feature
-// This feature was causing TipTap to not render due to DOM manipulation conflicts
-// Need to find a way to add language badges without interfering with TipTap's rendering
-
-/*
-// Supported languages for code blocks
-const CODE_BLOCK_LANGUAGES = [
-  { value: 'plaintext', label: 'Plain Text' },
-  { value: 'javascript', label: 'JavaScript' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python', label: 'Python' },
-  { value: 'bash', label: 'Bash' },
-  { value: 'json', label: 'JSON' },
-  { value: 'markdown', label: 'Markdown' },
-  { value: 'css', label: 'CSS' },
-  { value: 'html', label: 'HTML' },
-  { value: 'sql', label: 'SQL' },
-  { value: 'java', label: 'Java' },
-  { value: 'go', label: 'Go' },
-  { value: 'rust', label: 'Rust' },
-];
-
-function setupCodeBlockLanguageBadges(editorInstance: Editor) {
-  // Implementation commented out - was interfering with TipTap rendering
-}
-*/
-
 /**
  * Initialize TipTap editor with error handling
  */
@@ -723,7 +699,13 @@ function initializeEditor(initialContent: string) {
         SpaceFriendlyImagePaths,
         // GitHubAlerts must be before StarterKit to intercept alert blockquotes
         GitHubAlerts,
-        Highlight.configure({
+        Highlight.extend({
+          renderMarkdown(node: any, h: any) {
+            const open = highlightSyntax === 'github' ? '<mark>' : '==';
+            const close = highlightSyntax === 'github' ? '</mark>' : '==';
+            return `${open}${h.renderChildren(node)}${close}`;
+          },
+        }).configure({
           HTMLAttributes: {
             class: 'highlight',
           },
@@ -792,7 +774,6 @@ function initializeEditor(initialContent: string) {
           },
         }).configure({
           resizable: true,
-          View: TableInteractiveView,
           HTMLAttributes: {
             class: 'markdown-table',
           },
@@ -950,6 +931,7 @@ function initializeEditor(initialContent: string) {
         scheduleTocPaneSelectionRefresh();
       },
     });
+    tocPaneController.setVisible(true);
 
     const onWindowScroll = () => {
       scheduleTocPaneSelectionRefresh();
@@ -1019,10 +1001,6 @@ function initializeEditor(initialContent: string) {
       console.warn('[GPT-AI] Initial selection sync failed:', error);
     }
 
-    // Setup code block language badges
-    // TODO: Re-implement this feature without interfering with TipTap's DOM
-    // setupCodeBlockLanguageBadges(editor);
-
     // Store handler references for cleanup on editor destroy
     const contextMenuHandler = (e: MouseEvent) => {
       try {
@@ -1031,11 +1009,18 @@ function initializeEditor(initialContent: string) {
 
         if (tableCell && editorInstance.isActive('table')) {
           e.preventDefault();
+          const hit = editorInstance.view.posAtCoords({ left: e.clientX, top: e.clientY });
+          if (hit) {
+            tableMenu.dataset.contextPos = String(hit.pos);
+          } else {
+            tableMenu.dataset.contextPos = String(editorInstance.state.selection.from);
+          }
           tableMenu.style.display = 'block';
           tableMenu.style.position = 'fixed';
           tableMenu.style.left = `${e.clientX}px`;
           tableMenu.style.top = `${e.clientY}px`;
         } else {
+          delete tableMenu.dataset.contextPos;
           tableMenu.style.display = 'none';
         }
       } catch (error) {
@@ -1115,92 +1100,72 @@ function initializeEditor(initialContent: string) {
     document.addEventListener('click', documentClickHandler);
     document.addEventListener('keydown', keydownHandler);
 
-    // Add link click handler for navigation
+    // Add link click handler: click = edit dialog, Ctrl/Cmd+click = navigate
     const handleLinkClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const link = target.closest('.markdown-link') as HTMLAnchorElement;
       if (!link) return;
 
       const href = link.getAttribute('href');
-      console.log('[GPT-AI Webview] Link clicked:', href);
-
-      if (!href) {
-        console.warn('[GPT-AI Webview] Link has no href attribute');
-        return;
-      }
+      if (!href) return;
 
       e.preventDefault();
       e.stopPropagation();
 
+      // Ctrl+click (or Cmd+click on Mac) = navigate to link target
+      if (e.ctrlKey || e.metaKey) {
+        navigateToLink(href);
+        return;
+      }
+
+      // Regular click = open link editor dialog
+      if (editorInstance) {
+        showLinkDialog(editorInstance);
+      }
+    };
+
+    // Navigate to a link target (used by Ctrl/Cmd+click)
+    const navigateToLink = (href: string) => {
+      const vscodeApi = (window as any).vscode;
+
       // External URLs
       if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:')) {
-        console.log('[GPT-AI Webview] Sending openExternalLink message');
-        const vscode = (window as any).vscode;
-        if (vscode && typeof vscode.postMessage === 'function') {
-          vscode.postMessage({
-            type: 'openExternalLink',
-            url: href,
-          });
-        } else {
-          console.warn('[GPT-AI Webview] vscode.postMessage not available');
+        if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
+          vscodeApi.postMessage({ type: 'openExternalLink', url: href });
         }
         return;
       }
 
       // Anchor links (heading links)
       if (href.startsWith('#')) {
-        console.log('[GPT-AI Webview] Handling anchor link:', href);
         const slug = href.slice(1);
         if (editorInstance) {
-          // Find heading by slug
           const outline = buildOutlineFromEditor(editorInstance);
           const existingSlugs = new Set<string>();
           const headingMap = new Map<string, number>();
-
           outline.forEach(entry => {
             const headingSlug = generateHeadingSlug(entry.text, existingSlugs);
             headingMap.set(headingSlug, entry.pos);
           });
-
           const headingPos = headingMap.get(slug);
           if (headingPos !== undefined) {
-            console.log('[GPT-AI Webview] Scrolling to heading at position:', headingPos);
             scrollToHeading(editorInstance, headingPos);
-          } else {
-            console.warn('[GPT-AI Webview] Heading not found for slug:', slug);
           }
         }
         return;
       }
 
-      // Detect image files - handle separately
+      // Image files
       if (/\.(png|jpe?g|gif|svg|webp|bmp|ico|tiff?)$/i.test(href)) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        console.log('[GPT-AI Webview] Image link clicked, sending openImage message');
-        const vscode = (window as any).vscode;
-        if (vscode && typeof vscode.postMessage === 'function') {
-          vscode.postMessage({
-            type: 'openImage',
-            path: href,
-          });
-        } else {
-          console.warn('[GPT-AI Webview] vscode.postMessage not available');
+        if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
+          vscodeApi.postMessage({ type: 'openImage', path: href });
         }
         return;
       }
 
-      // Local file links (non-image)
-      console.log('[GPT-AI Webview] Sending openFileLink message');
-      const vscode = (window as any).vscode;
-      if (vscode && typeof vscode.postMessage === 'function') {
-        vscode.postMessage({
-          type: 'openFileLink',
-          path: href,
-        });
-      } else {
-        console.warn('[GPT-AI Webview] vscode.postMessage not available');
+      // Local file links
+      if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
+        vscodeApi.postMessage({ type: 'openFileLink', path: href });
       }
     };
 
@@ -1301,13 +1266,18 @@ function applyWebviewSettings(message: any) {
     );
   }
 
+  if (typeof message.tocMaxDepth === 'number') {
+    tocMaxDepth = message.tocMaxDepth;
+    scheduleTocPaneSelectionRefresh();
+  }
+
+  if (typeof message.highlightSyntax === 'string') {
+    highlightSyntax = message.highlightSyntax as 'obsidian' | 'github';
+  }
+
   if (message.themeOverride) {
-    (window as any).gptaiCurrentThemeOverride = message.themeOverride;
-    console.warn('[GPT-AI][THEME] settingsUpdate received', {
-      themeOverride: message.themeOverride,
-    });
-    if (typeof (window as any).gptaiApplyTheme === 'function') {
-      (window as any).gptaiApplyTheme(message.themeOverride);
+    if (typeof (window as any).gptAiApplyTheme === 'function') {
+      (window as any).gptAiApplyTheme(message.themeOverride);
     }
     window.dispatchEvent(new CustomEvent('themeChange'));
   }
@@ -1330,7 +1300,6 @@ window.addEventListener('message', (event: MessageEvent) => {
             initializeEditor(message.content);
           } else {
             pendingInitialContent = message.content;
-            (window as any)._pendingThemeOverride = message.themeOverride;
           }
           return;
         }

@@ -21,7 +21,11 @@ jest.mock('@tiptap/extension-table', () => ({
   __esModule: true,
   TableKit: { configure: () => ({}) },
   Table: { extend: () => ({ configure: () => ({}) }) },
+}));
+jest.mock('prosemirror-tables', () => ({
+  __esModule: true,
   TableView: class {},
+  findTable: jest.fn(),
 }));
 jest.mock('@tiptap/extension-list', () => ({
   __esModule: true,
@@ -80,9 +84,6 @@ jest.mock('./../../webview/BubbleMenuView', () => ({
   createFormattingToolbar: () => ({}),
   createTableMenu: () => ({}),
   updateToolbarStates: jest.fn(),
-}));
-jest.mock('./../../webview/extensions/tableInteractiveView', () => ({
-  TableInteractiveView: class {},
 }));
 jest.mock('./../../webview/features/imageDragDrop', () => ({
   setupImageDragDrop: jest.fn(),

@@ -158,8 +158,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         'gptAiMarkdownEditor.tableCellHorizontalSpacing',
         0.5
       ),
-      themeOverride: config.get<string>('gptAiMarkdownEditor.themeOverride', 'system'),
+      themeOverride: config.get<string>('gptAiMarkdownEditor.themeOverride', 'light'),
       developerMode: config.get<boolean>('gptAiMarkdownEditor.developerMode', true),
+      tocMaxDepth: config.get<number>('gptAiMarkdownEditor.tocMaxDepth', 3),
+      highlightSyntax: config.get<string>('gptAiMarkdownEditor.highlightSyntax', 'obsidian'),
     };
   }
 
@@ -406,7 +408,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('gptAiMarkdownEditor.mediaPath') ||
         e.affectsConfiguration('gptAiMarkdownEditor.mediaPathBase') ||
         e.affectsConfiguration('gptAiMarkdownEditor.themeOverride') ||
-        e.affectsConfiguration('gptAiMarkdownEditor.developerMode')
+        e.affectsConfiguration('gptAiMarkdownEditor.developerMode') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.tocMaxDepth') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.highlightSyntax')
       ) {
         const config = vscode.workspace.getConfiguration();
         const settings = this.getWebviewSettings(config);
@@ -2673,17 +2677,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.css')
     );
 
-    const lightStyleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'editor-light.css')
-    );
-
-    const darkStyleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'editor-dark.css')
-    );
-
     // Read the current theme from config
     const config = vscode.workspace.getConfiguration();
-    const themeOverride = config.get<string>('gptAiMarkdownEditor.themeOverride', 'system');
+    const themeOverride = config.get<string>('gptAiMarkdownEditor.themeOverride', 'light');
 
     // Use a nonce for security
     const nonce = getNonce();
@@ -2703,95 +2699,29 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
                        img-src ${webview.cspSource} https: data: blob:;">
         
         <link href="${styleUri}" rel="stylesheet">
-        <link id="theme-style-link" href="" rel="stylesheet">
         
         <script nonce="${nonce}">
-          window.gptAiThemeLightUri = "${lightStyleUri}";
-          window.gptAiThemeDarkUri = "${darkStyleUri}";
-          window.gptAiLastResolvedTheme = 'dark';
-
-          window.gptAiResolveVsCodeTheme = function() {
-            try {
-              const htmlCls = document.documentElement.classList;
-              const bodyCls = document.body ? document.body.classList : null;
-              const hasClass = function(name) {
-                return htmlCls.contains(name) || (bodyCls ? bodyCls.contains(name) : false);
-              };
-
-              if (hasClass('vscode-light') || hasClass('vscode-high-contrast-light')) {
-                return 'light';
-              }
-              if (hasClass('vscode-dark') || hasClass('vscode-high-contrast')) {
-                return 'dark';
-              }
-            } catch (err) {
-              console.error('[GPT-AI][THEME] Failed to resolve VS Code theme classes:', err);
-            }
-
-            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
-          };
-
-          window.gptAiSetThemeStylesheet = function(mode) {
-            const link = document.getElementById('theme-style-link');
-            if (!link) return;
-
-            if (mode === 'light') {
-              link.disabled = false;
-              link.href = window.gptAiThemeLightUri;
-              return;
-            }
-
-            if (mode === 'dark') {
-              link.disabled = false;
-              link.href = window.gptAiThemeDarkUri;
-              return;
-            }
-
-            // System mode: rely on VS Code-provided CSS variables from base stylesheet.
-            link.disabled = true;
-            link.removeAttribute('href');
-          };
-          
           window.gptAiApplyTheme = function(theme) {
             try {
               const body = document.body || document.documentElement;
-              const requested = theme === 'light' || theme === 'dark' || theme === 'system'
-                ? theme
-                : 'system';
-
-              const resolvedTheme = requested === 'system'
-                ? window.gptAiResolveVsCodeTheme()
-                : requested;
-
-              if (requested === 'system') {
-                body.removeAttribute('data-theme-override');
-              } else {
-                body.setAttribute('data-theme-override', requested);
-              }
-
-              window.gptAiSetThemeStylesheet(requested);
-              window.gptAiLastResolvedTheme = resolvedTheme;
-              console.warn('[GPT-AI][THEME] Applied', { requested, resolvedTheme });
+              const resolved = (theme === 'dark') ? 'dark' : 'light';
+              body.setAttribute('data-theme', resolved);
+              window.gptAiCurrentThemeOverride = resolved;
 
               window.dispatchEvent(
-                new CustomEvent('gptAiThemeChanged', { detail: { theme: resolvedTheme } })
+                new CustomEvent('gptAiThemeChanged', { detail: { theme: resolved } })
               );
             } catch (err) {
-              console.error('[GPT-AI][THEME] Failed to apply theme:', err, { theme });
+              console.error('[GPT-AI][THEME] Failed to apply theme:', err);
             }
           };
 
-          // Initial apply only. Re-apply later only via explicit settingsUpdate messages.
           document.addEventListener('DOMContentLoaded', () => {
-            window.gptAiCurrentThemeOverride = '${themeOverride}';
-            console.warn('[GPT-AI][THEME] Bootstrap ready', { override: window.gptAiCurrentThemeOverride });
             window.gptAiApplyTheme('${themeOverride}');
           });
         </script>
         
-        <title>GPT-AI Markdown Editor</title>
+        <title>Visual Markdown Editor</title>
       </head>
       <body>
         <div id="editor"></div>
