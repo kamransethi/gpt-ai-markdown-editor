@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { outlineViewProvider } from '../features/outlineView';
 import { setActiveWebviewPanel, getActiveWebviewPanel } from '../activeWebview';
+import { handleAiRefineRequest } from '../features/aiRefine';
 import { getNonce } from './utils';
 
 /**
@@ -688,6 +689,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       case 'handleFileLinkDrop':
         void this.handleFileLinkDrop(message, document, webview);
+        break;
+      case 'aiRefine':
+        void handleAiRefineRequest(webview, {
+          mode: message.mode as string,
+          selectedText: message.selectedText as string,
+          from: message.from as number,
+          to: message.to as number,
+        });
         break;
     }
   }

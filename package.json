@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/kamransethi/gpt-ai-markdown-editor#readme",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other",
@@ -63,6 +63,15 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "chatParticipants": [
+      {
+        "id": "gptAiMarkdownEditor.chat",
+        "fullName": "Visual Markdown Editor",
+        "name": "markdown-editor",
+        "description": "Ask questions about your current markdown document",
+        "isSticky": false
+      }
+    ],
     "customEditors": [
       {
         "viewType": "gptAiMarkdownEditor.editor",

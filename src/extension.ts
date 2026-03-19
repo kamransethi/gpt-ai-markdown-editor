@@ -130,6 +130,54 @@ export function activate(context: vscode.ExtensionContext) {
       outlineViewProvider.clearFilter();
     })
   );
+
+  // Register Copilot Chat Participant — makes the current document available to Copilot
+  try {
+    if (typeof vscode.chat?.createChatParticipant === 'function') {
+      const participant = vscode.chat.createChatParticipant(
+        'gptAiMarkdownEditor.chat',
+        async (request, _context, stream, _token) => {
+          // Provide the current document content as context
+          let docContent = '';
+          // Try to get the text from the active text document associated with our editor
+          for (const doc of vscode.workspace.textDocuments) {
+            if (doc.languageId === 'markdown' && !doc.isClosed) {
+              docContent = doc.getText();
+              break;
+            }
+          }
+
+          if (!docContent) {
+            stream.markdown('No markdown document is currently open in the Visual Markdown Editor.');
+            return;
+          }
+
+          // Use the language model to answer about the document
+          const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
+          const model = models[0];
+          if (!model) {
+            stream.markdown('No language model available. Please ensure GitHub Copilot is installed.');
+            return;
+          }
+
+          const messages = [
+            vscode.LanguageModelChatMessage.User(
+              `You are a writing assistant. The user is editing the following markdown document:\n\n---\n${docContent}\n---\n\nUser question: ${request.prompt}`
+            ),
+          ];
+
+          const response = await model.sendRequest(messages, {}, _token);
+          for await (const chunk of response.text) {
+            stream.markdown(chunk);
+          }
+        }
+      );
+      participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.png');
+      context.subscriptions.push(participant);
+    }
+  } catch (error) {
+    console.warn('[GPT-AI] Chat participant registration failed (Copilot may not be available):', error);
+  }
 }
 
 export function deactivate() {

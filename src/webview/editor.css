@@ -2120,6 +2120,271 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
 }
 
 /* ============================================
+     Context Menu (shared text + table)
+     ============================================ */
+
+.context-menu {
+  position: fixed;
+  background-color: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 4px 12px var(--md-shadow-color);
+  z-index: 1001;
+  min-width: 220px;
+  padding: 4px 0;
+  font-family: var(--md-font-sans);
+  font-size: 13px;
+  color: var(--md-menu-fg);
+  user-select: none;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  color: var(--md-menu-fg);
+  font: inherit;
+  cursor: pointer;
+  gap: 16px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.context-menu-item:hover {
+  background-color: var(--md-menu-selection-bg);
+  color: var(--md-menu-selection-fg);
+}
+
+.context-menu-item:disabled,
+.context-menu-item.disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.context-menu-label {
+  flex: 1;
+}
+
+.context-menu-shortcut {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-left: 20px;
+}
+
+.context-menu-arrow {
+  margin-left: 8px;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.context-menu-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--md-accent-primary);
+  color: #fff;
+  margin-left: 6px;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background-color: var(--md-menu-separator);
+  margin: 4px 0;
+}
+
+.context-menu-section-label {
+  padding: 4px 14px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.context-menu-button-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px 10px;
+}
+
+.context-menu-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--md-menu-fg);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.12s;
+}
+
+.context-menu-icon-btn:hover {
+  background-color: var(--md-menu-selection-bg);
+  color: var(--md-menu-selection-fg);
+}
+
+.context-menu-danger {
+  color: var(--md-del-text) !important;
+}
+
+.context-menu-danger:hover {
+  background-color: var(--md-del-text) !important;
+  color: #fff !important;
+}
+
+/* ── Submenu ── */
+
+.context-menu-submenu-wrapper {
+  position: relative;
+}
+
+.context-menu-submenu {
+  position: absolute;
+  top: -4px;
+  left: 100%;
+  background-color: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 4px 12px var(--md-shadow-color);
+  min-width: 180px;
+  padding: 4px 0;
+  z-index: 1002;
+}
+
+/* ============================================
+     AI Refine Dialog
+     ============================================ */
+
+.ai-refine-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-refine-dialog {
+  background: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-md);
+  box-shadow: 0 8px 32px var(--md-shadow-color);
+  padding: 20px 24px;
+  width: 400px;
+  max-width: 90vw;
+  font-family: var(--md-font-sans);
+}
+
+.ai-refine-dialog-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--md-menu-fg);
+  margin-bottom: 8px;
+}
+
+.ai-refine-dialog-description {
+  font-size: 13px;
+  color: var(--md-menu-fg);
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+
+.ai-refine-dialog-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--md-bg);
+  color: var(--md-fg);
+  font-family: var(--md-font-sans);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.ai-refine-dialog-input:focus {
+  outline: none;
+  border-color: var(--md-accent-primary);
+}
+
+.ai-refine-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ai-refine-dialog-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  background: none;
+  color: var(--md-menu-fg);
+  font-family: var(--md-font-sans);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ai-refine-dialog-btn:hover {
+  background: var(--md-menu-selection-bg);
+}
+
+.ai-refine-dialog-btn-submit {
+  background: var(--md-accent-primary);
+  color: #fff;
+  border-color: var(--md-accent-primary);
+}
+
+.ai-refine-dialog-btn-submit:hover {
+  opacity: 0.9;
+}
+
+/* ── AI Refine Loading ── */
+
+.ai-refine-loading {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 4px 12px var(--md-shadow-color);
+  padding: 10px 16px;
+  font-family: var(--md-font-sans);
+  font-size: 13px;
+  color: var(--md-menu-fg);
+  z-index: 2000;
+}
+
+.ai-refine-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--md-menu-border);
+  border-top-color: var(--md-accent-primary);
+  border-radius: 50%;
+  animation: ai-refine-spin 0.7s linear infinite;
+}
+
+@keyframes ai-refine-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
      TOC Overlay
      ============================================ */
 

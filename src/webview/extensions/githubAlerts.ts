@@ -28,6 +28,14 @@ declare module '@tiptap/core' {
 
 export type AlertType = 'NOTE' | 'TIP' | 'IMPORTANT' | 'WARNING' | 'CAUTION';
 
+/** Single source of truth for valid alert types */
+export const ALERT_TYPES: readonly AlertType[] = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'];
+
+/** Matches `[!TYPE]` at the start of a line (case-insensitive) */
+const ALERT_MARKER_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/i;
+/** Matches `[!TYPE]` with optional trailing whitespace */
+const ALERT_MARKER_STRIP_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i;
+
 export const GitHubAlerts = Node.create({
   name: 'githubAlert',
 
@@ -49,8 +57,7 @@ export const GitHubAlerts = Node.create({
         default: null,
         parseHTML: element => {
           const type = element.getAttribute('data-alert-type');
-          const validTypes: AlertType[] = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'];
-          return validTypes.includes(type as AlertType) ? type : null;
+          return ALERT_TYPES.includes(type as AlertType) ? type : null;
         },
         renderHTML: attributes => ({
           'data-alert-type': attributes.alertType,
@@ -84,8 +91,7 @@ export const GitHubAlerts = Node.create({
         priority: 100,
         getAttrs: (element: HTMLElement) => {
           const alertType = element.getAttribute('data-alert-type');
-          const validTypes: AlertType[] = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'];
-          if (alertType && validTypes.includes(alertType as AlertType)) {
+          if (alertType && ALERT_TYPES.includes(alertType as AlertType)) {
             return { alertType };
           }
           return false;
@@ -122,14 +128,13 @@ export const GitHubAlerts = Node.create({
     const firstLine = lines[0]?.trim() || '';
 
     // Match [!TYPE] pattern (case insensitive)
-    const alertMatch = firstLine.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/i);
+    const alertMatch = firstLine.match(ALERT_MARKER_RE);
     if (!alertMatch) {
       return []; // Not an alert, let default blockquote handle it
     }
 
     const alertType = alertMatch[1].toUpperCase() as AlertType;
-    const validTypes: AlertType[] = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'];
-    if (!validTypes.includes(alertType)) {
+    if (!ALERT_TYPES.includes(alertType)) {
       return [];
     }
 
@@ -148,7 +153,7 @@ export const GitHubAlerts = Node.create({
       const firstInline = paragraphTokens[0];
       if (firstInline && firstInline.type === 'text') {
         const trimmed = (firstInline.text ?? '').trim();
-        const markerMatch = trimmed.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i);
+        const markerMatch = trimmed.match(ALERT_MARKER_STRIP_RE);
         if (markerMatch) {
           // Remove the marker from the text
           const remainingText = trimmed.replace(/^\[![^\]]+\]\s*/, '').trim();
@@ -303,16 +308,15 @@ export const GitHubAlerts = Node.create({
               }
 
               const firstLine = text.split('\n')[0]?.trim() || '';
-              const alertMatch = firstLine.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/i);
+              const alertMatch = firstLine.match(ALERT_MARKER_RE);
 
               if (!alertMatch) {
                 return true;
               }
 
               const alertType = alertMatch[1].toUpperCase() as AlertType;
-              const validTypes: AlertType[] = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION'];
 
-              if (!validTypes.includes(alertType)) {
+              if (!ALERT_TYPES.includes(alertType)) {
                 return true;
               }
 

@@ -21,6 +21,7 @@ import {
   getDefaultImagePath,
 } from './imageConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
+import { modLabel } from '../utils/platform';
 import {
   isImageFile,
   insertImage,
@@ -154,7 +155,7 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
           💡 Tip: You can also do the following directly in the editor:
         </div>
         <div style="font-size: 11px; color: var(--md-muted); line-height: 1.6;">
-          • Copy & paste images (${navigator.platform.toLowerCase().includes('mac') ? 'Cmd' : 'Ctrl'}+V)<br>
+          • Copy & paste images (${modLabel}+V)<br>
           • Drag & drop from Finder/File Explorer<br>
           • Drag & drop from VS Code file explorer
         </div>

@@ -39,9 +39,11 @@ import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservati
 import {
   createFloatingFormattingBar,
   createFormattingToolbar,
-  createTableMenu,
   updateToolbarStates,
 } from './BubbleMenuView';
+import { createContextMenu } from './features/contextMenu';
+import { createTableContextMenu } from './features/tableContextMenu';
+import { handleAiRefineResult } from './features/aiRefine';
 import { TextColorMark, CustomTextStyle } from './extensions/textColor';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
 import {
@@ -323,7 +325,8 @@ let formattingToolbar: HTMLElement;
 let editorMetaBar: HTMLElement | null = null;
 let floatingFormattingBar: HTMLElement | null = null;
 let floatingBarController: ReturnType<typeof createFloatingFormattingBar> | null = null;
-let tableMenu: HTMLElement;
+let textContextMenuCtrl: ReturnType<typeof createContextMenu> | null = null;
+let tableContextMenuCtrl: ReturnType<typeof createTableContextMenu> | null = null;
 let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
@@ -331,6 +334,8 @@ let highlightSyntax: 'obsidian' | 'github' = 'obsidian';
 let tocScrollRaf: number | null = null;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
+// Guard: suppress floating bar until first real user interaction
+let editorFullyInitialized = false;
 
 function getActiveTocHeadingId(anchors: TocPaneAnchor[]): string | null {
   if (anchors.length === 0) {
@@ -809,6 +814,8 @@ function initializeEditor(initialContent: string) {
         BubbleMenuExtension.configure({
           element: floatingFormattingBar as HTMLElement,
           shouldShow: ({ editor: currentEditor, state }) => {
+            // Suppress during initial editor creation to prevent flash
+            if (!editorFullyInitialized) return false;
             const { from, to } = state.selection;
             return currentEditor.isEditable && from !== to;
           },
@@ -985,8 +992,9 @@ function initializeEditor(initialContent: string) {
       }, 0);
     });
 
-    // Create table menu
-    tableMenu = createTableMenu(editorInstance);
+    // Create context menus
+    textContextMenuCtrl = createContextMenu(editorInstance);
+    tableContextMenuCtrl = createTableContextMenu(editorInstance);
 
     // Setup image drag & drop handling
     setupImageDragDrop(editorInstance, vscode);
@@ -1007,21 +1015,18 @@ function initializeEditor(initialContent: string) {
         const target = e.target as HTMLElement;
         const tableCell = target.closest('td, th');
 
+        // Hide both menus first
+        textContextMenuCtrl?.hide();
+        tableContextMenuCtrl?.hide();
+
         if (tableCell && editorInstance.isActive('table')) {
           e.preventDefault();
           const hit = editorInstance.view.posAtCoords({ left: e.clientX, top: e.clientY });
-          if (hit) {
-            tableMenu.dataset.contextPos = String(hit.pos);
-          } else {
-            tableMenu.dataset.contextPos = String(editorInstance.state.selection.from);
-          }
-          tableMenu.style.display = 'block';
-          tableMenu.style.position = 'fixed';
-          tableMenu.style.left = `${e.clientX}px`;
-          tableMenu.style.top = `${e.clientY}px`;
-        } else {
-          delete tableMenu.dataset.contextPos;
-          tableMenu.style.display = 'none';
+          const pos = hit ? hit.pos : editorInstance.state.selection.from;
+          tableContextMenuCtrl?.show(e.clientX, e.clientY, pos);
+        } else if (target.closest('.ProseMirror')) {
+          e.preventDefault();
+          textContextMenuCtrl?.show(e.clientX, e.clientY);
         }
       } catch (error) {
         console.error('[GPT-AI] Error in context menu:', error);
@@ -1029,7 +1034,8 @@ function initializeEditor(initialContent: string) {
     };
 
     const documentClickHandler = () => {
-      tableMenu.style.display = 'none';
+      textContextMenuCtrl?.hide();
+      tableContextMenuCtrl?.hide();
     };
 
     // Handle keyboard shortcuts
@@ -1203,12 +1209,20 @@ function initializeEditor(initialContent: string) {
       floatingFormattingBar?.remove();
       floatingBarController = null;
       floatingFormattingBar = null;
+      textContextMenuCtrl?.destroy();
+      textContextMenuCtrl = null;
+      tableContextMenuCtrl?.destroy();
+      tableContextMenuCtrl = null;
       tocPaneController?.destroy();
       tocPaneController = null;
       console.log('[GPT-AI] Editor destroyed, global listeners cleaned up');
     });
 
     console.log('[GPT-AI] Editor initialization complete');
+    // Allow floating bar to show after init settles (prevents flash on open)
+    setTimeout(() => {
+      editorFullyInitialized = true;
+    }, 400);
   } catch (error) {
     console.error('[GPT-AI] Fatal error initializing editor:', error);
     showRuntimeErrorToUser('editor-init-fatal', 'Editor failed to initialize.', error);
@@ -1348,6 +1362,11 @@ window.addEventListener('message', (event: MessageEvent) => {
           console.log('[GPT-AI] Received "saved" signal from extension');
         }
         setDocDirty(false);
+        break;
+      case 'aiRefineResult':
+        if (editor) {
+          handleAiRefineResult(editor, message as any);
+        }
         break;
       case 'imageUriResolved':
         // Handled by the custom image message plugin; ignore here to avoid log noise.

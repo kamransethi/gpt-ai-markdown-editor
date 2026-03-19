@@ -19,6 +19,7 @@ import { showImageInsertDialog } from './features/imageInsertDialog';
 import type { Editor } from '@tiptap/core';
 import { getSelectedTableLines } from './utils/tableSelectionUtils';
 import { moveSelectedTableColumn, moveSelectedTableRow } from './utils/tableOperationActions';
+import { modLabel as modKeyLabel } from './utils/platform';
 
 // Store reference to refresh function so it can be called externally
 let toolbarRefreshFunction: (() => void) | null = null;
@@ -795,9 +796,6 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
   const toolbar = document.createElement('div');
   toolbar.className = 'formatting-toolbar';
-
-  const isMac = navigator.platform.toLowerCase().includes('mac');
-  const modKeyLabel = isMac ? 'Cmd' : 'Ctrl';
 
   const buttons: ToolbarItem[] = [
     {
