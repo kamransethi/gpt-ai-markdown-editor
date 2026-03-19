@@ -2205,7 +2205,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         const headingText = match[2].replace(/\s*#+\s*$/, '').trim(); // Remove trailing # markers
 
         // Generate GFM slug with duplicate handling
-        let slug = headingText
+        const slug = headingText
           .toLowerCase()
           .replace(/\s+/g, '-')
           .replace(/[^\w-]/g, '')

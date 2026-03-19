@@ -15,11 +15,28 @@ function isDarkMode(): boolean {
 }
 
 /**
+ * Read a CSS custom property, returning a fallback when the variable is
+ * not yet resolved (e.g. during early module initialisation before the
+ * stylesheet has loaded).  Mermaid's color parser throws on empty strings.
+ */
+function cssVar(styles: CSSStyleDeclaration, name: string, fallback: string): string {
+  const value = styles.getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+/**
  * Initialize mermaid with theme based on VS Code theme
  */
 function initializeMermaid() {
   const styles = getComputedStyle(document.documentElement);
-  const theme = isDarkMode() ? 'dark' : 'default';
+  const dark = isDarkMode();
+  const theme = dark ? 'dark' : 'default';
+
+  // Sensible defaults when CSS variables aren't available yet
+  const fb = dark
+    ? { bg: '#1e1e1e', fg: '#d4d4d4', subtle: '#2d2d2d', border: '#444', focus: '#569cd6' }
+    : { bg: '#ffffff', fg: '#1a1a1a', subtle: '#f7f7f7', border: '#e0e0e0', focus: '#1a73e8' };
+
   mermaid.initialize({
     startOnLoad: false,
     theme,
@@ -27,30 +44,30 @@ function initializeMermaid() {
     fontFamily: 'inherit',
     suppressErrorRendering: true,
     themeVariables: {
-      background: styles.getPropertyValue('--md-background').trim(),
-      primaryColor: styles.getPropertyValue('--md-subtle-bg').trim(),
-      primaryBorderColor: styles.getPropertyValue('--md-focus').trim(),
-      primaryTextColor: styles.getPropertyValue('--md-foreground').trim(),
-      secondaryColor: styles.getPropertyValue('--md-subtle-bg').trim(),
-      secondaryBorderColor: styles.getPropertyValue('--md-border').trim(),
-      tertiaryColor: styles.getPropertyValue('--md-subtle-bg').trim(),
-      tertiaryBorderColor: styles.getPropertyValue('--md-border').trim(),
-      lineColor: styles.getPropertyValue('--md-foreground').trim(),
-      textColor: styles.getPropertyValue('--md-foreground').trim(),
-      edgeLabelBackground: styles.getPropertyValue('--md-background').trim(),
-      clusterBkg: styles.getPropertyValue('--md-subtle-bg').trim(),
-      clusterBorder: styles.getPropertyValue('--md-border').trim(),
-      actorBorder: styles.getPropertyValue('--md-focus').trim(),
-      actorTextColor: styles.getPropertyValue('--md-foreground').trim(),
-      actorBkg: styles.getPropertyValue('--md-subtle-bg').trim(),
-      labelBoxBkg: styles.getPropertyValue('--md-subtle-bg').trim(),
-      labelBoxBorderColor: styles.getPropertyValue('--md-border').trim(),
-      labelTextColor: styles.getPropertyValue('--md-foreground').trim(),
-      signalColor: styles.getPropertyValue('--md-foreground').trim(),
-      signalTextColor: styles.getPropertyValue('--md-foreground').trim(),
-      noteBorderColor: styles.getPropertyValue('--md-focus').trim(),
-      noteBkgColor: styles.getPropertyValue('--md-subtle-bg').trim(),
-      noteTextColor: styles.getPropertyValue('--md-foreground').trim(),
+      background: cssVar(styles, '--md-background', fb.bg),
+      primaryColor: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      primaryBorderColor: cssVar(styles, '--md-focus', fb.focus),
+      primaryTextColor: cssVar(styles, '--md-foreground', fb.fg),
+      secondaryColor: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      secondaryBorderColor: cssVar(styles, '--md-border', fb.border),
+      tertiaryColor: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      tertiaryBorderColor: cssVar(styles, '--md-border', fb.border),
+      lineColor: cssVar(styles, '--md-foreground', fb.fg),
+      textColor: cssVar(styles, '--md-foreground', fb.fg),
+      edgeLabelBackground: cssVar(styles, '--md-background', fb.bg),
+      clusterBkg: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      clusterBorder: cssVar(styles, '--md-border', fb.border),
+      actorBorder: cssVar(styles, '--md-focus', fb.focus),
+      actorTextColor: cssVar(styles, '--md-foreground', fb.fg),
+      actorBkg: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      labelBoxBkg: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      labelBoxBorderColor: cssVar(styles, '--md-border', fb.border),
+      labelTextColor: cssVar(styles, '--md-foreground', fb.fg),
+      signalColor: cssVar(styles, '--md-foreground', fb.fg),
+      signalTextColor: cssVar(styles, '--md-foreground', fb.fg),
+      noteBorderColor: cssVar(styles, '--md-focus', fb.focus),
+      noteBkgColor: cssVar(styles, '--md-subtle-bg', fb.subtle),
+      noteTextColor: cssVar(styles, '--md-foreground', fb.fg),
     },
   });
 }

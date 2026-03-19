@@ -1107,10 +1107,7 @@ export function handleFileSearchResults(results: FileSearchResult[], requestId: 
 /**
  * Handle headings extracted from an external markdown file
  */
-export function handleFileHeadingsResult(
-  headings: HeadingResult[],
-  requestId: number
-): void {
+export function handleFileHeadingsResult(headings: HeadingResult[], requestId: number): void {
   if (requestId !== pendingFileHeadingsRequestId) {
     return;
   }
