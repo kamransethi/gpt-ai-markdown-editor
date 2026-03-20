@@ -31,11 +31,7 @@ export function getActiveWebviewPanel(): vscode.WebviewPanel | undefined {
 /** Update the stored selection text and the hasSelection context key. */
 export function setSelectedText(text: string) {
   currentSelectedText = text;
-  vscode.commands.executeCommand(
-    'setContext',
-    'gptAiMarkdownEditor.hasSelection',
-    text.length > 0
-  );
+  vscode.commands.executeCommand('setContext', 'gptAiMarkdownEditor.hasSelection', text.length > 0);
 }
 
 /** Retrieve the current selected text (empty string when nothing is selected). */

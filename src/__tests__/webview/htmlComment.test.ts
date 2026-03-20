@@ -83,9 +83,7 @@ describe('HtmlCommentBlock', () => {
     // handles the token.  Block HTML comments produce DOM Comment nodes that
     // ProseMirror's DOMParser ignores, so the document should be effectively
     // empty (no htmlCommentBlock node).
-    const hasComment = (doc.content || []).some(
-      (n: any) => n.type === 'htmlCommentBlock'
-    );
+    const hasComment = (doc.content || []).some((n: any) => n.type === 'htmlCommentBlock');
     expect(hasComment).toBe(false);
   });
 });
@@ -106,9 +104,7 @@ describe('HtmlCommentInline', () => {
     const para = doc.content?.[0];
     expect(para?.type).toBe('paragraph');
 
-    const commentNode = para?.content?.find(
-      (n: any) => n.type === 'htmlCommentInline'
-    );
+    const commentNode = para?.content?.find((n: any) => n.type === 'htmlCommentInline');
     expect(commentNode).toBeDefined();
     expect(commentNode?.attrs?.comment).toBe('<!-- note -->');
   });
@@ -133,9 +129,7 @@ describe('HtmlCommentInline', () => {
     const doc = manager.parse('<!-- start --> some text\n');
 
     const para = doc.content?.[0];
-    const commentNode = (para?.content || []).find(
-      (n: any) => n.type === 'htmlCommentInline'
-    );
+    const commentNode = (para?.content || []).find((n: any) => n.type === 'htmlCommentInline');
     // Comment is NOT preserved in this edge case
     expect(commentNode).toBeUndefined();
   });
@@ -156,9 +150,7 @@ describe('HtmlCommentInline', () => {
     const doc = manager.parse('text <!-- hidden --> more\n');
 
     const para = doc.content?.[0];
-    const commentNode = para?.content?.find(
-      (n: any) => n.type === 'htmlCommentInline'
-    );
+    const commentNode = para?.content?.find((n: any) => n.type === 'htmlCommentInline');
     expect(commentNode).toBeUndefined();
   });
 });
@@ -194,9 +186,7 @@ describe('renderMarkdown', () => {
     const manager = createManager();
     const doc = {
       type: 'doc',
-      content: [
-        { type: 'htmlCommentBlock', attrs: { comment: '<!-- block -->' } },
-      ],
+      content: [{ type: 'htmlCommentBlock', attrs: { comment: '<!-- block -->' } }],
     };
     const out = manager.serialize(doc);
     expect(out.trim()).toBe('<!-- block -->');

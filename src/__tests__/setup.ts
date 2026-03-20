@@ -50,3 +50,12 @@ if (typeof globalObj.acquireVsCodeApi === 'undefined') {
     setState: jest.fn(),
   });
 }
+
+// Polyfill ResizeObserver for test environment (not available in JSDOM)
+if (typeof globalObj.ResizeObserver === 'undefined') {
+  globalObj.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

@@ -4,6 +4,32 @@ import { CellSelection, TableMap, findTable, selectedRect } from 'prosemirror-ta
 
 export type TableMatrix = string[][];
 
+/**
+ * Parse an HTML string containing a `<table>` into a TableMatrix.
+ * Uses the browser's DOMParser to extract cell text from `<th>` and `<td>` elements.
+ * Returns null if the HTML doesn't contain a valid table with at least 2 columns.
+ */
+export function parseHtmlTable(html: string): TableMatrix | null {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const table = doc.querySelector('table');
+  if (!table) return null;
+
+  const rows = Array.from(table.querySelectorAll('tr'));
+  if (rows.length === 0) return null;
+
+  const matrix: TableMatrix = rows.map(row => {
+    const cells = Array.from(row.querySelectorAll('th, td'));
+    return cells.map(cell => (cell.textContent || '').trim());
+  });
+
+  const maxCols = Math.max(...matrix.map(r => r.length), 0);
+  if (maxCols < 2) return null;
+
+  // Normalize column count
+  return matrix.map(row => Array.from({ length: maxCols }, (_, i) => row[i] ?? ''));
+}
+
 function normalizeCellText(cell: ProseMirrorNode | null): string {
   if (!cell) {
     return '';
@@ -118,9 +144,9 @@ export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
       .map(cell => `<${cellTag}>${escapeHtml(cell).replace(/\n/g, '<br />')}</${cellTag}>`)
       .join('')}</tr>`;
 
-  return `<table><tbody>${renderRow(headerRow, 'th')}${bodyRows
+  return `<table>${renderRow(headerRow, 'th')}${bodyRows
     .map(row => renderRow(row, 'td'))
-    .join('')}</tbody></table>`;
+    .join('')}</table>`;
 }
 
 type DelimiterDetection = '\t' | ',' | null;
@@ -237,10 +263,7 @@ function findCellPosition(
  * add/remove rows or columns.
  * Returns the transaction if successful, null otherwise.
  */
-export function pasteIntoCells(
-  state: EditorState,
-  matrix: TableMatrix
-): Transaction | null {
+export function pasteIntoCells(state: EditorState, matrix: TableMatrix): Transaction | null {
   const pos = findCellPosition(state);
   if (!pos) return null;
 
@@ -265,16 +288,9 @@ export function pasteIntoCells(
       const cellEnd = cellStart + cell.content.size;
 
       const text = matrix[r][c];
-      const paragraph = schema.nodes.paragraph.create(
-        null,
-        text ? schema.text(text) : null
-      );
+      const paragraph = schema.nodes.paragraph.create(null, text ? schema.text(text) : null);
 
-      tr = tr.replaceWith(
-        tr.mapping.map(cellStart),
-        tr.mapping.map(cellEnd),
-        paragraph.content
-      );
+      tr = tr.replaceWith(tr.mapping.map(cellStart), tr.mapping.map(cellEnd), paragraph.content);
     }
   }
 

@@ -620,7 +620,7 @@ export function createLinkDialog(): HTMLElement {
   overlay.style.position = 'fixed';
   overlay.style.inset = '0';
   overlay.style.pointerEvents = 'none';
-  overlay.style.zIndex = '50';
+  overlay.style.zIndex = '5000';
   overlay.style.display = 'none';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Insert/Edit Link');

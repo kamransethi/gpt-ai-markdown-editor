@@ -36,7 +36,11 @@ import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { TableCellEnterHandler } from './extensions/tableCellEnterHandler';
 import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservation';
-import { HtmlCommentInline, HtmlCommentBlock, setPreserveHtmlComments } from './extensions/htmlComment';
+import {
+  HtmlCommentInline,
+  HtmlCommentBlock,
+  setPreserveHtmlComments,
+} from './extensions/htmlComment';
 import {
   createFloatingFormattingBar,
   createFormattingToolbar,
@@ -64,6 +68,7 @@ import {
   getCurrentTableMatrix,
   isTableSelection,
   parseClipboardTable,
+  parseHtmlTable,
   pasteIntoCells,
   renderTableMatrixAsHtml,
   serializeTableMatrix,
@@ -1676,6 +1681,29 @@ document.addEventListener(
         editor.commands.insertContent(html);
       }
       return;
+    }
+
+    // Check if HTML clipboard contains a table — parse it into a clean matrix
+    // to avoid <tbody> leaking through when TipTap processes the raw HTML
+    const clipboardHtml = clipboardData.getData('text/html') || '';
+    if (clipboardHtml && /<table[\s>]/i.test(clipboardHtml)) {
+      const htmlTable = parseHtmlTable(clipboardHtml);
+      if (htmlTable) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const activeTable = findTable(editor.state.selection.$from);
+        if (activeTable) {
+          const tr = pasteIntoCells(editor.state, htmlTable);
+          if (tr) {
+            editor.view.dispatch(tr);
+          }
+        } else {
+          const html = renderTableMatrixAsHtml(htmlTable);
+          editor.commands.insertContent(html);
+        }
+        return;
+      }
     }
 
     const result = processPasteContent(clipboardData);

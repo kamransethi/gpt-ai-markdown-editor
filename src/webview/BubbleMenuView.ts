@@ -104,6 +104,8 @@ type ToolbarDropdownItem = {
   isEnabled?: () => boolean; // Function to check if item should be enabled
   isActive?: () => boolean; // Function to check if item is currently active
   isSeparator?: boolean; // If true, renders as a visual separator instead of a clickable item
+  isCustomWidget?: boolean; // If true, renders via customRender instead of standard item
+  customRender?: (refreshFn: () => void) => HTMLElement; // Custom DOM render function
 };
 
 type ToolbarDropdown = {
@@ -244,7 +246,15 @@ function closeAllDropdowns() {
     (menu as HTMLElement).style.display = 'none';
   });
 
+  document.querySelectorAll('.toolbar-overflow-menu').forEach(menu => {
+    (menu as HTMLElement).style.display = 'none';
+  });
+
   document.querySelectorAll('.toolbar-dropdown button[aria-expanded="true"]').forEach(btn => {
+    (btn as HTMLElement).setAttribute('aria-expanded', 'false');
+  });
+
+  document.querySelectorAll('.toolbar-overflow-trigger[aria-expanded="true"]').forEach(btn => {
     (btn as HTMLElement).setAttribute('aria-expanded', 'false');
   });
 }
@@ -780,16 +790,27 @@ function isTableBulletActive(editor: Editor): boolean {
 /** Current editor zoom level */
 let editorZoomLevel = 1;
 
+/** Zoom increment/decrement step */
+const ZOOM_STEP = 0.1;
+const ZOOM_MIN = 0.7;
+const ZOOM_MAX = 1.5;
+
 export function setEditorZoom(level: number, persist = true) {
-  editorZoomLevel = level;
+  // Clamp and round to avoid floating point drift
+  const clamped = Math.round(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level)) * 100) / 100;
+  editorZoomLevel = clamped;
   const editorEl = document.querySelector('.markdown-editor') as HTMLElement;
   if (editorEl) {
-    editorEl.style.zoom = String(level);
+    editorEl.style.zoom = String(clamped);
   }
+  // Update any visible zoom label
+  document.querySelectorAll('.zoom-level-label').forEach(el => {
+    el.textContent = `${Math.round(clamped * 100)}%`;
+  });
   if (persist) {
     window.dispatchEvent(
       new CustomEvent('updateSetting', {
-        detail: { key: 'gptAiMarkdownEditor.editorZoomLevel', value: level },
+        detail: { key: 'gptAiMarkdownEditor.editorZoomLevel', value: clamped },
       })
     );
   }
@@ -797,6 +818,45 @@ export function setEditorZoom(level: number, persist = true) {
 
 function getEditorZoom(): number {
   return editorZoomLevel;
+}
+
+/** Build a Chrome-style zoom widget: [ − ] 100% [ + ] */
+function buildZoomWidget(refreshFn: () => void): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'zoom-widget';
+
+  const minus = document.createElement('button');
+  minus.type = 'button';
+  minus.className = 'zoom-widget-btn';
+  minus.title = 'Zoom out';
+  minus.textContent = '−';
+  minus.onmousedown = e => e.preventDefault();
+  minus.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditorZoom(getEditorZoom() - ZOOM_STEP);
+    refreshFn();
+  };
+
+  const label = document.createElement('span');
+  label.className = 'zoom-level-label';
+  label.textContent = `${Math.round(getEditorZoom() * 100)}%`;
+
+  const plus = document.createElement('button');
+  plus.type = 'button';
+  plus.className = 'zoom-widget-btn';
+  plus.title = 'Zoom in';
+  plus.textContent = '+';
+  plus.onmousedown = e => e.preventDefault();
+  plus.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditorZoom(getEditorZoom() + ZOOM_STEP);
+    refreshFn();
+  };
+
+  row.append(minus, label, plus);
+  return row;
 }
 
 export function createFormattingToolbar(editor: Editor): HTMLElement {
@@ -829,16 +889,6 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       action: () => editor.chain().focus().undo().run(),
       isActive: () => false,
       isEnabled: () => editor.can().undo(),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: 'Redo',
-      title: `Redo ${modKeyLabel}+Shift+Z`,
-      icon: { name: 'redo', fallback: '↪' },
-      action: () => editor.chain().focus().redo().run(),
-      isActive: () => false,
-      isEnabled: () => editor.can().redo(),
       requiresFocus: true,
     },
     { type: 'separator' },
@@ -883,26 +933,24 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       className: 'highlight',
     },
     {
-      type: 'dropdown',
-      label: 'More',
-      title: 'More formatting',
-      icon: { name: 'ellipsis', fallback: '…' },
+      type: 'button',
+      label: 'Strikethrough',
+      title: 'Strikethrough',
+      icon: { name: 'strikethrough', fallback: 'S' },
+      action: () => editor.chain().focus().toggleStrike().run(),
+      isActive: () => editor.isActive('strike'),
       requiresFocus: true,
-      isActive: () => editor.isActive('strike') || editor.isActive('code'),
-      items: [
-        {
-          label: 'Strikethrough',
-          icon: { name: 'strikethrough', fallback: 'S' },
-          action: () => editor.chain().focus().toggleStrike().run(),
-          isActive: () => editor.isActive('strike'),
-        },
-        {
-          label: 'Inline code',
-          icon: { name: 'code', fallback: '<>' },
-          action: () => editor.chain().focus().toggleCode().run(),
-          isActive: () => editor.isActive('code'),
-        },
-      ],
+      className: 'strikethrough',
+    },
+    {
+      type: 'button',
+      label: 'Inline Code',
+      title: 'Inline code',
+      icon: { name: 'code', fallback: '<>' },
+      action: () => editor.chain().focus().toggleCode().run(),
+      isActive: () => editor.isActive('code'),
+      requiresFocus: true,
+      className: 'inline-code',
     },
     {
       type: 'colorPicker',
@@ -1259,11 +1307,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           },
         },
         { label: '', action: () => {}, isSeparator: true },
-        ...[70, 80, 90, 100, 110, 120, 130, 140, 150].map(pct => ({
-          label: `Zoom ${pct}%`,
-          action: () => setEditorZoom(pct / 100),
-          isActive: () => Math.round(getEditorZoom() * 100) === pct,
-        })),
+        {
+          label: 'Zoom',
+          action: () => {},
+          isCustomWidget: true,
+          customRender: (refreshFn: () => void) => buildZoomWidget(refreshFn),
+        },
       ],
     },
     {
@@ -1440,6 +1489,13 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           sep.className = 'toolbar-dropdown-separator';
           sep.setAttribute('role', 'separator');
           menu.appendChild(sep);
+          return;
+        }
+
+        // Render custom widget items (e.g. Chrome-style zoom control)
+        if (item.isCustomWidget && item.customRender) {
+          const widget = item.customRender(refreshActiveStates);
+          menu.appendChild(widget);
           return;
         }
 
@@ -1681,6 +1737,84 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   document.addEventListener('click', () => {
     closeAllDropdowns();
   });
+
+  // --- Toolbar overflow: move items that don't fit into a '...' overflow menu ---
+  const overflowContainer = document.createElement('div');
+  overflowContainer.className = 'toolbar-overflow';
+
+  const overflowBtn = document.createElement('button');
+  overflowBtn.type = 'button';
+  overflowBtn.className = 'toolbar-button toolbar-overflow-trigger';
+  overflowBtn.title = 'More toolbar items';
+  overflowBtn.setAttribute('aria-label', 'More toolbar items');
+  overflowBtn.setAttribute('aria-haspopup', 'true');
+  overflowBtn.setAttribute('aria-expanded', 'false');
+  overflowBtn.onmousedown = e => e.preventDefault();
+  const overflowIcon = createIconElement({ name: 'ellipsis', fallback: '…' }, 'toolbar-icon');
+  overflowBtn.appendChild(overflowIcon);
+
+  const overflowMenu = document.createElement('div');
+  overflowMenu.className = 'toolbar-overflow-menu';
+
+  overflowBtn.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isVisible = overflowMenu.style.display === 'flex';
+    closeAllDropdowns();
+    overflowMenu.style.display = isVisible ? 'none' : 'flex';
+    overflowBtn.setAttribute('aria-expanded', isVisible ? 'false' : 'true');
+  };
+
+  overflowContainer.append(overflowBtn, overflowMenu);
+  overflowContainer.style.display = 'none';
+  toolbar.appendChild(overflowContainer);
+
+  /** Redistribute toolbar groups between main bar and overflow menu */
+  function updateOverflow() {
+    // Move everything back to the toolbar first (before overflow container)
+    const groups = Array.from(overflowMenu.children) as HTMLElement[];
+    groups.forEach(g => toolbar.insertBefore(g, overflowContainer));
+
+    // Hide overflow initially
+    overflowContainer.style.display = 'none';
+    overflowMenu.style.display = 'none';
+
+    // Get all toolbar-group children (not the overflow container)
+    const allGroups = Array.from(toolbar.querySelectorAll(':scope > .toolbar-group')) as HTMLElement[];
+    if (allGroups.length === 0) return;
+
+    const toolbarRect = toolbar.getBoundingClientRect();
+    // Reserve space for the overflow button (~40px)
+    const maxRight = toolbarRect.right - 40;
+
+    let overflowing = false;
+    for (const group of allGroups) {
+      const groupRect = group.getBoundingClientRect();
+      if (groupRect.right > maxRight) {
+        overflowing = true;
+      }
+      if (overflowing) {
+        overflowMenu.appendChild(group);
+      }
+    }
+
+    if (overflowMenu.children.length > 0) {
+      overflowContainer.style.display = 'inline-flex';
+    }
+  }
+
+  // Run overflow check on resize and initially after layout
+  const resizeObserver = new ResizeObserver(() => {
+    updateOverflow();
+  });
+  resizeObserver.observe(toolbar);
+
+  editor.on('destroy', () => {
+    resizeObserver.disconnect();
+  });
+
+  // Initial layout after first paint
+  requestAnimationFrame(() => updateOverflow());
 
   return toolbar;
 }

@@ -1631,7 +1631,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   display: flex;
   align-items: center;
   gap: 1px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding: 3px 6px;
   background-color: var(--md-background);
   border-bottom: 1px solid var(--md-border);
@@ -1785,7 +1785,6 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   box-shadow: 0 4px 12px var(--md-shadow-color);
   min-width: 200px;
   z-index: 1000;
-  overflow: hidden;
 }
 
 .toolbar-dropdown-item {
@@ -1839,6 +1838,87 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   height: 1px;
   background-color: var(--md-menu-separator);
   margin: 4px 0;
+}
+
+/* Chrome-style zoom widget inside dropdown */
+.zoom-widget {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 4px 10px;
+}
+
+.zoom-widget-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--md-hover-bg);
+  color: var(--md-dropdown-fg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.1s;
+  flex-shrink: 0;
+}
+
+.zoom-widget-btn:hover {
+  background: var(--md-menu-selection-bg);
+}
+
+.zoom-widget-btn:active {
+  background: var(--md-button-bg);
+  color: var(--md-button-fg);
+}
+
+.zoom-level-label {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--md-dropdown-fg);
+  user-select: none;
+}
+
+/* Toolbar overflow menu */
+.toolbar-overflow {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.toolbar-overflow-trigger {
+  min-width: 24px;
+  height: 26px;
+}
+
+.toolbar-overflow-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background-color: var(--md-dropdown-bg);
+  border: 1px solid var(--md-dropdown-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--md-shadow-color);
+  z-index: 1000;
+  min-width: 0;
+  width: max-content;
+}
+
+.toolbar-overflow-menu .toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-wrap: wrap;
 }
 
 .toolbar-button-with-label {

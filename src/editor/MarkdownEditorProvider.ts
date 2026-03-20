@@ -2608,7 +2608,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    */
   private async handleUpdateSetting(
     message: { type: string; [key: string]: unknown },
-    webview: vscode.Webview
+    _webview: vscode.Webview
   ): Promise<void> {
     const key = message.key as string;
     const value = message.value as unknown;
@@ -2618,14 +2618,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       await config.update(key, value, vscode.ConfigurationTarget.Global);
       console.log(`[DK-AI] Setting updated: ${key} = ${value}`);
 
-      // Immediately notify webview of the setting change
-      // This ensures the setting takes effect right away without waiting for next update
-      const settings = this.getWebviewSettings(config);
-
-      webview.postMessage({
-        type: 'settingsUpdate',
-        ...settings,
-      });
+      // Do NOT re-broadcast settings to the webview here.
+      // The webview already applied the change locally before requesting the save.
+      // Re-broadcasting causes race conditions (stale config.get() values)
+      // because config.update() is async and the new value may not have propagated yet.
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`[DK-AI] Failed to update setting: ${errorMessage}`);
