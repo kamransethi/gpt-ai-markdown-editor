@@ -281,10 +281,7 @@ describe('tableClipboard utilities', () => {
     });
 
     it('normalizes uneven row lengths', () => {
-      const html = renderTableMatrixAsHtml([
-        ['A', 'B', 'C'],
-        ['D'],
-      ]);
+      const html = renderTableMatrixAsHtml([['A', 'B', 'C'], ['D']]);
       // Should pad second row to 3 columns
       expect(html).toContain('<td>D</td><td></td><td></td>');
     });
@@ -292,7 +289,8 @@ describe('tableClipboard utilities', () => {
 
   describe('parseHtmlTable', () => {
     it('parses a simple HTML table into a matrix', () => {
-      const html = '<table><tr><th>Name</th><th>Age</th></tr><tr><td>Alice</td><td>30</td></tr></table>';
+      const html =
+        '<table><tr><th>Name</th><th>Age</th></tr><tr><td>Alice</td><td>30</td></tr></table>';
       expect(parseHtmlTable(html)).toEqual([
         ['Name', 'Age'],
         ['Alice', '30'],
@@ -300,7 +298,8 @@ describe('tableClipboard utilities', () => {
     });
 
     it('parses HTML table with <tbody> wrapper', () => {
-      const html = '<table><tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody></table>';
+      const html =
+        '<table><tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody></table>';
       expect(parseHtmlTable(html)).toEqual([
         ['A', 'B'],
         ['1', '2'],
@@ -308,7 +307,8 @@ describe('tableClipboard utilities', () => {
     });
 
     it('parses HTML table with <thead> and <tbody>', () => {
-      const html = '<table><thead><tr><th>X</th><th>Y</th></tr></thead><tbody><tr><td>a</td><td>b</td></tr></tbody></table>';
+      const html =
+        '<table><thead><tr><th>X</th><th>Y</th></tr></thead><tbody><tr><td>a</td><td>b</td></tr></tbody></table>';
       expect(parseHtmlTable(html)).toEqual([
         ['X', 'Y'],
         ['a', 'b'],
@@ -339,7 +339,8 @@ describe('tableClipboard utilities', () => {
     });
 
     it('handles rich HTML wrapping around the table', () => {
-      const html = '<html><body><meta charset="utf-8"><table><tr><th>Col1</th><th>Col2</th></tr><tr><td>val1</td><td>val2</td></tr></table></body></html>';
+      const html =
+        '<html><body><meta charset="utf-8"><table><tr><th>Col1</th><th>Col2</th></tr><tr><td>val1</td><td>val2</td></tr></table></body></html>';
       expect(parseHtmlTable(html)).toEqual([
         ['Col1', 'Col2'],
         ['val1', 'val2'],
@@ -388,7 +389,8 @@ describe('tableClipboard utilities', () => {
 
     it('HTML with <tbody> round-trips through parseHtmlTable', () => {
       // Simulating what an external source might put in clipboard
-      const externalHtml = '<table><tbody><tr><th>Key</th><th>Value</th></tr><tr><td>name</td><td>test</td></tr></tbody></table>';
+      const externalHtml =
+        '<table><tbody><tr><th>Key</th><th>Value</th></tr><tr><td>name</td><td>test</td></tr></tbody></table>';
       const parsed = parseHtmlTable(externalHtml);
       expect(parsed).toEqual([
         ['Key', 'Value'],

@@ -1780,7 +1780,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     overflowMenu.style.display = 'none';
 
     // Get all toolbar-group children (not the overflow container)
-    const allGroups = Array.from(toolbar.querySelectorAll(':scope > .toolbar-group')) as HTMLElement[];
+    const allGroups = Array.from(
+      toolbar.querySelectorAll(':scope > .toolbar-group')
+    ) as HTMLElement[];
     if (allGroups.length === 0) return;
 
     const toolbarRect = toolbar.getBoundingClientRect();

@@ -782,10 +782,36 @@ function initializeEditor(initialContent: string) {
             breaks: true, // Preserve single newlines as <br>
           },
         }),
-        // Custom Table extension that handles <br /> correctly
+        // Custom Table extension that handles <br /> correctly and
+        // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>
+        // for content rows (browsers auto-insert <tbody> during DOM parsing,
+        // which would otherwise cause literal "<tbody>" text in cells).
         Table.extend({
           renderMarkdown(node, h) {
             return renderTableToMarkdownWithBreaks(node, h);
+          },
+          parseHTML() {
+            return [
+              {
+                tag: 'table',
+                // Browsers auto-insert <tbody> when parsing <table> HTML via
+                // innerHTML. ProseMirror's DOMParser has no rule for these
+                // section wrappers so they'd leak as literal text.  Unwrap them
+                // before ProseMirror reads children of the <table> element.
+                contentElement(node: HTMLElement) {
+                  const sections = node.querySelectorAll(
+                    ':scope > thead, :scope > tbody, :scope > tfoot'
+                  );
+                  for (const section of Array.from(sections)) {
+                    while (section.firstChild) {
+                      node.insertBefore(section.firstChild, section);
+                    }
+                    section.remove();
+                  }
+                  return node;
+                },
+              },
+            ];
           },
         }).configure({
           resizable: true,
@@ -1704,6 +1730,16 @@ document.addEventListener(
         }
         return;
       }
+
+      // parseHtmlTable failed (e.g. single-column table) but HTML does contain
+      // a <table>.  Let TipTap handle it — our Table extension's parseHTML
+      // contentElement hook unwraps <thead>/<tbody>/<tfoot> at the DOM level.
+      // MUST preventDefault here — otherwise ProseMirror's native handler
+      // processes the raw HTML separately.
+      event.preventDefault();
+      event.stopPropagation();
+      editor.commands.insertContent(clipboardHtml);
+      return;
     }
 
     const result = processPasteContent(clipboardData);
