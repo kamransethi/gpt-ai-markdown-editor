@@ -103,6 +103,7 @@ type ToolbarDropdownItem = {
   icon?: ToolbarIcon;
   isEnabled?: () => boolean; // Function to check if item should be enabled
   isActive?: () => boolean; // Function to check if item is currently active
+  isSeparator?: boolean; // If true, renders as a visual separator instead of a clickable item
 };
 
 type ToolbarDropdown = {
@@ -779,11 +780,18 @@ function isTableBulletActive(editor: Editor): boolean {
 /** Current editor zoom level */
 let editorZoomLevel = 1;
 
-function setEditorZoom(level: number) {
+export function setEditorZoom(level: number, persist = true) {
   editorZoomLevel = level;
   const editorEl = document.querySelector('.markdown-editor') as HTMLElement;
   if (editorEl) {
     editorEl.style.zoom = String(level);
+  }
+  if (persist) {
+    window.dispatchEvent(
+      new CustomEvent('updateSetting', {
+        detail: { key: 'gptAiMarkdownEditor.editorZoomLevel', value: level },
+      })
+    );
   }
 }
 
@@ -832,35 +840,6 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       isActive: () => false,
       isEnabled: () => editor.can().redo(),
       requiresFocus: true,
-    },
-    {
-      type: 'dropdown',
-      label: 'Zoom',
-      title: 'Zoom level',
-      icon: { name: 'zoom-in', fallback: '100%' },
-      requiresFocus: false,
-      items: [
-        {
-          label: '75%',
-          action: () => setEditorZoom(0.75),
-          isActive: () => getEditorZoom() === 0.75,
-        },
-        {
-          label: '100%',
-          action: () => setEditorZoom(1),
-          isActive: () => getEditorZoom() === 1,
-        },
-        {
-          label: '125%',
-          action: () => setEditorZoom(1.25),
-          isActive: () => getEditorZoom() === 1.25,
-        },
-        {
-          label: '150%',
-          action: () => setEditorZoom(1.5),
-          isActive: () => getEditorZoom() === 1.5,
-        },
-      ],
     },
     { type: 'separator' },
     {
@@ -1279,6 +1258,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             window.dispatchEvent(new CustomEvent('openExtensionSettings'));
           },
         },
+        { label: '', action: () => {}, isSeparator: true },
+        ...[70, 80, 90, 100, 110, 120, 130, 140, 150].map(pct => ({
+          label: `Zoom ${pct}%`,
+          action: () => setEditorZoom(pct / 100),
+          isActive: () => Math.round(getEditorZoom() * 100) === pct,
+        })),
       ],
     },
     {
@@ -1449,6 +1434,15 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       menu.className = 'toolbar-dropdown-menu';
 
       btn.items.forEach(item => {
+        // Render separator items
+        if (item.isSeparator) {
+          const sep = document.createElement('div');
+          sep.className = 'toolbar-dropdown-separator';
+          sep.setAttribute('role', 'separator');
+          menu.appendChild(sep);
+          return;
+        }
+
         const menuItem = document.createElement('button');
         menuItem.type = 'button';
         menuItem.className = 'toolbar-dropdown-item';

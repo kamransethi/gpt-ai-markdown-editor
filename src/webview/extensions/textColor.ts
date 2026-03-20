@@ -55,18 +55,6 @@ const extensionConfig = {
     }
     return helpers.renderChildren();
   },
-  toMarkdown: {
-    open(_state: any, mark: any, _parent: any, _index: any) {
-      if (mark.attrs.color) {
-        return `<span style="color: ${mark.attrs.color}">`;
-      }
-      return '<span>';
-    },
-    close(_state: any, _mark: any, _parent: any, _index: any) {
-      return '</span>';
-    },
-    mixable: true,
-  },
 };
 
 // Note: Jest's jest-runtime strips the prototype (including the .extend method)

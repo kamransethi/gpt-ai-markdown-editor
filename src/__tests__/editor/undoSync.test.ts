@@ -204,6 +204,8 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       developerMode: true,
       highlightSyntax: 'obsidian',
       tocMaxDepth: 3,
+      preserveHtmlComments: false,
+      editorZoomLevel: 1,
     });
   });
 });

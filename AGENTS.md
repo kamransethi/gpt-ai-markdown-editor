@@ -195,18 +195,21 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 | --------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Add/remove TipTap extension | `vibe-coding-rules/env-context.md`                                         | Verify file paths in "Key File Locations"                          |
 | Change sync/debounce logic  | `vibe-coding-rules/env-context.md`, `vibe-coding-rules/common-pitfalls.md` | Verify timing values match (500ms, 2s, etc.)                       |
-| Add/remove config option    | `package.json` descriptions, README.md                                     | Verify config exists and matches enum/defaults                     |
+| Add/remove config option    | `FEATURES.md` (Configuration section), `package.json`, README.md           | Verify setting listed with type, default, and description          |
 | **Add/remove dependency**   | **`THIRD_PARTY_LICENSES.md`** **THIRD_PARTY_LICENSES.md**                  | **Add entry with license, copyright, repository, and license URL** |
 | Change file structure       | `vibe-coding-rules/env-context.md` (Key File Locations table)              | Verify all paths exist                                             |
 | Ship new feature            | `roadmap/shipped/`                                                         | Move plan from pipeline to shipped when complete                   |
 | Change styling patterns     | `vibe-coding-rules/styling.md`                                             | Verify examples match current CSS                                  |
 | Change testing approach     | `vibe-coding-rules/testing.md`                                             | Verify patterns match current tests                                |
 | Change image/DOM handling   | `vibe-coding-rules/image-and-dom-handling.md`                              | Verify patterns match code                                         |
+| Add/change/remove feature   | `FEATURES.md`                                                              | Add, update, or remove the feature entry in the relevant section   |
+| Add/remove command          | `FEATURES.md` (Commands section), `package.json`                           | Verify command listed with correct description                     |
 
 ***
 
 ## Documentation
 
+- `FEATURES.md` — Complete feature catalog organized by capability **Keep up to date when adding/changing/removing features**
 - `vibe-coding-rules/env-context.md` — Architecture (~80 lines) **Start here**
 - `roadmap/shipped/` — Shipped features (detailed plan files)
 - `docs/ARCHITECTURE.md` — Deep dive (when needed)
@@ -244,7 +247,43 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 
 ***
 
-**Last Updated:** 2025-12-13
+**Last Updated:** 2026-03-19
+
+## UI Design Language (MANDATORY)
+
+All dialogs, menus, buttons, and interactive elements must follow these conventions for visual consistency across the entire app.
+
+### CSS Variables — Use Only Defined Variables
+
+All UI colors must use the variables defined in the **Deterministic Color System** at the top of `editor.css`. Never invent new `--md-*` variables without defining them in the `:root`/`body` block.
+
+Key variables for interactive elements:
+- **Primary action buttons**: `background: var(--md-button-bg); color: var(--md-button-fg);`
+- **Primary hover**: `background: var(--md-button-hover-bg);`
+- **Secondary buttons**: `background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg);`
+- **Cancel/neutral buttons**: `background: none; border: 1px solid var(--md-menu-border);`
+- **Input focus border**: `border-color: var(--md-button-bg);` (not `--md-accent-primary`)
+- **Font family for UI**: `var(--md-font-family)` (not `--md-font-sans`)
+
+### Button Hierarchy
+
+Every dialog/modal must use this exact button pattern:
+1. **Primary action** (Submit, Refine, Save, Apply): `--md-button-bg` background + `--md-button-fg` text — this is the "default on Enter" action
+2. **Secondary/Cancel**: Transparent background + `--md-menu-border` border
+3. **Danger** (Delete Table, destructive actions): `--md-error-fg` color
+
+### Active/Selected State
+
+- **Dropdown items** with `isActive()` get the `.active` class → `--md-button-bg` background, `--md-button-fg` text, `font-weight: 600`
+- **Toolbar buttons** follow the same `.active` pattern
+- **Radio/checkbox inputs** use `accent-color: var(--md-button-bg);`
+
+### Quick Checklist Before Adding UI
+
+- [ ] All color values use CSS variables (no hardcoded hex in component CSS)
+- [ ] Primary buttons use `--md-button-bg/fg`, not `--md-accent-primary` or inline colors
+- [ ] Font references use `--md-font-family`, not `--md-font-sans`
+- [ ] Input fields use `--md-input-bg/fg` for background/color, `--md-button-bg` for focus border
 
 ## Modular Extension Strategy
 

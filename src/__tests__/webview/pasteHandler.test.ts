@@ -191,7 +191,13 @@ describe('pasteHandler', () => {
   describe('processPasteContent', () => {
     it('should return empty result for null', () => {
       const result = processPasteContent(null);
-      expect(result).toEqual({ content: '', wasConverted: false, isImage: false, isHtml: false, isMarkdown: false });
+      expect(result).toEqual({
+        content: '',
+        wasConverted: false,
+        isImage: false,
+        isHtml: false,
+        isMarkdown: false,
+      });
     });
 
     it('should detect image content', () => {

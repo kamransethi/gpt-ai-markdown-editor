@@ -543,9 +543,7 @@ function insertWorkspaceImage(
     // Verify the image was actually inserted
     setTimeout(() => {
       const images = document.querySelectorAll(`img[src="${relativePath}"]`);
-      console.log(
-        `[DK-AI] Verification: Found ${images.length} images with src="${relativePath}"`
-      );
+      console.log(`[DK-AI] Verification: Found ${images.length} images with src="${relativePath}"`);
     }, 100);
   } catch (error) {
     console.error(`[DK-AI] Failed to insert workspace image:`, error);

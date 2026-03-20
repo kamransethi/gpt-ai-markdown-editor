@@ -36,9 +36,11 @@ import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { TableCellEnterHandler } from './extensions/tableCellEnterHandler';
 import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservation';
+import { HtmlCommentInline, HtmlCommentBlock, setPreserveHtmlComments } from './extensions/htmlComment';
 import {
   createFloatingFormattingBar,
   createFormattingToolbar,
+  setEditorZoom,
   updateToolbarStates,
 } from './BubbleMenuView';
 import { createContextMenu } from './features/contextMenu';
@@ -62,6 +64,7 @@ import {
   getCurrentTableMatrix,
   isTableSelection,
   parseClipboardTable,
+  pasteIntoCells,
   renderTableMatrixAsHtml,
   serializeTableMatrix,
   serializeTableMatrixAsMarkdown,
@@ -726,6 +729,8 @@ function initializeEditor(initialContent: string) {
         CharacterCount,
         GenericHTMLInline,
         GenericHTMLBlock,
+        HtmlCommentInline,
+        HtmlCommentBlock,
         DragHandle.configure({
           render() {
             const element = document.createElement('div');
@@ -905,8 +910,10 @@ function initializeEditor(initialContent: string) {
       },
       onSelectionUpdate: ({ editor }) => {
         try {
-          const { from } = editor.state.selection;
-          vscode.postMessage({ type: 'selectionChange', pos: from });
+          const { from, to, empty } = editor.state.selection;
+          // Send position for outline tracking + selected text for Copilot/external access
+          const selectedText = empty ? '' : editor.state.doc.textBetween(from, to, '\n\n', '\n');
+          vscode.postMessage({ type: 'selectionChange', pos: from, from, to, selectedText });
         } catch (error) {
           console.warn('[DK-AI] Selection update failed:', error);
         }
@@ -1289,6 +1296,14 @@ function applyWebviewSettings(message: any) {
     highlightSyntax = message.highlightSyntax as 'obsidian' | 'github';
   }
 
+  if (typeof message.preserveHtmlComments === 'boolean') {
+    setPreserveHtmlComments(message.preserveHtmlComments);
+  }
+
+  if (typeof message.editorZoomLevel === 'number') {
+    setEditorZoom(message.editorZoomLevel, false);
+  }
+
   if (message.themeOverride) {
     if (typeof (window as any).gptAiApplyTheme === 'function') {
       (window as any).gptAiApplyTheme(message.themeOverride);
@@ -1355,9 +1370,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'saved':
         if (typeof message.requestId === 'string') {
-          console.log(
-            `[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`
-          );
+          console.log(`[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`);
         } else {
           console.log('[DK-AI] Received "saved" signal from extension');
         }
@@ -1546,6 +1559,14 @@ window.addEventListener('openExtensionSettings', () => {
   vscode.postMessage({ type: 'openExtensionSettings' });
 });
 
+// Handle setting updates from toolbar (e.g., zoom level persistence)
+window.addEventListener('updateSetting', (event: Event) => {
+  const detail = (event as CustomEvent).detail;
+  if (detail?.key && detail?.value !== undefined) {
+    vscode.postMessage({ type: 'updateSetting', key: detail.key, value: detail.value });
+  }
+});
+
 // Handle attachments button from toolbar -> open attachments folder in OS explorer
 window.addEventListener('openAttachmentsFolder', () => {
   vscode.postMessage({ type: 'openAttachmentsFolder' });
@@ -1643,12 +1664,15 @@ document.addEventListener(
       event.preventDefault();
       event.stopPropagation();
 
-      const html = renderTableMatrixAsHtml(parsedTable);
       const activeTable = findTable(editor.state.selection.$from);
       if (activeTable) {
-        const insertPos = activeTable.pos + activeTable.node.nodeSize;
-        editor.chain().focus().insertContentAt(insertPos, html).run();
+        // Paste into existing table cells at cursor position
+        const tr = pasteIntoCells(editor.state, parsedTable);
+        if (tr) {
+          editor.view.dispatch(tr);
+        }
       } else {
+        const html = renderTableMatrixAsHtml(parsedTable);
         editor.commands.insertContent(html);
       }
       return;

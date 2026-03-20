@@ -137,6 +137,21 @@ Renders GitHub-flavored markdown alerts with colored styling:
 - Display math: `$$...$$`
 - Full KaTeX rendering
 
+## Copy & Paste
+
+### Copy
+
+- **Copy as Markdown** — Toolbar / context menu copies selection as clean markdown
+- **Standard Copy** — Cmd/Ctrl+C copies HTML (TipTap default)
+
+### Paste
+
+- **HTML → Markdown** — Smart paste converts HTML clipboard to markdown equivalent
+- **Image Paste** — Images from clipboard inserted and saved to media folder
+- **Table Paste** — CSV and HTML table data pasted as visual tables
+- **Markdown Paste** — Recognized markdown text rendered immediately
+- **File Link Paste** — Drag files from Explorer to insert links
+
 ## Export
 
 | Format | Method |
@@ -145,6 +160,37 @@ Renders GitHub-flavored markdown alerts with colored styling:
 | **HTML** | Full standalone HTML document |
 | **DOCX** | Microsoft Word format |
 | **CSV** | Table-only export |
+
+## AI Features
+
+### AI Refine (Copilot Integration)
+
+Right-click context menu with preset modes:
+
+| Mode | Effect |
+|------|--------|
+| **Fix Spelling** | Corrects typos and grammar |
+| **Improve Writing** | Enhances clarity and flow |
+| **Make Shorter** | Condenses text |
+| **Make Longer** | Expands text with more detail |
+| **Make Professional** | Adjusts tone to business/formal |
+| **Simplify Language** | Reduces complexity |
+| **Custom Instruction** | User-provided prompt |
+
+Requires GitHub Copilot extension. Uses VS Code Language Model API.
+
+### Chat Participant
+
+- Invoked with `@markdown-editor` in Copilot Chat
+- Provides full document context to Copilot
+- Includes currently selected text when available
+- Ask questions about your document, get writing suggestions
+
+### Selection Visibility for Copilot
+
+- The editor exposes selected text to the extension host on every selection change
+- Context key `gptAiMarkdownEditor.hasSelection` is set when text is selected
+- Command `gptAiMarkdownEditor.getSelectedText` returns the current selection for any extension to query
 
 ## Source View Toggle
 
@@ -169,6 +215,10 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 
 `gptAiMarkdownEditor.developerMode` — When enabled (default: true), shows detailed error notifications for runtime failures.
 
+### HTML Comment Preservation
+
+`gptAiMarkdownEditor.preserveHtmlComments` — When enabled, `<!-- HTML comments -->` are preserved during round-trip editing instead of being stripped.
+
 ## VS Code Integration
 
 ### Commands
@@ -181,6 +231,8 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 | Navigate to Heading | Jump to a heading by position |
 | Filter Outline | Search headings by text |
 | Toggle Source View | Open raw markdown alongside WYSIWYG |
+| Open Attachments Folder | Open the media/attachments folder in the file explorer |
+| Get Selected Text | Returns currently selected text (for extension interop) |
 
 ### Context Menus
 
@@ -209,6 +261,15 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 - `.md` and `.markdown` files
 - Untitled documents (with workspace fallback)
 - Full Git diff compatibility (text-based storage)
+
+## Advanced Features
+
+- **HTML Preservation** — Unknown/arbitrary HTML tags preserved during round-trip
+- **HTML Comment Preservation** — `<!-- comments -->` preserved when enabled
+- **Smart Typography** — Automatic curly quotes, em-dashes, ellipses
+- **Frontmatter** — YAML frontmatter recognized and preserved
+- **Indented Image Support** — 4-space or tab-indented images parsed correctly
+- **Space-Friendly Paths** — Image paths with spaces handled via angle-bracket encoding
 
 ## Performance
 

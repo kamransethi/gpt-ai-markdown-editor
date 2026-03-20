@@ -80,6 +80,11 @@ jest.mock('./../../webview/extensions/htmlPreservation', () => ({
   GenericHTMLInline: {},
   GenericHTMLBlock: {},
 }));
+jest.mock('./../../webview/extensions/htmlComment', () => ({
+  HtmlCommentInline: {},
+  HtmlCommentBlock: {},
+  setPreserveHtmlComments: jest.fn(),
+}));
 jest.mock('./../../webview/BubbleMenuView', () => ({
   createFormattingToolbar: () => ({}),
   createTableMenu: () => ({}),

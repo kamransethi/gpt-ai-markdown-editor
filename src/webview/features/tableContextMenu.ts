@@ -249,7 +249,7 @@ export function createTableContextMenu(editor: Editor): TableContextMenuControll
 
   mb.addSeparator();
 
-  // ── DELETE (icon buttons) ──
+  // ── DELETE (icon buttons — all on one row) ──
   mb.addSectionLabel('Delete');
 
   mb.addButtonRow([
@@ -263,11 +263,12 @@ export function createTableContextMenu(editor: Editor): TableContextMenuControll
       title: 'Delete column',
       action: () => editor.chain().focus().deleteColumn().run(),
     },
+    {
+      icon: '<span style="font-size:11px;color:var(--md-error-fg)">Table</span>',
+      title: 'Delete table',
+      action: () => editor.chain().focus().deleteTable().run(),
+    },
   ]);
-
-  mb.addItem('Delete Table', () => editor.chain().focus().deleteTable().run(), {
-    className: 'context-menu-danger',
-  });
 
   mb.addSeparator();
 

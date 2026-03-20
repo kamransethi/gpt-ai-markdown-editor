@@ -110,6 +110,10 @@
       {
         "command": "gptAiMarkdownEditor.openAttachmentsFolder",
         "title": "Open Attachments Folder"
+      },
+      {
+        "command": "gptAiMarkdownEditor.getSelectedText",
+        "title": "Visual Markdown Editor: Get Selected Text"
       }
     ],
     "views": {
@@ -237,6 +241,18 @@
           ],
           "default": "obsidian",
           "description": "Controls how highlighted text is saved to markdown."
+        },
+        "gptAiMarkdownEditor.preserveHtmlComments": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "**Preserve HTML Comments**: When enabled, HTML comments (`<!-- ... -->`) in markdown files are retained during editing and round-trip on save. Comments are shown as subtle badges in the editor."
+        },
+        "gptAiMarkdownEditor.editorZoomLevel": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0.7,
+          "maximum": 1.5,
+          "description": "Editor zoom level (0.7 = 70%, 1.0 = 100%, 1.5 = 150%). Persisted across all documents."
         },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",

@@ -325,7 +325,13 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
       if (markdown) {
         // Convert back to HTML for TipTap insertion
         const cleanHtml = markdownToHtml(markdown);
-        return { content: cleanHtml, wasConverted: true, isImage: false, isHtml: true, isMarkdown: false };
+        return {
+          content: cleanHtml,
+          wasConverted: true,
+          isImage: false,
+          isHtml: true,
+          isMarkdown: false,
+        };
       }
     } catch {
       // Fall through to plain text handling
@@ -335,9 +341,21 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
   // Case 2: Plain text that looks like markdown (tables, lists, headers, etc.)
   // Pass raw markdown to TipTap's Markdown parser for best fidelity
   if (plainText && looksLikeMarkdown(plainText)) {
-    return { content: plainText, wasConverted: true, isImage: false, isHtml: false, isMarkdown: true };
+    return {
+      content: plainText,
+      wasConverted: true,
+      isImage: false,
+      isHtml: false,
+      isMarkdown: true,
+    };
   }
 
   // Case 3: Plain text without markdown - let TipTap handle it
-  return { content: plainText, wasConverted: false, isImage: false, isHtml: false, isMarkdown: false };
+  return {
+    content: plainText,
+    wasConverted: false,
+    isImage: false,
+    isHtml: false,
+    isMarkdown: false,
+  };
 }

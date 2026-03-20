@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import { MarkdownEditorProvider } from './editor/MarkdownEditorProvider';
 import { WordCountFeature } from './features/wordCount';
-import { getActiveWebviewPanel } from './activeWebview';
+import { getActiveWebviewPanel, getSelectedText } from './activeWebview';
 import { outlineViewProvider } from './features/outlineView';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -131,6 +131,13 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // Expose selected text so Copilot and other extensions can query our editor's selection
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gptAiMarkdownEditor.getSelectedText', () => {
+      return getSelectedText();
+    })
+  );
+
   // Register Copilot Chat Participant — makes the current document available to Copilot
   try {
     if (typeof vscode.chat?.createChatParticipant === 'function') {
@@ -154,6 +161,9 @@ export function activate(context: vscode.ExtensionContext) {
             return;
           }
 
+          // Include currently selected text if any
+          const selText = getSelectedText();
+
           // Use the language model to answer about the document
           const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
           const model = models[0];
@@ -164,11 +174,19 @@ export function activate(context: vscode.ExtensionContext) {
             return;
           }
 
-          const messages = [
-            vscode.LanguageModelChatMessage.User(
-              `You are a writing assistant. The user is editing the following markdown document:\n\n---\n${docContent}\n---\n\nUser question: ${request.prompt}`
-            ),
-          ];
+          let systemPrompt =
+            'You are a writing assistant. The user is editing the following markdown document:\n\n---\n' +
+            docContent +
+            '\n---\n';
+          if (selText) {
+            systemPrompt +=
+              '\nThe user currently has the following text selected in the editor:\n\n```\n' +
+              selText +
+              '\n```\n';
+          }
+          systemPrompt += `\nUser question: ${request.prompt}`;
+
+          const messages = [vscode.LanguageModelChatMessage.User(systemPrompt)];
 
           const response = await model.sendRequest(messages, {}, _token);
           for await (const chunk of response.text) {

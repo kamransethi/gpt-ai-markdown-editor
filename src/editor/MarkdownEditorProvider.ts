@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { outlineViewProvider } from '../features/outlineView';
-import { setActiveWebviewPanel, getActiveWebviewPanel } from '../activeWebview';
+import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText } from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
 import { getNonce } from './utils';
 
@@ -163,6 +163,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       developerMode: config.get<boolean>('gptAiMarkdownEditor.developerMode', true),
       tocMaxDepth: config.get<number>('gptAiMarkdownEditor.tocMaxDepth', 3),
       highlightSyntax: config.get<string>('gptAiMarkdownEditor.highlightSyntax', 'obsidian'),
+      preserveHtmlComments: config.get<boolean>('gptAiMarkdownEditor.preserveHtmlComments', false),
+      editorZoomLevel: config.get<number>('gptAiMarkdownEditor.editorZoomLevel', 1),
     };
   }
 
@@ -411,7 +413,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('gptAiMarkdownEditor.themeOverride') ||
         e.affectsConfiguration('gptAiMarkdownEditor.developerMode') ||
         e.affectsConfiguration('gptAiMarkdownEditor.tocMaxDepth') ||
-        e.affectsConfiguration('gptAiMarkdownEditor.highlightSyntax')
+        e.affectsConfiguration('gptAiMarkdownEditor.highlightSyntax') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.preserveHtmlComments') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.editorZoomLevel')
       ) {
         const config = vscode.workspace.getConfiguration();
         const settings = this.getWebviewSettings(config);
@@ -587,6 +591,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'selectionChange': {
         const pos = message.pos as number | undefined;
         outlineViewProvider.setActiveSelection(typeof pos === 'number' ? pos : null);
+        // Track selected text so Copilot and other extensions can access it
+        const selText = (message.selectedText as string) ?? '';
+        setSelectedText(selText);
         break;
       }
       case 'saveImage':

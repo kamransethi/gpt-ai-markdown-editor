@@ -1,5 +1,5 @@
-import type { EditorState, Selection } from '@tiptap/pm/state';
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import type { EditorState, Selection, Transaction } from '@tiptap/pm/state';
+import type { Node as ProseMirrorNode, Schema } from '@tiptap/pm/model';
 import { CellSelection, TableMap, findTable, selectedRect } from 'prosemirror-tables';
 
 export type TableMatrix = string[][];
@@ -200,4 +200,83 @@ export function parseClipboardTable(text: string): TableMatrix | null {
 
 export function isTableSelection(selection: Selection): selection is CellSelection {
   return selection instanceof CellSelection;
+}
+
+/**
+ * Find the current cell's row and column index within its table.
+ * Returns null if the selection is not inside a table cell.
+ */
+function findCellPosition(
+  state: EditorState
+): { tableStart: number; table: ProseMirrorNode; row: number; col: number } | null {
+  const tableResult = findTable(state.selection.$from);
+  if (!tableResult) return null;
+
+  const { node: table, pos: tablePos } = tableResult;
+  const map = TableMap.get(table);
+  const cellPos = state.selection.$from.pos - (tablePos + 1);
+
+  // Find which cell contains the cursor
+  for (let row = 0; row < map.height; row++) {
+    for (let col = 0; col < map.width; col++) {
+      const cellStart = map.map[row * map.width + col];
+      const cell = table.nodeAt(cellStart);
+      if (!cell) continue;
+      const cellEnd = cellStart + cell.nodeSize;
+      if (cellPos >= cellStart && cellPos < cellEnd) {
+        return { tableStart: tablePos + 1, table, row, col };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Paste a matrix of text values into existing table cells, starting from
+ * the current cursor position. Overwrites cell content but does not
+ * add/remove rows or columns.
+ * Returns the transaction if successful, null otherwise.
+ */
+export function pasteIntoCells(
+  state: EditorState,
+  matrix: TableMatrix
+): Transaction | null {
+  const pos = findCellPosition(state);
+  if (!pos) return null;
+
+  const { tableStart, table, row: startRow, col: startCol } = pos;
+  const map = TableMap.get(table);
+  const schema: Schema = state.schema;
+  let tr = state.tr;
+
+  for (let r = 0; r < matrix.length; r++) {
+    const targetRow = startRow + r;
+    if (targetRow >= map.height) break;
+
+    for (let c = 0; c < matrix[r].length; c++) {
+      const targetCol = startCol + c;
+      if (targetCol >= map.width) break;
+
+      const cellOffset = map.map[targetRow * map.width + targetCol];
+      const cell = table.nodeAt(cellOffset);
+      if (!cell) continue;
+
+      const cellStart = tableStart + cellOffset + 1; // inside the cell node
+      const cellEnd = cellStart + cell.content.size;
+
+      const text = matrix[r][c];
+      const paragraph = schema.nodes.paragraph.create(
+        null,
+        text ? schema.text(text) : null
+      );
+
+      tr = tr.replaceWith(
+        tr.mapping.map(cellStart),
+        tr.mapping.map(cellEnd),
+        paragraph.content
+      );
+    }
+  }
+
+  return tr;
 }
