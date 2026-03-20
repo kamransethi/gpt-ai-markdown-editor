@@ -254,17 +254,17 @@ export function createTableContextMenu(editor: Editor): TableContextMenuControll
 
   mb.addButtonRow([
     {
-      icon: '<span style="font-size:11px">Row</span>',
+      icon: '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="1.2"/><line x1="9" y1="4" x2="9" y2="16" stroke="currentColor" stroke-width="1.2"/><line x1="4" y1="6.5" x2="14" y2="6.5" stroke="var(--md-error-fg)" stroke-width="2"/><line x1="6" y1="2" x2="12" y2="2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
       title: 'Delete row',
       action: () => editor.chain().focus().deleteRow().run(),
     },
     {
-      icon: '<span style="font-size:11px">Column</span>',
+      icon: '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="9" y1="2" x2="9" y2="16" stroke="currentColor" stroke-width="1.2"/><line x1="5.5" y1="4" x2="5.5" y2="14" stroke="var(--md-error-fg)" stroke-width="2"/></svg>',
       title: 'Delete column',
       action: () => editor.chain().focus().deleteColumn().run(),
     },
     {
-      icon: '<span style="font-size:11px;color:var(--md-error-fg)">Table</span>',
+      icon: '<svg width="18" height="18" viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2"/><line x1="5" y1="5" x2="13" y2="13" stroke="var(--md-error-fg)" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="5" x2="5" y2="13" stroke="var(--md-error-fg)" stroke-width="2" stroke-linecap="round"/></svg>',
       title: 'Delete table',
       action: () => editor.chain().focus().deleteTable().run(),
     },

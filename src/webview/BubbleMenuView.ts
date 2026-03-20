@@ -1185,6 +1185,16 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           },
           isEnabled: () => !editor.isActive('table'),
         },
+        {
+          label: 'Insert emoji',
+          icon: { name: 'smiley', fallback: '😀' },
+          action: () => {
+            const vscodeApi = window.vscode;
+            if (vscodeApi) {
+              vscodeApi.postMessage({ type: 'showEmojiPicker' });
+            }
+          },
+        },
       ],
     },
     {
@@ -1679,17 +1689,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     };
 
     const icon = createIconElement(btn.icon, 'toolbar-icon');
-    const shouldShowLabel = btn.className === 'save-button';
-
-    if (shouldShowLabel) {
-      const label = document.createElement('span');
-      label.className = 'toolbar-button-label';
-      label.textContent = btn.label;
-      button.classList.add('toolbar-button-with-label');
-      button.append(icon, label);
-    } else {
-      button.append(icon);
-    }
+    button.append(icon);
 
     button.onclick = e => {
       e.preventDefault();

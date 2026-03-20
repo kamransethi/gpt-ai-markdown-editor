@@ -80,52 +80,81 @@ describe('Mermaid node view editing', () => {
     document.body.innerHTML = '';
   });
 
-  it('keeps the embedded editor open after textarea blur', () => {
+  it('renders a compact header with Edit button', () => {
     const { view } = createMermaidNodeView();
     document.body.appendChild(view.dom);
 
-    view.dom.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    const header = view.dom.querySelector('.mermaid-code-header');
+    expect(header).not.toBeNull();
 
-    const textarea = view.dom.querySelector('.mermaid-textarea') as HTMLTextAreaElement;
-    expect(view.dom.classList.contains('is-editing')).toBe(true);
+    const title = view.dom.querySelector('.mermaid-code-title');
+    expect(title?.textContent).toBe('Mermaid');
 
-    textarea.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
-
-    expect(view.dom.classList.contains('is-editing')).toBe(true);
+    const editButton = view.dom.querySelector('.mermaid-edit-button') as HTMLButtonElement | null;
+    expect(editButton).not.toBeNull();
+    expect(editButton!.textContent).toBe('Edit');
   });
 
-  it('does not exit edit mode when the node is deselected', () => {
+  it('sends editMermaidSource message when Edit is clicked', () => {
     const { view } = createMermaidNodeView();
     document.body.appendChild(view.dom);
 
-    view.dom.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-    expect(view.dom.classList.contains('is-editing')).toBe(true);
+    const postMessage = jest.fn();
+    (window as any).vscode = { postMessage };
 
-    view.deselectNode();
+    const editButton = view.dom.querySelector('.mermaid-edit-button') as HTMLButtonElement;
+    editButton.click();
 
-    expect(view.dom.classList.contains('is-editing')).toBe(true);
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'editMermaidSource',
+        code: 'graph TD\nA-->B',
+      })
+    );
+
+    delete (window as any).vscode;
   });
 
-  it('renders a close button and only closes when that button is clicked', () => {
+  it('sends editMermaidSource message on double-click', () => {
+    const { view } = createMermaidNodeView();
+    document.body.appendChild(view.dom);
+
+    const postMessage = jest.fn();
+    (window as any).vscode = { postMessage };
+
+    view.dom.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'editMermaidSource',
+      })
+    );
+
+    delete (window as any).vscode;
+  });
+
+  it('commits content when mermaidSourceUpdate event is received', () => {
     const { view, editor, node } = createMermaidNodeView();
     document.body.appendChild(view.dom);
 
-    view.dom.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    // Extract the mermaidId from the postMessage call
+    const postMessage = jest.fn();
+    (window as any).vscode = { postMessage };
+    const editButton = view.dom.querySelector('.mermaid-edit-button') as HTMLButtonElement;
+    editButton.click();
+    const mermaidId = postMessage.mock.calls[0][0].mermaidId as string;
 
-    const textarea = view.dom.querySelector('.mermaid-textarea') as HTMLTextAreaElement;
-    textarea.value = 'graph LR\nX-->Y';
+    // Simulate content update from VS Code source editor
+    window.dispatchEvent(
+      new CustomEvent('mermaidSourceUpdate', {
+        detail: { mermaidId, code: 'graph LR\nX-->Y' },
+      })
+    );
 
-    const closeButton = view.dom.querySelector('.mermaid-close-button') as HTMLButtonElement | null;
-    expect(closeButton).not.toBeNull();
-
-    textarea.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
-    expect(view.dom.classList.contains('is-editing')).toBe(true);
-
-    closeButton!.click();
-
-    expect(view.dom.classList.contains('is-editing')).toBe(false);
     expect(node.type.create).toHaveBeenCalled();
     expect(editor.state.tr.replaceWith).toHaveBeenCalled();
     expect(editor.view.dispatch).toHaveBeenCalled();
+
+    delete (window as any).vscode;
   });
 });

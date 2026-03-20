@@ -4,10 +4,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Table, TableKit } from '@tiptap/extension-table';
 import { markdownToHtml } from '../../webview/utils/pasteHandler';
-import {
-  parseHtmlTable,
-  renderTableMatrixAsHtml,
-} from '../../webview/utils/tableClipboard';
+import { parseHtmlTable, renderTableMatrixAsHtml } from '../../webview/utils/tableClipboard';
 
 /**
  * Regression tests for the <tbody> bug.
@@ -85,9 +82,7 @@ describe('tbody regression — no section wrappers leak into tables', () => {
   // ── Layer 3: parseHtmlTable ──────────────────────────────────────
   describe('parseHtmlTable extracts data through wrappers', () => {
     it('parses through <tbody>', () => {
-      const matrix = parseHtmlTable(
-        '<table><tbody><tr><td>A</td><td>B</td></tr></tbody></table>'
-      );
+      const matrix = parseHtmlTable('<table><tbody><tr><td>A</td><td>B</td></tr></tbody></table>');
       expect(matrix).toEqual([['A', 'B']]);
     });
 
@@ -118,11 +113,7 @@ describe('tbody regression — no section wrappers leak into tables', () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [
-          StarterKit,
-          createTableExtension(),
-          TableKit.configure({ table: false }),
-        ],
+        extensions: [StarterKit, createTableExtension(), TableKit.configure({ table: false })],
         content: '<p>Start</p>',
       });
     });
@@ -145,9 +136,7 @@ describe('tbody regression — no section wrappers leak into tables', () => {
     }
 
     it('inserts clean table correctly', () => {
-      insertAndCheck(
-        '<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>'
-      );
+      insertAndCheck('<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>');
     });
 
     it('inserts table with <tbody> without leaking text', () => {

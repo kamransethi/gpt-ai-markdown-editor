@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 import { outlineViewProvider } from '../features/outlineView';
 import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText } from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
@@ -626,6 +627,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'exportTableCsv':
         void this.handleExportTableCsv(message, document);
         break;
+      case 'showEmojiPicker':
+        void this.handleShowEmojiPicker(webview);
+        break;
+      case 'editMermaidSource':
+        void this.handleEditMermaidSource(message, webview);
+        break;
       case 'showError':
         vscode.window.showErrorMessage(message.message as string);
         break;
@@ -983,6 +990,212 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const errorMessage = error instanceof Error ? error.message : String(error);
       vscode.window.showErrorMessage(`Failed to export CSV: ${errorMessage}`);
     }
+  }
+
+  /**
+   * Show a searchable emoji picker via VS Code QuickPick and insert the
+   * selected emoji into the webview editor.
+   */
+  private async handleShowEmojiPicker(webview: vscode.Webview): Promise<void> {
+    const emojis: Array<{ emoji: string; label: string }> = [
+      // Smileys & People
+      { emoji: '😀', label: 'grinning face' },
+      { emoji: '😁', label: 'beaming face' },
+      { emoji: '😂', label: 'face with tears of joy' },
+      { emoji: '🤣', label: 'rolling on the floor laughing' },
+      { emoji: '😃', label: 'smiley face' },
+      { emoji: '😄', label: 'happy face' },
+      { emoji: '😅', label: 'sweat smile' },
+      { emoji: '😆', label: 'laughing squinting' },
+      { emoji: '😉', label: 'winking face' },
+      { emoji: '😊', label: 'smiling face with blush' },
+      { emoji: '😎', label: 'cool sunglasses' },
+      { emoji: '😍', label: 'heart eyes' },
+      { emoji: '🥰', label: 'smiling face with hearts' },
+      { emoji: '😘', label: 'face blowing a kiss' },
+      { emoji: '😜', label: 'winking tongue' },
+      { emoji: '🤔', label: 'thinking face' },
+      { emoji: '🤗', label: 'hugging face' },
+      { emoji: '🤩', label: 'star struck' },
+      { emoji: '😢', label: 'crying face' },
+      { emoji: '😭', label: 'loudly crying' },
+      { emoji: '😤', label: 'angry huffing' },
+      { emoji: '😡', label: 'pouting red face' },
+      { emoji: '🤯', label: 'mind blown exploding head' },
+      { emoji: '😱', label: 'screaming in fear' },
+      { emoji: '😴', label: 'sleeping face' },
+      { emoji: '🥳', label: 'partying face' },
+      { emoji: '😇', label: 'angel halo' },
+      { emoji: '🫡', label: 'saluting face' },
+      // Gestures & Body
+      { emoji: '👍', label: 'thumbs up' },
+      { emoji: '👎', label: 'thumbs down' },
+      { emoji: '👏', label: 'clapping hands' },
+      { emoji: '🙌', label: 'raising hands' },
+      { emoji: '🤝', label: 'handshake' },
+      { emoji: '✌️', label: 'victory peace' },
+      { emoji: '🤞', label: 'fingers crossed' },
+      { emoji: '💪', label: 'flexed biceps strong' },
+      { emoji: '👋', label: 'waving hand' },
+      { emoji: '🙏', label: 'folded hands pray please' },
+      { emoji: '☝️', label: 'index pointing up' },
+      { emoji: '👀', label: 'eyes looking' },
+      // Hearts & Emotions
+      { emoji: '❤️', label: 'red heart love' },
+      { emoji: '💔', label: 'broken heart' },
+      { emoji: '💯', label: 'hundred points perfect' },
+      { emoji: '🔥', label: 'fire hot' },
+      { emoji: '✨', label: 'sparkles' },
+      { emoji: '⭐', label: 'star' },
+      { emoji: '🌟', label: 'glowing star' },
+      { emoji: '💡', label: 'light bulb idea' },
+      { emoji: '💎', label: 'gem stone diamond' },
+      { emoji: '🎉', label: 'party popper celebration' },
+      { emoji: '🎊', label: 'confetti ball' },
+      { emoji: '🏆', label: 'trophy winner' },
+      { emoji: '🥇', label: 'gold medal first place' },
+      // Objects & Symbols
+      { emoji: '📌', label: 'pin pushpin' },
+      { emoji: '📎', label: 'paperclip' },
+      { emoji: '📝', label: 'memo note writing' },
+      { emoji: '📅', label: 'calendar date' },
+      { emoji: '📊', label: 'bar chart statistics' },
+      { emoji: '📈', label: 'chart increasing trending up' },
+      { emoji: '📉', label: 'chart decreasing trending down' },
+      { emoji: '🔗', label: 'link chain' },
+      { emoji: '🔒', label: 'locked lock secure' },
+      { emoji: '🔓', label: 'unlocked open lock' },
+      { emoji: '🔑', label: 'key' },
+      { emoji: '🛠️', label: 'tools hammer wrench' },
+      { emoji: '⚙️', label: 'gear settings cog' },
+      { emoji: '💻', label: 'laptop computer' },
+      { emoji: '📱', label: 'mobile phone' },
+      { emoji: '🖥️', label: 'desktop computer monitor' },
+      { emoji: '📧', label: 'email e-mail' },
+      { emoji: '📂', label: 'folder open file' },
+      { emoji: '🗑️', label: 'wastebasket trash delete' },
+      // Arrows & Indicators
+      { emoji: '✅', label: 'check mark done complete' },
+      { emoji: '❌', label: 'cross mark wrong cancel' },
+      { emoji: '⚠️', label: 'warning caution' },
+      { emoji: '❗', label: 'exclamation mark important' },
+      { emoji: '❓', label: 'question mark' },
+      { emoji: 'ℹ️', label: 'information source' },
+      { emoji: '➡️', label: 'right arrow' },
+      { emoji: '⬅️', label: 'left arrow' },
+      { emoji: '⬆️', label: 'up arrow' },
+      { emoji: '⬇️', label: 'down arrow' },
+      { emoji: '🔄', label: 'counterclockwise arrows cycle refresh' },
+      // Nature & Weather
+      { emoji: '🌈', label: 'rainbow' },
+      { emoji: '☀️', label: 'sun sunny' },
+      { emoji: '🌙', label: 'crescent moon' },
+      { emoji: '⚡', label: 'lightning bolt zap' },
+      { emoji: '🌍', label: 'globe earth world' },
+      { emoji: '🍀', label: 'four leaf clover luck' },
+      { emoji: '🌸', label: 'cherry blossom flower' },
+      // Food & Activities
+      { emoji: '☕', label: 'coffee hot beverage' },
+      { emoji: '🍕', label: 'pizza' },
+      { emoji: '🎵', label: 'musical note music' },
+      { emoji: '🎮', label: 'video game controller' },
+      { emoji: '📚', label: 'books stack reading' },
+      { emoji: '🚀', label: 'rocket launch' },
+      { emoji: '🎯', label: 'bullseye target direct hit' },
+      // Misc useful
+      { emoji: '🐛', label: 'bug insect' },
+      { emoji: '🏷️', label: 'label tag' },
+      { emoji: '🔍', label: 'magnifying glass search' },
+      { emoji: '📋', label: 'clipboard' },
+      { emoji: '🧪', label: 'test tube experiment' },
+      { emoji: '🧩', label: 'puzzle piece' },
+      { emoji: '🗂️', label: 'card index dividers organize' },
+      { emoji: '⏰', label: 'alarm clock time' },
+      { emoji: '🔔', label: 'bell notification' },
+      { emoji: '🚫', label: 'prohibited forbidden no' },
+      { emoji: '💬', label: 'speech bubble comment' },
+      { emoji: '💭', label: 'thought balloon thinking' },
+    ];
+
+    const items = emojis.map(e => ({
+      label: e.emoji,
+      description: e.label,
+    }));
+
+    const pick = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Search for an emoji…',
+      matchOnDescription: true,
+    });
+
+    if (pick) {
+      webview.postMessage({ type: 'insertEmoji', emoji: pick.label });
+    }
+  }
+
+  /**
+   * Open the same document in VS Code's default text editor beside the
+   * WYSIWYG view, scrolled to the `` ```mermaid `` fence that contains the
+   * given code.  Hides the outline pane while the source view is open and
+   * restores it when the tab is closed.
+   */
+  private async handleEditMermaidSource(
+    message: { type: string; [key: string]: unknown },
+    webview: vscode.Webview
+  ): Promise<void> {
+    const code = ((message.code as string) || '').trim();
+    const document = this.getCurrentDocument();
+    if (!document) return;
+
+    // Find the line of the ```mermaid fence whose body matches the code
+    const text = document.getText();
+    const lines = text.split('\n');
+    let targetLine = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (/^```mermaid\s*$/i.test(lines[i].trim())) {
+        // Collect the fence body to match against the requested code
+        let body = '';
+        for (let j = i + 1; j < lines.length; j++) {
+          if (lines[j].trim().startsWith('```')) break;
+          if (body) body += '\n';
+          body += lines[j];
+        }
+        if (body.trim() === code) {
+          targetLine = i;
+          break;
+        }
+        // If code is empty or no exact match yet, use first fence
+        if (!targetLine) targetLine = i;
+      }
+    }
+
+    // Hide outline pane
+    webview.postMessage({ type: 'setOutlineVisible', visible: false });
+
+    // Open source view scrolled to the mermaid fence
+    const position = new vscode.Position(targetLine, 0);
+    const selection = new vscode.Range(position, position);
+
+    await vscode.commands.executeCommand(
+      'vscode.openWith',
+      document.uri,
+      'default',
+      {
+        viewColumn: vscode.ViewColumn.Beside,
+        selection,
+      }
+    );
+
+    // Restore outline when the source editor beside is no longer visible
+    const editorWatcher = vscode.window.onDidChangeVisibleTextEditors(editors => {
+      const stillOpen = editors.some(
+        e => e.document.uri.toString() === document.uri.toString() &&
+             e.viewColumn !== vscode.ViewColumn.Active
+      );
+      if (!stillOpen) {
+        webview.postMessage({ type: 'setOutlineVisible', visible: true });
+        editorWatcher.dispose();
+      }
+    });
   }
 
   /**

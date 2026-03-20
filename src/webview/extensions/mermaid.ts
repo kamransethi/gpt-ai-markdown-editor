@@ -186,9 +186,7 @@ export const Mermaid = Node.create({
       const container = document.createElement('div');
       container.classList.add('mermaid-split-wrapper');
 
-      const codeBlock = document.createElement('div');
-      codeBlock.classList.add('mermaid-code-block');
-
+      // Compact header matching code block style
       const codeHeader = document.createElement('div');
       codeHeader.classList.add('mermaid-code-header');
 
@@ -196,36 +194,23 @@ export const Mermaid = Node.create({
       codeTitle.classList.add('mermaid-code-title');
       codeTitle.textContent = 'Mermaid';
 
-      const closeButton = document.createElement('button');
-      closeButton.type = 'button';
-      closeButton.classList.add('mermaid-close-button');
-      closeButton.textContent = 'Close';
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.classList.add('mermaid-edit-button');
+      editButton.textContent = 'Edit';
 
       codeHeader.appendChild(codeTitle);
-      codeHeader.appendChild(closeButton);
-      codeBlock.appendChild(codeHeader);
-
-      const textarea = document.createElement('textarea');
-      textarea.classList.add('mermaid-textarea');
-      textarea.spellcheck = false;
-      textarea.value = node.textContent;
-      codeBlock.appendChild(textarea);
+      codeHeader.appendChild(editButton);
 
       const renderBlock = document.createElement('div');
       renderBlock.classList.add('mermaid-render-block');
 
-      container.appendChild(codeBlock);
+      container.appendChild(codeHeader);
       container.appendChild(renderBlock);
 
       let currentContent = node.textContent;
       let renderVersion = 0;
       let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-      let isEditing = false;
-
-      const setEditing = (nextEditing: boolean) => {
-        isEditing = nextEditing;
-        container.classList.toggle('is-editing', nextEditing);
-      };
 
       const renderDiagram = async (code: string) => {
         const content = code.trim();
@@ -275,65 +260,24 @@ export const Mermaid = Node.create({
           });
       };
 
-      // Commit textarea content back to the ProseMirror document
-      const commitContent = () => {
-        const newCode = textarea.value;
-        if (newCode === currentContent) return;
-        currentContent = newCode;
-
-        const pos = getPos();
-        if (typeof pos !== 'number') return;
-
-        const { tr } = editor.state;
-        const textContent = newCode.length > 0 ? editor.schema.text(newCode) : undefined;
-        const newNode = node.type.create(node.attrs, textContent);
-        tr.replaceWith(pos, pos + node.nodeSize, newNode);
-        editor.view.dispatch(tr);
-      };
-
-      const enterEditMode = () => {
-        tooltip.style.display = 'none';
-        container.classList.remove('highlighted');
-        setEditing(true);
-        textarea.value = currentContent;
-        setTimeout(() => textarea.focus(), 10);
-      };
-
-      const exitEditMode = () => {
-        commitContent();
-        setEditing(false);
-      };
-
-      // Live preview while typing in textarea
-      textarea.addEventListener('input', () => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          renderDiagram(textarea.value);
-        }, 400);
-      });
-
-      // Stop events from bubbling to the editor
-      textarea.addEventListener('keydown', e => {
-        e.stopPropagation();
-        // Escape keeps the editor open and restores focus inside the embedded textarea.
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          textarea.focus();
+      // Open the same document in VS Code source view, scrolled to this mermaid block
+      const openSourceEditor = () => {
+        const vscodeApi = (window as any).vscode;
+        if (vscodeApi) {
+          vscodeApi.postMessage({
+            type: 'editMermaidSource',
+            code: currentContent,
+          });
         }
-      });
-      textarea.addEventListener('click', e => e.stopPropagation());
-      textarea.addEventListener('mousedown', e => e.stopPropagation());
-      textarea.addEventListener('focus', e => e.stopPropagation());
-      textarea.addEventListener('paste', e => e.stopPropagation());
-      textarea.addEventListener('copy', e => e.stopPropagation());
-      textarea.addEventListener('cut', e => e.stopPropagation());
+      };
 
+      // Header events
       codeHeader.addEventListener('click', e => e.stopPropagation());
       codeHeader.addEventListener('mousedown', e => e.stopPropagation());
-      closeButton.addEventListener('click', e => {
+      editButton.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
-        exitEditMode();
+        openSourceEditor();
       });
 
       // Tooltip for "Double-click to edit" hint
@@ -345,19 +289,16 @@ export const Mermaid = Node.create({
 
       // Manual selection on click
       container.addEventListener('click', () => {
-        if (isEditing) return;
         const pos = getPos();
         if (typeof pos === 'number') {
           editor.commands.setNodeSelection(pos);
         }
       });
 
-      // Toggle split-view on double-click (but not on textarea)
+      // Open source editor on double-click
       container.addEventListener('dblclick', e => {
-        if ((e.target as HTMLElement | null)?.closest('.mermaid-code-block')) return;
-        if (!isEditing) {
-          enterEditMode();
-        }
+        if ((e.target as HTMLElement | null)?.closest('.mermaid-code-header')) return;
+        openSourceEditor();
       });
 
       const themeChangeListener = () => {
@@ -373,19 +314,13 @@ export const Mermaid = Node.create({
           if (updatedNode.type.name !== 'mermaid') return false;
           if (currentContent !== updatedNode.textContent) {
             currentContent = updatedNode.textContent;
-            // Only update textarea if not actively editing
-            if (!isEditing && document.activeElement !== textarea) {
-              textarea.value = currentContent;
-            }
             renderDiagram(currentContent);
           }
           return true;
         },
         selectNode: () => {
-          if (!container.classList.contains('is-editing')) {
-            container.classList.add('highlighted');
-            tooltip.style.display = 'block';
-          }
+          container.classList.add('highlighted');
+          tooltip.style.display = 'block';
         },
         deselectNode: () => {
           container.classList.remove('highlighted');
@@ -393,7 +328,7 @@ export const Mermaid = Node.create({
         },
         stopEvent: event => {
           const target = event.target as HTMLElement | null;
-          return Boolean(target?.closest('.mermaid-code-block'));
+          return Boolean(target?.closest('.mermaid-code-header'));
         },
         destroy: () => {
           renderVersion++;

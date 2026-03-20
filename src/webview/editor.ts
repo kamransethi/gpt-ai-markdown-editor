@@ -1412,6 +1412,21 @@ window.addEventListener('message', (event: MessageEvent) => {
           handleAiRefineResult(editor, message as any);
         }
         break;
+      case 'insertEmoji':
+        if (editor && typeof message.emoji === 'string') {
+          editor.chain().focus().insertContent(message.emoji).run();
+        }
+        break;
+      case 'mermaidSourceUpdate':
+        // Relay updated mermaid source from VS Code editor back to the NodeView
+        if (typeof message.mermaidId === 'string' && typeof message.code === 'string') {
+          window.dispatchEvent(
+            new CustomEvent('mermaidSourceUpdate', {
+              detail: { mermaidId: message.mermaidId, code: message.code },
+            })
+          );
+        }
+        break;
       case 'imageUriResolved':
         // Handled by the custom image message plugin; ignore here to avoid log noise.
         break;
