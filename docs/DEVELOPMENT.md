@@ -614,7 +614,7 @@ Contributors using any AI coding assistant can benefit from:
 
 - **GitHub Discussions**: General questions, ideas
 - **GitHub Issues**: Bug reports, feature requests
-- **Email**: support@GPT-AI
+- **Email**: support@DK-AI
 
 ### For Users
 

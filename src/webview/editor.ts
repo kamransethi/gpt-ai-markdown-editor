@@ -256,7 +256,7 @@ type VsCodeApi = {
 
 declare const acquireVsCodeApi: () => VsCodeApi;
 
-// Extended window interface for GPT-AI globals
+// Extended window interface for DK-AI globals
 declare global {
   interface Window {
     vscode?: VsCodeApi;

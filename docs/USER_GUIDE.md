@@ -1,6 +1,6 @@
-# GPT-AI Markdown Editor: User Guide
+# DK-AI Markdown Editor: User Guide
 
-Welcome to the **GPT-AI Markdown Editor**, a powerful, premium WYSIWYG editor designed specifically for VS Code. This guide covers the key features and how to make the most of your editing experience.
+Welcome to the **DK-AI Markdown Editor**, a powerful, premium WYSIWYG editor designed specifically for VS Code. This guide covers the key features and how to make the most of your editing experience.
 
 ---
 
@@ -8,8 +8,8 @@ Welcome to the **GPT-AI Markdown Editor**, a powerful, premium WYSIWYG editor de
 
 ### Opening a File
 To open a file with the editor:
-- **Right-click** any `.md` or `.markdown` file in the VS Code Explorer and select **"Open with GPT-AI Markdown Editor"**.
-- Alternatively, click the **"GPT-AI" icon** in the editor title bar when a markdown file is already open.
+- **Right-click** any `.md` or `.markdown` file in the VS Code Explorer and select **"Open with DK-AI Markdown Editor"**.
+- Alternatively, click the **"DK-AI" icon** in the editor title bar when a markdown file is already open.
 
 ### The Workspace
 - **WYSIWYG Mode**: The default view where you see your formatted content (Bold, Italic, Tables, Images, etc.) exactly as it will appear.
@@ -19,7 +19,7 @@ To open a file with the editor:
 
 ## 🖼️ Image Management (The Human Way)
 
-The GPT-AI editor solves the biggest pain point of markdown: images.
+The DK-AI editor solves the biggest pain point of markdown: images.
 
 - **Drag & Drop**: Drag an image from your computer directly into the editor. We handle the paths and storage automatically.
 - **Visual Resizing**: Click any image to reveal blue drag handles at the corners. Resize your image visually to fit your document layout.

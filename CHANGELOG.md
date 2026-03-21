@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to GPT-AI Markdown Editor will be documented in this file.
+All notable changes to DK-AI Markdown Editor will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -61,7 +61,7 @@ This is the major launch baseline for the current generation of Visual AI Markdo
 
 #### Documentation & Discovery
 
-- **Enhanced README** — Added comparison table showing how GPT-AI Markdown Editor differs from other markdown editors
+- **Enhanced README** — Added comparison table showing how DK-AI Markdown Editor differs from other markdown editors
 - **Improved Marketplace Listing** — Better keywords and descriptions to help users discover the extension more easily
 
 ### 🛠️ Technical Improvements
@@ -104,7 +104,7 @@ This release includes several under-the-hood improvements that make the extensio
 
 ### Changed
 
-- Enhanced marketplace discoverability: Updated displayName to "GPT-AI Markdown Editor: WYSIWYG Editor" to improve brand clarity while maintaining search ranking for "markdown editor" and "wysiwyg markdown" queries
+- Enhanced marketplace discoverability: Updated displayName to "DK-AI Markdown Editor: WYSIWYG Editor" to improve brand clarity while maintaining search ranking for "markdown editor" and "wysiwyg markdown" queries
 - Expanded keywords from 6 to 30 terms for better marketplace visibility (includes: notion-like, writing, documentation, formatting, syntax-highlighting, live-preview, full-screen, distraction-free, cover-images, image-resizing, export, html, pdf, docx, human-friendly, and more)
 - Updated package.json description to SEO-optimized version highlighting key features
 - Restructured README with comparison table ("What Makes It Different") and improved SEO positioning

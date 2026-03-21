@@ -1242,7 +1242,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             },
           ],
         },
-        
+
         {
           label: 'Remove alert',
           icon: { name: 'close', fallback: '×' },

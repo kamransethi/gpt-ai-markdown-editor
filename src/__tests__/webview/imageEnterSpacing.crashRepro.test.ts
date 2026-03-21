@@ -56,7 +56,7 @@ describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
 
 ## Manual repro steps
 
-1. Open a markdown file that contains the snippet above in GPT-AI.
+1. Open a markdown file that contains the snippet above in DK-AI.
 2. Place the caret at the end of the line:
    \`![generated-image (3)](./images/generated-image-3-1765562200066.png)  \`
 3. Press \`Enter\`.
