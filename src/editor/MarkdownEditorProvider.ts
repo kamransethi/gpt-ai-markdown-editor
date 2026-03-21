@@ -146,6 +146,23 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   private editQueue = new Map<string, Promise<void>>();
 
   /**
+   * Check whether a file exists at the given URI.
+   * Returns false for ENOENT/FileNotFound; re-throws unknown errors.
+   */
+  private async fileExists(uri: vscode.Uri): Promise<boolean> {
+    try {
+      await vscode.workspace.fs.stat(uri);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('ENOENT') || message.includes('FileNotFound')) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Helper to retrieve all webview-related configuration settings.
    */
   private getWebviewSettings(config: vscode.WorkspaceConfiguration) {
@@ -1348,27 +1365,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         let targetPath = path.join(imagesDir, finalFilename);
         let targetUri = vscode.Uri.file(targetPath);
 
-        const fileExists = async (uri: vscode.Uri): Promise<boolean> => {
-          try {
-            await vscode.workspace.fs.stat(uri);
-            return true;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            if (message.includes('ENOENT') || message.includes('FileNotFound')) {
-              return false;
-            }
-            throw error;
-          }
-        };
-
         // Handle filename collisions
-        if (await fileExists(targetUri)) {
+        if (await this.fileExists(targetUri)) {
           let foundAvailableName = false;
           for (let suffix = 2; suffix < 1000; suffix += 1) {
             finalFilename = `${baseFilename}-${suffix}${extension}`;
             targetPath = path.join(imagesDir, finalFilename);
             targetUri = vscode.Uri.file(targetPath);
-            if (!(await fileExists(targetUri))) {
+            if (!(await this.fileExists(targetUri))) {
               foundAvailableName = true;
               break;
             }
@@ -1477,27 +1481,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       let imagePath = path.join(imagesDir, finalFilename);
       let imageUri = vscode.Uri.file(imagePath);
 
-      const fileExists = async (uri: vscode.Uri): Promise<boolean> => {
-        try {
-          await vscode.workspace.fs.stat(uri);
-          return true;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          // Treat not-found as available; unknown errors should abort to avoid accidental overwrites.
-          if (message.includes('ENOENT') || message.includes('FileNotFound')) {
-            return false;
-          }
-          throw error;
-        }
-      };
-
-      if (await fileExists(imageUri)) {
+      if (await this.fileExists(imageUri)) {
         let foundAvailableName = false;
         for (let suffix = 2; suffix < 1000; suffix += 1) {
           finalFilename = `${baseFilename}-${suffix}${extension}`;
           imagePath = path.join(imagesDir, finalFilename);
           imageUri = vscode.Uri.file(imagePath);
-          if (!(await fileExists(imageUri))) {
+          if (!(await this.fileExists(imageUri))) {
             foundAvailableName = true;
             break;
           }
@@ -2750,26 +2740,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       let targetPath = path.join(imagesDir, finalFilename);
       let targetUri = vscode.Uri.file(targetPath);
 
-      const fileExists = async (uri: vscode.Uri): Promise<boolean> => {
-        try {
-          await vscode.workspace.fs.stat(uri);
-          return true;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          if (message.includes('ENOENT') || message.includes('FileNotFound')) {
-            return false;
-          }
-          throw error;
-        }
-      };
-
-      if (await fileExists(targetUri)) {
+      if (await this.fileExists(targetUri)) {
         let foundAvailableName = false;
         for (let suffix = 2; suffix < 1000; suffix += 1) {
           finalFilename = `${baseFilename}-${suffix}${extension}`;
           targetPath = path.join(imagesDir, finalFilename);
           targetUri = vscode.Uri.file(targetPath);
-          if (!(await fileExists(targetUri))) {
+          if (!(await this.fileExists(targetUri))) {
             foundAvailableName = true;
             break;
           }

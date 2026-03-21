@@ -4,6 +4,8 @@
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
 
+import { createModalOverlay, PRIMARY_BUTTON_STYLE, SECONDARY_BUTTON_STYLE } from './dialogFactory';
+
 /**
  * Image Drop Confirmation Dialog
  *
@@ -33,34 +35,26 @@ export async function confirmImageDrop(
       : 'Relative to current markdown file';
 
   return new Promise(resolve => {
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'image-drop-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    let resolved = false;
 
-    // Create dialog
-    const dialog = document.createElement('div');
+    const handleSave = () => {
+      if (resolved) return;
+      resolved = true;
+      const folder = folderInput.value.trim() || defaultFolder;
+      const remember = rememberCheckbox.checked;
+      remove();
+      resolve({ targetFolder: folder, rememberChoice: remember });
+    };
+
+    const handleCancel = () => {
+      if (resolved) return;
+      resolved = true;
+      remove();
+      resolve(null);
+    };
+
+    const { dialog, remove } = createModalOverlay({ onClose: handleCancel });
     dialog.className = 'image-drop-dialog';
-    dialog.style.cssText = `
-      background: var(--md-background);
-      border: 1px solid var(--md-border);
-      border-radius: 6px;
-      padding: 20px;
-      min-width: 400px;
-      max-width: 500px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    `;
 
     dialog.innerHTML = `
       <h3 style="margin: 0 0 16px 0; color: var(--md-foreground);">
@@ -99,74 +93,27 @@ export async function confirmImageDrop(
       </div>
 
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button id="cancel-btn" style="
-          padding: 6px 14px;
-          background: var(--md-button-secondary-bg);
-          color: var(--md-button-secondary-fg);
-          border: none;
-          border-radius: 3px;
-          cursor: pointer;
-          font-family: var(--md-font-family);
-        ">Cancel</button>
-        <button id="save-btn" style="
-          padding: 6px 14px;
-          background: var(--md-button-bg);
-          color: var(--md-button-fg);
-          border: none;
-          border-radius: 3px;
-          cursor: pointer;
-          font-family: var(--md-font-family);
-          font-weight: 500;
-        ">Save Images</button>
+        <button id="cancel-btn" style="${SECONDARY_BUTTON_STYLE}">Cancel</button>
+        <button id="save-btn" style="${PRIMARY_BUTTON_STYLE}">Save Images</button>
       </div>
     `;
 
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
-
-    // Get elements
     const folderInput = dialog.querySelector('#image-folder-input') as HTMLInputElement;
     const rememberCheckbox = dialog.querySelector('#remember-choice') as HTMLInputElement;
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
     const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
 
-    // Focus folder input
     folderInput.focus();
     folderInput.select();
 
-    // Handle save
-    const handleSave = () => {
-      const folder = folderInput.value.trim() || defaultFolder;
-      const remember = rememberCheckbox.checked;
-
-      document.body.removeChild(overlay);
-      resolve({
-        targetFolder: folder,
-        rememberChoice: remember,
-      });
-    };
-
-    // Handle cancel
-    const handleCancel = () => {
-      document.body.removeChild(overlay);
-      resolve(null);
-    };
-
-    // Event listeners
     saveBtn.addEventListener('click', handleSave);
     cancelBtn.addEventListener('click', handleCancel);
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) handleCancel();
-    });
 
-    // Enter to save, Escape to cancel
+    // Enter to save
     dialog.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         handleSave();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancel();
       }
     });
   });

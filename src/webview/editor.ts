@@ -1234,20 +1234,6 @@ function initializeEditor(initialContent: string) {
     // Add click handler to editor DOM
     editorInstance.view.dom.addEventListener('click', handleLinkClick);
 
-    // Also handle links added dynamically by listening to editor updates
-    const updateLinkHandlers = () => {
-      const links = editorInstance.view.dom.querySelectorAll('.markdown-link');
-      links.forEach(link => {
-        if (!(link as any)._linkHandlerAdded) {
-          (link as any)._linkHandlerAdded = true;
-          // Handler is on parent, so this is just for marking
-        }
-      });
-    };
-
-    editorInstance.on('update', updateLinkHandlers);
-    updateLinkHandlers(); // Initial call
-
     // Clean up listeners when editor is destroyed to prevent memory leaks
     editorInstance.on('destroy', () => {
       document.removeEventListener('contextmenu', contextMenuHandler);
@@ -1271,6 +1257,10 @@ function initializeEditor(initialContent: string) {
       tableContextMenuCtrl = null;
       tocPaneController?.destroy();
       tocPaneController = null;
+      // Clean up custom event listeners registered at module scope
+      for (const [eventName, handler] of customEventCleanup) {
+        window.removeEventListener(eventName, handler);
+      }
       devLog('[DK-AI] Editor destroyed, global listeners cleaned up');
     });
 
@@ -1570,34 +1560,26 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // Handle custom event for TOC pane toggle from toolbar button
-window.addEventListener('toggleTocPane', () => {
+const handleToggleTocPane = () => {
   if (!editor || !tocPaneController) {
     return;
   }
-
   tocPaneController.toggle();
   localStorage.setItem('gptAiOutlinePaneVisible', String(tocPaneController.isVisible()));
   updateToolbarStates();
-});
-
+};
+window.addEventListener('toggleTocPane', handleToggleTocPane);
 // Backward compatibility for older toolbar event name
-window.addEventListener('toggleTocOutline', () => {
-  if (!editor || !tocPaneController) {
-    return;
-  }
-
-  tocPaneController.toggle();
-  localStorage.setItem('gptAiOutlinePaneVisible', String(tocPaneController.isVisible()));
-  updateToolbarStates();
-});
+window.addEventListener('toggleTocOutline', handleToggleTocPane);
 
 // Handle copy as markdown from toolbar button
-window.addEventListener('copyAsMarkdown', () => {
+const handleCopyAsMarkdown = () => {
   if (!editor) return;
   copySelectionAsMarkdown(editor);
-});
+};
+window.addEventListener('copyAsMarkdown', handleCopyAsMarkdown);
 
-window.addEventListener('exportTableCsv', () => {
+const handleExportTableCsv = () => {
   if (!editor) {
     return;
   }
@@ -1615,34 +1597,39 @@ window.addEventListener('exportTableCsv', () => {
     type: 'exportTableCsv',
     csv: serializeTableMatrix(matrix, ','),
   });
-});
+};
+window.addEventListener('exportTableCsv', handleExportTableCsv);
 
 // Handle open source view from toolbar button
-window.addEventListener('openSourceView', () => {
+const handleOpenSourceView = () => {
   devLog('[DK-AI] Opening source view...');
   vscode.postMessage({ type: 'openSourceView' });
-});
+};
+window.addEventListener('openSourceView', handleOpenSourceView);
 
 // Handle settings button from toolbar -> open VS Code settings UI
-window.addEventListener('openExtensionSettings', () => {
+const handleOpenExtensionSettings = () => {
   vscode.postMessage({ type: 'openExtensionSettings' });
-});
+};
+window.addEventListener('openExtensionSettings', handleOpenExtensionSettings);
 
 // Handle setting updates from toolbar (e.g., zoom level persistence)
-window.addEventListener('updateSetting', (event: Event) => {
+const handleUpdateSetting = (event: Event) => {
   const detail = (event as CustomEvent).detail;
   if (detail?.key && detail?.value !== undefined) {
     vscode.postMessage({ type: 'updateSetting', key: detail.key, value: detail.value });
   }
-});
+};
+window.addEventListener('updateSetting', handleUpdateSetting);
 
 // Handle attachments button from toolbar -> open attachments folder in OS explorer
-window.addEventListener('openAttachmentsFolder', () => {
+const handleOpenAttachmentsFolder = () => {
   vscode.postMessage({ type: 'openAttachmentsFolder' });
-});
+};
+window.addEventListener('openAttachmentsFolder', handleOpenAttachmentsFolder);
 
 // Handle export document from toolbar button
-window.addEventListener('exportDocument', async (event: Event) => {
+const handleExportDocument = async (event: Event) => {
   if (!editor) return;
 
   const customEvent = event as CustomEvent;
@@ -1670,7 +1657,23 @@ window.addEventListener('exportDocument', async (event: Event) => {
       message: 'Failed to prepare document for export. See console for details.',
     });
   }
-});
+};
+window.addEventListener('exportDocument', handleExportDocument);
+
+/**
+ * Collect all named custom-event listeners for cleanup on editor destroy.
+ */
+const customEventCleanup: Array<[string, EventListener]> = [
+  ['toggleTocPane', handleToggleTocPane],
+  ['toggleTocOutline', handleToggleTocPane],
+  ['copyAsMarkdown', handleCopyAsMarkdown],
+  ['exportTableCsv', handleExportTableCsv],
+  ['openSourceView', handleOpenSourceView],
+  ['openExtensionSettings', handleOpenExtensionSettings],
+  ['updateSetting', handleUpdateSetting as EventListener],
+  ['openAttachmentsFolder', handleOpenAttachmentsFolder],
+  ['exportDocument', handleExportDocument as EventListener],
+];
 
 // Handle paste - convert markdown to HTML for proper TipTap rendering
 // Must use capture phase to intercept BEFORE TipTap's default handling

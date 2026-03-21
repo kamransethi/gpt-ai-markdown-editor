@@ -14,6 +14,7 @@
  */
 
 import { getRememberedFolder, setRememberedFolder, getDefaultImagePath } from './imageConfirmation';
+import { createModalOverlay, PRIMARY_BUTTON_STYLE, SECONDARY_BUTTON_STYLE } from './dialogFactory';
 
 /**
  * Options for handling local image outside repo
@@ -35,34 +36,42 @@ export async function showLocalImageOutsideRepoDialog(
     const rememberedFolder = getRememberedFolder();
     const targetFolder = rememberedFolder || defaultFolder || getDefaultImagePath();
 
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'local-image-outside-repo-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    let resolved = false;
 
-    // Create dialog
-    const dialog = document.createElement('div');
+    // Handle confirm
+    const handleConfirm = () => {
+      if (resolved) return;
+      resolved = true;
+      const action = editInPlaceRadio.checked ? 'edit-in-place' : 'copy-to-repo';
+      const folder = copyToRepoRadio.checked
+        ? copyFolderInput.value.trim() || defaultFolder
+        : undefined;
+      const remember = rememberCheckbox.checked;
+
+      if (remember && folder) {
+        setRememberedFolder(folder);
+      }
+
+      remove();
+      resolve({
+        action: action as 'edit-in-place' | 'copy-to-repo',
+        targetFolder: folder,
+      });
+    };
+
+    const handleCancel = () => {
+      if (resolved) return;
+      resolved = true;
+      remove();
+      resolve(null);
+    };
+
+    const { dialog, remove } = createModalOverlay({
+      onClose: handleCancel,
+      minWidth: '450px',
+      maxWidth: '550px',
+    });
     dialog.className = 'local-image-outside-repo-dialog';
-    dialog.style.cssText = `
-      background: var(--md-background);
-      border: 1px solid var(--md-border);
-      border-radius: 6px;
-      padding: 20px;
-      min-width: 450px;
-      max-width: 550px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    `;
 
     dialog.innerHTML = `
       <div style="display: flex; align-items: center; margin-bottom: 16px;">
@@ -134,32 +143,11 @@ export async function showLocalImageOutsideRepoDialog(
       </div>
 
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button id="cancel-local-image" style="
-          padding: 6px 14px;
-          background: var(--md-button-secondary-bg);
-          color: var(--md-button-secondary-fg);
-          border: none;
-          border-radius: 3px;
-          cursor: pointer;
-          font-family: var(--md-font-family);
-        ">Cancel</button>
-        <button id="confirm-local-image" style="
-          padding: 6px 14px;
-          background: var(--md-button-bg);
-          color: var(--md-button-fg);
-          border: none;
-          border-radius: 3px;
-          cursor: pointer;
-          font-family: var(--md-font-family);
-          font-weight: 500;
-        ">Continue</button>
+        <button id="cancel-local-image" style="${SECONDARY_BUTTON_STYLE}">Cancel</button>
+        <button id="confirm-local-image" style="${PRIMARY_BUTTON_STYLE}">Continue</button>
       </div>
     `;
 
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
-
-    // Get elements
     const editInPlaceRadio = dialog.querySelector(
       'input[value="edit-in-place"]'
     ) as HTMLInputElement;
@@ -183,46 +171,14 @@ export async function showLocalImageOutsideRepoDialog(
     editInPlaceRadio.addEventListener('change', updateFolderInputVisibility);
     copyToRepoRadio.addEventListener('change', updateFolderInputVisibility);
 
-    // Handle confirm
-    const handleConfirm = () => {
-      const action = editInPlaceRadio.checked ? 'edit-in-place' : 'copy-to-repo';
-      const folder = copyToRepoRadio.checked
-        ? copyFolderInput.value.trim() || defaultFolder
-        : undefined;
-      const remember = rememberCheckbox.checked;
-
-      if (remember && folder) {
-        setRememberedFolder(folder);
-      }
-
-      document.body.removeChild(overlay);
-      resolve({
-        action: action as 'edit-in-place' | 'copy-to-repo',
-        targetFolder: folder,
-      });
-    };
-
-    // Handle cancel
-    const handleCancel = () => {
-      document.body.removeChild(overlay);
-      resolve(null);
-    };
-
-    // Event listeners
     confirmBtn.addEventListener('click', handleConfirm);
     cancelBtn.addEventListener('click', handleCancel);
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) handleCancel();
-    });
 
-    // Enter to confirm, Escape to cancel
+    // Enter to confirm
     dialog.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         handleConfirm();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancel();
       }
     });
   });

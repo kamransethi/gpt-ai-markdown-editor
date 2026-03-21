@@ -115,6 +115,10 @@ export const Mermaid = Node.create({
   selectable: true,
   draggable: true,
 
+  onDestroy() {
+    window.removeEventListener('focus', initializeMermaid);
+  },
+
   addAttributes() {
     return {
       language: {

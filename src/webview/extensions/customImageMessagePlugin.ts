@@ -19,6 +19,27 @@ type ImageRenameCheckPayload = {
   error?: string;
 };
 
+/** Register a callback with an auto-cleanup timeout to prevent memory leaks. */
+function setCallbackWithTimeout<T>(
+  map: Map<string, (value: T) => void>,
+  requestId: string,
+  callback: (value: T) => void,
+  timeoutMs = 10_000
+) {
+  const timer = setTimeout(() => {
+    if (map.has(requestId)) {
+      map.delete(requestId);
+      console.warn(`[DK-AI] Callback timed out for requestId: ${requestId}`);
+    }
+  }, timeoutMs);
+
+  map.set(requestId, (value: T) => {
+    clearTimeout(timer);
+    map.delete(requestId);
+    callback(value);
+  });
+}
+
 export function createCustomImageMessagePlugin(editor: Editor) {
   const uriResolveCallbacks = new Map<string, (uri: string) => void>();
   const imageReferencesCallbacks = new Map<string, (payload: ImageReferencesPayload) => void>();
@@ -33,7 +54,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
       window.resolveImagePath = function (relativePath: string): Promise<string> {
         return new Promise(resolve => {
           const requestId = `resolve-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-          uriResolveCallbacks.set(requestId, resolve);
+          setCallbackWithTimeout(uriResolveCallbacks, requestId, resolve);
           vscode.postMessage({ type: 'resolveImageUri', requestId, relativePath });
         });
       };
@@ -41,7 +62,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
       window.getImageReferences = function (imagePath: string): Promise<unknown> {
         return new Promise(resolve => {
           const requestId = `refs-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-          imageReferencesCallbacks.set(requestId, resolve as any);
+          setCallbackWithTimeout(imageReferencesCallbacks, requestId, resolve as any);
           vscode.postMessage({ type: 'getImageReferences', requestId, imagePath });
         });
       };
@@ -49,7 +70,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
       window.checkImageRename = function (oldPath: string, newName: string): Promise<unknown> {
         return new Promise(resolve => {
           const requestId = `renamecheck-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-          imageRenameCheckCallbacks.set(requestId, resolve as any);
+          setCallbackWithTimeout(imageRenameCheckCallbacks, requestId, resolve as any);
           vscode.postMessage({ type: 'checkImageRename', requestId, oldPath, newName });
         });
       };
@@ -76,7 +97,6 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             const callback = imageReferencesCallbacks.get(requestId);
             if (callback) {
               callback(message as ImageReferencesPayload);
-              imageReferencesCallbacks.delete(requestId);
             }
             break;
           }
@@ -85,7 +105,6 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             const callback = imageRenameCheckCallbacks.get(requestId);
             if (callback) {
               callback(message as ImageRenameCheckPayload);
-              imageRenameCheckCallbacks.delete(requestId);
             }
             break;
           }
@@ -187,7 +206,6 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             const callback = uriResolveCallbacks.get(message.requestId);
             if (callback) {
               callback(message.webviewUri);
-              uriResolveCallbacks.delete(message.requestId);
             }
             break;
           }
