@@ -1,9 +1,7 @@
 # Instructions for AI Agents
 
 > **Project:** VS Code WYSIWYG Markdown Editor (medium.com-style reading/writing experience)
-> 
 > **Status:** MVP ~85% complete | **Core value:** Write markdown naturally—focus on content, not syntax
-> 
 > **Source of Truth (order):** Code + tests → plan file (`roadmap/pipeline/*.md` or `roadmap/shipped/*.md`) → these instructions. Prefer source over docs when in doubt.
 
 **Start here (quick boot-up):**
@@ -12,7 +10,7 @@
 2. Read `vibe-coding-rules/env-context.md` for architecture/perf budgets.
 3. Scan the code/tests referenced in the task with `rg` before writing anything.
 
-***
+---
 
 ## Critical Constraints
 
@@ -57,12 +55,13 @@
 ### 5. Git & File Rules
 
 - **Never commit or push** — User must review first
-- **Use** **`git mv`** **git mv** for renaming/moving tracked files (preserves history)
+- **Use** `**git mv**` **git mv** for renaming/moving tracked files (preserves history)
 - **Pre-commit hook** — Automatically runs `npm run lint:fix` before each commit (see `.github/hooks/pre-commit`)
 
-***
+---
 
 ## Key Technical Decisions
+
 
 | Decision         | Choice                        | Why                                               |
 | ---------------- | ----------------------------- | ------------------------------------------------- |
@@ -72,7 +71,8 @@
 | Sync Debounce    | 500ms                         | Balance responsiveness vs. performance            |
 | Body Font        | Serif (Charter/Georgia)       | Prose, not code; matches premium editors          |
 
-***
+
+---
 
 ## Detailed Guides (Load As Needed)
 
@@ -87,13 +87,13 @@
 
 Load only what the current task requires.
 
-***
+---
 
 ## Plan Workflow (TDD Enforced)
 
 **For new features/plans:**
 
-1. **Create Plan** → Use [roadmap/task-plan-template.md](roadmap/task-plan-template.md)[roadmap/task-plan-template.md](roadmap/task-plan-template.md) as starting point (can use any AI coding tool or manually)
+1. **Create Plan** → Use [roadmap/task-plan-template.mdroadmap/task-plan-template.md](roadmap/task-plan-template.md) as starting point (can use any AI coding tool or manually)
 2. **Move to Pipeline** → Once plan is locked and ready: `git mv [source]/[name].plan.md roadmap/pipeline/[name].md`
 3. **Write Tests First** → Create failing tests that define expected behavior
 4. **Implement** → Write simplest clean solution to make tests pass
@@ -109,7 +109,7 @@ Load only what the current task requires.
 - **Self-review before shipping** - catch overlooked issues
 - If issues found, debug/audit code - NO quick hacks or patches
 
-***
+---
 
 ## Feature Checklist
 
@@ -124,7 +124,7 @@ Load only what the current task requires.
 - [ ] **Write failing tests FIRST** (`src/__tests__/`)
 - [ ] Verify tests fail (confirms tests work)
 - [ ] **Implement feature** to make tests pass
-- [ ] **Run** **`npm test`** **npm test** - ALL tests pass (new + existing)
+- [ ] **Run** `**npm test**` **npm test** - ALL tests pass (new + existing)
 - [ ] Cover positive, negative, edge cases
 - [ ] If bugs found: audit/debug, not quick fixes
 
@@ -142,7 +142,7 @@ Load only what the current task requires.
 - [ ] **Diff review** - Does this make sense to future you in 6 months?
 - [ ] **Manual read** - Read a 3000+ word doc in the editor for 10+ minutes (light/dark) to catch UX regressions
 
-***
+---
 
 ## Code Documentation (Auto-Update)
 
@@ -155,7 +155,7 @@ Load only what the current task requires.
 
 See: [vibe-coding-rules/coding-standards.md#code-documentation](vibe-coding-rules/coding-standards.md)
 
-***
+---
 
 ## Research Over Assumptions
 
@@ -170,9 +170,10 @@ See: [vibe-coding-rules/coding-standards.md#code-documentation](vibe-coding-rule
 
 See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md) — **Read before sync/editor state work**
 
-***
+---
 
 ## Quick Reference: File Locations
+
 
 | Task                  | File                                                          |
 | --------------------- | ------------------------------------------------------------- |
@@ -185,18 +186,20 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 | Add TipTap extension  | `src/webview/extensions/`                                     |
 | Update document sync  | `src/editor/MarkdownEditorProvider.ts`                        |
 
-***
+
+---
 
 ## Documentation Update Triggers
 
 **When you change code, check these docs:**
+
 
 | Code Change                 | Docs to Check                                                              | Quick Check                                                        |
 | --------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Add/remove TipTap extension | `vibe-coding-rules/env-context.md`                                         | Verify file paths in "Key File Locations"                          |
 | Change sync/debounce logic  | `vibe-coding-rules/env-context.md`, `vibe-coding-rules/common-pitfalls.md` | Verify timing values match (500ms, 2s, etc.)                       |
 | Add/remove config option    | `FEATURES.md` (Configuration section), `package.json`, README.md           | Verify setting listed with type, default, and description          |
-| **Add/remove dependency**   | **`THIRD_PARTY_LICENSES.md`** **THIRD_PARTY_LICENSES.md**                  | **Add entry with license, copyright, repository, and license URL** |
+| **Add/remove dependency**   | `**THIRD_PARTY_LICENSES.md**` **THIRD_PARTY_LICENSES.md**                  | **Add entry with license, copyright, repository, and license URL** |
 | Change file structure       | `vibe-coding-rules/env-context.md` (Key File Locations table)              | Verify all paths exist                                             |
 | Ship new feature            | `roadmap/shipped/`                                                         | Move plan from pipeline to shipped when complete                   |
 | Change styling patterns     | `vibe-coding-rules/styling.md`                                             | Verify examples match current CSS                                  |
@@ -205,7 +208,8 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 | Add/change/remove feature   | `FEATURES.md`                                                              | Add, update, or remove the feature entry in the relevant section   |
 | Add/remove command          | `FEATURES.md` (Commands section), `package.json`                           | Verify command listed with correct description                     |
 
-***
+
+---
 
 ## Documentation
 
@@ -214,7 +218,7 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 - `roadmap/shipped/` — Shipped features (detailed plan files)
 - `docs/ARCHITECTURE.md` — Deep dive (when needed)
 
-***
+---
 
 ## Decision Making
 
@@ -222,7 +226,7 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 **For Tech:** Is this the simplest solution that works?  
 **For Features:** Does this align with "write markdown naturally"?
 
-***
+---
 
 ## 6 Core Principles
 
@@ -237,15 +241,13 @@ See: [vibe-coding-rules/common-pitfalls.md](vibe-coding-rules/common-pitfalls.md
 
 - Config key: `gptAiMarkdownEditor.developerMode` (boolean, default `true`).
 - For runtime failures that risk data loss (serialization/sync/save), always:
-
   - log with `[DK-AI]` context,
   - surface a user-visible error notification,
   - include technical details in notifications only when Developer Mode is enabled.
-
 - Throttle repeated notifications to avoid user spam loops.
 - Do not silently discard risky failures.
 
-***
+---
 
 **Last Updated:** 2026-03-19
 
@@ -258,6 +260,7 @@ All dialogs, menus, buttons, and interactive elements must follow these conventi
 All UI colors must use the variables defined in the **Deterministic Color System** at the top of `editor.css`. Never invent new `--md-*` variables without defining them in the `:root`/`body` block.
 
 Key variables for interactive elements:
+
 - **Primary action buttons**: `background: var(--md-button-bg); color: var(--md-button-fg);`
 - **Primary hover**: `background: var(--md-button-hover-bg);`
 - **Secondary buttons**: `background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg);`
@@ -268,6 +271,7 @@ Key variables for interactive elements:
 ### Button Hierarchy
 
 Every dialog/modal must use this exact button pattern:
+
 1. **Primary action** (Submit, Refine, Save, Apply): `--md-button-bg` background + `--md-button-fg` text — this is the "default on Enter" action
 2. **Secondary/Cancel**: Transparent background + `--md-menu-border` border
 3. **Danger** (Delete Table, destructive actions): `--md-error-fg` color
@@ -293,16 +297,12 @@ To maintain a clean and reliable editor experience, all custom functionality MUS
 
 1. **No Core Redundancy**: If `StarterKit` or an official `@tiptap/extension-*` provides it (e.g., input rules for Markdown), use the official package. Do NOT write custom input rules unless they are for our own entirely custom nodes.
 2. **Total Encapsulation**: Tiptap extensions should be completely self-sufficient.
-
-   - If a feature requires CSS, it hooks into an existing standardized class, or the CSS is cleanly separated in `editor.css`.
-   - If a feature requires DOM manipulation (like drag handles for images), it MUST be implemented within a `NodeView` via the `addNodeView` method of the extension, NOT via global `window.addEventListener('click')` inside `editor.ts`.
-
+  - If a feature requires CSS, it hooks into an existing standardized class, or the CSS is cleanly separated in `editor.css`.
+  - If a feature requires DOM manipulation (like drag handles for images), it MUST be implemented within a `NodeView` via the `addNodeView` method of the extension, NOT via global `window.addEventListener('click')` inside `editor.ts`.
 3. **Strict Boundaries**:
-
-   - Extensions reside in `src/webview/extensions/`.
-   - Extensions should export a single `Extension.create()`, `Node.create()`, or `Mark.create()` object.
-   - Extensions should only communicate with the VS Code backend via standardized `vscode.postMessage` payloads.
-
+  - Extensions reside in `src/webview/extensions/`.
+  - Extensions should export a single `Extension.create()`, `Node.create()`, or `Mark.create()` object.
+  - Extensions should only communicate with the VS Code backend via standardized `vscode.postMessage` payloads.
 
 ### Refactoring Roadmap
 

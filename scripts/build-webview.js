@@ -23,9 +23,7 @@ const noSourcemap = args.includes('--no-sourcemap');
 
 const buildOptions = {
   entryPoints: [
-    { in: 'src/webview/editor.ts', out: 'webview' },
-    { in: 'src/webview/editor-light.css', out: 'editor-light' },
-    { in: 'src/webview/editor-dark.css', out: 'editor-dark' }
+    { in: 'src/webview/editor.ts', out: 'webview' }
   ],
   bundle: true,
   outdir: 'dist',

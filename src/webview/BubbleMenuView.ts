@@ -231,7 +231,7 @@ const CODICON_TO_SVG: Record<string, string> = {
   strikethrough: 'strikethrough',
   code: 'inline-code',
   paintcan: 'highlight',
-  'symbol-color': 'highlight',
+  'symbol-color': 'text-color',
   link: 'link',
   'text-size': 'heading',
   quote: 'blockquote',

@@ -80,7 +80,23 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
 
   const header = document.createElement('div');
   header.className = 'toc-pane-header';
-  header.textContent = 'Contents';
+
+  const headerTitle = document.createElement('span');
+  headerTitle.className = 'toc-pane-header-title';
+  headerTitle.textContent = 'Contents';
+
+  const collapseBtn = document.createElement('button');
+  collapseBtn.type = 'button';
+  collapseBtn.className = 'toc-pane-collapse-btn';
+  collapseBtn.title = 'Hide outline pane';
+  collapseBtn.setAttribute('aria-label', 'Hide outline pane');
+  collapseBtn.innerHTML = '&rsaquo;&rsaquo;';
+  collapseBtn.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('toggleTocPane'));
+  });
+
+  header.appendChild(headerTitle);
+  header.appendChild(collapseBtn);
 
   const list = document.createElement('div');
   list.className = 'toc-pane-list';
