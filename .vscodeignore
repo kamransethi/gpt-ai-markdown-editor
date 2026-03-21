@@ -33,6 +33,7 @@ test-docs/**
 coverage/**
 *.log
 *.vsix
+dist/*.vsix
 dist/**/*.vsix
 *.tsbuildinfo
 tsconfig.tsbuildinfo
@@ -91,5 +92,6 @@ test-tags2.ts
 test-list-serialization.ts
 
 # Exclude VSIX from package even if in dist/
+dist/*.vsix
 dist/**/*.vsix
 *.vsix

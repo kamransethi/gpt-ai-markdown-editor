@@ -50,16 +50,17 @@ export function createImageMenu(isLocal: boolean = true): HTMLElement {
   menu.setAttribute('role', 'menu');
   menu.style.display = 'none';
 
-  // Build menu HTML
+  // Build menu HTML — follows the context-menu design language
+  // (section labels, separators, red for destructive actions)
   let menuHTML = `
-
-    <div class="menu-item" role="menuitem" tabindex="0" data-action="revert">
-      <span class="codicon codicon-refresh menu-icon"></span>
-      <span class="menu-label">Revert to original size</span>
-    </div>
+    <div class="menu-section-label">Edit</div>
     <div class="menu-item" role="menuitem" tabindex="0" data-action="rename">
       <span class="codicon codicon-edit menu-icon"></span>
       <span class="menu-label">Rename</span>
+    </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="revert">
+      <span class="codicon codicon-refresh menu-icon"></span>
+      <span class="menu-label">Revert to original size</span>
     </div>
   `;
 
@@ -67,6 +68,7 @@ export function createImageMenu(isLocal: boolean = true): HTMLElement {
   if (isLocal) {
     menuHTML += `
       <div class="menu-separator"></div>
+      <div class="menu-section-label">Reveal</div>
       <div class="menu-item" role="menuitem" tabindex="0" data-action="openInFinder">
         <span class="codicon codicon-folder-opened menu-icon"></span>
         <span class="menu-label">Open In Finder/Explorer</span>

@@ -23,7 +23,7 @@ Welcome! This guide will help you set up the project, understand its architectur
 
 ```bash
 # Clone the repository
-git clone https://github.com/concretios/gpt-ai-markdown-editor.git
+git clone https://github.com/kamransethi/gpt-ai-markdown-editor.git
 cd gpt-ai-markdown-editor
 
 # Install dependencies
@@ -63,7 +63,7 @@ code --version   # Should be 1.85+
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/concretios/gpt-ai-markdown-editor.git
+git clone https://github.com/kamransethi/gpt-ai-markdown-editor.git
 cd gpt-ai-markdown-editor
 npm install
 ```
@@ -340,7 +340,7 @@ git commit -m "fix: resolve cursor jump after image insert"
 
 ### 🐛 Report Bugs
 
-1. Check [existing issues](https://github.com/concretios/markdown-for-humans/issues)
+1. Check [existing issues](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
 2. Check [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) to see if it's a known issue
 3. **Record a screen video** using [Loom.com](https://www.loom.com) or similar tool showing the bug
 4. Create a new issue with:
@@ -354,7 +354,7 @@ git commit -m "fix: resolve cursor jump after image insert"
 ### 💡 Suggest Features
 
 1. Check existing feature requests
-2. Open a [GitHub Discussion](https://github.com/concretios/markdown-for-humans/discussions)
+2. Open a [GitHub Discussion](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
 3. Describe the problem it solves
 4. Provide examples/mockups if possible
 
@@ -418,9 +418,10 @@ See [roadmap/README.md](./roadmap/README.md) for detailed planning workflow.
 
 ## Getting Help
 
-- **GitHub Discussions**: [Ask questions](https://github.com/concretios/markdown-for-humans/discussions)
-- **Issue Tracker**: [Report bugs](https://github.com/concretios/markdown-for-humans/issues)
-- **Email**: support@GPT-AI
+- **GitHub Repository**: [kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)
+- **GitHub Discussions**: [Ask questions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
+- **Issue Tracker**: [Report bugs](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
+- **Email**: dinaranam@gmail.com
 
 ### Useful Resources
 

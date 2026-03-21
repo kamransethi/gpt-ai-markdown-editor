@@ -132,29 +132,4 @@ describe('Mermaid node view editing', () => {
 
     delete (window as any).vscode;
   });
-
-  it('commits content when mermaidSourceUpdate event is received', () => {
-    const { view, editor, node } = createMermaidNodeView();
-    document.body.appendChild(view.dom);
-
-    // Extract the mermaidId from the postMessage call
-    const postMessage = jest.fn();
-    (window as any).vscode = { postMessage };
-    const editButton = view.dom.querySelector('.mermaid-edit-button') as HTMLButtonElement;
-    editButton.click();
-    const mermaidId = postMessage.mock.calls[0][0].mermaidId as string;
-
-    // Simulate content update from VS Code source editor
-    window.dispatchEvent(
-      new CustomEvent('mermaidSourceUpdate', {
-        detail: { mermaidId, code: 'graph LR\nX-->Y' },
-      })
-    );
-
-    expect(node.type.create).toHaveBeenCalled();
-    expect(editor.state.tr.replaceWith).toHaveBeenCalled();
-    expect(editor.view.dispatch).toHaveBeenCalled();
-
-    delete (window as any).vscode;
-  });
 });

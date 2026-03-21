@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for your question! For general questions, consider using [GitHub Discussions](https://github.com/concretios/markdown-for-humans/discussions) instead. Use this template for questions that might need follow-up or are related to bugs/features.
+        Thanks for your question! For general questions, consider using [GitHub Discussions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions) instead. Use this template for questions that might need follow-up or are related to bugs/features.
 
   - type: textarea
     id: question

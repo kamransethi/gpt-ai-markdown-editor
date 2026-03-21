@@ -103,15 +103,13 @@ export function createTableInsertDialog(): HTMLElement {
     <div class="table-insert-actions">
       <button
         id="table-cancel-btn"
-        class="export-settings-select"
-        style="padding: 8px 24px; background: var(--md-button-secondary-bg); color: var(--md-button-secondary-fg); border: none; cursor: pointer; border-radius: 4px;"
+        class="table-insert-btn table-insert-btn-cancel"
       >
         Cancel
       </button>
       <button
         id="table-ok-btn"
-        class="export-settings-select"
-        style="padding: 8px 24px; background: var(--md-button-bg); color: var(--md-button-fg); border: none; cursor: pointer; border-radius: 4px;"
+        class="table-insert-btn table-insert-btn-submit"
       >
         OK
       </button>

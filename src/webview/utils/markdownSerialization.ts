@@ -5,6 +5,7 @@
  */
 
 import type { Editor, JSONContent } from '@tiptap/core';
+import { devLog } from '../utils/devLog';
 
 type MarkdownManager = {
   serialize?: (json: JSONContent) => string;
@@ -137,7 +138,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     markdownManager.serialize!(normalizedJson)
   );
   if (normalizedSerialized !== null && (normalizedSerialized.length > 0 || !nonEmptyDoc)) {
-    console.log(
+    devLog(
       '[DK-AI] Serialization successful (normalized). JSON nodes:',
       parsedJson.content?.length,
       'Serialized len:',

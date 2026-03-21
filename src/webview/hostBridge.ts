@@ -47,7 +47,7 @@ export function createVsCodeBridge(): HostBridge {
 export function createNoOpBridge(): HostBridge {
   return {
     postMessage(message) {
-      console.log('[DK-AI] Bridge message (no-op):', message.type);
+      devLog('[DK-AI] Bridge message (no-op):', message.type);
     },
     onMessage() {
       // No-op

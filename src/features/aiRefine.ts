@@ -55,15 +55,19 @@ export async function handleAiRefineRequest(
   const { mode, selectedText, from, to } = data;
 
   try {
+    // Read the configured model family
+    const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
+    const modelFamily = config.get<string>('aiModel', 'gpt-4.1');
+
     // Select an available language model
     const models = await vscode.lm.selectChatModels({
       vendor: 'copilot',
-      family: 'gpt-4o',
+      family: modelFamily,
     });
 
     let model = models[0];
 
-    // Fallback: try any copilot model if gpt-4o not available
+    // Fallback: try any copilot model if gpt-4.1 not available
     if (!model) {
       const fallbackModels = await vscode.lm.selectChatModels({ vendor: 'copilot' });
       model = fallbackModels[0];

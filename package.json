@@ -1,8 +1,8 @@
 {
   "name": "gpt-ai-markdown-editor",
-  "displayName": "Visual Markdown Editor",
+  "displayName": "Visual AI Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "1.2.10",
+  "version": "2.0.3",
   "publisher": "kamransethi",
   "author": {
     "name": "Kamran Sethi",
@@ -66,7 +66,7 @@
     "chatParticipants": [
       {
         "id": "gptAiMarkdownEditor.chat",
-        "fullName": "Visual Markdown Editor",
+        "fullName": "Visual AI Markdown Editor",
         "name": "markdown-editor",
         "description": "Ask questions about your current markdown document",
         "isSticky": false
@@ -75,7 +75,7 @@
     "customEditors": [
       {
         "viewType": "gptAiMarkdownEditor.editor",
-        "displayName": "Visual Markdown Editor",
+        "displayName": "Visual AI Markdown Editor",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -90,7 +90,7 @@
     "commands": [
       {
         "command": "gptAiMarkdownEditor.openFile",
-        "title": "Open with Visual Markdown Editor"
+        "title": "Open with Visual AI Markdown Editor"
       },
       {
         "command": "gptAiMarkdownEditor.outline.revealCurrent",
@@ -113,14 +113,14 @@
       },
       {
         "command": "gptAiMarkdownEditor.getSelectedText",
-        "title": "Visual Markdown Editor: Get Selected Text"
+        "title": "Visual AI Markdown Editor: Get Selected Text"
       }
     ],
     "views": {
       "explorer": [
         {
           "id": "gptAiMarkdownEditorOutline",
-          "name": "Visual Markdown Editor: Outline",
+          "name": "Visual AI Markdown Editor: Outline",
           "when": "gptAiMarkdownEditor.isActive",
           "icon": "$(layout-sidebar-right)"
         }
@@ -153,7 +153,7 @@
       ]
     },
     "configuration": {
-      "title": "Visual Markdown Editor",
+      "title": "Visual AI Markdown Editor",
       "properties": {
         "gptAiMarkdownEditor.mediaPath": {
           "type": "string",
@@ -254,6 +254,31 @@
           "maximum": 1.5,
           "description": "Editor zoom level (0.7 = 70%, 1.0 = 100%, 1.5 = 150%). Persisted across all documents."
         },
+        "gptAiMarkdownEditor.aiModel": {
+          "type": "string",
+          "enum": [
+            "gpt-4.1",
+            "gpt-4.1-mini",
+            "gpt-4.1-nano",
+            "gpt-4o",
+            "gpt-4o-mini",
+            "claude-sonnet-4",
+            "o4-mini",
+            "o3-mini"
+          ],
+          "enumDescriptions": [
+            "GPT-4.1 — Best quality, recommended for most tasks",
+            "GPT-4.1 Mini — Fast and capable, good balance of speed and quality",
+            "GPT-4.1 Nano — Fastest, lightweight tasks",
+            "GPT-4o — Strong multimodal model",
+            "GPT-4o Mini — Fast and efficient",
+            "Claude Sonnet 4 — Anthropic's balanced model",
+            "o4-mini — OpenAI reasoning model, compact",
+            "o3-mini — OpenAI reasoning model, compact"
+          ],
+          "default": "gpt-4.1",
+          "markdownDescription": "**AI Model**: The language model used for AI text refinement (Rephrase, Shorten, Summarize, etc.). All models are free with GitHub Copilot."
+        },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",
           "default": true,
@@ -264,6 +289,7 @@
     }
   },
   "scripts": {
+    "prepackage:release": "node scripts/clean-vsix-artifacts.js",
     "vscode:prepublish": "npm run build:release",
     "build:debug": "npm run build:extension:debug && npm run build:webview:debug",
     "build:release": "npm run build:extension:release && npm run build:webview:release && npm run verify-build",
@@ -283,7 +309,7 @@
     "precommit": "npm run lint && npm run test",
     "validate": "npm run lint && npm run test && npm run build:debug",
     "package:release": "vsce package",
-    "vsix": "npm run build:release && vsce package",
+    "vsix": "npm run build:release && npm run prepackage:release && vsce package",
     "publish:release": "vsce publish",
     "publish:ovsx:release": "npm run build:release && ovsx publish",
     "repackage": "node scripts/repackage.js",

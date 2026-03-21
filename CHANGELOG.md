@@ -10,6 +10,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.0.1] - 2026-03-20
+
+### Changed
+
+- Bumped release version to 2.0.1 and rebuilt the marketplace package
+
+## [2.0.0] - 2026-03-20
+
+### Launch Release
+
+This is the major launch baseline for the current generation of Visual AI Markdown Editor.
+
+### Added
+
+- Feature-rich visual Markdown workflow inside VS Code with strong emphasis on direct manipulation instead of syntax-first editing
+- Advanced table editing with resizing, context actions, and toolbar controls
+- Inline image management with drag and drop, resize, rename, and metadata workflows
+- Mermaid diagram support with rendering, templates, and source editing workflow
+- Rich formatting controls including highlighting, text color, headings, code, and contextual toolbar actions
+- Export workflows for PDF and DOCX
+- Outline, navigation, and writing aids for longer documents
+
+### Changed
+
+- Repositioned the extension on a new major version line to reflect the expanded feature set and launch readiness
+- Rewrote the README to make the feature set easier to scan for users evaluating the extension
+
+### Fixed
+
+- Documentation and repository support links now point to the current project repository and help channels
+
 ## [0.1.3] - 2026-01-16
 
 ### 🎯 What's New

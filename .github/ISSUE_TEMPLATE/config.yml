@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Discussions
-    url: https://github.com/concretios/markdown-for-humans/discussions
+    url: https://github.com/kamransethi/gpt-ai-markdown-editor/discussions
     about: Ask questions and discuss ideas with the community
   - name: 📖 Documentation
-    url: https://github.com/concretios/markdown-for-humans#readme
+    url: https://github.com/kamransethi/gpt-ai-markdown-editor#readme
     about: Read the documentation for help and guides
   - name: 🐛 Troubleshooting Guide
-    url: https://github.com/concretios/markdown-for-humans/blob/main/docs/TROUBLESHOOTING.md
+    url: https://github.com/kamransethi/gpt-ai-markdown-editor/blob/main/docs/TROUBLESHOOTING.md
     about: Check the troubleshooting guide for common issues
   - name: 📧 Email Support
-    url: mailto:support@concret.io
-    about: Contact us directly for support
+    url: https://github.com/kamransethi/gpt-ai-markdown-editor/issues
+    about: Open an issue for support

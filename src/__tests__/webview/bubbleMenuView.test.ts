@@ -38,6 +38,7 @@ const moveSelectedTableColumnMock = jest.fn();
 jest.mock('../../webview/utils/tableOperationActions', () => ({
   moveSelectedTableRow: (...args: unknown[]) => moveSelectedTableRowMock(...args),
   moveSelectedTableColumn: (...args: unknown[]) => moveSelectedTableColumnMock(...args),
+  sortTableByColumn: jest.fn(),
 }));
 
 describe('BubbleMenuView', () => {
@@ -144,8 +145,8 @@ describe('BubbleMenuView', () => {
       const toolbar = createFormattingToolbar(editor);
       const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
 
-      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(button =>
-        button.textContent?.includes('View')
+      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(
+        button => button.getAttribute('aria-label')?.includes('Outline')
       ) as HTMLButtonElement | undefined;
 
       expect(viewButton).toBeTruthy();
@@ -188,20 +189,22 @@ describe('BubbleMenuView', () => {
       const editor = createMockEditor();
       const menu = createTableMenu(editor);
 
-      const items = menu.querySelectorAll('.table-menu-item');
-      expect(items.length).toBeGreaterThan(0);
+      // Icon buttons (INSERT/MOVE/DELETE rows) + text items (Sort/Export)
+      const iconBtns = menu.querySelectorAll('.context-menu-icon-btn');
+      const textItems = menu.querySelectorAll('.context-menu-item');
+      expect(iconBtns.length + textItems.length).toBeGreaterThan(0);
 
-      // Check for specific operations
-      const addRowItem = Array.from(items).find(item => item.textContent?.includes('Add Row'));
-      expect(addRowItem).toBeTruthy();
+      // Check for specific insert operation via title
+      const addRowBtn = Array.from(iconBtns).find(btn => btn.getAttribute('title')?.includes('Insert row'));
+      expect(addRowBtn).toBeTruthy();
     });
 
     it('calls editor commands on item click', () => {
       const editor = createMockEditor();
       const menu = createTableMenu(editor);
 
-      const items = menu.querySelectorAll('.table-menu-item');
-      const firstItem = items[0] as HTMLElement;
+      const iconBtns = menu.querySelectorAll('.context-menu-icon-btn');
+      const firstItem = iconBtns[0] as HTMLElement;
 
       if (firstItem) {
         firstItem.click();
@@ -212,23 +215,22 @@ describe('BubbleMenuView', () => {
     it('includes move row and move column actions', () => {
       const editor = createMockEditor();
       const menu = createTableMenu(editor);
-      const labels = Array.from(menu.querySelectorAll('.table-menu-item')).map(
-        item => item.textContent
-      );
+      const iconBtns = Array.from(menu.querySelectorAll('.context-menu-icon-btn'));
+      const titles = iconBtns.map(btn => btn.getAttribute('title'));
 
-      expect(labels).toContain('Move Row Up');
-      expect(labels).toContain('Move Row Down');
-      expect(labels).toContain('Move Column Left');
-      expect(labels).toContain('Move Column Right');
+      expect(titles).toContain('Move row up');
+      expect(titles).toContain('Move row down');
+      expect(titles).toContain('Move column left');
+      expect(titles).toContain('Move column right');
     });
 
     it('calls move helpers from move menu items', () => {
       const editor = createMockEditor();
       const menu = createTableMenu(editor);
-      const items = Array.from(menu.querySelectorAll('.table-menu-item')) as HTMLElement[];
+      const iconBtns = Array.from(menu.querySelectorAll('.context-menu-icon-btn')) as HTMLElement[];
 
-      const moveRowUp = items.find(item => item.textContent === 'Move Row Up');
-      const moveColumnRight = items.find(item => item.textContent === 'Move Column Right');
+      const moveRowUp = iconBtns.find(btn => btn.getAttribute('title') === 'Move row up');
+      const moveColumnRight = iconBtns.find(btn => btn.getAttribute('title') === 'Move column right');
 
       moveRowUp?.click();
       moveColumnRight?.click();
@@ -241,16 +243,22 @@ describe('BubbleMenuView', () => {
       const editor = createMockEditor() as Editor & {
         __chainApi: { setTextSelection: jest.Mock; focus: jest.Mock; run: jest.Mock };
       };
+      // view.hasFocus() returns false → triggers restoration via chain
+      (editor as any).view.hasFocus = jest.fn().mockReturnValue(false);
+      (editor as any).state.doc.content = { size: 100 };
+
       const menu = createTableMenu(editor);
       menu.dataset.contextPos = '12';
 
-      const items = Array.from(menu.querySelectorAll('.table-menu-item')) as HTMLElement[];
-      const moveColumnLeft = items.find(item => item.textContent === 'Move Column Left');
+      const iconBtns = Array.from(menu.querySelectorAll('.context-menu-icon-btn')) as HTMLElement[];
+      const moveColumnLeft = iconBtns.find(btn => btn.getAttribute('title') === 'Move column left');
 
       moveColumnLeft?.click();
 
+      // Restoration uses a single chain: .focus().setTextSelection(12).run()
       expect(editor.__chainApi.focus).toHaveBeenCalled();
       expect(editor.__chainApi.setTextSelection).toHaveBeenCalledWith(12);
+      expect(editor.__chainApi.run).toHaveBeenCalled();
       expect(moveSelectedTableColumnMock).toHaveBeenCalledWith(editor, 'left');
     });
 
@@ -260,8 +268,8 @@ describe('BubbleMenuView', () => {
 
       menu.style.display = 'block';
 
-      const items = menu.querySelectorAll('.table-menu-item');
-      const firstItem = items[0] as HTMLElement;
+      const iconBtns = menu.querySelectorAll('.context-menu-icon-btn');
+      const firstItem = iconBtns[0] as HTMLElement;
 
       if (firstItem) {
         firstItem.click();

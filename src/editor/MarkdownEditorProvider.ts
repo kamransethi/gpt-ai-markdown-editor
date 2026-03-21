@@ -7,7 +7,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import * as fs from 'fs';
 import { outlineViewProvider } from '../features/outlineView';
 import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText } from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
@@ -631,7 +630,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         void this.handleShowEmojiPicker(webview);
         break;
       case 'editMermaidSource':
-        void this.handleEditMermaidSource(message, webview);
+        void this.handleEditMermaidSource(message, document, webview);
         break;
       case 'showError':
         vscode.window.showErrorMessage(message.message as string);
@@ -1140,11 +1139,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    */
   private async handleEditMermaidSource(
     message: { type: string; [key: string]: unknown },
+    document: vscode.TextDocument,
     webview: vscode.Webview
   ): Promise<void> {
     const code = ((message.code as string) || '').trim();
-    const document = this.getCurrentDocument();
-    if (!document) return;
 
     // Find the line of the ```mermaid fence whose body matches the code
     const text = document.getText();
@@ -1175,21 +1173,17 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const position = new vscode.Position(targetLine, 0);
     const selection = new vscode.Range(position, position);
 
-    await vscode.commands.executeCommand(
-      'vscode.openWith',
-      document.uri,
-      'default',
-      {
-        viewColumn: vscode.ViewColumn.Beside,
-        selection,
-      }
-    );
+    await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default', {
+      viewColumn: vscode.ViewColumn.Beside,
+      selection,
+    });
 
     // Restore outline when the source editor beside is no longer visible
     const editorWatcher = vscode.window.onDidChangeVisibleTextEditors(editors => {
       const stillOpen = editors.some(
-        e => e.document.uri.toString() === document.uri.toString() &&
-             e.viewColumn !== vscode.ViewColumn.Active
+        e =>
+          e.document.uri.toString() === document.uri.toString() &&
+          e.viewColumn !== vscode.ViewColumn.Active
       );
       if (!stillOpen) {
         webview.postMessage({ type: 'setOutlineVisible', visible: true });
@@ -3036,7 +3030,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           });
         </script>
         
-        <title>Visual Markdown Editor</title>
+        <title>Visual AI Markdown Editor</title>
       </head>
       <body>
         <div id="editor"></div>

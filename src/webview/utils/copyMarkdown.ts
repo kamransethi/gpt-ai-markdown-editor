@@ -11,6 +11,7 @@
  */
 
 import { Editor } from '@tiptap/core';
+import { devLog } from '../utils/devLog';
 
 /**
  * Result of a copy operation
@@ -210,7 +211,7 @@ export async function copySelectionAsMarkdown(editor: Editor): Promise<CopyResul
   showCopyFeedback(result.success);
 
   if (result.success) {
-    console.log('[DK-AI] Copied to clipboard:', markdown.substring(0, 100) + '...');
+    devLog('[DK-AI] Copied to clipboard:', markdown.substring(0, 100) + '...');
   } else {
     console.error('[DK-AI] Copy failed:', result.error);
   }

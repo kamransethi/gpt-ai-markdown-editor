@@ -78,6 +78,7 @@ import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
 import { isSaveShortcut } from './utils/shortcutKeys';
+import { devLog } from './utils/devLog';
 import { collectExportContent, getDocumentTitle } from './utils/exportContent';
 import { findTable } from 'prosemirror-tables';
 import Underline from '@tiptap/extension-underline';
@@ -554,7 +555,7 @@ function saveDocument() {
 
     trackSentContent(markdown);
 
-    console.log(
+    devLog(
       `[DK-AI][SAVE][${saveRequestId}] Dispatching saveAndEdit (len=${markdown.length}, hash=${contentHash})`
     );
 
@@ -600,7 +601,7 @@ function debouncedUpdate(markdown: string) {
 
   updateTimeout = window.setTimeout(() => {
     try {
-      console.log(`[DK-AI] debouncedUpdate firing for ${markdown.length} chars...`);
+      devLog(`[DK-AI] debouncedUpdate firing for ${markdown.length} chars...`);
       if (editor && markdown.length === 0 && editor.getText().trim().length > 0) {
         const details = {
           plainTextLength: editor.getText().trim().length,
@@ -625,7 +626,7 @@ function debouncedUpdate(markdown: string) {
       // Check if any images are currently being saved
       if (hasPendingImageSaves()) {
         const count = getPendingImageCount();
-        console.log(`[DK-AI] Delaying document sync - ${count} image(s) still being saved`);
+        devLog(`[DK-AI] Delaying document sync - ${count} image(s) still being saved`);
         // Re-queue the update
         debouncedUpdate(markdown);
         return;
@@ -699,7 +700,7 @@ function initializeEditor(initialContent: string) {
       document.body.appendChild(floatingFormattingBar);
     }
 
-    console.log('[DK-AI] Initializing editor...');
+    devLog('[DK-AI] Initializing editor...');
 
     const editorInstance = new Editor({
       element: editorElement,
@@ -852,8 +853,12 @@ function initializeEditor(initialContent: string) {
           shouldShow: ({ editor: currentEditor, state }) => {
             // Suppress during initial editor creation to prevent flash
             if (!editorFullyInitialized) return false;
-            const { from, to } = state.selection;
-            return currentEditor.isEditable && from !== to;
+            const { from, to, empty } = state.selection;
+            // Never show when selection is empty or collapsed
+            if (empty || from === to) return false;
+            // Don't show for node selections (images, code blocks, etc.)
+            if (state.selection.constructor.name === 'NodeSelection') return false;
+            return currentEditor.isEditable;
           },
           options: {
             placement: 'top',
@@ -933,7 +938,7 @@ function initializeEditor(initialContent: string) {
           updateEditorMetaBar(_editor);
 
           const markdown = getEditorMarkdownForSync(_editor);
-          console.log(`[DK-AI] onUpdate: markdown serialized (len=${markdown.length})`);
+          devLog(`[DK-AI] onUpdate: markdown serialized (len=${markdown.length})`);
           debouncedUpdate(markdown);
         } catch (error) {
           console.error('[DK-AI] Error in onUpdate:', error);
@@ -957,11 +962,11 @@ function initializeEditor(initialContent: string) {
         // Focus change is handled via relatedTarget in editorDom listener to allow toolbar interaction
       },
       onCreate: () => {
-        console.log('[DK-AI] Editor created successfully');
+        devLog('[DK-AI] Editor created successfully');
         updateEditorMetaBar(editorInstance);
       },
       onDestroy: () => {
-        console.log('[DK-AI] Editor destroyed');
+        devLog('[DK-AI] Editor destroyed');
       },
     });
 
@@ -976,7 +981,9 @@ function initializeEditor(initialContent: string) {
         scheduleTocPaneSelectionRefresh();
       },
     });
-    tocPaneController.setVisible(true);
+    // Restore outline pane visibility from persisted state (default: visible)
+    const savedOutlineVisible = localStorage.getItem('gptAiOutlinePaneVisible');
+    tocPaneController.setVisible(savedOutlineVisible !== 'false');
 
     const onWindowScroll = () => {
       scheduleTocPaneSelectionRefresh();
@@ -1082,12 +1089,12 @@ function initializeEditor(initialContent: string) {
 
       // Log ALL modifier key presses for debugging
       if (isMod) {
-        console.log(`[DK-AI] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
+        devLog(`[DK-AI] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
       }
 
       // Save shortcut - immediate save
       if (isSaveShortcut(e)) {
-        console.log('[DK-AI] *** SAVE SHORTCUT TRIGGERED ***');
+        devLog('[DK-AI] *** SAVE SHORTCUT TRIGGERED ***');
         e.preventDefault();
         e.stopPropagation();
         immediateUpdate();
@@ -1111,7 +1118,7 @@ function initializeEditor(initialContent: string) {
 
       if (isMod && formattingShortcuts.includes(e.key.toLowerCase())) {
         e.stopPropagation(); // Stop event from reaching VS Code
-        console.log(`[DK-AI] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
+        devLog(`[DK-AI] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
         // TipTap will handle the formatting
         return;
       }
@@ -1120,7 +1127,7 @@ function initializeEditor(initialContent: string) {
       if (isMod && e.key === 'k') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[DK-AI] Link shortcut');
+        devLog('[DK-AI] Link shortcut');
         if (editor) {
           showLinkDialog(editor);
         }
@@ -1131,7 +1138,7 @@ function initializeEditor(initialContent: string) {
       if (isMod && e.key === 'f') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[DK-AI] Search shortcut');
+        devLog('[DK-AI] Search shortcut');
         if (editor) {
           toggleSearchOverlay(editor);
         }
@@ -1253,10 +1260,10 @@ function initializeEditor(initialContent: string) {
       tableContextMenuCtrl = null;
       tocPaneController?.destroy();
       tocPaneController = null;
-      console.log('[DK-AI] Editor destroyed, global listeners cleaned up');
+      devLog('[DK-AI] Editor destroyed, global listeners cleaned up');
     });
 
-    console.log('[DK-AI] Editor initialization complete');
+    devLog('[DK-AI] Editor initialization complete');
     // Allow floating bar to show after init settles (prevents flash on open)
     setTimeout(() => {
       editorFullyInitialized = true;
@@ -1401,9 +1408,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'saved':
         if (typeof message.requestId === 'string') {
-          console.log(`[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`);
+          devLog(`[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`);
         } else {
-          console.log('[DK-AI] Received "saved" signal from extension');
+          devLog('[DK-AI] Received "saved" signal from extension');
         }
         setDocDirty(false);
         break;
@@ -1417,14 +1424,13 @@ window.addEventListener('message', (event: MessageEvent) => {
           editor.chain().focus().insertContent(message.emoji).run();
         }
         break;
-      case 'mermaidSourceUpdate':
-        // Relay updated mermaid source from VS Code editor back to the NodeView
-        if (typeof message.mermaidId === 'string' && typeof message.code === 'string') {
-          window.dispatchEvent(
-            new CustomEvent('mermaidSourceUpdate', {
-              detail: { mermaidId: message.mermaidId, code: message.code },
-            })
-          );
+      case 'setOutlineVisible':
+        if (tocPaneController && typeof message.visible === 'boolean') {
+          // When restoring (visible=true), respect the user's persisted preference
+          const targetVisible = message.visible
+            ? localStorage.getItem('gptAiOutlinePaneVisible') !== 'false'
+            : false;
+          tocPaneController.setVisible(targetVisible);
         }
         break;
       case 'imageUriResolved':
@@ -1454,7 +1460,7 @@ function updateEditorContent(markdown: string) {
       // Also check timestamp to allow legitimate identical content after a delay
       const timeSinceLastSend = Date.now() - lastSentTimestamp;
       if (timeSinceLastSend < 2000) {
-        console.log('[DK-AI] Ignoring update (matches content we just sent)');
+        devLog('[DK-AI] Ignoring update (matches content we just sent)');
         return;
       }
     }
@@ -1462,7 +1468,7 @@ function updateEditorContent(markdown: string) {
     // Don't update if user edited recently (within 2 seconds)
     const timeSinceLastEdit = Date.now() - lastUserEditTime;
     if (timeSinceLastEdit < 2000) {
-      console.log(`[DK-AI] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
+      devLog(`[DK-AI] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
       return;
     }
 
@@ -1471,18 +1477,18 @@ function updateEditorContent(markdown: string) {
     const startTime = performance.now();
     const docSize = markdown.length;
 
-    console.log(`[DK-AI] Updating content (${docSize} chars)...`);
+    devLog(`[DK-AI] Updating content (${docSize} chars)...`);
 
     // Skip if content is already in sync
     const currentMarkdown = getEditorMarkdownForSync(editor);
     if (currentMarkdown === markdown) {
-      console.log('[DK-AI] Update skipped (content unchanged)');
+      devLog('[DK-AI] Update skipped (content unchanged)');
       return;
     }
 
     // Save cursor position
     const { from, to } = editor.state.selection;
-    console.log(`[DK-AI] Saving cursor position: ${from}-${to}`);
+    devLog(`[DK-AI] Saving cursor position: ${from}-${to}`);
 
     // Set content
     editor.commands.setContent(preprocessMarkdownContent(markdown), { contentType: 'markdown' });
@@ -1490,9 +1496,9 @@ function updateEditorContent(markdown: string) {
     // Restore cursor position
     try {
       editor.commands.setTextSelection({ from, to });
-      console.log(`[DK-AI] Restored cursor position: ${from}-${to}`);
+      devLog(`[DK-AI] Restored cursor position: ${from}-${to}`);
     } catch {
-      console.log('[DK-AI] Could not restore cursor position (document too short)');
+      devLog('[DK-AI] Could not restore cursor position (document too short)');
       // If exact position fails, move to end of document
       const endPos = editor.state.doc.content.size;
       editor.commands.setTextSelection(Math.min(from, endPos));
@@ -1501,7 +1507,7 @@ function updateEditorContent(markdown: string) {
     pushOutlineUpdate();
 
     const duration = performance.now() - startTime;
-    console.log(`[DK-AI] Content updated in ${duration.toFixed(2)}ms`);
+    devLog(`[DK-AI] Content updated in ${duration.toFixed(2)}ms`);
 
     if (duration > 1000) {
       console.warn(`[DK-AI] Slow update: ${duration.toFixed(2)}ms for ${docSize} chars`);
@@ -1555,6 +1561,7 @@ window.addEventListener('toggleTocPane', () => {
   }
 
   tocPaneController.toggle();
+  localStorage.setItem('gptAiOutlinePaneVisible', String(tocPaneController.isVisible()));
   updateToolbarStates();
 });
 
@@ -1565,6 +1572,7 @@ window.addEventListener('toggleTocOutline', () => {
   }
 
   tocPaneController.toggle();
+  localStorage.setItem('gptAiOutlinePaneVisible', String(tocPaneController.isVisible()));
   updateToolbarStates();
 });
 
@@ -1596,7 +1604,7 @@ window.addEventListener('exportTableCsv', () => {
 
 // Handle open source view from toolbar button
 window.addEventListener('openSourceView', () => {
-  console.log('[DK-AI] Opening source view...');
+  devLog('[DK-AI] Opening source view...');
   vscode.postMessage({ type: 'openSourceView' });
 });
 
@@ -1625,7 +1633,7 @@ window.addEventListener('exportDocument', async (event: Event) => {
   const customEvent = event as CustomEvent;
   const format = customEvent.detail?.format || 'pdf';
 
-  console.log(`[DK-AI] Exporting document as ${format}...`);
+  devLog(`[DK-AI] Exporting document as ${format}...`);
 
   try {
     // Collect content and convert Mermaid to PNG

@@ -12,6 +12,7 @@ import { getMarkRange, Editor } from '@tiptap/core';
 import { TextSelection } from 'prosemirror-state';
 import { buildOutlineFromEditor } from '../utils/outline';
 import { formatFileLinkLabel } from '../utils/fileLinks';
+import { devLog } from '../utils/devLog';
 
 type Range = { from: number; to: number };
 type ParentContext = { parentStart: number; parentText: string };
@@ -495,7 +496,7 @@ function handleFileSearch(query: string): void {
     const requestId = ++fileSearchRequestId;
     const vscode = (window as any).vscode;
     if (vscode && typeof vscode.postMessage === 'function') {
-      console.log('[DK-AI] Sending file search request:', {
+      devLog('[DK-AI] Sending file search request:', {
         query: trimmedQuery,
         requestId,
       });
@@ -1078,14 +1079,14 @@ export function isLinkDialogVisible(): boolean {
  * Handle file search results from extension
  */
 export function handleFileSearchResults(results: FileSearchResult[], requestId: number): void {
-  console.log('[DK-AI] Received file search results:', {
+  devLog('[DK-AI] Received file search results:', {
     resultsCount: results.length,
     requestId,
     currentRequestId: fileSearchRequestId,
   });
 
   if (requestId !== fileSearchRequestId) {
-    console.log('[DK-AI] Ignoring outdated search results (requestId mismatch)');
+    devLog('[DK-AI] Ignoring outdated search results (requestId mismatch)');
     return;
   }
 
@@ -1100,7 +1101,7 @@ export function handleFileSearchResults(results: FileSearchResult[], requestId: 
     return;
   }
 
-  console.log('[DK-AI] Updating autocomplete dropdown with', results.length, 'results');
+  devLog('[DK-AI] Updating autocomplete dropdown with', results.length, 'results');
   updateAutocompleteDropdown(autocompleteDropdown, results, urlInput);
 }
 

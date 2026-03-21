@@ -18,8 +18,9 @@ import { showLinkDialog } from './features/linkDialog';
 import { showImageInsertDialog } from './features/imageInsertDialog';
 import type { Editor } from '@tiptap/core';
 import { getSelectedTableLines } from './utils/tableSelectionUtils';
-import { moveSelectedTableColumn, moveSelectedTableRow } from './utils/tableOperationActions';
 import { modLabel as modKeyLabel } from './utils/platform';
+import { TIPTAP_ICONS, createSvgIcon } from './icons/tiptapIcons';
+import { buildSharedTableOps } from './utils/sharedTableOps';
 
 // Store reference to refresh function so it can be called externally
 let toolbarRefreshFunction: (() => void) | null = null;
@@ -80,7 +81,8 @@ let isEditorFocused = false;
 let focusChangeListener: ((e: Event) => void) | null = null;
 
 type ToolbarIcon = {
-  name?: string;
+  name?: string;       // Codicon name (legacy) or SVG icon key
+  svgName?: string;    // Explicit SVG icon key from TIPTAP_ICONS
   fallback: string;
   badge?: string;
 };
@@ -97,13 +99,25 @@ type ToolbarActionButton = {
   requiresFocus?: boolean; // Whether this button requires editor focus to be enabled
 };
 
+type ToolbarDropdownIconButton = {
+  icon: ToolbarIcon;
+  title: string;
+  action: () => void;
+  isActive?: () => boolean;
+  isEnabled?: () => boolean;
+};
+
 type ToolbarDropdownItem = {
   label: string;
   action: () => void;
   icon?: ToolbarIcon;
+  className?: string; // Extra CSS class(es) on the item (e.g. 'danger')
   isEnabled?: () => boolean; // Function to check if item should be enabled
   isActive?: () => boolean; // Function to check if item is currently active
   isSeparator?: boolean; // If true, renders as a visual separator instead of a clickable item
+  isSectionLabel?: boolean; // If true, renders as a non-interactive section header
+  isButtonRow?: boolean; // If true, renders as a horizontal row of icon buttons
+  buttons?: ToolbarDropdownIconButton[]; // Buttons for button row items
   isCustomWidget?: boolean; // If true, renders via customRender instead of standard item
   customRender?: (refreshFn: () => void) => HTMLElement; // Custom DOM render function
 };
@@ -209,6 +223,42 @@ function ensureCodiconFont() {
     });
 }
 
+/** Map codicon names to SVG icon keys from TIPTAP_ICONS */
+const CODICON_TO_SVG: Record<string, string> = {
+  bold: 'bold',
+  italic: 'italic',
+  underline: 'underline',
+  strikethrough: 'strikethrough',
+  code: 'inline-code',
+  paintcan: 'highlight',
+  'symbol-color': 'highlight',
+  link: 'link',
+  'text-size': 'heading',
+  quote: 'blockquote',
+  'list-unordered': 'list-unordered',
+  'list-ordered': 'list-ordered',
+  tasklist: 'list-task',
+  discard: 'undo',
+  save: 'save',
+  'file-media': 'image-plus',
+  'pie-chart': 'diagram',
+  add: 'image-plus',
+  table: 'table',
+  'arrow-up': 'arrow-up',
+  'arrow-down': 'arrow-down',
+  'arrow-left': 'arrow-left',
+  'arrow-right': 'arrow-right',
+  trash: 'trash',
+  close: 'close',
+  export: 'export',
+  'layout-sidebar-right': 'view',
+  'chevron-down': 'chevron-down',
+  ellipsis: 'ellipsis',
+  'clear-all': 'clear-formatting',
+  remove: 'close',
+  smiley: 'emoji',
+};
+
 function createIconElement(icon: ToolbarIcon | undefined, baseClass: string): HTMLSpanElement {
   const span = document.createElement('span');
   span.className = baseClass;
@@ -216,7 +266,14 @@ function createIconElement(icon: ToolbarIcon | undefined, baseClass: string): HT
 
   if (!icon) return span;
 
-  if (icon.name) {
+  // Try SVG icon first: explicit svgName, or mapped from codicon name
+  const svgKey = icon.svgName || (icon.name ? CODICON_TO_SVG[icon.name] : undefined);
+  if (svgKey && TIPTAP_ICONS[svgKey]) {
+    const svg = createSvgIcon(svgKey, 'toolbar-svg-icon');
+    span.appendChild(svg);
+    span.classList.add('has-svg');
+  } else if (icon.name) {
+    // Fall back to codicon font
     span.classList.add('codicon', `codicon-${icon.name}`, 'uses-codicon');
   } else if (icon.fallback) {
     span.textContent = icon.fallback;
@@ -224,7 +281,7 @@ function createIconElement(icon: ToolbarIcon | undefined, baseClass: string): HT
 
   if (icon.fallback) {
     span.setAttribute('data-fallback', icon.fallback);
-    if (!icon.name) {
+    if (!icon.name && !svgKey) {
       span.textContent = icon.fallback;
     }
   }
@@ -237,7 +294,7 @@ function createIconElement(icon: ToolbarIcon | undefined, baseClass: string): HT
   return span;
 }
 
-function closeAllDropdowns() {
+function closeAllDropdowns(options?: { keepOverflow?: boolean }) {
   document.querySelectorAll('.toolbar-dropdown-menu').forEach(menu => {
     (menu as HTMLElement).style.display = 'none';
   });
@@ -246,15 +303,17 @@ function closeAllDropdowns() {
     (menu as HTMLElement).style.display = 'none';
   });
 
-  document.querySelectorAll('.toolbar-overflow-menu').forEach(menu => {
-    (menu as HTMLElement).style.display = 'none';
-  });
+  if (!options?.keepOverflow) {
+    document.querySelectorAll('.toolbar-overflow-menu').forEach(menu => {
+      (menu as HTMLElement).style.display = 'none';
+    });
+
+    document.querySelectorAll('.toolbar-overflow-trigger[aria-expanded="true"]').forEach(btn => {
+      (btn as HTMLElement).setAttribute('aria-expanded', 'false');
+    });
+  }
 
   document.querySelectorAll('.toolbar-dropdown button[aria-expanded="true"]').forEach(btn => {
-    (btn as HTMLElement).setAttribute('aria-expanded', 'false');
-  });
-
-  document.querySelectorAll('.toolbar-overflow-trigger[aria-expanded="true"]').forEach(btn => {
     (btn as HTMLElement).setAttribute('aria-expanded', 'false');
   });
 }
@@ -631,6 +690,27 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   container.appendChild(createDivider());
   container.appendChild(linkButton.element);
   container.appendChild(clearFormattingButton.element);
+  container.appendChild(createDivider());
+
+  // Dismiss button to close the floating bar
+  const dismissButton = document.createElement('button');
+  dismissButton.type = 'button';
+  dismissButton.className = 'floating-toolbar-button floating-toolbar-dismiss';
+  dismissButton.title = 'Dismiss';
+  dismissButton.setAttribute('aria-label', 'Dismiss selection toolbar');
+  dismissButton.append(createIconElement({ svgName: 'close', fallback: '×' }, 'toolbar-icon'));
+  dismissButton.onmousedown = e => e.preventDefault();
+  dismissButton.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Collapse selection to dismiss the bubble menu
+    const activeEditor = getEditor();
+    if (activeEditor) {
+      const { to } = activeEditor.state.selection;
+      activeEditor.chain().setTextSelection(to).run();
+    }
+  };
+  container.appendChild(dismissButton);
 
   const buttons = [
     boldButton,
@@ -859,6 +939,9 @@ function buildZoomWidget(refreshFn: () => void): HTMLElement {
   return row;
 }
 
+// getSharedTableOperations removed — table ops now use buildSharedTableOps
+// from utils/sharedTableOps.ts for identical rendering in toolbar + context menu.
+
 export function createFormattingToolbar(editor: Editor): HTMLElement {
   ensureCodiconFont();
 
@@ -868,7 +951,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   const buttons: ToolbarItem[] = [
     {
       type: 'button',
-      label: 'Save',
+      label: '',
       title: `Save document ${modKeyLabel}+S`,
       icon: { name: 'save', fallback: 'Save' },
       action: () => {
@@ -883,7 +966,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'button',
-      label: 'Undo',
+      label: '',
       title: `Undo ${modKeyLabel}+Z`,
       icon: { name: 'discard', fallback: '↩' },
       action: () => editor.chain().focus().undo().run(),
@@ -894,9 +977,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     { type: 'separator' },
     {
       type: 'button',
-      label: 'Bold',
+      label: '',
       title: `Bold ${modKeyLabel}+B`,
-      icon: { name: 'bold', fallback: 'B' },
+      icon: { name: 'bold', fallback: '' },
       action: () => editor.chain().focus().toggleBold().run(),
       isActive: () => editor.isActive('bold'),
       requiresFocus: true,
@@ -904,9 +987,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'button',
-      label: 'Italic',
+      label: '',
       title: `Italic ${modKeyLabel}+I`,
-      icon: { name: 'italic', fallback: 'I' },
+      icon: { name: 'italic', fallback: '' },
       action: () => editor.chain().focus().toggleItalic().run(),
       isActive: () => editor.isActive('italic'),
       requiresFocus: true,
@@ -914,9 +997,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'button',
-      label: 'Underline',
+      label: '',
       title: `Underline ${modKeyLabel}+U`,
-      icon: { name: 'underline', fallback: 'U' },
+      icon: { name: 'underline', fallback: '' },
       action: () => editor.chain().focus().toggleUnderline().run(),
       isActive: () => editor.isActive('underline'),
       requiresFocus: true,
@@ -924,9 +1007,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'button',
-      label: 'Highlight',
+      label: '',
       title: 'Highlight',
-      icon: { name: 'paintcan', fallback: 'Hl' },
+      icon: { name: 'paintcan', fallback: '' },
       action: () => editor.chain().focus().toggleHighlight().run(),
       isActive: () => editor.isActive('highlight'),
       requiresFocus: true,
@@ -934,9 +1017,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'button',
-      label: 'Strikethrough',
+      label: '',
       title: 'Strikethrough',
-      icon: { name: 'strikethrough', fallback: 'S' },
+      icon: { name: 'strikethrough', fallback: '' },
       action: () => editor.chain().focus().toggleStrike().run(),
       isActive: () => editor.isActive('strike'),
       requiresFocus: true,
@@ -944,9 +1027,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'button',
-      label: 'Inline Code',
+      label: '',
       title: 'Inline code',
-      icon: { name: 'code', fallback: '<>' },
+      icon: { name: 'code', fallback: '' },
       action: () => editor.chain().focus().toggleCode().run(),
       isActive: () => editor.isActive('code'),
       requiresFocus: true,
@@ -954,17 +1037,17 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'colorPicker',
-      label: 'Text Color',
+      label: '',
       title: 'Choose text color',
-      icon: { name: 'symbol-color', fallback: 'A' },
+      icon: { name: 'symbol-color', fallback: '' },
       requiresFocus: true,
       isEnabled: () => true,
     },
     {
       type: 'dropdown',
-      label: 'Headings',
+      label: '',
       title: 'Heading levels',
-      icon: { name: 'text-size', fallback: 'H' },
+      icon: { name: 'text-size', fallback: '' },
       requiresFocus: true,
       isActive: () => editor.isActive('heading'),
       isEnabled: () => !editor.isActive('table'),
@@ -1001,10 +1084,46 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         },
       ],
     },
+    {
+      type: 'button',
+      label: '',
+      title: `Insert/edit link (${modKeyLabel}+K)`,
+      icon: { name: 'link', fallback: '🔗' },
+      action: () => showLinkDialog(editor),
+      requiresFocus: true,
+    },
+    {
+      type: 'button',
+      label: '',
+      title: 'Insert image',
+      icon: { name: 'file-media', fallback: '📷' },
+      action: () => {
+        const vscodeApi = window.vscode;
+        if (vscodeApi && editor) {
+          showImageInsertDialog(editor, vscodeApi).catch(error => {
+            console.error('[DK-AI] Failed to show image insert dialog:', error);
+          });
+        }
+      },
+      requiresFocus: true,
+    },
+    {
+      type: 'button',
+      label: '',
+      title: 'Insert emoji',
+      icon: { name: 'smiley', fallback: '😀' },
+      action: () => {
+        const vscodeApi = window.vscode;
+        if (vscodeApi) {
+          vscodeApi.postMessage({ type: 'showEmojiPicker' });
+        }
+      },
+      requiresFocus: true,
+    },
     { type: 'separator' },
     {
       type: 'dropdown',
-      label: 'Lists',
+      label: '',
       title: 'Lists and checklists',
       icon: { name: 'list-unordered', fallback: 'L' },
       requiresFocus: true,
@@ -1046,7 +1165,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'dropdown',
-      label: 'Blocks',
+      label: '',
       title: 'Block formatting',
       icon: { name: 'quote', fallback: '"' },
       requiresFocus: true,
@@ -1059,117 +1178,100 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => editor.chain().focus().toggleBlockquote().run(),
           isActive: () => editor.isActive('blockquote'),
         },
+        { label: '', action: () => {}, isSeparator: true },
+        { label: 'Alerts', action: () => {}, isSectionLabel: true },
         {
-          label: 'Note alert',
-          icon: { name: 'info', fallback: 'ℹ' },
-          action: () => {
-            editor.chain().focus().toggleAlert('NOTE').run();
-          },
-          isActive: () => editor.isActive('githubAlert', { alertType: 'NOTE' }),
+          label: '',
+          action: () => {},
+          isButtonRow: true,
+          buttons: [
+            {
+              icon: { name: 'info', fallback: 'ℹ' },
+              title: 'Note alert',
+              action: () => editor.chain().focus().toggleAlert('NOTE' as any).run(),
+              isActive: () => editor.isActive('githubAlert', { alertType: 'NOTE' }),
+            },
+            {
+              icon: { name: 'lightbulb', fallback: '💡' },
+              title: 'Tip alert',
+              action: () => editor.chain().focus().toggleAlert('TIP' as any).run(),
+              isActive: () => editor.isActive('githubAlert', { alertType: 'TIP' }),
+            },
+            {
+              icon: { name: 'megaphone', fallback: '📢' },
+              title: 'Important alert',
+              action: () => editor.chain().focus().toggleAlert('IMPORTANT' as any).run(),
+              isActive: () => editor.isActive('githubAlert', { alertType: 'IMPORTANT' }),
+            },
+            {
+              icon: { name: 'warning', fallback: '⚠' },
+              title: 'Warning alert',
+              action: () => editor.chain().focus().toggleAlert('WARNING' as any).run(),
+              isActive: () => editor.isActive('githubAlert', { alertType: 'WARNING' }),
+            },
+            {
+              icon: { name: 'error', fallback: '🛑' },
+              title: 'Caution alert',
+              action: () => editor.chain().focus().toggleAlert('CAUTION' as any).run(),
+              isActive: () => editor.isActive('githubAlert', { alertType: 'CAUTION' }),
+            },
+          ],
         },
-        {
-          label: 'Tip alert',
-          icon: { name: 'lightbulb', fallback: '💡' },
-          action: () => {
-            editor.chain().focus().toggleAlert('TIP').run();
-          },
-          isActive: () => editor.isActive('githubAlert', { alertType: 'TIP' }),
-        },
-        {
-          label: 'Important alert',
-          icon: { name: 'megaphone', fallback: '📢' },
-          action: () => {
-            editor.chain().focus().toggleAlert('IMPORTANT').run();
-          },
-          isActive: () => editor.isActive('githubAlert', { alertType: 'IMPORTANT' }),
-        },
-        {
-          label: 'Warning alert',
-          icon: { name: 'warning', fallback: '⚠' },
-          action: () => {
-            editor.chain().focus().toggleAlert('WARNING').run();
-          },
-          isActive: () => editor.isActive('githubAlert', { alertType: 'WARNING' }),
-        },
-        {
-          label: 'Caution alert',
-          icon: { name: 'error', fallback: '🛑' },
-          action: () => {
-            editor.chain().focus().toggleAlert('CAUTION').run();
-          },
-          isActive: () => editor.isActive('githubAlert', { alertType: 'CAUTION' }),
-        },
+        { label: '', action: () => {}, isSeparator: true },
         {
           label: 'Remove alert',
           icon: { name: 'close', fallback: '×' },
           action: () => {
             editor.chain().focus().lift('githubAlert').run();
           },
+          isEnabled: () => editor.isActive('githubAlert'),
+          className: 'danger',
         },
       ],
     },
     {
       type: 'dropdown',
-      label: 'Insert',
-      title: 'Links, images, diagrams, and code blocks',
+      label: '',
+      title: 'Code blocks and diagrams',
       icon: { name: 'add', fallback: '+' },
       requiresFocus: true,
       isEnabled: () => true,
       items: [
+        { label: 'Code Blocks', action: () => {}, isSectionLabel: true },
         {
-          label: `Insert/edit link (${modKeyLabel}+K)`,
-          icon: { name: 'link', fallback: '🔗' },
-          action: () => showLinkDialog(editor),
-        },
-        {
-          label: 'Insert image',
-          icon: { name: 'file-media', fallback: '📷' },
-          action: () => {
-            const vscodeApi = window.vscode;
-            if (vscodeApi && editor) {
-              showImageInsertDialog(editor, vscodeApi).catch(error => {
-                console.error('[DK-AI] Failed to show image insert dialog:', error);
-              });
-            } else {
-              console.warn(
-                '[DK-AI] Cannot show image insert dialog: vscode API or editor not available'
-              );
-            }
-          },
-          isEnabled: () => true,
-        },
-        {
-          label: 'Code block: Plain text',
+          label: 'Plain text',
           icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'plaintext'),
           isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Code block: TypeScript',
+          label: 'TypeScript',
           icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'typescript'),
           isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Code block: Python',
+          label: 'Python',
           icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'python'),
           isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Code block: JSON',
+          label: 'JSON',
           icon: { name: 'code', fallback: '{}' },
           action: () => setCodeBlockNormalized(editor, 'json'),
           isEnabled: () => !editor.isActive('table'),
         },
+        { label: '', action: () => {}, isSeparator: true },
+        { label: 'Diagrams', action: () => {}, isSectionLabel: true },
         {
-          label: 'Code block: Mermaid',
+          label: 'Mermaid (empty)',
           icon: { name: 'pie-chart', fallback: 'Mer' },
           action: () => setCodeBlockNormalized(editor, 'mermaid'),
           isEnabled: () => !editor.isActive('table'),
         },
         {
-          label: 'Mermaid: Flowchart',
+          label: 'Mermaid flowchart',
           icon: { name: 'pie-chart', fallback: 'Mer' },
           action: () => {
             editor
@@ -1185,21 +1287,11 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           },
           isEnabled: () => !editor.isActive('table'),
         },
-        {
-          label: 'Insert emoji',
-          icon: { name: 'smiley', fallback: '😀' },
-          action: () => {
-            const vscodeApi = window.vscode;
-            if (vscodeApi) {
-              vscodeApi.postMessage({ type: 'showEmojiPicker' });
-            }
-          },
-        },
       ],
     },
     {
       type: 'dropdown',
-      label: 'Table',
+      label: '',
       title: 'Insert and edit table',
       icon: { name: 'table', fallback: 'Tbl' },
       requiresFocus: true,
@@ -1211,84 +1303,30 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           action: () => showTableInsertDialog(editor),
           isEnabled: () => !editor.isActive('table'),
         },
+        { label: '', action: () => {}, isSeparator: true },
         {
-          label: 'Add row before',
-          icon: { name: 'arrow-up', fallback: '↑' },
-          action: () => editor.chain().focus().addRowBefore().run(),
+          label: 'Table operations',
+          action: () => {},
           isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Add row after',
-          icon: { name: 'arrow-down', fallback: '↓' },
-          action: () => editor.chain().focus().addRowAfter().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Delete row',
-          icon: { name: 'trash', fallback: '–' },
-          action: () => editor.chain().focus().deleteRow().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Move row up',
-          icon: { name: 'arrow-up', fallback: '↑' },
-          action: () => moveSelectedTableRow(editor, 'up'),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Move row down',
-          icon: { name: 'arrow-down', fallback: '↓' },
-          action: () => moveSelectedTableRow(editor, 'down'),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Add column before',
-          icon: { name: 'arrow-left', fallback: '←' },
-          action: () => editor.chain().focus().addColumnBefore().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Add column after',
-          icon: { name: 'arrow-right', fallback: '→' },
-          action: () => editor.chain().focus().addColumnAfter().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Delete column',
-          icon: { name: 'remove', fallback: '×' },
-          action: () => editor.chain().focus().deleteColumn().run(),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Move column left',
-          icon: { name: 'arrow-left', fallback: '←' },
-          action: () => moveSelectedTableColumn(editor, 'left'),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Move column right',
-          icon: { name: 'arrow-right', fallback: '→' },
-          action: () => moveSelectedTableColumn(editor, 'right'),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Export table as CSV',
-          icon: { name: 'export', fallback: 'CSV' },
-          action: () => window.dispatchEvent(new CustomEvent('exportTableCsv')),
-          isEnabled: () => editor.isActive('table'),
-        },
-        {
-          label: 'Delete table',
-          icon: { name: 'trash', fallback: '✕' },
-          action: () => editor.chain().focus().deleteTable().run(),
-          isEnabled: () => editor.isActive('table'),
+          isCustomWidget: true,
+          customRender: (refreshFn: () => void) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-ops-widget';
+            buildSharedTableOps(wrapper, editor, {
+              onItemClick: () => {
+                closeAllDropdowns();
+                refreshFn();
+              },
+            });
+            return wrapper;
+          },
         },
       ],
     },
     { type: 'separator' },
     {
       type: 'dropdown',
-      label: 'View',
+      label: '',
       title: 'Outline, source, and settings',
       icon: { name: 'layout-sidebar-right', fallback: 'View' },
       items: [
@@ -1327,8 +1365,8 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     },
     {
       type: 'dropdown',
-      label: 'Export',
-      title: 'Export and settings',
+      label: '',
+      title: 'Export document',
       icon: { name: 'export', fallback: 'Export' },
       items: [
         {
@@ -1471,7 +1509,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       button.type = 'button';
       button.className =
         'toolbar-button toolbar-dropdown-trigger' + (btn.className ? ` ${btn.className}` : '');
-      button.title = btn.title || btn.label;
+      button.setAttribute('data-tooltip', btn.title || btn.label);
       button.setAttribute('aria-label', btn.title || btn.label);
       button.setAttribute('aria-haspopup', 'true');
       button.setAttribute('aria-expanded', 'false');
@@ -1502,16 +1540,81 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           return;
         }
 
+        // Render section labels (non-interactive headers)
+        if (item.isSectionLabel) {
+          const label = document.createElement('div');
+          label.className = 'toolbar-dropdown-section-label';
+          label.textContent = item.label;
+          menu.appendChild(label);
+          return;
+        }
+
+        // Render button row (horizontal icon buttons — like context menu button rows)
+        if (item.isButtonRow && item.buttons) {
+          const row = document.createElement('div');
+          row.className = 'toolbar-dropdown-button-row';
+          item.buttons.forEach(b => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'toolbar-dropdown-icon-btn';
+            btn.title = b.title;
+            btn.setAttribute('aria-label', b.title);
+            const ic = createIconElement(b.icon, 'toolbar-dropdown-icon');
+            btn.appendChild(ic);
+            btn.onmousedown = e => e.preventDefault();
+            btn.onclick = e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (btn.disabled) return;
+              b.action();
+              closeAllDropdowns();
+              refreshActiveStates();
+            };
+            row.appendChild(btn);
+          });
+          // Track button row items for state updates
+          item.buttons.forEach((b, idx) => {
+            if (b.isActive || b.isEnabled) {
+              const btnEl = row.children[idx] as HTMLButtonElement;
+              dropdownItems.push({
+                config: {
+                  label: b.title,
+                  action: b.action,
+                  isActive: b.isActive,
+                  isEnabled: b.isEnabled,
+                },
+                element: btnEl,
+              });
+            }
+          });
+          menu.appendChild(row);
+          return;
+        }
+
         // Render custom widget items (e.g. Chrome-style zoom control)
         if (item.isCustomWidget && item.customRender) {
           const widget = item.customRender(refreshActiveStates);
           menu.appendChild(widget);
+          // Track buttons inside custom widget for enable/disable states
+          if (item.isEnabled) {
+            widget.querySelectorAll('button').forEach(btn => {
+              dropdownItems.push({
+                config: {
+                  label: btn.title || btn.getAttribute('aria-label') || '',
+                  action: () => {},
+                  isEnabled: item.isEnabled,
+                },
+                element: btn as HTMLButtonElement,
+              });
+            });
+          }
           return;
         }
 
         const menuItem = document.createElement('button');
         menuItem.type = 'button';
-        menuItem.className = 'toolbar-dropdown-item';
+        menuItem.className =
+          'toolbar-dropdown-item' + (item.className ? ` ${item.className}` : '');
         menuItem.title = item.label;
         menuItem.setAttribute('aria-label', item.label);
         menuItem.onmousedown = e => {
@@ -1539,8 +1642,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           }
 
           item.action();
-          menu.style.display = 'none';
-          button.setAttribute('aria-expanded', 'false');
+          closeAllDropdowns();
           refreshActiveStates();
         };
 
@@ -1560,7 +1662,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         }
 
         const isVisible = menu.style.display === 'block';
-        closeAllDropdowns();
+        closeAllDropdowns({ keepOverflow: true });
 
         if (!isVisible) {
           // Refresh enabled states before showing menu
@@ -1588,7 +1690,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       const primary = document.createElement('button');
       primary.type = 'button';
       primary.className = 'toolbar-button toolbar-color-primary';
-      primary.title = btn.title || btn.label;
+      primary.setAttribute('data-tooltip', btn.title || btn.label);
       primary.setAttribute('aria-label', btn.title || btn.label);
       primary.onmousedown = e => {
         e.preventDefault();
@@ -1604,7 +1706,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       const toggle = document.createElement('button');
       toggle.type = 'button';
       toggle.className = 'toolbar-button toolbar-color-toggle';
-      toggle.title = 'Font color options';
+      toggle.setAttribute('data-tooltip', 'Font color options');
       toggle.setAttribute('aria-label', 'Font color options');
       toggle.onmousedown = e => {
         e.preventDefault();
@@ -1668,7 +1770,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           return;
         }
         const isVisible = menu.style.display === 'flex';
-        closeAllDropdowns();
+        closeAllDropdowns({ keepOverflow: true });
         menu.style.display = isVisible ? 'none' : 'flex';
       };
 
@@ -1681,7 +1783,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'toolbar-button' + (btn.className ? ` ${btn.className}` : '');
-    button.title = btn.title || btn.label;
+    button.setAttribute('data-tooltip', btn.title || btn.label);
     button.setAttribute('aria-label', btn.title || btn.label);
     button.onmousedown = e => {
       // Prevent focus steal to preserve current text selection.
@@ -1745,7 +1847,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   const overflowBtn = document.createElement('button');
   overflowBtn.type = 'button';
   overflowBtn.className = 'toolbar-button toolbar-overflow-trigger';
-  overflowBtn.title = 'More toolbar items';
+  overflowBtn.setAttribute('data-tooltip', 'More toolbar items');
   overflowBtn.setAttribute('aria-label', 'More toolbar items');
   overflowBtn.setAttribute('aria-haspopup', 'true');
   overflowBtn.setAttribute('aria-expanded', 'false');
@@ -1779,9 +1881,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     overflowContainer.style.display = 'none';
     overflowMenu.style.display = 'none';
 
-    // Get all toolbar-group children (not the overflow container)
+    // Get all toolbar-group children (not the overflow container or pinned groups)
     const allGroups = Array.from(
-      toolbar.querySelectorAll(':scope > .toolbar-group')
+      toolbar.querySelectorAll(':scope > .toolbar-group:not(.toolbar-no-overflow)')
     ) as HTMLElement[];
     if (allGroups.length === 0) return;
 
@@ -1817,6 +1919,59 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
   // Initial layout after first paint
   requestAnimationFrame(() => updateOverflow());
+
+  // --- Theme toggle button (sun/moon) at the far right ---
+  const themeToggleGroup = document.createElement('div');
+  themeToggleGroup.className = 'toolbar-group toolbar-theme-toggle-group toolbar-no-overflow';
+  themeToggleGroup.style.marginLeft = 'auto';
+
+  const themeToggleBtn = document.createElement('button');
+  themeToggleBtn.type = 'button';
+  themeToggleBtn.className = 'toolbar-button theme-toggle';
+  themeToggleBtn.setAttribute('data-tooltip', 'Toggle light/dark theme');
+  themeToggleBtn.setAttribute('aria-label', 'Toggle light/dark theme');
+  themeToggleBtn.onmousedown = e => e.preventDefault();
+
+  function isCurrentThemeDark(): boolean {
+    const override = (window as any).gptAiCurrentThemeOverride;
+    if (override) return override === 'dark';
+    return document.body.getAttribute('data-theme') === 'dark'
+      || document.body.classList.contains('vscode-dark');
+  }
+
+  function updateThemeIcon() {
+    themeToggleBtn.innerHTML = '';
+    const icon = document.createElement('span');
+    icon.className = 'toolbar-icon';
+    const dark = isCurrentThemeDark();
+    icon.innerHTML = dark
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    themeToggleBtn.appendChild(icon);
+  }
+  updateThemeIcon();
+
+  themeToggleBtn.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newTheme = isCurrentThemeDark() ? 'light' : 'dark';
+    // Apply theme via the global helper (sets data-theme attribute + fires event)
+    if (typeof (window as any).gptAiApplyTheme === 'function') {
+      (window as any).gptAiApplyTheme(newTheme);
+    }
+    // Persist to VS Code settings
+    const vscodeApi = (window as any).vscode;
+    if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
+      vscodeApi.postMessage({ type: 'updateThemeOverride', theme: newTheme });
+    }
+    updateThemeIcon();
+  };
+
+  // Keep icon in sync when theme is changed externally
+  window.addEventListener('gptAiThemeChanged', () => updateThemeIcon());
+
+  themeToggleGroup.appendChild(themeToggleBtn);
+  toolbar.appendChild(themeToggleGroup);
 
   return toolbar;
 }
@@ -1868,18 +2023,27 @@ export function createTableMenu(editor: Editor): HTMLElement {
       return;
     }
 
-    const chain = editor.chain().focus();
-    if (
-      typeof (chain as { setTextSelection?: (position: number) => unknown }).setTextSelection ===
-      'function'
-    ) {
-      (chain as { setTextSelection: (position: number) => { run: () => boolean } })
-        .setTextSelection(pos)
-        .run();
-      return;
+    // If editor is focused and selection is already in a table, skip restoration
+    if (editor.view.hasFocus()) {
+      const { $from } = editor.state.selection;
+      for (let d = $from.depth; d > 0; d--) {
+        if ($from.node(d).type.name === 'table') {
+          return;
+        }
+      }
     }
 
-    chain.run();
+    try {
+      const maxPos = editor.state.doc.content.size;
+      const safePos = Math.min(pos, maxPos);
+      editor.chain().focus().setTextSelection(safePos).run();
+    } catch {
+      try {
+        editor.view.focus();
+      } catch {
+        // ignore
+      }
+    }
   };
 
   menu.onmousedown = event => {
@@ -1887,96 +2051,10 @@ export function createTableMenu(editor: Editor): HTMLElement {
     event.stopPropagation();
   };
 
-  const items: Array<
-    | { separator: true }
-    | {
-        label: string;
-        action: () => void;
-      }
-  > = [
-    {
-      label: 'Add Row Before',
-      action: () => editor.chain().focus().addRowBefore().run(),
-    },
-    {
-      label: 'Add Row After',
-      action: () => editor.chain().focus().addRowAfter().run(),
-    },
-    {
-      label: 'Delete Row',
-      action: () => editor.chain().focus().deleteRow().run(),
-    },
-    {
-      label: 'Move Row Up',
-      action: () => {
-        editor.chain().focus().run();
-        moveSelectedTableRow(editor, 'up');
-      },
-    },
-    {
-      label: 'Move Row Down',
-      action: () => {
-        editor.chain().focus().run();
-        moveSelectedTableRow(editor, 'down');
-      },
-    },
-    { separator: true },
-    {
-      label: 'Add Column Before',
-      action: () => editor.chain().focus().addColumnBefore().run(),
-    },
-    {
-      label: 'Add Column After',
-      action: () => editor.chain().focus().addColumnAfter().run(),
-    },
-    {
-      label: 'Delete Column',
-      action: () => editor.chain().focus().deleteColumn().run(),
-    },
-    {
-      label: 'Move Column Left',
-      action: () => {
-        editor.chain().focus().run();
-        moveSelectedTableColumn(editor, 'left');
-      },
-    },
-    {
-      label: 'Move Column Right',
-      action: () => {
-        editor.chain().focus().run();
-        moveSelectedTableColumn(editor, 'right');
-      },
-    },
-    { separator: true },
-    {
-      label: 'Export Table as CSV',
-      action: () => window.dispatchEvent(new CustomEvent('exportTableCsv')),
-    },
-    { separator: true },
-    {
-      label: 'Delete Table',
-      action: () => editor.chain().focus().deleteTable().run(),
-    },
-  ];
-
-  items.forEach(item => {
-    if ('separator' in item) {
-      const separator = document.createElement('div');
-      separator.className = 'table-menu-separator';
-      menu.appendChild(separator);
-    } else {
-      const menuItem = document.createElement('div');
-      menuItem.className = 'table-menu-item';
-      menuItem.textContent = item.label;
-      menuItem.title = item.label;
-      menuItem.setAttribute('aria-label', item.label);
-      menuItem.onclick = () => {
-        restoreContextSelection();
-        item.action();
-        menu.style.display = 'none';
-      };
-      menu.appendChild(menuItem);
-    }
+  // Reuse shared table operations — identical rendering as toolbar dropdown
+  buildSharedTableOps(menu, editor, {
+    onItemClick: () => { menu.style.display = 'none'; },
+    beforeAction: restoreContextSelection,
   });
 
   document.body.appendChild(menu);

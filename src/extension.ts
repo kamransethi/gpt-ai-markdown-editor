@@ -156,7 +156,7 @@ export function activate(context: vscode.ExtensionContext) {
 
           if (!docContent) {
             stream.markdown(
-              'No markdown document is currently open in the Visual Markdown Editor.'
+              'No markdown document is currently open in the Visual AI Markdown Editor.'
             );
             return;
           }

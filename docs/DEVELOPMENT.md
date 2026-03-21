@@ -619,8 +619,9 @@ Contributors using any AI coding assistant can benefit from:
 ### For Users
 
 - **Documentation**: [README.md](../README.md)
-- **Issue Tracker**: [GitHub Issues](https://github.com/concretios/markdown-for-humans/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/concretios/markdown-for-humans/discussions)
+- **Repository**: [kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)
+- **Issue Tracker**: [GitHub Issues](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
 
 ---
 

@@ -26,6 +26,7 @@ import {
   getDefaultImagePath,
 } from './imageConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
+import { devLog } from '../utils/devLog';
 
 /**
  * Track images currently being saved to prevent document sync race conditions
@@ -208,7 +209,7 @@ async function handleWorkspaceImageDrop(
   e?: DragEvent,
   insertPosOverride?: number
 ): Promise<void> {
-  console.log('[DK-AI] Handling workspace image drop:', uriOrPath);
+  devLog('[DK-AI] Handling workspace image drop:', uriOrPath);
 
   // Clean up the path - could be file:// URI or absolute path
   let filePath = uriOrPath.trim();
@@ -254,7 +255,7 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
 
   // Case 1: Check for actual File objects (from desktop/finder)
   const files = getImageFiles(dt);
-  console.log('[DK-AI] Drop payload types:', {
+  devLog('[DK-AI] Drop payload types:', {
     types: Array.from(dt.types || []),
     fileCount: dt.files?.length || 0,
     hasImageFiles: files.length > 0,
@@ -268,7 +269,7 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
       await handleWorkspaceImageDrop(imagePath, editor, vscodeApi, e);
       return;
     }
-    console.log('[DK-AI] Drop ignored: no image files or image paths detected');
+    devLog('[DK-AI] Drop ignored: no image files or image paths detected');
     return; // No images to process
   }
 
@@ -471,19 +472,19 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
     message.type === 'imageError' ||
     message.type === 'insertWorkspaceImage'
   ) {
-    console.log('[DK-AI] Received message from extension:', message.type, message);
+    devLog('[DK-AI] Received message from extension:', message.type, message);
   }
 
   switch (message.type) {
     case 'imageSaved': {
       // Update placeholder with final path
-      console.log(
+      devLog(
         `[DK-AI] Processing imageSaved: placeholderId=${message.placeholderId}, newSrc=${message.newSrc}`
       );
       updateImageSrc(message.placeholderId, message.newSrc, editor);
       // Remove from pending saves
       pendingImageSaves.delete(message.placeholderId);
-      console.log(`[DK-AI] Removed from pending saves. Remaining: ${pendingImageSaves.size}`);
+      devLog(`[DK-AI] Removed from pending saves. Remaining: ${pendingImageSaves.size}`);
       break;
     }
     case 'imageError': {
@@ -492,14 +493,14 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
       removeImagePlaceholder(message.placeholderId, editor);
       // Remove from pending saves
       pendingImageSaves.delete(message.placeholderId);
-      console.log(
+      devLog(
         `[DK-AI] Removed from pending saves (error). Remaining: ${pendingImageSaves.size}`
       );
       break;
     }
     case 'insertWorkspaceImage': {
       // Insert image from workspace with relative path
-      console.log(
+      devLog(
         `[DK-AI] Inserting workspace image: ${message.relativePath}, alt: ${message.altText}`
       );
       insertWorkspaceImage(editor, message.relativePath, message.altText, message.insertPosition);
@@ -517,7 +518,7 @@ function insertWorkspaceImage(
   altText: string,
   pos?: number
 ): void {
-  console.log(`[DK-AI] insertWorkspaceImage called with:`, {
+  devLog(`[DK-AI] insertWorkspaceImage called with:`, {
     relativePath,
     altText,
     pos,
@@ -538,12 +539,12 @@ function insertWorkspaceImage(
       })
       .run();
 
-    console.log(`[DK-AI] Inserted workspace image: ${relativePath}, success: ${result}`);
+    devLog(`[DK-AI] Inserted workspace image: ${relativePath}, success: ${result}`);
 
     // Verify the image was actually inserted
     setTimeout(() => {
       const images = document.querySelectorAll(`img[src="${relativePath}"]`);
-      console.log(`[DK-AI] Verification: Found ${images.length} images with src="${relativePath}"`);
+      devLog(`[DK-AI] Verification: Found ${images.length} images with src="${relativePath}"`);
     }, 100);
   } catch (error) {
     console.error(`[DK-AI] Failed to insert workspace image:`, error);
@@ -680,14 +681,14 @@ export async function insertImage(
 
     // Add to pending saves to prevent document sync race condition
     pendingImageSaves.add(placeholderId);
-    console.log(`[DK-AI] Added to pending saves. Total pending: ${pendingImageSaves.size}`);
+    devLog(`[DK-AI] Added to pending saves. Total pending: ${pendingImageSaves.size}`);
 
     // Generate filename with source type and dimensions
     const imageName = generateImageName(file.name, source, finalDimensions);
 
     // Send to extension to save to workspace
     const buffer = await imageFile.arrayBuffer();
-    console.log(
+    devLog(
       `[DK-AI] Sending saveImage message: placeholderId=${placeholderId}, name=${imageName}, targetFolder=${targetFolder}`
     );
 
@@ -708,7 +709,7 @@ export async function insertImage(
  * Update image src after save (replace base64 with file path)
  */
 function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): void {
-  console.log(`[DK-AI] updateImageSrc called: looking for placeholder ${placeholderId}`);
+  devLog(`[DK-AI] updateImageSrc called: looking for placeholder ${placeholderId}`);
 
   const img = document.querySelector(
     `img[data-placeholder-id="${placeholderId}"]`
@@ -718,25 +719,25 @@ function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): 
     console.warn(`[DK-AI] Image with placeholder ${placeholderId} not found in DOM`);
     // Try to find any images and log their attributes for debugging
     const allImages = document.querySelectorAll('.markdown-image');
-    console.log(`[DK-AI] Found ${allImages.length} images in document`);
+    devLog(`[DK-AI] Found ${allImages.length} images in document`);
     allImages.forEach((imgEl, i) => {
-      console.log(
+      devLog(
         `[DK-AI] Image ${i}: data-placeholder-id="${imgEl.getAttribute('data-placeholder-id')}"`
       );
     });
     return;
   }
 
-  console.log(`[DK-AI] Found image element, updating src...`);
+  devLog(`[DK-AI] Found image element, updating src...`);
 
   // Find the position of this image node in the editor
   const pos = editor.view.posAtDOM(img, 0);
-  console.log(`[DK-AI] Image position in editor: ${pos}`);
+  devLog(`[DK-AI] Image position in editor: ${pos}`);
 
   if (pos !== undefined && pos !== null) {
     // Update the TipTap node's src attribute
     const node = editor.state.doc.nodeAt(pos);
-    console.log(`[DK-AI] Node at position: ${node?.type.name}`);
+    devLog(`[DK-AI] Node at position: ${node?.type.name}`);
 
     if (node && node.type.name === 'image') {
       editor
@@ -748,7 +749,7 @@ function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): 
         })
         .run();
 
-      console.log(`[DK-AI] Successfully updated image src to: ${newSrc}`);
+      devLog(`[DK-AI] Successfully updated image src to: ${newSrc}`);
     } else {
       console.warn(`[DK-AI] Node at position ${pos} is not an image: ${node?.type.name}`);
     }

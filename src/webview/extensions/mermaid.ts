@@ -210,7 +210,7 @@ export const Mermaid = Node.create({
 
       let currentContent = node.textContent;
       let renderVersion = 0;
-      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      const debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
       const renderDiagram = async (code: string) => {
         const content = code.trim();

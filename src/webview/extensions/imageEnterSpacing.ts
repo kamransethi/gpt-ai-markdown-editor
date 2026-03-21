@@ -5,6 +5,7 @@
  */
 
 import { Extension } from '@tiptap/core';
+import { devLog } from '../utils/devLog';
 import { GapCursor } from '@tiptap/pm/gapcursor';
 import { NodeSelection, Plugin, PluginKey, TextSelection, EditorState } from '@tiptap/pm/state';
 import { Fragment, Node as ProseMirrorNode } from '@tiptap/pm/model';
@@ -174,7 +175,7 @@ function deleteSelectedImage(view: any, state: EditorState, selection: NodeSelec
     const $from = state.doc.resolve(from);
     const parent = $from.parent;
 
-    console.log('[ImageEnterSpacing] Deleting image', {
+    devLog('[ImageEnterSpacing] Deleting image', {
       from,
       to,
       depth: $from.depth,
@@ -210,7 +211,7 @@ function deleteSelectedImage(view: any, state: EditorState, selection: NodeSelec
       }
     });
 
-    console.log('[ImageEnterSpacing] Paragraph analysis', {
+    devLog('[ImageEnterSpacing] Paragraph analysis', {
       imageCount,
       hasTextContent,
       imageIndex: imageIndexInParagraph,
@@ -222,7 +223,7 @@ function deleteSelectedImage(view: any, state: EditorState, selection: NodeSelec
       const paragraphStart = $from.before($from.depth);
       const paragraphEnd = $from.after($from.depth);
 
-      console.log('[ImageEnterSpacing] Deleting entire paragraph', {
+      devLog('[ImageEnterSpacing] Deleting entire paragraph', {
         paragraphStart,
         paragraphEnd,
       });
@@ -289,7 +290,7 @@ function deleteSelectedImage(view: any, state: EditorState, selection: NodeSelec
       }
     }
 
-    console.log('[ImageEnterSpacing] Rebuilt children', {
+    devLog('[ImageEnterSpacing] Rebuilt children', {
       originalChildCount: parent.childCount,
       newChildCount: cleanedChildren.length,
     });
@@ -311,7 +312,7 @@ function deleteSelectedImage(view: any, state: EditorState, selection: NodeSelec
     const contentStart = $from.start(); // Start of paragraph content
     const contentEnd = $from.end(); // End of paragraph content
 
-    console.log('[ImageEnterSpacing] Replacing paragraph content', {
+    devLog('[ImageEnterSpacing] Replacing paragraph content', {
       contentStart,
       contentEnd,
     });
@@ -562,7 +563,7 @@ export const ImageEnterSpacing = Extension.create({
               // Step 2: Image is selected and pending deletion - delete it
               if (isImageNode(selection, imageType.name) && pendingDeleteImagePos !== null) {
                 const selectionFrom = (selection as NodeSelection).from;
-                console.log('[ImageEnterSpacing] Delete on pending image', {
+                devLog('[ImageEnterSpacing] Delete on pending image', {
                   selectionFrom,
                   pendingDeleteImagePos,
                   match: selectionFrom === pendingDeleteImagePos,
@@ -573,7 +574,7 @@ export const ImageEnterSpacing = Extension.create({
                   event.stopPropagation();
                   // Delete the selected image
                   const deleted = deleteSelectedImage(view, state, selection as NodeSelection);
-                  console.log('[ImageEnterSpacing] Delete result:', deleted);
+                  devLog('[ImageEnterSpacing] Delete result:', deleted);
                   if (deleted) {
                     // Clear pending state - the deletion transaction will trigger apply
                     // We'll clear it in the apply function when docChanged
@@ -627,7 +628,7 @@ export const ImageEnterSpacing = Extension.create({
                     if (nodeAtPos && nodeAtPos.type.name === imageType.name) {
                       // Create node selection and set pending deletion in one transaction
                       const nodeSelection = NodeSelection.create(state.doc, targetPos);
-                      console.log('[ImageEnterSpacing] Setting pending deletion', {
+                      devLog('[ImageEnterSpacing] Setting pending deletion', {
                         targetPos,
                         nodeSize: nodeAtPos.nodeSize,
                         selectionFrom: nodeSelection.from,
@@ -746,7 +747,7 @@ export const ImageEnterSpacing = Extension.create({
                   event.preventDefault();
                   event.stopPropagation();
 
-                  console.log('[ImageEnterSpacing] Enter at gap cursor', {
+                  devLog('[ImageEnterSpacing] Enter at gap cursor', {
                     gapPos: selection.head,
                     imageBefore,
                     imageAfter,
@@ -754,7 +755,7 @@ export const ImageEnterSpacing = Extension.create({
                   });
 
                   const inserted = insertParagraphAtDocPos(view, state, insertPos);
-                  console.log('[ImageEnterSpacing] Insert result:', inserted);
+                  devLog('[ImageEnterSpacing] Insert result:', inserted);
                   return inserted;
                 }
               }

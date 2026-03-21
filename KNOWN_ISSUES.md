@@ -2,7 +2,7 @@
 
 This document tracks known issues, limitations, workarounds, and technical debt for Markdown for Humans.
 
-> **For Users:** Check the issues and workarounds sections below. If you encounter an issue not listed here, please [report it](https://github.com/concretios/markdown-for-humans/issues).
+> **For Users:** Check the issues and workarounds sections below. If you encounter an issue not listed here, please [report it](https://github.com/kamransethi/gpt-ai-markdown-editor/issues).
 > 
 > **For Developers:** See technical debt, roadmap, and development guidelines sections. For troubleshooting during development, see [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md).
 
@@ -167,7 +167,7 @@ None currently. All critical issues have been resolved*.*
 
 **GitHub Repository Setup:**
 
-- [x] Repository exists: [https://github.com/concretios/markdown-for-humans](https://github.com/concretios/markdown-for-humans)
+- [x] Repository exists: [https://github.com/kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)
 - [x] README.md comprehensive and professional
 - [x] LICENSE file present (MIT)
 - [x] CONTRIBUTING.md present
@@ -376,4 +376,4 @@ If you find a workaround for a known issue or have additional information, pleas
 **Status:** ✅ Production Ready for v0.1.0  
 **Next Review:** After v0.1.0 marketplace release (plan v0.2.0 improvements)
 
-**Note:** This document is maintained manually. For the most up-to-date issue tracking, see [GitHub Issues](https://github.com/concretios/markdown-for-humans/issues).
+**Note:** This document is maintained manually. For the most up-to-date issue tracking, see [GitHub Issues](https://github.com/kamransethi/gpt-ai-markdown-editor/issues).

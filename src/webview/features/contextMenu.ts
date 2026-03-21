@@ -57,6 +57,7 @@ export function createContextMenu(editor: Editor): MenuController {
   );
   mb.addItem('Delete', () => editor.chain().focus().deleteSelection().run(), {
     enabledFn: () => hasTextSelection(editor),
+    className: 'context-menu-danger',
   });
 
   // ── AI REFINE ──

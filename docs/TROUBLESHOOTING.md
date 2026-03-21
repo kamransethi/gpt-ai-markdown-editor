@@ -295,7 +295,8 @@ If you're still stuck:
 1. Check build output carefully - errors often point to the issue
 2. Review docs/BUILD.md for architecture overview
 3. Compare your feature to similar working features
-4. Use git bisect to find when it broke:
+4. Get help in the repository: https://github.com/kamransethi/gpt-ai-markdown-editor
+5. Use git bisect to find when it broke:
    ```bash
    git bisect start
    git bisect bad  # current broken version

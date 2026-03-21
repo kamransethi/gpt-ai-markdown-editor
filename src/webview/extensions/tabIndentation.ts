@@ -5,6 +5,7 @@
  */
 
 import { Extension } from '@tiptap/core';
+import { devLog } from '../utils/devLog';
 import { NodeSelection } from 'prosemirror-state';
 
 function outdentIndentPrefix(indentPrefix: unknown): string | null {
@@ -50,12 +51,12 @@ export const TabIndentation = Extension.create({
   addKeyboardShortcuts() {
     return {
       Tab: () => {
-        console.log('🔷 [TabIndentation] Tab key pressed');
+        devLog('🔷 [TabIndentation] Tab key pressed');
         const { state } = this.editor.view;
         const { selection } = state;
 
-        console.log('🔷 [TabIndentation] Selection type:', selection.constructor.name);
-        console.log('🔷 [TabIndentation] Active states:', {
+        devLog('🔷 [TabIndentation] Selection type:', selection.constructor.name);
+        devLog('🔷 [TabIndentation] Active states:', {
           table: this.editor.isActive('table'),
           codeBlock: this.editor.isActive('codeBlock'),
           listItem: this.editor.isActive('listItem'),
@@ -67,14 +68,14 @@ export const TabIndentation = Extension.create({
         // 1. Handle Node Selection (e.g., Image selected)
         // Add \t before the image
         if (selection instanceof NodeSelection) {
-          console.log('🔷 [TabIndentation] NodeSelection (Image) - inserting tab');
+          devLog('🔷 [TabIndentation] NodeSelection (Image) - inserting tab');
           this.editor.commands.insertContent('\t');
           return true;
         }
 
         // 2. Check for Table - Let Table extension handle it (Next Cell)
         if (this.editor.isActive('table')) {
-          console.log(
+          devLog(
             '🔷 [TabIndentation] In table - returning false (let Table extension handle)'
           );
           return false;
@@ -82,7 +83,7 @@ export const TabIndentation = Extension.create({
 
         // 3. Check for Code Block - Let CodeBlockLowlight handle it
         if (this.editor.isActive('codeBlock')) {
-          console.log(
+          devLog(
             '🔷 [TabIndentation] In codeBlock - returning false (let CodeBlockLowlight handle)'
           );
           return false;
@@ -90,13 +91,13 @@ export const TabIndentation = Extension.create({
 
         // 4. Check for List - Try to indent, don't insert tab if it fails
         if (this.editor.isActive('listItem') || this.editor.isActive('taskItem')) {
-          console.log('🔷 [TabIndentation] In list - trying to indent');
+          devLog('🔷 [TabIndentation] In list - trying to indent');
 
           // Try to sink (indent) the list item
           const sinkListResult = this.editor.commands.sinkListItem('listItem');
           const sinkTaskResult = this.editor.commands.sinkListItem('taskItem');
 
-          console.log('🔷 [TabIndentation] sinkListItem results:', {
+          devLog('🔷 [TabIndentation] sinkListItem results:', {
             listItem: sinkListResult,
             taskItem: sinkTaskResult,
           });
@@ -104,9 +105,9 @@ export const TabIndentation = Extension.create({
           // Always return true to prevent focus loss, even if indent failed
           // Don't insert \t in list content - that creates malformed markdown
           if (sinkListResult || sinkTaskResult) {
-            console.log('🔷 [TabIndentation] Successfully indented list item');
+            devLog('🔷 [TabIndentation] Successfully indented list item');
           } else {
-            console.log(
+            devLog(
               '🔷 [TabIndentation] Cannot indent (first item or max depth) - preventing default, not inserting tab'
             );
           }
@@ -114,18 +115,18 @@ export const TabIndentation = Extension.create({
         }
 
         // 5. All other contexts (Paragraphs, Headings, Blockquotes, etc.) - Add \t
-        console.log('🔷 [TabIndentation] Default context - inserting tab');
+        devLog('🔷 [TabIndentation] Default context - inserting tab');
         this.editor.commands.insertContent('\t');
         return true;
       },
 
       'Shift-Tab': () => {
-        console.log('🔶 [TabIndentation] Shift+Tab key pressed');
+        devLog('🔶 [TabIndentation] Shift+Tab key pressed');
         const { state, dispatch } = this.editor.view;
         const { selection } = state;
 
-        console.log('🔶 [TabIndentation] Selection type:', selection.constructor.name);
-        console.log('🔶 [TabIndentation] Active states:', {
+        devLog('🔶 [TabIndentation] Selection type:', selection.constructor.name);
+        devLog('🔶 [TabIndentation] Active states:', {
           table: this.editor.isActive('table'),
           codeBlock: this.editor.isActive('codeBlock'),
           listItem: this.editor.isActive('listItem'),
@@ -134,22 +135,22 @@ export const TabIndentation = Extension.create({
 
         // 1. Check for Table - Let Table extension handle it (Prev Cell)
         if (this.editor.isActive('table')) {
-          console.log('🔶 [TabIndentation] In table - returning false');
+          devLog('🔶 [TabIndentation] In table - returning false');
           return false;
         }
 
         // 2. Check for Code Block - Let CodeBlockLowlight handle it
         if (this.editor.isActive('codeBlock')) {
-          console.log('🔶 [TabIndentation] In codeBlock - returning false');
+          devLog('🔶 [TabIndentation] In codeBlock - returning false');
           return false;
         }
 
         // 3. Check for List - Lift (Outdent or convert to paragraph)
         if (this.editor.isActive('listItem') || this.editor.isActive('taskItem')) {
-          console.log('🔶 [TabIndentation] In list - calling liftListItem');
+          devLog('🔶 [TabIndentation] In list - calling liftListItem');
           const liftListResult = this.editor.commands.liftListItem('listItem');
           const liftTaskResult = this.editor.commands.liftListItem('taskItem');
-          console.log('🔶 [TabIndentation] liftListItem results:', {
+          devLog('🔶 [TabIndentation] liftListItem results:', {
             listItem: liftListResult,
             taskItem: liftTaskResult,
           });
@@ -200,13 +201,13 @@ export const TabIndentation = Extension.create({
         }
 
         // 5. All other contexts - Smart removal of leading indentation
-        console.log('🔶 [TabIndentation] Default context - removing leading indentation');
+        devLog('🔶 [TabIndentation] Default context - removing leading indentation');
 
         // Get current position and text content
         const textBefore = $from.parent.textContent;
         const posInParent = $from.parentOffset;
 
-        console.log(
+        devLog(
           '🔶 [TabIndentation] Text before cursor:',
           JSON.stringify(textBefore.substring(0, posInParent))
         );
@@ -215,14 +216,14 @@ export const TabIndentation = Extension.create({
         const lineStart = textBefore.lastIndexOf('\n', posInParent - 1) + 1;
         const textFromLineStart = textBefore.substring(lineStart, posInParent);
 
-        console.log('🔶 [TabIndentation] Text from line start:', JSON.stringify(textFromLineStart));
+        devLog('🔶 [TabIndentation] Text from line start:', JSON.stringify(textFromLineStart));
 
         // Remove leading \t or spaces (up to 4)
         const leadingWhitespace = textFromLineStart.match(/^(\t| {1,4})/);
 
         if (leadingWhitespace) {
           const removeLength = leadingWhitespace[0].length;
-          console.log('🔶 [TabIndentation] Removing', removeLength, 'characters of whitespace');
+          devLog('🔶 [TabIndentation] Removing', removeLength, 'characters of whitespace');
 
           const from = $from.pos - posInParent + lineStart;
           const to = from + removeLength;
@@ -232,7 +233,7 @@ export const TabIndentation = Extension.create({
           return true;
         }
 
-        console.log('🔶 [TabIndentation] No leading whitespace found - do nothing');
+        devLog('🔶 [TabIndentation] No leading whitespace found - do nothing');
         return true; // Capture anyway to prevent focus loss
       },
     };
