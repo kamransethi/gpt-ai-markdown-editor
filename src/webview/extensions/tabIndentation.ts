@@ -75,9 +75,7 @@ export const TabIndentation = Extension.create({
 
         // 2. Check for Table - Let Table extension handle it (Next Cell)
         if (this.editor.isActive('table')) {
-          devLog(
-            '🔷 [TabIndentation] In table - returning false (let Table extension handle)'
-          );
+          devLog('🔷 [TabIndentation] In table - returning false (let Table extension handle)');
           return false;
         }
 

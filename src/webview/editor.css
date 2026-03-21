@@ -3659,7 +3659,9 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
 
 .formatting-toolbar .toolbar-button.save-button:not(.disabled) {
   opacity: 1;
-  color: var(--md-link-fg);
+  color: var(--md-foreground);
+  border: 1px solid var(--md-link-fg);
+  border-radius: 6px;
 }
 
 /* ============================================

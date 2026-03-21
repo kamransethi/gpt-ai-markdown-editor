@@ -206,6 +206,7 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       tocMaxDepth: 3,
       preserveHtmlComments: false,
       editorZoomLevel: 1,
+      showSelectionToolbar: true,
     });
   });
 });

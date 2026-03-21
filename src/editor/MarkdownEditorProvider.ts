@@ -165,6 +165,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       highlightSyntax: config.get<string>('gptAiMarkdownEditor.highlightSyntax', 'obsidian'),
       preserveHtmlComments: config.get<boolean>('gptAiMarkdownEditor.preserveHtmlComments', false),
       editorZoomLevel: config.get<number>('gptAiMarkdownEditor.editorZoomLevel', 1),
+      showSelectionToolbar: config.get<boolean>('gptAiMarkdownEditor.showSelectionToolbar', true),
     };
   }
 
@@ -415,7 +416,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('gptAiMarkdownEditor.tocMaxDepth') ||
         e.affectsConfiguration('gptAiMarkdownEditor.highlightSyntax') ||
         e.affectsConfiguration('gptAiMarkdownEditor.preserveHtmlComments') ||
-        e.affectsConfiguration('gptAiMarkdownEditor.editorZoomLevel')
+        e.affectsConfiguration('gptAiMarkdownEditor.editorZoomLevel') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.showSelectionToolbar')
       ) {
         const config = vscode.workspace.getConfiguration();
         const settings = this.getWebviewSettings(config);

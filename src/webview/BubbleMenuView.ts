@@ -81,8 +81,8 @@ let isEditorFocused = false;
 let focusChangeListener: ((e: Event) => void) | null = null;
 
 type ToolbarIcon = {
-  name?: string;       // Codicon name (legacy) or SVG icon key
-  svgName?: string;    // Explicit SVG icon key from TIPTAP_ICONS
+  name?: string; // Codicon name (legacy) or SVG icon key
+  svgName?: string; // Explicit SVG icon key from TIPTAP_ICONS
   fallback: string;
   badge?: string;
 };
@@ -1188,36 +1188,61 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             {
               icon: { name: 'info', fallback: 'ℹ' },
               title: 'Note alert',
-              action: () => editor.chain().focus().toggleAlert('NOTE' as any).run(),
+              action: () =>
+                editor
+                  .chain()
+                  .focus()
+                  .toggleAlert('NOTE' as any)
+                  .run(),
               isActive: () => editor.isActive('githubAlert', { alertType: 'NOTE' }),
             },
             {
               icon: { name: 'lightbulb', fallback: '💡' },
               title: 'Tip alert',
-              action: () => editor.chain().focus().toggleAlert('TIP' as any).run(),
+              action: () =>
+                editor
+                  .chain()
+                  .focus()
+                  .toggleAlert('TIP' as any)
+                  .run(),
               isActive: () => editor.isActive('githubAlert', { alertType: 'TIP' }),
             },
             {
               icon: { name: 'megaphone', fallback: '📢' },
               title: 'Important alert',
-              action: () => editor.chain().focus().toggleAlert('IMPORTANT' as any).run(),
+              action: () =>
+                editor
+                  .chain()
+                  .focus()
+                  .toggleAlert('IMPORTANT' as any)
+                  .run(),
               isActive: () => editor.isActive('githubAlert', { alertType: 'IMPORTANT' }),
             },
             {
               icon: { name: 'warning', fallback: '⚠' },
               title: 'Warning alert',
-              action: () => editor.chain().focus().toggleAlert('WARNING' as any).run(),
+              action: () =>
+                editor
+                  .chain()
+                  .focus()
+                  .toggleAlert('WARNING' as any)
+                  .run(),
               isActive: () => editor.isActive('githubAlert', { alertType: 'WARNING' }),
             },
             {
               icon: { name: 'error', fallback: '🛑' },
               title: 'Caution alert',
-              action: () => editor.chain().focus().toggleAlert('CAUTION' as any).run(),
+              action: () =>
+                editor
+                  .chain()
+                  .focus()
+                  .toggleAlert('CAUTION' as any)
+                  .run(),
               isActive: () => editor.isActive('githubAlert', { alertType: 'CAUTION' }),
             },
           ],
         },
-        { label: '', action: () => {}, isSeparator: true },
+        
         {
           label: 'Remove alert',
           icon: { name: 'close', fallback: '×' },
@@ -1613,8 +1638,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
 
         const menuItem = document.createElement('button');
         menuItem.type = 'button';
-        menuItem.className =
-          'toolbar-dropdown-item' + (item.className ? ` ${item.className}` : '');
+        menuItem.className = 'toolbar-dropdown-item' + (item.className ? ` ${item.className}` : '');
         menuItem.title = item.label;
         menuItem.setAttribute('aria-label', item.label);
         menuItem.onmousedown = e => {
@@ -1935,8 +1959,10 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   function isCurrentThemeDark(): boolean {
     const override = (window as any).gptAiCurrentThemeOverride;
     if (override) return override === 'dark';
-    return document.body.getAttribute('data-theme') === 'dark'
-      || document.body.classList.contains('vscode-dark');
+    return (
+      document.body.getAttribute('data-theme') === 'dark' ||
+      document.body.classList.contains('vscode-dark')
+    );
   }
 
   function updateThemeIcon() {
@@ -2053,7 +2079,9 @@ export function createTableMenu(editor: Editor): HTMLElement {
 
   // Reuse shared table operations — identical rendering as toolbar dropdown
   buildSharedTableOps(menu, editor, {
-    onItemClick: () => { menu.style.display = 'none'; },
+    onItemClick: () => {
+      menu.style.display = 'none';
+    },
     beforeAction: restoreContextSelection,
   });
 

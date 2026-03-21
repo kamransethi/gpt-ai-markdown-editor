@@ -2,7 +2,7 @@
 
 A premium WYSIWYG markdown editing experience inside VS Code. Write naturally, focus on content — not syntax.
 
-![Editor overview](marketplace-assets/screenshots/Hero%20Image.png)
+<img src="marketplace-assets/screenshots/Hero%20Image.png" alt="Editor overview" width="763" height="496" />
 
 ---
 
@@ -45,9 +45,11 @@ A persistent toolbar at the top of the editor with the same formatting options, 
 
 - **Blocks** — Blockquote, GitHub Alerts (horizontal icon row), Remove alert
 - **Insert** — Link, Image, Emoji, Code Blocks (Plain/TypeScript/Python/JSON), Diagrams (Mermaid)
-- **Table** — Full table management (rows, columns, sort, move, export, delete)
-- **Export** — PDF, Word (DOCX)
-- **View** — Toggle outline, Source view, Copy as Markdown, Configuration, Zoom
+
+- [ ] **Table** — Full table management (rows, columns, sort, move, export, delete)
+- [x] **Export** — PDF, Word (DOCX)
+  - [ ] **View** — Toggle outline, Source view, Copy as Markdown, Configuration, Zoom
+  - [ ] Sample Text
 
 ---
 
@@ -81,7 +83,7 @@ A persistent toolbar at the top of the editor with the same formatting options, 
   2. Second item
   3. Third item
 - Task / checkbox lists:
-  - [x] Completed task
+  - [ ] Completed task
   - [ ] Pending task
 - Nested indentation with **Tab** / **Shift+Tab**
 - Checkbox toggling by clicking

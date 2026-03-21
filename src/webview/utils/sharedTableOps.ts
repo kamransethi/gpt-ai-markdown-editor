@@ -82,7 +82,7 @@ function addSeparator(container: HTMLElement): void {
 function addButtonRow(
   container: HTMLElement,
   buttons: IconButton[],
-  options: SharedTableOpsOptions,
+  options: SharedTableOpsOptions
 ): void {
   const row = document.createElement('div');
   row.className = 'context-menu-button-row';
@@ -111,7 +111,7 @@ function addTextItem(
   label: string,
   action: () => void,
   options: SharedTableOpsOptions,
-  extra?: { icon?: string; className?: string },
+  extra?: { icon?: string; className?: string }
 ): void {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -152,46 +152,116 @@ function addTextItem(
 export function buildSharedTableOps(
   container: HTMLElement,
   editor: Editor,
-  options: SharedTableOpsOptions,
+  options: SharedTableOpsOptions
 ): void {
   // ── INSERT ──
   addSectionLabel(container, 'Insert');
-  addButtonRow(container, [
-    { icon: TABLE_SVG.rowAbove, title: 'Insert row above', action: () => editor.chain().focus().addRowBefore().run() },
-    { icon: TABLE_SVG.rowBelow, title: 'Insert row below', action: () => editor.chain().focus().addRowAfter().run() },
-    { icon: TABLE_SVG.colLeft, title: 'Insert column left', action: () => editor.chain().focus().addColumnBefore().run() },
-    { icon: TABLE_SVG.colRight, title: 'Insert column right', action: () => editor.chain().focus().addColumnAfter().run() },
-  ], options);
+  addButtonRow(
+    container,
+    [
+      {
+        icon: TABLE_SVG.rowAbove,
+        title: 'Insert row above',
+        action: () => editor.chain().focus().addRowBefore().run(),
+      },
+      {
+        icon: TABLE_SVG.rowBelow,
+        title: 'Insert row below',
+        action: () => editor.chain().focus().addRowAfter().run(),
+      },
+      {
+        icon: TABLE_SVG.colLeft,
+        title: 'Insert column left',
+        action: () => editor.chain().focus().addColumnBefore().run(),
+      },
+      {
+        icon: TABLE_SVG.colRight,
+        title: 'Insert column right',
+        action: () => editor.chain().focus().addColumnAfter().run(),
+      },
+    ],
+    options
+  );
 
   addSeparator(container);
 
   // ── MOVE ──
   addSectionLabel(container, 'Move');
-  addButtonRow(container, [
-    { icon: TABLE_SVG.moveUp, title: 'Move row up', action: () => moveSelectedTableRow(editor, 'up') },
-    { icon: TABLE_SVG.moveDown, title: 'Move row down', action: () => moveSelectedTableRow(editor, 'down') },
-    { icon: TABLE_SVG.moveLeft, title: 'Move column left', action: () => moveSelectedTableColumn(editor, 'left') },
-    { icon: TABLE_SVG.moveRight, title: 'Move column right', action: () => moveSelectedTableColumn(editor, 'right') },
-  ], options);
+  addButtonRow(
+    container,
+    [
+      {
+        icon: TABLE_SVG.moveUp,
+        title: 'Move row up',
+        action: () => moveSelectedTableRow(editor, 'up'),
+      },
+      {
+        icon: TABLE_SVG.moveDown,
+        title: 'Move row down',
+        action: () => moveSelectedTableRow(editor, 'down'),
+      },
+      {
+        icon: TABLE_SVG.moveLeft,
+        title: 'Move column left',
+        action: () => moveSelectedTableColumn(editor, 'left'),
+      },
+      {
+        icon: TABLE_SVG.moveRight,
+        title: 'Move column right',
+        action: () => moveSelectedTableColumn(editor, 'right'),
+      },
+    ],
+    options
+  );
 
   addSeparator(container);
 
   // ── DELETE ──
   addSectionLabel(container, 'Delete');
-  addButtonRow(container, [
-    { icon: TABLE_SVG.deleteRow, title: 'Delete row', action: () => editor.chain().focus().deleteRow().run() },
-    { icon: TABLE_SVG.deleteCol, title: 'Delete column', action: () => editor.chain().focus().deleteColumn().run() },
-    { icon: TABLE_SVG.deleteTable, title: 'Delete table', action: () => editor.chain().focus().deleteTable().run() },
-  ], options);
+  addButtonRow(
+    container,
+    [
+      {
+        icon: TABLE_SVG.deleteRow,
+        title: 'Delete row',
+        action: () => editor.chain().focus().deleteRow().run(),
+      },
+      {
+        icon: TABLE_SVG.deleteCol,
+        title: 'Delete column',
+        action: () => editor.chain().focus().deleteColumn().run(),
+      },
+      {
+        icon: TABLE_SVG.deleteTable,
+        title: 'Delete table',
+        action: () => editor.chain().focus().deleteTable().run(),
+      },
+    ],
+    options
+  );
 
   addSeparator(container);
 
   // ── SORT ──
-  addTextItem(container, 'Sort ascending (A → Z)', () => sortTableByColumn(editor, true), options, { icon: TABLE_SVG.sortAsc });
-  addTextItem(container, 'Sort descending (Z → A)', () => sortTableByColumn(editor, false), options, { icon: TABLE_SVG.sortDesc });
+  addTextItem(container, 'Sort ascending (A → Z)', () => sortTableByColumn(editor, true), options, {
+    icon: TABLE_SVG.sortAsc,
+  });
+  addTextItem(
+    container,
+    'Sort descending (Z → A)',
+    () => sortTableByColumn(editor, false),
+    options,
+    { icon: TABLE_SVG.sortDesc }
+  );
 
   addSeparator(container);
 
   // ── EXPORT ──
-  addTextItem(container, 'Export table as CSV', () => window.dispatchEvent(new CustomEvent('exportTableCsv')), options, { icon: TABLE_SVG.exportCsv });
+  addTextItem(
+    container,
+    'Export table as CSV',
+    () => window.dispatchEvent(new CustomEvent('exportTableCsv')),
+    options,
+    { icon: TABLE_SVG.exportCsv }
+  );
 }

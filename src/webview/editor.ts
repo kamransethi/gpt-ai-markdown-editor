@@ -340,6 +340,7 @@ let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
 let highlightSyntax: 'obsidian' | 'github' = 'obsidian';
+let showSelectionToolbar = true;
 let tocScrollRaf: number | null = null;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
@@ -851,6 +852,8 @@ function initializeEditor(initialContent: string) {
         BubbleMenuExtension.configure({
           element: floatingFormattingBar as HTMLElement,
           shouldShow: ({ editor: currentEditor, state }) => {
+            // Respect configuration toggle
+            if (!showSelectionToolbar) return false;
             // Suppress during initial editor creation to prevent flash
             if (!editorFullyInitialized) return false;
             const { from, to, empty } = state.selection;
@@ -864,8 +867,9 @@ function initializeEditor(initialContent: string) {
             placement: 'top',
             offset: {
               crossAxis: 0,
-              mainAxis: 10,
+              mainAxis: 12,
             },
+            flip: {},
           },
           updateDelay: 120,
         }),
@@ -1086,6 +1090,13 @@ function initializeEditor(initialContent: string) {
     // Handle keyboard shortcuts
     const keydownHandler = (e: KeyboardEvent) => {
       const isMod = e.metaKey || e.ctrlKey; // Cmd on Mac, Ctrl on Windows/Linux
+
+      // ESC key - dismiss floating selection toolbar by collapsing selection
+      if (e.key === 'Escape' && editor && !editor.state.selection.empty) {
+        const { to } = editor.state.selection;
+        editor.chain().setTextSelection(to).run();
+        return;
+      }
 
       // Log ALL modifier key presses for debugging
       if (isMod) {
@@ -1336,6 +1347,10 @@ function applyWebviewSettings(message: any) {
 
   if (typeof message.preserveHtmlComments === 'boolean') {
     setPreserveHtmlComments(message.preserveHtmlComments);
+  }
+
+  if (typeof message.showSelectionToolbar === 'boolean') {
+    showSelectionToolbar = message.showSelectionToolbar;
   }
 
   if (typeof message.editorZoomLevel === 'number') {

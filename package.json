@@ -279,6 +279,11 @@
           "default": "gpt-4.1",
           "markdownDescription": "**AI Model**: The language model used for AI text refinement (Rephrase, Shorten, Summarize, etc.). All models are free with GitHub Copilot."
         },
+        "gptAiMarkdownEditor.showSelectionToolbar": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "**Selection Toolbar**: Show a floating formatting toolbar when text is selected. Provides quick access to Bold, Italic, Highlight, and other formatting options."
+        },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",
           "default": true,

@@ -145,8 +145,8 @@ describe('BubbleMenuView', () => {
       const toolbar = createFormattingToolbar(editor);
       const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
 
-      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(
-        button => button.getAttribute('aria-label')?.includes('Outline')
+      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(button =>
+        button.getAttribute('aria-label')?.includes('Outline')
       ) as HTMLButtonElement | undefined;
 
       expect(viewButton).toBeTruthy();
@@ -195,7 +195,9 @@ describe('BubbleMenuView', () => {
       expect(iconBtns.length + textItems.length).toBeGreaterThan(0);
 
       // Check for specific insert operation via title
-      const addRowBtn = Array.from(iconBtns).find(btn => btn.getAttribute('title')?.includes('Insert row'));
+      const addRowBtn = Array.from(iconBtns).find(btn =>
+        btn.getAttribute('title')?.includes('Insert row')
+      );
       expect(addRowBtn).toBeTruthy();
     });
 
@@ -230,7 +232,9 @@ describe('BubbleMenuView', () => {
       const iconBtns = Array.from(menu.querySelectorAll('.context-menu-icon-btn')) as HTMLElement[];
 
       const moveRowUp = iconBtns.find(btn => btn.getAttribute('title') === 'Move row up');
-      const moveColumnRight = iconBtns.find(btn => btn.getAttribute('title') === 'Move column right');
+      const moveColumnRight = iconBtns.find(
+        btn => btn.getAttribute('title') === 'Move column right'
+      );
 
       moveRowUp?.click();
       moveColumnRight?.click();

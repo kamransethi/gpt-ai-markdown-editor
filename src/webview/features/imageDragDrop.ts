@@ -493,16 +493,12 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
       removeImagePlaceholder(message.placeholderId, editor);
       // Remove from pending saves
       pendingImageSaves.delete(message.placeholderId);
-      devLog(
-        `[DK-AI] Removed from pending saves (error). Remaining: ${pendingImageSaves.size}`
-      );
+      devLog(`[DK-AI] Removed from pending saves (error). Remaining: ${pendingImageSaves.size}`);
       break;
     }
     case 'insertWorkspaceImage': {
       // Insert image from workspace with relative path
-      devLog(
-        `[DK-AI] Inserting workspace image: ${message.relativePath}, alt: ${message.altText}`
-      );
+      devLog(`[DK-AI] Inserting workspace image: ${message.relativePath}, alt: ${message.altText}`);
       insertWorkspaceImage(editor, message.relativePath, message.altText, message.insertPosition);
       break;
     }
