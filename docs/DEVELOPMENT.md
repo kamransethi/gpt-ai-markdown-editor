@@ -1,4 +1,4 @@
-# Markdown for Humans - Development Guide
+# Visual AI Markdown Editor - Development Guide
 
 **Development roadmap, design principles, and philosophy**
 

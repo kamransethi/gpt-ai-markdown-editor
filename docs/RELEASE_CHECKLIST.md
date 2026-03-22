@@ -1,6 +1,6 @@
 # Release Checklist
 
-Quick checklist for publishing Markdown for Humans to VS Code Marketplace.
+Quick checklist for publishing Visual AI Markdown Editor to VS Code Marketplace.
 
 ---
 

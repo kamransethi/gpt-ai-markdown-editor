@@ -2612,6 +2612,120 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   border-color: var(--md-button-hover-bg);
 }
 
+/* ============================================
+     About Modal
+     ============================================ */
+
+.about-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-modal {
+  background: var(--md-menu-bg);
+  border: 1px solid var(--md-menu-border);
+  border-radius: var(--ui-radius-md);
+  box-shadow: 0 8px 32px var(--md-shadow-color);
+  width: 360px;
+  max-width: 90vw;
+  font-family: var(--md-font-family);
+  overflow: hidden;
+}
+
+.about-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--md-menu-border);
+}
+
+.about-modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--md-menu-fg);
+  margin: 0;
+}
+
+.about-modal-close {
+  background: none;
+  border: none;
+  color: var(--md-menu-fg);
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.about-modal-close:hover {
+  opacity: 1;
+  background: var(--md-menu-selection-bg);
+}
+
+.about-modal-body {
+  padding: 16px 20px 20px;
+}
+
+.about-modal-version {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.about-modal-label {
+  font-size: 13px;
+  color: var(--md-menu-fg);
+  opacity: 0.6;
+}
+
+.about-modal-value {
+  font-size: 13px;
+  color: var(--md-menu-fg);
+  font-weight: 500;
+}
+
+.about-modal-divider {
+  height: 1px;
+  background: var(--md-menu-border);
+  margin: 12px 0;
+}
+
+.about-modal-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.about-modal-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius-sm);
+  font-size: 13px;
+  color: var(--md-menu-fg);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.about-modal-link:hover {
+  background: var(--md-menu-selection-bg);
+}
+
+.about-modal-link svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
 /* ── AI Refine Loading ── */
 
 .ai-refine-loading {

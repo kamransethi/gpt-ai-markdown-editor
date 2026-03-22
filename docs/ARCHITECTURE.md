@@ -1,4 +1,4 @@
-# Markdown for Humans - Technical Architecture
+# Visual AI Markdown Editor - Technical Architecture
 
 **Complete technical documentation: architecture, implementation, and key technical decisions**
 

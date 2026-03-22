@@ -556,7 +556,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         
         <title>Visual AI Markdown Editor</title>
       </head>
-      <body>
+      <body data-extension-version="${this.context.extension?.packageJSON?.version || ''}">
         <div id="editor"></div>
         <script nonce="${nonce}" src="${scriptUri}"></script>
       </body>

@@ -50,6 +50,8 @@ A persistent toolbar at the top of the editor with the same formatting options, 
 - [x] **Export** — PDF, Word (DOCX)
   - [ ] **View** — Toggle outline, Source view, Copy as Markdown, Configuration, Zoom
   - [ ] Sample Text
+- **Help (?)** — About dialog with version info, documentation links, issue reporting, and community discussions
+- **Theme toggle (☀/🌙)** — Switch between light and dark editor themes
 
 ---
 

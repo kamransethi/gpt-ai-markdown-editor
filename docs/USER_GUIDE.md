@@ -59,6 +59,15 @@ Create beautiful, live-rendered diagrams using the powerful [Mermaid](https://me
 
 ---
 
+## ❓ Help & About
+
+Click the **?** button in the toolbar (next to the theme toggle) to see:
+- Current extension version
+- Quick links to documentation, changelog, features list
+- Report an issue or join community discussions
+
+---
+
 ## 🛠️ For Developers & Maintainers
 
 If you are building the extension from source, we have automated the versioning and packaging process:
@@ -73,4 +82,4 @@ This single command handles the entire release flow:
 ---
 
 ## 📄 License & Credits
-Built with ❤️ by the open-source community. Based on the original work by Concretios. Licensed under MIT.
+Built by DK-AI. Licensed under MIT.
