@@ -744,6 +744,10 @@ function initializeEditor(initialContent: string) {
                 // section wrappers so they'd leak as literal text.  Unwrap them
                 // before ProseMirror reads children of the <table> element.
                 contentElement(node: HTMLElement) {
+                  // Remove <colgroup> — only contains <col> styling hints,
+                  // no content for ProseMirror. Would leak as literal text.
+                  node.querySelectorAll(':scope > colgroup').forEach(el => el.remove());
+
                   const sections = node.querySelectorAll(
                     ':scope > thead, :scope > tbody, :scope > tfoot'
                   );
@@ -807,10 +811,10 @@ function initializeEditor(initialContent: string) {
             return currentEditor.isEditable;
           },
           options: {
-            placement: 'top',
+            placement: 'top-start',
             offset: {
               crossAxis: 0,
-              mainAxis: 12,
+              mainAxis: 20,
             },
             flip: {},
           },

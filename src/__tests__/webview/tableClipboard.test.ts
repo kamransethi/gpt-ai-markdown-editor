@@ -282,8 +282,8 @@ describe('tableClipboard utilities', () => {
 
     it('normalizes uneven row lengths', () => {
       const html = renderTableMatrixAsHtml([['A', 'B', 'C'], ['D']]);
-      // Should pad second row to 3 columns
-      expect(html).toContain('<td>D</td><td></td><td></td>');
+      // Should pad second row to 3 columns — empty cells get <p></p> for ProseMirror schema
+      expect(html).toContain('<td>D</td><td><p></p></td><td><p></p></td>');
     });
   });
 

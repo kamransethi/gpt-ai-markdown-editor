@@ -34,6 +34,10 @@ function createTableExtension() {
         {
           tag: 'table',
           contentElement(node: HTMLElement) {
+            // Remove <colgroup> — only contains <col> styling hints,
+            // no content for ProseMirror. Would leak as literal text.
+            node.querySelectorAll(':scope > colgroup').forEach(el => el.remove());
+
             const sections = node.querySelectorAll(
               ':scope > thead, :scope > tbody, :scope > tfoot'
             );
@@ -132,6 +136,7 @@ describe('tbody regression — no section wrappers leak into tables', () => {
       expect(output).not.toContain('&lt;tbody');
       expect(output).not.toContain('&lt;thead');
       expect(output).not.toContain('&lt;tfoot');
+      expect(output).not.toContain('&lt;colgroup');
       return output;
     }
 
@@ -166,6 +171,18 @@ describe('tbody regression — no section wrappers leak into tables', () => {
       const googleHtml =
         '<table style="border:none;border-collapse:collapse;table-layout:fixed;width:468pt"><colgroup><col /><col /></colgroup><tbody><tr style="height:0pt"><td><p><span>Name</span></p></td><td><p><span>Value</span></p></td></tr><tr style="height:0pt"><td><p><span>Test</span></p></td><td><p><span>123</span></p></td></tr></tbody></table>';
       insertAndCheck(googleHtml);
+    });
+
+    it('strips <colgroup> from browser clipboard HTML (colgroup regression)', () => {
+      // Browser clipboard HTML for a copied markdown table typically includes <colgroup>.
+      // contentElement hook must strip it so ProseMirror doesn't hoist it as
+      // a text paragraph (which would serialize as literal "<colgroup>" in markdown).
+      const clipboardHtml =
+        '<table><colgroup><col><col><col><col></colgroup><thead><tr><th>#</th><th>Quality</th><th>Description</th><th>Features</th></tr></thead><tbody><tr><td>1</td><td>Accuracy</td><td>Gets things right</td><td>Spell check</td></tr></tbody></table>';
+      const output = insertAndCheck(clipboardHtml);
+      // Verify table data was parsed correctly
+      expect(output).toContain('Accuracy');
+      expect(output).toContain('Spell check');
     });
 
     it('round-trips a table through renderTableMatrixAsHtml', () => {

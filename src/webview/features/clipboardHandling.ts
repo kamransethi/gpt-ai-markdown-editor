@@ -32,6 +32,37 @@ function isEmbeddedEditorTarget(target: EventTarget | null): boolean {
 }
 
 /**
+ * Check if HTML contains mixed content: either multiple tables or
+ * significant non-table content alongside a table.
+ */
+function isMixedTableContent(html: string): boolean {
+  const tableCount = (html.match(/<table[\s>]/gi) || []).length;
+  if (tableCount > 1) return true;
+
+  // Strip all table content to check if there's meaningful text outside
+  const withoutTables = html.replace(/<table[\s\S]*?<\/table>/gi, '');
+  const textContent = withoutTables.replace(/<[^>]*>/g, '').trim();
+  return textContent.length > 0;
+}
+
+/**
+ * Insert a parsed table matrix into the editor — either into an existing table
+ * (if cursor is inside one) or as a new standalone table.
+ */
+function insertTableMatrix(editor: Editor, matrix: string[][]): void {
+  const activeTable = findTable(editor.state.selection.$from);
+  if (activeTable) {
+    const tr = pasteIntoCells(editor.state, matrix);
+    if (tr) {
+      editor.view.dispatch(tr);
+    }
+  } else {
+    const html = renderTableMatrixAsHtml(matrix);
+    editor.commands.insertContent(html);
+  }
+}
+
+/**
  * Set up clipboard event handlers (copy/paste) on the document.
  *
  * @param getEditor - Getter for the current TipTap editor instance.
@@ -90,63 +121,59 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
       return;
     }
 
-    const tableText =
-      clipboardData.getData('text/tab-separated-values') ||
-      clipboardData.getData('text/csv') ||
-      clipboardData.getData('text/plain') ||
-      '';
-    const parsedTable = parseClipboardTable(tableText);
+    // ── PRIORITY 1: Explicit table formats (from spreadsheets, our copy handler) ──
+    // These are intentionally set by the source app and are the most reliable.
+    const explicitTableText =
+      clipboardData.getData('text/tab-separated-values') || clipboardData.getData('text/csv');
+    if (explicitTableText) {
+      const parsedTable = parseClipboardTable(explicitTableText);
+      if (parsedTable) {
+        event.preventDefault();
+        event.stopPropagation();
+        insertTableMatrix(editor, parsedTable);
+        return;
+      }
+    }
+
+    // ── PRIORITY 2: HTML clipboard with table(s) ──
+    // Check HTML BEFORE text/plain to avoid greedily parsing mixed
+    // content (text + multiple tables) as a single tab-separated table.
+    const clipboardHtml = clipboardData.getData('text/html') || '';
+    if (clipboardHtml && /<table[\s>]/i.test(clipboardHtml)) {
+      // Single isolated table → normalize through matrix roundtrip.
+      // This strips <tbody>/<thead> wrappers and <colgroup> artifacts.
+      if (!isMixedTableContent(clipboardHtml)) {
+        const htmlTable = parseHtmlTable(clipboardHtml);
+        if (htmlTable) {
+          event.preventDefault();
+          event.stopPropagation();
+          insertTableMatrix(editor, htmlTable);
+          return;
+        }
+      }
+
+      // Mixed content (text + tables, multiple tables, full-document paste)
+      // or parseHtmlTable failed (e.g. single-column table):
+      // Let ProseMirror's native paste handler deal with it.
+      // - ProseMirror strips <meta>, <colgroup>, <style>, etc.
+      // - ProseMirror preserves data-pm-slice for within-editor round-trips
+      // - Our Table extension's contentElement hook handles <tbody>/<thead>/<tfoot>
+      return;
+    }
+
+    // ── PRIORITY 3: Plain text that looks like a table (TSV from text editors) ──
+    // Only reached when no HTML table is available — avoids the greedy-parse
+    // problem where browser text/plain mixes table tabs with non-table text.
+    const plainText = clipboardData.getData('text/plain') || '';
+    const parsedTable = parseClipboardTable(plainText);
     if (parsedTable) {
       event.preventDefault();
       event.stopPropagation();
-
-      const activeTable = findTable(editor.state.selection.$from);
-      if (activeTable) {
-        // Paste into existing table cells at cursor position
-        const tr = pasteIntoCells(editor.state, parsedTable);
-        if (tr) {
-          editor.view.dispatch(tr);
-        }
-      } else {
-        const html = renderTableMatrixAsHtml(parsedTable);
-        editor.commands.insertContent(html);
-      }
+      insertTableMatrix(editor, parsedTable);
       return;
     }
 
-    // Check if HTML clipboard contains a table — parse it into a clean matrix
-    // to avoid <tbody> leaking through when TipTap processes the raw HTML
-    const clipboardHtml = clipboardData.getData('text/html') || '';
-    if (clipboardHtml && /<table[\s>]/i.test(clipboardHtml)) {
-      const htmlTable = parseHtmlTable(clipboardHtml);
-      if (htmlTable) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        const activeTable = findTable(editor.state.selection.$from);
-        if (activeTable) {
-          const tr = pasteIntoCells(editor.state, htmlTable);
-          if (tr) {
-            editor.view.dispatch(tr);
-          }
-        } else {
-          const html = renderTableMatrixAsHtml(htmlTable);
-          editor.commands.insertContent(html);
-        }
-        return;
-      }
-
-      // parseHtmlTable failed (e.g. single-column table) but HTML does contain
-      // a <table>.  Let TipTap handle it — our Table extension's parseHTML
-      // contentElement hook unwraps <thead>/<tbody>/<tfoot> at the DOM level.
-      // MUST preventDefault here — otherwise ProseMirror's native handler
-      // processes the raw HTML separately.
-      event.preventDefault();
-      event.stopPropagation();
-      editor.commands.insertContent(clipboardHtml);
-      return;
-    }
-
+    // ── PRIORITY 4: Rich HTML / Markdown / plain text ──
     const result = processPasteContent(clipboardData);
 
     // Images handled by imageDragDrop - don't interfere

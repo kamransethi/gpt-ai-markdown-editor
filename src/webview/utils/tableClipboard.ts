@@ -141,7 +141,12 @@ export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
   const [headerRow, ...bodyRows] = normalized;
   const renderRow = (row: string[], cellTag: 'th' | 'td') =>
     `<tr>${row
-      .map(cell => `<${cellTag}>${escapeHtml(cell).replace(/\n/g, '<br />')}</${cellTag}>`)
+      .map(cell => {
+        const content = escapeHtml(cell).replace(/\n/g, '<br />');
+        // ProseMirror requires at least one block node inside table cells.
+        // Empty <td></td> violates the schema — wrap with <p></p>.
+        return `<${cellTag}>${content || '<p></p>'}</${cellTag}>`;
+      })
       .join('')}</tr>`;
 
   return `<table>${renderRow(headerRow, 'th')}${bodyRows
