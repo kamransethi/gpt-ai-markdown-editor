@@ -59,8 +59,7 @@ export function getWorkspaceFolderPath(document: vscode.TextDocument): string | 
     const containing = [...folders]
       .sort((a, b) => b.uri.fsPath.length - a.uri.fsPath.length)
       .find(
-        folder =>
-          docPath === folder.uri.fsPath || docPath.startsWith(folder.uri.fsPath + path.sep)
+        folder => docPath === folder.uri.fsPath || docPath.startsWith(folder.uri.fsPath + path.sep)
       );
     return containing?.uri.fsPath ?? null;
   }

@@ -57,7 +57,6 @@ export async function handleOpenAttachmentsFolder(
   }
 }
 
-
 /**
  * Handle document export request from webview
  */
@@ -76,8 +75,6 @@ export async function handleExportDocument(
 
   await exportDocument(format, html, mermaidImages, title, document);
 }
-
-
 
 export async function handleExportTableCsv(
   message: { type: string; [key: string]: unknown },
@@ -112,7 +109,6 @@ export async function handleExportTableCsv(
     vscode.window.showErrorMessage(`Failed to export CSV: ${errorMessage}`);
   }
 }
-
 
 /**
  * Show a searchable emoji picker via VS Code QuickPick and insert the
@@ -258,7 +254,6 @@ export async function handleShowEmojiPicker(
   }
 }
 
-
 /**
  * Open the same document in VS Code's default text editor beside the
  * WYSIWYG view, scrolled to the `` ```mermaid `` fence that contains the
@@ -320,7 +315,6 @@ export async function handleEditMermaidSource(
   });
 }
 
-
 /**
  * Handle setting update request from webview
  */
@@ -345,4 +339,3 @@ export async function handleUpdateSetting(
     console.error(`[DK-AI] Failed to update setting: ${errorMessage}`);
   }
 }
-

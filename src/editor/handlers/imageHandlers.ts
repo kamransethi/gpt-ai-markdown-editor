@@ -80,7 +80,6 @@ export function handleResolveImageUri(
   });
 }
 
-
 /**
  * Handle workspace image drop (from VS Code file explorer)
  * Computes relative path from document to the image, or copies image if outside workspace
@@ -121,9 +120,7 @@ export async function handleWorkspaceImage(
 
   // If path is invalid or image is outside workspace, copy it to workspace
   if (!isValidPath || !withinWorkspace) {
-    console.log(
-      `[DK-AI] Image is outside workspace or has invalid path, copying to workspace...`
-    );
+    console.log(`[DK-AI] Image is outside workspace or has invalid path, copying to workspace...`);
 
     try {
       // Read the source image
@@ -225,7 +222,6 @@ export async function handleWorkspaceImage(
   });
 }
 
-
 /**
  * Handle image save from webview
  * Saves the image to the workspace and returns the relative path
@@ -294,8 +290,7 @@ export async function handleSaveImage(
     // Markdown link should always be relative to the markdown file directory (portable in git).
     const docDir = getDocumentDirectory(document);
     const markdownDir =
-      docDir ??
-      (document.uri.scheme === 'file' ? path.dirname(document.uri.fsPath) : os.homedir());
+      docDir ?? (document.uri.scheme === 'file' ? path.dirname(document.uri.fsPath) : os.homedir());
     let relativePath = path.relative(markdownDir, imagePath).replace(/\\/g, '/');
 
     if (!relativePath.startsWith('..') && !relativePath.startsWith('./')) {
@@ -324,7 +319,6 @@ export async function handleSaveImage(
     });
   }
 }
-
 
 /**
  * Compute image reference counts across the workspace for UI previews.
@@ -404,7 +398,6 @@ export async function handleGetImageReferences(
   }
 }
 
-
 /**
  * Find all markdown files that reference an image
  */
@@ -477,7 +470,6 @@ export async function findImageReferences(
   return results;
 }
 
-
 /**
  * Update image references in markdown files
  */
@@ -531,8 +523,6 @@ export async function updateImageReferences(
 
   return filesUpdated;
 }
-
-
 
 export async function handleCheckImageRename(
   message: { type: string; [key: string]: unknown },
@@ -596,7 +586,6 @@ export async function handleCheckImageRename(
     });
   }
 }
-
 
 /**
  * Handle image rename request from webview
@@ -668,9 +657,7 @@ export async function handleRenameImage(
       try {
         await vscode.workspace.fs.delete(newUri, { useTrash: true });
       } catch (error) {
-        console.warn(
-          `[DK-AI] Could not move existing file to trash, deleting directly: ${error}`
-        );
+        console.warn(`[DK-AI] Could not move existing file to trash, deleting directly: ${error}`);
         await vscode.workspace.fs.delete(newUri);
       }
     }
@@ -731,7 +718,6 @@ export async function handleRenameImage(
     });
   }
 }
-
 
 /**
  * Check if image is in workspace
@@ -808,7 +794,6 @@ export async function handleCheckImageInWorkspace(
   }
 }
 
-
 /**
  * Get image metadata (file size, dimensions, last modified, etc.)
  */
@@ -881,7 +866,6 @@ export async function handleGetImageMetadata(
   }
 }
 
-
 /**
  * Handle reveal image in OS file manager (Finder/Explorer)
  */
@@ -931,7 +915,6 @@ export async function handleRevealImageInOS(
   }
 }
 
-
 /**
  * Handle reveal image in VS Code Explorer
  */
@@ -980,7 +963,6 @@ export async function handleRevealImageInExplorer(
     vscode.window.showErrorMessage(`Failed to reveal image: ${errorMessage}`);
   }
 }
-
 
 /**
  * Copy local image (outside workspace) to workspace
@@ -1075,4 +1057,3 @@ export async function handleCopyLocalImageToWorkspace(
     });
   }
 }
-

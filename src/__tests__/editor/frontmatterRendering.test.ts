@@ -33,7 +33,10 @@ describe('MarkdownEditorProvider frontmatter rendering', () => {
     const document = createDocument(content);
     const webview = { postMessage: jest.fn() };
 
-    (provider.sync as DocumentSync).updateWebview(document as unknown as TextDocument, webview as unknown as import('vscode').Webview);
+    (provider.sync as DocumentSync).updateWebview(
+      document as unknown as TextDocument,
+      webview as unknown as import('vscode').Webview
+    );
 
     expect(webview.postMessage).toHaveBeenCalledTimes(1);
     const payload = (webview.postMessage as jest.Mock).mock.calls[0][0];
@@ -54,7 +57,10 @@ describe('MarkdownEditorProvider frontmatter rendering', () => {
     const webview = { postMessage: jest.fn() };
 
     // Seed any internal caches via updateWebview
-    (provider.sync as DocumentSync).updateWebview(document, webview as unknown as import('vscode').Webview);
+    (provider.sync as DocumentSync).updateWebview(
+      document,
+      webview as unknown as import('vscode').Webview
+    );
 
     const editedFenced = ['```yaml', '---', 'title: New', '---', '```', '', '# Heading'].join('\n');
 

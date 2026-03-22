@@ -182,9 +182,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
     it('should return document directory for file scheme', () => {
       const document = createMockTextDocument('content');
       document.uri = { scheme: 'file', fsPath: '/workspace/test.md' } as unknown as vscode.Uri;
-      const docDir = pathUtils.getDocumentDirectory(
-        document as unknown as vscode.TextDocument
-      );
+      const docDir = pathUtils.getDocumentDirectory(document as unknown as vscode.TextDocument);
       expect(docDir).toBe('/workspace');
     });
 
@@ -199,9 +197,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       ];
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
 
-      const docDir = pathUtils.getDocumentDirectory(
-        document as unknown as vscode.TextDocument
-      );
+      const docDir = pathUtils.getDocumentDirectory(document as unknown as vscode.TextDocument);
       expect(docDir).toBe('/workspace');
     });
 
@@ -215,9 +211,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
         undefined;
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
 
-      const docDir = pathUtils.getDocumentDirectory(
-        document as unknown as vscode.TextDocument
-      );
+      const docDir = pathUtils.getDocumentDirectory(document as unknown as vscode.TextDocument);
       expect(docDir).toBeNull();
     });
 
@@ -234,9 +228,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
         uri: { fsPath: '/wrong-workspace' },
       });
 
-      const docDir = pathUtils.getDocumentDirectory(
-        document as unknown as vscode.TextDocument
-      );
+      const docDir = pathUtils.getDocumentDirectory(document as unknown as vscode.TextDocument);
       // Should use workspaceFolders[0], not getWorkspaceFolder result
       expect(docDir).toBe('/workspace');
     });
@@ -246,9 +238,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
     it('should return document directory for file scheme', () => {
       const document = createMockTextDocument('content');
       document.uri = { scheme: 'file', fsPath: '/workspace/test.md' } as unknown as vscode.Uri;
-      const basePath = pathUtils.getImageBasePath(
-        document as unknown as vscode.TextDocument
-      );
+      const basePath = pathUtils.getImageBasePath(document as unknown as vscode.TextDocument);
       expect(basePath).toBe('/workspace');
     });
 
@@ -263,9 +253,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       ];
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
 
-      const basePath = pathUtils.getImageBasePath(
-        document as unknown as vscode.TextDocument
-      );
+      const basePath = pathUtils.getImageBasePath(document as unknown as vscode.TextDocument);
       expect(basePath).toBe('/workspace');
     });
 
@@ -279,9 +267,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
         undefined;
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(null);
 
-      const basePath = pathUtils.getImageBasePath(
-        document as unknown as vscode.TextDocument
-      );
+      const basePath = pathUtils.getImageBasePath(document as unknown as vscode.TextDocument);
       expect(basePath).toBe(os.homedir());
     });
   });

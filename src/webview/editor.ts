@@ -63,10 +63,7 @@ import { createTocPane, type TocPaneAnchor } from './features/tocPane';
 import { setupClipboardHandlers } from './features/clipboardHandling';
 import { createKeydownHandler } from './features/keyboardShortcuts';
 import { createLinkClickHandler } from './features/linkHandling';
-import {
-  getCurrentTableMatrix,
-  serializeTableMatrix,
-} from './utils/tableClipboard';
+import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
@@ -899,7 +896,13 @@ function initializeEditor(initialContent: string) {
           const { from, to, empty } = editor.state.selection;
           // Send position for outline tracking + selected text for Copilot/external access
           const selectedText = empty ? '' : editor.state.doc.textBetween(from, to, '\n\n', '\n');
-          vscode.postMessage({ type: MessageType.SELECTION_CHANGE, pos: from, from, to, selectedText });
+          vscode.postMessage({
+            type: MessageType.SELECTION_CHANGE,
+            pos: from,
+            from,
+            to,
+            selectedText,
+          });
         } catch (error) {
           console.warn('[DK-AI] Selection update failed:', error);
         }
@@ -1045,10 +1048,7 @@ function initializeEditor(initialContent: string) {
     document.addEventListener('keydown', keydownHandler);
 
     // Add link click handler: click = edit dialog, Ctrl/Cmd+click = navigate
-    const handleLinkClick = createLinkClickHandler(
-      () => editorInstance,
-      vscode
-    );
+    const handleLinkClick = createLinkClickHandler(() => editorInstance, vscode);
 
     // Add click handler to editor DOM
     editorInstance.view.dom.addEventListener('click', handleLinkClick);
@@ -1224,9 +1224,15 @@ window.addEventListener('message', (event: MessageEvent) => {
       }
       case MessageType.EXPORT_RESULT:
         if (message.success) {
-          vscode.postMessage({ type: MessageType.SHOW_INFO, message: 'Document exported successfully!' });
+          vscode.postMessage({
+            type: MessageType.SHOW_INFO,
+            message: 'Document exported successfully!',
+          });
         } else {
-          vscode.postMessage({ type: MessageType.SHOW_ERROR, message: `Export failed: ${message.error}` });
+          vscode.postMessage({
+            type: MessageType.SHOW_ERROR,
+            message: `Export failed: ${message.error}`,
+          });
         }
         break;
       case MessageType.SAVED:

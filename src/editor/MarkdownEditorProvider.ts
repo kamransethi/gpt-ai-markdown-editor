@@ -18,9 +18,7 @@ import { registerImageHandlers } from './handlers/imageHandlers';
 import { registerFileHandlers } from './handlers/fileHandlers';
 import { registerUiHandlers } from './handlers/uiHandlers';
 import { DocumentSync } from './handlers/documentSync';
-import {
-  getImageBasePath,
-} from './utils/pathUtils';
+import { getImageBasePath } from './utils/pathUtils';
 
 /**
  * Parse an image filename to extract source prefix
@@ -410,9 +408,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
             }
           } catch (err) {
             console.error(`[DK-AI][SAVE][${requestId}] Critical error in saveAndEdit:`, err);
-            vscode.window.showErrorMessage(
-              `Save failed: ${toErrorMessage(err)}`
-            );
+            vscode.window.showErrorMessage(`Save failed: ${toErrorMessage(err)}`);
           }
         });
         break;

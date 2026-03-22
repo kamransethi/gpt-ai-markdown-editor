@@ -37,9 +37,7 @@ function isEmbeddedEditorTarget(target: EventTarget | null): boolean {
  * @param getEditor - Getter for the current TipTap editor instance.
  * @returns Cleanup function that removes all registered listeners.
  */
-export function setupClipboardHandlers(
-  getEditor: () => Editor | null
-): () => void {
+export function setupClipboardHandlers(getEditor: () => Editor | null): () => void {
   const handleCopyAsMarkdown = () => {
     const editor = getEditor();
     if (!editor) return;

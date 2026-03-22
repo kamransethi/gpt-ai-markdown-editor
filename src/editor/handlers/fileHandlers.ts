@@ -30,8 +30,6 @@ export function registerFileHandlers(router: MessageRouter): void {
   router.register(MessageType.HANDLE_FILE_LINK_DROP, handleFileLinkDrop);
 }
 
-
-
 export async function handleOpenFileAtLocation(
   message: { type: string; [key: string]: unknown },
   _ctx: HandlerContext
@@ -63,7 +61,6 @@ export async function handleOpenFileAtLocation(
     vscode.window.showErrorMessage(`Failed to open file: ${errorMessage}`);
   }
 }
-
 
 /**
  * Handle file search request from webview
@@ -214,7 +211,6 @@ export async function handleSearchFiles(
   }
 }
 
-
 /**
  * Extract headings from a markdown file for cross-file heading linking.
  * Uses regex-based extraction since TipTap is not available on the extension side.
@@ -302,7 +298,6 @@ export async function handleGetFileHeadings(
   }
 }
 
-
 /**
  * Handle external link navigation (open in browser)
  */
@@ -334,7 +329,6 @@ export async function handleOpenExternalLink(
     vscode.window.showErrorMessage(`Failed to open link: ${errorMessage}`);
   }
 }
-
 
 /**
  * Handle image link navigation (open image in VS Code preview)
@@ -417,7 +411,6 @@ export async function handleOpenImage(
     vscode.window.showErrorMessage(`Failed to open image: ${errorMessage}`);
   }
 }
-
 
 /**
  * Handle file link navigation (open file in VS Code)
@@ -540,7 +533,6 @@ export async function handleOpenFileLink(
   }
 }
 
-
 /**
  * Handle browsing for a local file to link
  */
@@ -570,8 +562,7 @@ export async function handleBrowseLocalFile(
     if (workspacePath) {
       // Check if selected file is inside the workspace
       isOutsideWorkspace =
-        !selectedPath.startsWith(workspacePath + pathModule.sep) &&
-        selectedPath !== workspacePath;
+        !selectedPath.startsWith(workspacePath + pathModule.sep) && selectedPath !== workspacePath;
     } else {
       // No workspace open, consider it "outside" for the purpose of copying to a local folder
       isOutsideWorkspace = true;
@@ -597,9 +588,7 @@ export async function handleBrowseLocalFile(
 
           vscode.window.showInformationMessage(`Copied file to: ${mediaFolderName}/${fileName}`);
         } catch (error) {
-          vscode.window.showErrorMessage(
-            `Failed to copy file: ${toErrorMessage(error)}`
-          );
+          vscode.window.showErrorMessage(`Failed to copy file: ${toErrorMessage(error)}`);
           // Continue with original path if copy fails
         }
       }
@@ -621,8 +610,6 @@ export async function handleBrowseLocalFile(
     });
   }
 }
-
-
 
 export async function handleFileLinkDrop(
   message: { type: string; [key: string]: unknown },
@@ -656,9 +643,7 @@ export async function handleFileLinkDrop(
     const targetDir = resolveMediaTargetFolder(document, mediaFolderName, ctx.getConfig);
 
     if (!targetDir) {
-      vscode.window.showErrorMessage(
-        'Cannot determine the attachments folder for dropped files.'
-      );
+      vscode.window.showErrorMessage('Cannot determine the attachments folder for dropped files.');
       return;
     }
 
@@ -687,4 +672,3 @@ export async function handleFileLinkDrop(
     insertPosition,
   });
 }
-
