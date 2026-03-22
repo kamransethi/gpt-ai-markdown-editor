@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { WorkspaceEdit, Position, workspace } from 'vscode';
 import { MarkdownEditorProvider } from '../../editor/MarkdownEditorProvider';
+import { DocumentSync } from '../../editor/handlers/documentSync';
 
 // Helper to create a minimal mock TextDocument
 function createDocument(content: string, uri = 'file://test.md') {
@@ -38,18 +39,10 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       return true;
     });
 
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('alpha beta', document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit('alpha beta', document as unknown as vscode.TextDocument);
     expect(document.isDirty).toBe(true);
 
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit(originalContent, document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit(originalContent, document as unknown as vscode.TextDocument);
     expect(document.isDirty).toBe(false);
   });
 
@@ -74,40 +67,16 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     });
 
     // Apply multiple edits
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('edit1', document as unknown as vscode.TextDocument);
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('edit2', document as unknown as vscode.TextDocument);
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('edit3', document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit('edit1', document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit('edit2', document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit('edit3', document as unknown as vscode.TextDocument);
     expect(document.isDirty).toBe(true);
     expect(content).toBe('edit3');
 
     // Undo sequence back to original
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('edit2', document as unknown as vscode.TextDocument);
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('edit1', document as unknown as vscode.TextDocument);
-    await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit(originalContent, document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit('edit2', document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit('edit1', document as unknown as vscode.TextDocument);
+    await (provider.sync as DocumentSync).applyEdit(originalContent, document as unknown as vscode.TextDocument);
 
     expect(content).toBe(originalContent);
     expect(document.isDirty).toBe(false);
@@ -117,15 +86,11 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     const provider = new MarkdownEditorProvider({} as unknown as vscode.ExtensionContext);
     const document = createDocument('hello world');
 
-    const result = await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('hello world', document as unknown as vscode.TextDocument);
+    const result = await (provider.sync as DocumentSync).applyEdit('hello world', document as unknown as vscode.TextDocument);
 
     expect(result).toBe(true);
     expect(workspace.applyEdit).not.toHaveBeenCalled();
-    expect((provider as unknown as { pendingEdits: Map<unknown, unknown> }).pendingEdits.size).toBe(
+    expect((provider.sync as any).pendingEdits.size).toBe(
       0
     );
   });
@@ -134,11 +99,7 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     const provider = new MarkdownEditorProvider({} as unknown as vscode.ExtensionContext);
     const document = createDocument('hello world');
 
-    const result = await (
-      provider as unknown as {
-        applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
-      }
-    ).applyEdit('hi world', document as unknown as vscode.TextDocument);
+    const result = await (provider.sync as DocumentSync).applyEdit('hi world', document as unknown as vscode.TextDocument);
 
     expect(result).toBe(true);
     expect(workspace.applyEdit).toHaveBeenCalledTimes(1);
@@ -149,7 +110,7 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     const replaces = (lastCall as unknown as { replaces?: Array<{ text: string }> }).replaces;
     expect(replaces).toHaveLength(1);
     expect(replaces?.[0]?.text).toBe('hi world');
-    expect((provider as unknown as { pendingEdits: Map<unknown, unknown> }).pendingEdits.size).toBe(
+    expect((provider.sync as any).pendingEdits.size).toBe(
       1
     );
   });
@@ -159,16 +120,12 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     const document = createDocument('same content');
     const webview = { postMessage: jest.fn() };
 
-    (provider as unknown as { lastWebviewContent: Map<string, string> }).lastWebviewContent.set(
+    (provider.sync as any).lastWebviewContent.set(
       document.uri.toString(),
       'same content'
     );
 
-    (
-      provider as unknown as {
-        updateWebview: (doc: vscode.TextDocument, wv: { postMessage: jest.Mock }) => void;
-      }
-    ).updateWebview(document as unknown as vscode.TextDocument, webview);
+    (provider.sync as DocumentSync).updateWebview(document as unknown as vscode.TextDocument, webview as unknown as vscode.Webview);
 
     expect(webview.postMessage).not.toHaveBeenCalled();
   });
@@ -178,16 +135,12 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     const document = createDocument('fresh content');
     const webview = { postMessage: jest.fn() };
 
-    (provider as unknown as { lastWebviewContent: Map<string, string> }).lastWebviewContent.set(
+    (provider.sync as any).lastWebviewContent.set(
       document.uri.toString(),
       'old content'
     );
 
-    (
-      provider as unknown as {
-        updateWebview: (doc: vscode.TextDocument, wv: { postMessage: jest.Mock }) => void;
-      }
-    ).updateWebview(document as unknown as vscode.TextDocument, webview);
+    (provider.sync as DocumentSync).updateWebview(document as unknown as vscode.TextDocument, webview as unknown as vscode.Webview);
 
     expect(webview.postMessage).toHaveBeenCalledTimes(1);
     const payload = (webview.postMessage as jest.Mock).mock.calls[0][0];

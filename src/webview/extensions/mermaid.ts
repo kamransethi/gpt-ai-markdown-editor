@@ -5,6 +5,7 @@
  */
 
 import { Node, mergeAttributes } from '@tiptap/core';
+import { MessageType } from '../../shared/messageTypes';
 import mermaid from 'mermaid';
 
 /**
@@ -269,7 +270,7 @@ export const Mermaid = Node.create({
         const vscodeApi = (window as any).vscode;
         if (vscodeApi) {
           vscodeApi.postMessage({
-            type: 'editMermaidSource',
+            type: MessageType.EDIT_MERMAID_SOURCE,
             code: currentContent,
           });
         }

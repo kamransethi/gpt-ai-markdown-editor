@@ -1,6 +1,7 @@
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/core';
 import { getCachedImageMetadata } from '../features/imageMetadata';
+import { MessageType } from '../../shared/messageTypes';
 
 type ImageReferenceMatch = { line: number; text: string };
 type ImageReferencesPayload = {
@@ -55,7 +56,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
         return new Promise(resolve => {
           const requestId = `resolve-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
           setCallbackWithTimeout(uriResolveCallbacks, requestId, resolve);
-          vscode.postMessage({ type: 'resolveImageUri', requestId, relativePath });
+          vscode.postMessage({ type: MessageType.RESOLVE_IMAGE_URI, requestId, relativePath });
         });
       };
 
@@ -63,7 +64,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
         return new Promise(resolve => {
           const requestId = `refs-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
           setCallbackWithTimeout(imageReferencesCallbacks, requestId, resolve as any);
-          vscode.postMessage({ type: 'getImageReferences', requestId, imagePath });
+          vscode.postMessage({ type: MessageType.GET_IMAGE_REFERENCES, requestId, imagePath });
         });
       };
 
@@ -71,7 +72,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
         return new Promise(resolve => {
           const requestId = `renamecheck-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
           setCallbackWithTimeout(imageRenameCheckCallbacks, requestId, resolve as any);
-          vscode.postMessage({ type: 'checkImageRename', requestId, oldPath, newName });
+          vscode.postMessage({ type: MessageType.CHECK_IMAGE_RENAME, requestId, oldPath, newName });
         });
       };
 
@@ -80,7 +81,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
         if (!message || !message.type) return;
 
         switch (message.type) {
-          case 'imageWorkspaceCheck': {
+          case MessageType.IMAGE_WORKSPACE_CHECK: {
             const requestId = message.requestId as string;
             const callbacks = (window as any)._workspaceCheckCallbacks;
             if (callbacks && callbacks.has(requestId)) {
@@ -92,7 +93,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
-          case 'imageReferences': {
+          case MessageType.IMAGE_REFERENCES: {
             const requestId = message.requestId as string;
             const callback = imageReferencesCallbacks.get(requestId);
             if (callback) {
@@ -100,7 +101,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
-          case 'imageRenameCheck': {
+          case MessageType.IMAGE_RENAME_CHECK: {
             const requestId = message.requestId as string;
             const callback = imageRenameCheckCallbacks.get(requestId);
             if (callback) {
@@ -108,7 +109,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
-          case 'imageMetadata': {
+          case MessageType.IMAGE_METADATA: {
             const requestId = message.requestId as string;
             const metadata = message.metadata;
             const callbacks = (window as any)._metadataCallbacks;
@@ -154,7 +155,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
-          case 'localImageCopied': {
+          case MessageType.LOCAL_IMAGE_COPIED: {
             if (!editor) break;
             const relativePath = message.relativePath as string;
             const originalPath = message.originalPath as string;
@@ -192,7 +193,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
-          case 'localImageCopyError': {
+          case MessageType.LOCAL_IMAGE_COPY_ERROR: {
             const images = document.querySelectorAll('.markdown-image');
             for (const img of images) {
               const imgElement = img as HTMLImageElement;
@@ -202,7 +203,7 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
-          case 'imageUriResolved': {
+          case MessageType.IMAGE_URI_RESOLVED: {
             const callback = uriResolveCallbacks.get(message.requestId);
             if (callback) {
               callback(message.webviewUri);

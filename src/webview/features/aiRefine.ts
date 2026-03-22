@@ -9,6 +9,7 @@
  */
 
 import type { Editor } from '@tiptap/core';
+import { MessageType } from '../../shared/messageTypes';
 
 // ── State ───────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ export function requestAiRefine(
   }
 
   vscodeApi.postMessage({
-    type: 'aiRefine',
+    type: MessageType.AI_REFINE,
     mode,
     selectedText,
     from,

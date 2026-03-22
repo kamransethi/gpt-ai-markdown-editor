@@ -11,6 +11,8 @@
  * The actual rename operation is handled by the extension.
  */
 
+import { MessageType } from '../../shared/messageTypes';
+
 interface VsCodeApi {
   postMessage(message: unknown): void;
 }
@@ -422,7 +424,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         e.preventDefault();
         e.stopPropagation();
         vscodeApi.postMessage({
-          type: 'openFileAtLocation',
+          type: MessageType.OPEN_FILE_AT_LOCATION,
           fsPath: fileRef.fsPath,
           line: firstLine,
           openToSide: false,
@@ -434,7 +436,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
         e.preventDefault();
         e.stopPropagation();
         vscodeApi.postMessage({
-          type: 'openFileAtLocation',
+          type: MessageType.OPEN_FILE_AT_LOCATION,
           fsPath: fileRef.fsPath,
           line: firstLine,
           openToSide: true,
@@ -559,7 +561,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
       return;
     }
     vscodeApi.postMessage({
-      type: 'renameImage',
+      type: MessageType.RENAME_IMAGE,
       oldPath: imagePath,
       newName: pendingOverwriteName,
       updateAllReferences: true,
@@ -623,7 +625,7 @@ export function showImageRenameDialog(img: HTMLImageElement, vscodeApi: VsCodeAp
 
     // Send rename request to extension
     vscodeApi.postMessage({
-      type: 'renameImage',
+      type: MessageType.RENAME_IMAGE,
       oldPath: imagePath,
       newName: sanitizedName,
       updateAllReferences: true, // Default to updating all references

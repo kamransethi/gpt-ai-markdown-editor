@@ -9,6 +9,7 @@
  * @description Provides a modal dialog for inserting and editing hyperlinks.
  */
 import { getMarkRange, Editor } from '@tiptap/core';
+import { MessageType } from '../../shared/messageTypes';
 import { TextSelection } from 'prosemirror-state';
 import { buildOutlineFromEditor } from '../utils/outline';
 import { formatFileLinkLabel } from '../utils/fileLinks';
@@ -501,7 +502,7 @@ function handleFileSearch(query: string): void {
         requestId,
       });
       vscode.postMessage({
-        type: 'searchFiles',
+        type: MessageType.SEARCH_FILES,
         query: trimmedQuery,
         requestId,
       });
@@ -559,7 +560,7 @@ function requestFileHeadings(filePath: string): void {
       autocompleteDropdown.appendChild(loadingMsg);
       autocompleteDropdown.style.display = 'block';
     }
-    vscode.postMessage({ type: 'getFileHeadings', filePath, requestId });
+    vscode.postMessage({ type: MessageType.GET_FILE_HEADINGS, filePath, requestId });
   }
 }
 
@@ -787,7 +788,7 @@ export function createLinkDialog(): HTMLElement {
     browseLocalBtn.addEventListener('click', () => {
       const vscode = (window as Window & { vscode: { postMessage: (msg: any) => void } }).vscode;
       if (vscode && typeof vscode.postMessage === 'function') {
-        vscode.postMessage({ type: 'browseLocalFile' });
+        vscode.postMessage({ type: MessageType.BROWSE_LOCAL_FILE });
       }
     });
   }
@@ -795,7 +796,7 @@ export function createLinkDialog(): HTMLElement {
   // Set up message listener for local file selection
   const messageListener = (event: MessageEvent) => {
     const message = event.data;
-    if (message.type === 'localFileSelected' && isVisible && currentMode === 'file') {
+    if (message.type === MessageType.LOCAL_FILE_SELECTED && isVisible && currentMode === 'file') {
       // Normalize path
       let normalizedPath = message.path.replace(/\\/g, '/');
       if (

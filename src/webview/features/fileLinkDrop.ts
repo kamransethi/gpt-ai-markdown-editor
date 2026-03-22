@@ -1,5 +1,6 @@
 import type { Editor } from '@tiptap/core';
 import { escapeHtml } from '../utils/fileLinks';
+import { MessageType } from '../../shared/messageTypes';
 
 interface VsCodeApi {
   postMessage: (message: unknown) => void;
@@ -86,7 +87,7 @@ export function setupFileLinkDrop(editor: Editor, vscodeApi: VsCodeApi): void {
       top: dragEvent.clientY,
     })?.pos;
     vscodeApi.postMessage({
-      type: 'handleFileLinkDrop',
+      type: MessageType.HANDLE_FILE_LINK_DROP,
       sourcePath: extracted.sourcePath,
       fileName: extracted.fileName,
       insertPosition,
@@ -95,7 +96,7 @@ export function setupFileLinkDrop(editor: Editor, vscodeApi: VsCodeApi): void {
 
   const messageHandler = (event: MessageEvent) => {
     const message = event.data;
-    if (message.type !== 'insertFileLink') {
+    if (message.type !== MessageType.INSERT_FILE_LINK) {
       return;
     }
 

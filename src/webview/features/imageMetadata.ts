@@ -13,6 +13,8 @@
  * - Large images (> 600px): Full footer with all metadata
  */
 
+import { MessageType } from '../../shared/messageTypes';
+
 interface VsCodeApi {
   postMessage(message: unknown): void;
 }
@@ -178,7 +180,7 @@ export function getImageMetadata(
     });
 
     vscodeApi.postMessage({
-      type: 'getImageMetadata',
+      type: MessageType.GET_IMAGE_METADATA,
       imagePath,
       requestId,
     });

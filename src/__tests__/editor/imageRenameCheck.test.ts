@@ -1,4 +1,4 @@
-import { MarkdownEditorProvider } from '../../editor/MarkdownEditorProvider';
+import { handleCheckImageRename } from '../../editor/handlers/imageHandlers';
 import * as vscode from 'vscode';
 
 jest.mock('vscode', () => ({
@@ -71,11 +71,9 @@ function createMockTextDocument(): vscode.TextDocument {
 }
 
 describe('MarkdownEditorProvider - checkImageRename', () => {
+  const mockGetConfig = <T>(_key: string, defaultValue: T): T => defaultValue;
+
   it('returns exists=true when the target filename already exists', async () => {
-    const provider = new MarkdownEditorProvider({
-      extensionUri: { fsPath: '/extension' } as vscode.Uri,
-      subscriptions: [],
-    } as unknown as vscode.ExtensionContext);
     const document = createMockTextDocument();
     const mockWebview = { postMessage: jest.fn() };
 
@@ -97,18 +95,9 @@ describe('MarkdownEditorProvider - checkImageRename', () => {
       throw new Error(`Unexpected path: ${uri.fsPath}`);
     });
 
-    await (
-      provider as unknown as {
-        handleCheckImageRename: (
-          message: unknown,
-          doc: vscode.TextDocument,
-          webview: { postMessage: jest.Mock }
-        ) => Promise<void>;
-      }
-    ).handleCheckImageRename(
+    await handleCheckImageRename(
       { type: 'checkImageRename', requestId: 'req-1', oldPath: './images/cat.png', newName: 'dog' },
-      document,
-      mockWebview
+      { document, webview: mockWebview as unknown as vscode.Webview, getConfig: mockGetConfig }
     );
 
     expect(mockWebview.postMessage).toHaveBeenCalledWith(

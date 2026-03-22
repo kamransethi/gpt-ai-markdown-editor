@@ -27,6 +27,7 @@ import {
 } from './imageConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
 import { devLog } from '../utils/devLog';
+import { MessageType } from '../../shared/messageTypes';
 
 /**
  * Track images currently being saved to prevent document sync race conditions
@@ -235,7 +236,7 @@ async function handleWorkspaceImageDrop(
   // For workspace images, we ask the extension to handle the copy/link
   // Send message to extension with the source path
   vscodeApi.postMessage({
-    type: 'handleWorkspaceImage',
+    type: MessageType.HANDLE_WORKSPACE_IMAGE,
     sourcePath: filePath,
     fileName: fileName,
     insertPosition: pos,
@@ -468,15 +469,15 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
 
   // Only log our messages
   if (
-    message.type === 'imageSaved' ||
-    message.type === 'imageError' ||
-    message.type === 'insertWorkspaceImage'
+    message.type === MessageType.IMAGE_SAVED ||
+    message.type === MessageType.IMAGE_ERROR ||
+    message.type === MessageType.INSERT_WORKSPACE_IMAGE
   ) {
     devLog('[DK-AI] Received message from extension:', message.type, message);
   }
 
   switch (message.type) {
-    case 'imageSaved': {
+    case MessageType.IMAGE_SAVED: {
       // Update placeholder with final path
       devLog(
         `[DK-AI] Processing imageSaved: placeholderId=${message.placeholderId}, newSrc=${message.newSrc}`
@@ -487,7 +488,7 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
       devLog(`[DK-AI] Removed from pending saves. Remaining: ${pendingImageSaves.size}`);
       break;
     }
-    case 'imageError': {
+    case MessageType.IMAGE_ERROR: {
       // Remove placeholder on error
       console.error('[DK-AI] Image save failed:', message.error);
       removeImagePlaceholder(message.placeholderId, editor);
@@ -496,7 +497,7 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
       devLog(`[DK-AI] Removed from pending saves (error). Remaining: ${pendingImageSaves.size}`);
       break;
     }
-    case 'insertWorkspaceImage': {
+    case MessageType.INSERT_WORKSPACE_IMAGE: {
       // Insert image from workspace with relative path
       devLog(`[DK-AI] Inserting workspace image: ${message.relativePath}, alt: ${message.altText}`);
       insertWorkspaceImage(editor, message.relativePath, message.altText, message.insertPosition);
@@ -689,7 +690,7 @@ export async function insertImage(
     );
 
     vscodeApi.postMessage({
-      type: 'saveImage',
+      type: MessageType.SAVE_IMAGE,
       placeholderId,
       name: imageName,
       data: Array.from(new Uint8Array(buffer)),

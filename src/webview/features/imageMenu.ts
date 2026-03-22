@@ -16,6 +16,7 @@
  */
 
 import type { Editor } from '@tiptap/core';
+import { MessageType } from '../../shared/messageTypes';
 import { showImageRenameDialog } from './imageRenameDialog';
 
 // Track currently open menu to close on outside click
@@ -167,7 +168,7 @@ export function showImageMenu(
         const imagePath = img.getAttribute('data-markdown-src') || img.getAttribute('src') || '';
         if (imagePath && vscodeApi && typeof (vscodeApi as any).postMessage === 'function') {
           (vscodeApi as any).postMessage({
-            type: 'revealImageInOS',
+            type: MessageType.REVEAL_IMAGE_IN_OS,
             imagePath: imagePath,
           });
         }
@@ -177,7 +178,7 @@ export function showImageMenu(
         const imagePath = img.getAttribute('data-markdown-src') || img.getAttribute('src') || '';
         if (imagePath && vscodeApi && typeof (vscodeApi as any).postMessage === 'function') {
           (vscodeApi as any).postMessage({
-            type: 'revealImageInExplorer',
+            type: MessageType.REVEAL_IMAGE_IN_EXPLORER,
             imagePath: imagePath,
           });
         }

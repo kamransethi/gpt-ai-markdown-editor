@@ -22,6 +22,7 @@ import {
 } from './imageConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
 import { modLabel } from '../utils/platform';
+import { MessageType } from '../../shared/messageTypes';
 import {
   isImageFile,
   insertImage,
@@ -314,7 +315,7 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
 
         // Send to extension to handle (will insert via insertWorkspaceImage)
         vscodeApi.postMessage({
-          type: 'handleWorkspaceImage',
+          type: MessageType.HANDLE_WORKSPACE_IMAGE,
           sourcePath: filePath,
           fileName: fileName,
           insertPosition: editor.state.selection.from,
@@ -439,7 +440,7 @@ export async function showImageInsertDialog(editor: Editor, vscodeApi: VsCodeApi
 
         // Send to extension to handle (will insert via insertWorkspaceImage)
         vscodeApi.postMessage({
-          type: 'handleWorkspaceImage',
+          type: MessageType.HANDLE_WORKSPACE_IMAGE,
           sourcePath: filePath,
           fileName: fileName,
           insertPosition: editor.state.selection.from,

@@ -16,7 +16,7 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 - *Italic Text* using single asterisks or single underscores.
 - ***Bold & Italic*** mixed together.
 - ~~Strikethrough~~ text to show deleted items.
-- ==Highlighted Text== to test highlight support (Mark extension).
+- <mark>Highlighted Text</mark> to test highlight support (Mark extension).
 - `Inline Code` for short snippets.
 - Text with a ^superscript^ and a ~~subscript~~.
 - Text with underlining ++text++.
@@ -63,7 +63,7 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 
 - [x] Completed task
 - [ ] Incomplete task
-- [ ] Task with *formatting* and ==highlight==
+- [ ] Task with *formatting* and <mark>highlight</mark>
 
 ---
 
@@ -80,12 +80,12 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 This table contains cells with bullet points separated by `<br />-` elements as requested.
 
 
-| Feature Type   | Description / Details | Status |
-| -------------- | --------------------- | ------ |
-| **Formatting** | - Bold<br />- Italic<br />- ==Highlight==       | ✅      |
-| **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra   | 🌀     |
-| **Media**      | - Images<br />- Videos<br />- Audio files         | 🎬     |
-| **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes      | 🚀     |
+| Feature Type   | Description / Details    | Status |
+| -------------- | ------------------------ | ------ |
+| **Formatting** | - Bold<br />- Italic<br />- <mark>Highlight</mark> | ✅      |
+| **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra      | 🌀     |
+| **Media**      | - Images<br />- Videos<br />- Audio files            | 🎬     |
+| **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes         | 🚀     |
 
 
 ---
@@ -226,10 +226,7 @@ Inside this collapsible section, we can have more content:
 ---
 
 
-| Feature Type   | Description / Details | Status |
-| -------------- | --------------------- | ------ |
-| **Formatting** | - Test ==Highlight==  | ✅      |
-| **Logic**      | - Logical operators   |        |
-
-
-<img src="./markdown_comprehensive_test/futuristic_landscape.png" alt="futuristic_landscape" width="392" height="392" />
+| Feature Type | Description / Details | Status |
+| ------------ | --------------------- | ------ |
+| Formatting   | - Test Highlight      | qwewq  |
+| Logic        | - Logical operators   |        |

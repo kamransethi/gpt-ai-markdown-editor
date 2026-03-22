@@ -9,6 +9,7 @@ import { MarkdownEditorProvider } from './editor/MarkdownEditorProvider';
 import { WordCountFeature } from './features/wordCount';
 import { getActiveWebviewPanel, getSelectedText } from './activeWebview';
 import { outlineViewProvider } from './features/outlineView';
+import { MessageType } from './shared/messageTypes';
 
 export function activate(context: vscode.ExtensionContext) {
   // Register the custom editor provider
@@ -98,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('gptAiMarkdownEditor.toggleTocOutlineView', () => {
       const panel = getActiveWebviewPanel();
       if (panel) {
-        panel.webview.postMessage({ type: 'toggleTocOutlineView' });
+        panel.webview.postMessage({ type: MessageType.TOGGLE_TOC_OUTLINE_VIEW });
       }
     })
   );
@@ -108,7 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('gptAiMarkdownEditor.navigateToHeading', (pos: number) => {
       const panel = getActiveWebviewPanel();
       if (panel) {
-        panel.webview.postMessage({ type: 'navigateToHeading', pos });
+        panel.webview.postMessage({ type: MessageType.NAVIGATE_TO_HEADING, pos });
       }
     })
   );

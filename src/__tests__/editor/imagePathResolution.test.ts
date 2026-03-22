@@ -6,7 +6,8 @@
  * resolve correctly in the WYSIWYG editor.
  */
 
-import { MarkdownEditorProvider, normalizeImagePath } from '../../editor/MarkdownEditorProvider';
+import { normalizeImagePath } from '../../editor/MarkdownEditorProvider';
+import { handleResolveImageUri } from '../../editor/handlers/imageHandlers';
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { createMockTextDocument } from '../../__mocks__/vscode';
@@ -216,32 +217,19 @@ describe('normalizeImagePath', () => {
       return { postMessage, asWebviewUri };
     };
 
-    const createProvider = () =>
-      new MarkdownEditorProvider({
-        extensionUri: Uri.file('/test/extension'),
-      } as unknown as vscode.ExtensionContext);
+    const mockGetConfig = <T>(_key: string, defaultValue: T): T => defaultValue;
 
     it('resolves and decodes workspace-relative image paths', () => {
-      const provider = createProvider();
       const document = createMockTextDocument('');
       const webview = createMockWebview();
 
-      (
-        provider as unknown as {
-          handleResolveImageUri: (
-            message: unknown,
-            doc: vscode.TextDocument,
-            webview: vscode.Webview
-          ) => void;
-        }
-      ).handleResolveImageUri(
+      handleResolveImageUri(
         {
           type: 'resolveImageUri',
           requestId: 'req-1',
           relativePath: 'images/Hero%20Image.png',
         },
-        document,
-        webview as unknown as vscode.Webview
+        { document, webview: webview as unknown as vscode.Webview, getConfig: mockGetConfig }
       );
 
       expect(webview.asWebviewUri).toHaveBeenCalledWith(
@@ -260,26 +248,16 @@ describe('normalizeImagePath', () => {
     });
 
     it('strips file:// scheme and decodes before resolving', () => {
-      const provider = createProvider();
       const document = createMockTextDocument('');
       const webview = createMockWebview();
 
-      (
-        provider as unknown as {
-          handleResolveImageUri: (
-            message: unknown,
-            doc: vscode.TextDocument,
-            webview: vscode.Webview
-          ) => void;
-        }
-      ).handleResolveImageUri(
+      handleResolveImageUri(
         {
           type: 'resolveImageUri',
           requestId: 'req-2',
           relativePath: 'file:///test/assets/My%20Diagram.png',
         },
-        document,
-        webview as unknown as vscode.Webview
+        { document, webview: webview as unknown as vscode.Webview, getConfig: mockGetConfig }
       );
 
       expect(webview.asWebviewUri).toHaveBeenCalledWith(

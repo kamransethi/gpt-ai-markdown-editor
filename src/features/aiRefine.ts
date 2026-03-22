@@ -8,6 +8,7 @@
  */
 
 import * as vscode from 'vscode';
+import { MessageType } from '../shared/messageTypes';
 
 // ── Prompts ─────────────────────────────────────────────────────────
 
@@ -75,7 +76,7 @@ export async function handleAiRefineRequest(
 
     if (!model) {
       webview.postMessage({
-        type: 'aiRefineResult',
+        type: MessageType.AI_REFINE_RESULT,
         success: false,
         error:
           'No language model available. Please ensure GitHub Copilot is installed and signed in.',
@@ -112,7 +113,7 @@ export async function handleAiRefineRequest(
       .trim();
 
     webview.postMessage({
-      type: 'aiRefineResult',
+      type: MessageType.AI_REFINE_RESULT,
       success: true,
       refinedText,
       from,
@@ -136,7 +137,7 @@ export async function handleAiRefineRequest(
     console.error('[DK-AI] AI Refine error:', error);
 
     webview.postMessage({
-      type: 'aiRefineResult',
+      type: MessageType.AI_REFINE_RESULT,
       success: false,
       error: errorMessage,
       from,

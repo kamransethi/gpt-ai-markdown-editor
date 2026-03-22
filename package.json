@@ -2,7 +2,7 @@
   "name": "gpt-ai-markdown-editor",
   "displayName": "Visual AI Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "publisher": "kamransethi",
   "author": {
     "name": "Kamran Sethi",

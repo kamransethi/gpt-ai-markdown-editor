@@ -13,6 +13,7 @@
  */
 
 import { MERMAID_TEMPLATES } from './mermaidTemplates';
+import { MessageType } from '../shared/messageTypes';
 import { showTableInsertDialog } from './features/tableInsert';
 import { showLinkDialog } from './features/linkDialog';
 import { showImageInsertDialog } from './features/imageInsertDialog';
@@ -1115,7 +1116,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       action: () => {
         const vscodeApi = window.vscode;
         if (vscodeApi) {
-          vscodeApi.postMessage({ type: 'showEmojiPicker' });
+          vscodeApi.postMessage({ type: MessageType.SHOW_EMOJI_PICKER });
         }
       },
       requiresFocus: true,
@@ -1988,7 +1989,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     // Persist to VS Code settings
     const vscodeApi = (window as any).vscode;
     if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
-      vscodeApi.postMessage({ type: 'updateThemeOverride', theme: newTheme });
+      vscodeApi.postMessage({ type: MessageType.UPDATE_THEME_OVERRIDE, theme: newTheme });
     }
     updateThemeIcon();
   };

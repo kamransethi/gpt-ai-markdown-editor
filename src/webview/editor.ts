@@ -59,28 +59,22 @@ import {
 } from './features/imageDragDrop';
 import { setupFileLinkDrop } from './features/fileLinkDrop';
 import { renderTableToMarkdownWithBreaks } from './utils/tableMarkdownSerializer';
-import { toggleSearchOverlay } from './features/searchOverlay';
 import { createTocPane, type TocPaneAnchor } from './features/tocPane';
-import { showLinkDialog } from './features/linkDialog';
-import { processPasteContent, parseFencedCode } from './utils/pasteHandler';
-import { copySelectionAsMarkdown } from './utils/copyMarkdown';
+import { setupClipboardHandlers } from './features/clipboardHandling';
+import { createKeydownHandler } from './features/keyboardShortcuts';
+import { createLinkClickHandler } from './features/linkHandling';
 import {
   getCurrentTableMatrix,
-  isTableSelection,
-  parseClipboardTable,
-  parseHtmlTable,
-  pasteIntoCells,
-  renderTableMatrixAsHtml,
   serializeTableMatrix,
-  serializeTableMatrixAsMarkdown,
 } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
-import { isSaveShortcut } from './utils/shortcutKeys';
 import { devLog } from './utils/devLog';
 import { collectExportContent, getDocumentTitle } from './utils/exportContent';
-import { findTable } from 'prosemirror-tables';
+import { MessageType } from '../shared/messageTypes';
+import { toErrorMessage } from '../shared/errorUtils';
+import { debounce, rafThrottle } from './utils/debounce';
 import Underline from '@tiptap/extension-underline';
 
 /**
@@ -197,27 +191,6 @@ function reconstructFromTokens(
     .join('');
 }
 
-// Helper function for slug generation (same as in linkDialog)
-function generateHeadingSlug(text: string, existingSlugs: Set<string>): string {
-  const slug = text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  let finalSlug = slug;
-  let counter = 1;
-  while (existingSlugs.has(finalSlug)) {
-    finalSlug = `${slug}-${counter}`;
-    counter++;
-  }
-
-  existingSlugs.add(finalSlug);
-  return finalSlug;
-}
-
 // Import common languages for syntax highlighting
 import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
@@ -288,7 +261,7 @@ window.vscode = vscode;
 function reportWebviewIssue(level: 'error' | 'warn' | 'info', message: string, details?: unknown) {
   try {
     vscode.postMessage({
-      type: 'webviewLog',
+      type: MessageType.WEBVIEW_LOG,
       level,
       message,
       details,
@@ -323,7 +296,7 @@ function showRuntimeErrorToUser(code: string, baseMessage: string, error?: unkno
     isDeveloperModeEnabled() && errorText ? `${baseMessage} (${errorText})` : baseMessage;
 
   vscode.postMessage({
-    type: 'showError',
+    type: MessageType.SHOW_ERROR,
     message,
   });
 }
@@ -341,7 +314,6 @@ let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
 let highlightSyntax: 'obsidian' | 'github' = 'obsidian';
 let showSelectionToolbar = true;
-let tocScrollRaf: number | null = null;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
 // Guard: suppress floating bar until first real user interaction
@@ -397,16 +369,7 @@ function updateEditorMetaBar(currentEditor: Editor | null) {
   editorMetaBar.textContent = `${words} words  •  ${characters} characters`;
 }
 
-function scheduleTocPaneSelectionRefresh() {
-  if (tocScrollRaf !== null) {
-    cancelAnimationFrame(tocScrollRaf);
-  }
-
-  tocScrollRaf = requestAnimationFrame(() => {
-    refreshTocPaneSelection();
-    tocScrollRaf = null;
-  });
-}
+const scheduleTocPaneSelectionRefresh = rafThrottle(refreshTocPaneSelection);
 
 function setDocDirty(dirty: boolean) {
   docDirty = dirty;
@@ -419,7 +382,6 @@ let lastUserEditTime = 0; // Track when user last edited
 let pendingInitialContent: string | null = null; // Content from host before editor is ready
 let hasSentReadySignal = false;
 let isDomReady = document.readyState !== 'loading';
-let outlineUpdateTimeout: number | null = null;
 
 // Hash-based sync deduplication (replaces unreliable ignoreNextUpdate boolean)
 let lastSentContentHash: string | null = null;
@@ -445,7 +407,7 @@ function createRequestId(prefix: string): string {
 
 const signalReady = () => {
   if (hasSentReadySignal) return;
-  vscode.postMessage({ type: 'ready' });
+  vscode.postMessage({ type: MessageType.READY });
   hasSentReadySignal = true;
 };
 
@@ -455,7 +417,7 @@ const signalReady = () => {
  */
 function requestHostResync(reason: string) {
   console.warn('[DK-AI][RECOVERY] Requesting host resync:', reason);
-  vscode.postMessage({ type: 'ready' });
+  vscode.postMessage({ type: MessageType.READY });
 }
 
 function isEditorDomBlank(): boolean {
@@ -489,21 +451,13 @@ const pushOutlineUpdate = () => {
   if (!editor) return;
   try {
     const outline = buildOutlineFromEditor(editor);
-    vscode.postMessage({ type: 'outlineUpdated', outline });
+    vscode.postMessage({ type: MessageType.OUTLINE_UPDATED, outline });
   } catch (error) {
     console.warn('[DK-AI] Failed to build outline:', error);
   }
 };
 
-const scheduleOutlineUpdate = () => {
-  if (outlineUpdateTimeout) {
-    clearTimeout(outlineUpdateTimeout);
-  }
-  outlineUpdateTimeout = window.setTimeout(() => {
-    pushOutlineUpdate();
-    outlineUpdateTimeout = null;
-  }, 250);
-};
+const scheduleOutlineUpdate = debounce(pushOutlineUpdate, 250);
 
 /**
  * Immediately send update (used for save shortcuts)
@@ -562,7 +516,7 @@ function saveDocument() {
 
     // Send combined edit and save to avoid race conditions
     vscode.postMessage({
-      type: 'saveAndEdit',
+      type: MessageType.SAVE_AND_EDIT,
       content: markdown,
       requestId: saveRequestId,
     });
@@ -570,7 +524,7 @@ function saveDocument() {
   } catch (error) {
     console.error('[DK-AI] Error saving document:', error);
     reportWebviewIssue('error', '[SAVE] Exception while preparing save payload', {
-      error: error instanceof Error ? error.message : String(error),
+      error: toErrorMessage(error),
     });
     showRuntimeErrorToUser(
       'save-exception',
@@ -578,14 +532,6 @@ function saveDocument() {
       error
     );
   }
-}
-
-function isEmbeddedEditorTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  return Boolean(target.closest('.mermaid-code-block, .mermaid-textarea'));
 }
 
 // Expose saveDocument globally for toolbar button
@@ -634,7 +580,7 @@ function debouncedUpdate(markdown: string) {
       }
 
       vscode.postMessage({
-        type: 'edit',
+        type: MessageType.EDIT,
         content: markdown,
       });
       updateTimeout = null;
@@ -953,7 +899,7 @@ function initializeEditor(initialContent: string) {
           const { from, to, empty } = editor.state.selection;
           // Send position for outline tracking + selected text for Copilot/external access
           const selectedText = empty ? '' : editor.state.doc.textBetween(from, to, '\n\n', '\n');
-          vscode.postMessage({ type: 'selectionChange', pos: from, from, to, selectedText });
+          vscode.postMessage({ type: MessageType.SELECTION_CHANGE, pos: from, from, to, selectedText });
         } catch (error) {
           console.warn('[DK-AI] Selection update failed:', error);
         }
@@ -1053,7 +999,7 @@ function initializeEditor(initialContent: string) {
     pushOutlineUpdate();
     try {
       const { from } = editorInstance.state.selection;
-      vscode.postMessage({ type: 'selectionChange', pos: from });
+      vscode.postMessage({ type: MessageType.SELECTION_CHANGE, pos: from });
     } catch (error) {
       console.warn('[DK-AI] Initial selection sync failed:', error);
     }
@@ -1088,74 +1034,10 @@ function initializeEditor(initialContent: string) {
     };
 
     // Handle keyboard shortcuts
-    const keydownHandler = (e: KeyboardEvent) => {
-      const isMod = e.metaKey || e.ctrlKey; // Cmd on Mac, Ctrl on Windows/Linux
-
-      // ESC key - dismiss floating selection toolbar by collapsing selection
-      if (e.key === 'Escape' && editor && !editor.state.selection.empty) {
-        const { to } = editor.state.selection;
-        editor.chain().setTextSelection(to).run();
-        return;
-      }
-
-      // Log ALL modifier key presses for debugging
-      if (isMod) {
-        devLog(`[DK-AI] Key pressed: ${e.key}, metaKey: ${e.metaKey}, ctrlKey: ${e.ctrlKey}`);
-      }
-
-      // Save shortcut - immediate save
-      if (isSaveShortcut(e)) {
-        devLog('[DK-AI] *** SAVE SHORTCUT TRIGGERED ***');
-        e.preventDefault();
-        e.stopPropagation();
-        immediateUpdate();
-
-        // Visual feedback - flash the document briefly
-        document.body.style.opacity = '0.7';
-        setTimeout(() => {
-          document.body.style.opacity = '1';
-        }, 100);
-
-        return;
-      }
-
-      // Prevent VS Code from handling markdown formatting shortcuts
-      // TipTap will handle these natively
-      const formattingShortcuts = [
-        'b', // Bold
-        'i', // Italic
-        'u', // Underline (some editors)
-      ];
-
-      if (isMod && formattingShortcuts.includes(e.key.toLowerCase())) {
-        e.stopPropagation(); // Stop event from reaching VS Code
-        devLog(`[DK-AI] Intercepted Cmd+${e.key.toUpperCase()} for editor`);
-        // TipTap will handle the formatting
-        return;
-      }
-
-      // Intercept Cmd+K for link in markdown context
-      if (isMod && e.key === 'k') {
-        e.preventDefault();
-        e.stopPropagation();
-        devLog('[DK-AI] Link shortcut');
-        if (editor) {
-          showLinkDialog(editor);
-        }
-        return;
-      }
-
-      // Intercept Cmd/Ctrl+F for in-document search
-      if (isMod && e.key === 'f') {
-        e.preventDefault();
-        e.stopPropagation();
-        devLog('[DK-AI] Search shortcut');
-        if (editor) {
-          toggleSearchOverlay(editor);
-        }
-        return;
-      }
-    };
+    const keydownHandler = createKeydownHandler({
+      getEditor: () => editor,
+      immediateUpdate,
+    });
 
     // Register handlers
     document.addEventListener('contextmenu', contextMenuHandler);
@@ -1163,73 +1045,10 @@ function initializeEditor(initialContent: string) {
     document.addEventListener('keydown', keydownHandler);
 
     // Add link click handler: click = edit dialog, Ctrl/Cmd+click = navigate
-    const handleLinkClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const link = target.closest('.markdown-link') as HTMLAnchorElement;
-      if (!link) return;
-
-      const href = link.getAttribute('href');
-      if (!href) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Ctrl+click (or Cmd+click on Mac) = navigate to link target
-      if (e.ctrlKey || e.metaKey) {
-        navigateToLink(href);
-        return;
-      }
-
-      // Regular click = open link editor dialog
-      if (editorInstance) {
-        showLinkDialog(editorInstance);
-      }
-    };
-
-    // Navigate to a link target (used by Ctrl/Cmd+click)
-    const navigateToLink = (href: string) => {
-      const vscodeApi = (window as any).vscode;
-
-      // External URLs
-      if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:')) {
-        if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
-          vscodeApi.postMessage({ type: 'openExternalLink', url: href });
-        }
-        return;
-      }
-
-      // Anchor links (heading links)
-      if (href.startsWith('#')) {
-        const slug = href.slice(1);
-        if (editorInstance) {
-          const outline = buildOutlineFromEditor(editorInstance);
-          const existingSlugs = new Set<string>();
-          const headingMap = new Map<string, number>();
-          outline.forEach(entry => {
-            const headingSlug = generateHeadingSlug(entry.text, existingSlugs);
-            headingMap.set(headingSlug, entry.pos);
-          });
-          const headingPos = headingMap.get(slug);
-          if (headingPos !== undefined) {
-            scrollToHeading(editorInstance, headingPos);
-          }
-        }
-        return;
-      }
-
-      // Image files
-      if (/\.(png|jpe?g|gif|svg|webp|bmp|ico|tiff?)$/i.test(href)) {
-        if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
-          vscodeApi.postMessage({ type: 'openImage', path: href });
-        }
-        return;
-      }
-
-      // Local file links
-      if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
-        vscodeApi.postMessage({ type: 'openFileLink', path: href });
-      }
-    };
+    const handleLinkClick = createLinkClickHandler(
+      () => editorInstance,
+      vscode
+    );
 
     // Add click handler to editor DOM
     editorInstance.view.dom.addEventListener('click', handleLinkClick);
@@ -1240,12 +1059,11 @@ function initializeEditor(initialContent: string) {
       document.removeEventListener('click', documentClickHandler);
       document.removeEventListener('keydown', keydownHandler);
       editorInstance.view.dom.removeEventListener('click', handleLinkClick);
+      cleanupClipboard();
       window.removeEventListener('scroll', onWindowScroll);
       window.removeEventListener('resize', onWindowResize);
-      if (tocScrollRaf !== null) {
-        cancelAnimationFrame(tocScrollRaf);
-        tocScrollRaf = null;
-      }
+      scheduleTocPaneSelectionRefresh.cancel();
+      scheduleOutlineUpdate.cancel();
       tocAnchors = [];
       floatingBarController?.destroy();
       floatingFormattingBar?.remove();
@@ -1363,7 +1181,7 @@ window.addEventListener('message', (event: MessageEvent) => {
     const message = event.data;
 
     switch (message.type) {
-      case 'update':
+      case MessageType.UPDATE:
         applyWebviewSettings(message);
 
         // Initialize editor with first payload to seed undo history correctly
@@ -1377,18 +1195,18 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
         updateEditorContent(message.content);
         break;
-      case 'settingsUpdate': {
+      case MessageType.SETTINGS_UPDATE: {
         applyWebviewSettings(message);
         break;
       }
 
-      case 'navigateToHeading': {
+      case MessageType.NAVIGATE_TO_HEADING: {
         if (!editor) return;
         const pos = message.pos as number;
         scrollToHeading(editor, pos);
         break;
       }
-      case 'fileSearchResults': {
+      case MessageType.FILE_SEARCH_RESULTS: {
         import('./features/linkDialog').then(({ handleFileSearchResults }) => {
           const results = message.results as Array<{ filename: string; path: string }>;
           const requestId = message.requestId as number;
@@ -1396,7 +1214,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         });
         break;
       }
-      case 'fileHeadingsResult': {
+      case MessageType.FILE_HEADINGS_RESULT: {
         import('./features/linkDialog').then(({ handleFileHeadingsResult }) => {
           const headings = message.headings as Array<{ text: string; level: number; slug: string }>;
           const requestId = message.requestId as number;
@@ -1404,14 +1222,14 @@ window.addEventListener('message', (event: MessageEvent) => {
         });
         break;
       }
-      case 'exportResult':
+      case MessageType.EXPORT_RESULT:
         if (message.success) {
-          vscode.postMessage({ type: 'showInfo', message: 'Document exported successfully!' });
+          vscode.postMessage({ type: MessageType.SHOW_INFO, message: 'Document exported successfully!' });
         } else {
-          vscode.postMessage({ type: 'showError', message: `Export failed: ${message.error}` });
+          vscode.postMessage({ type: MessageType.SHOW_ERROR, message: `Export failed: ${message.error}` });
         }
         break;
-      case 'saved':
+      case MessageType.SAVED:
         if (typeof message.requestId === 'string') {
           devLog(`[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`);
         } else {
@@ -1419,17 +1237,17 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
         setDocDirty(false);
         break;
-      case 'aiRefineResult':
+      case MessageType.AI_REFINE_RESULT:
         if (editor) {
           handleAiRefineResult(editor, message as any);
         }
         break;
-      case 'insertEmoji':
+      case MessageType.INSERT_EMOJI:
         if (editor && typeof message.emoji === 'string') {
           editor.chain().focus().insertContent(message.emoji).run();
         }
         break;
-      case 'setOutlineVisible':
+      case MessageType.SET_OUTLINE_VISIBLE:
         if (tocPaneController && typeof message.visible === 'boolean') {
           // When restoring (visible=true), respect the user's persisted preference
           const targetVisible = message.visible
@@ -1438,7 +1256,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           tocPaneController.setVisible(targetVisible);
         }
         break;
-      case 'imageUriResolved':
+      case MessageType.IMAGE_URI_RESOLVED:
         // Handled by the custom image message plugin; ignore here to avoid log noise.
         break;
       default:
@@ -1572,12 +1390,8 @@ window.addEventListener('toggleTocPane', handleToggleTocPane);
 // Backward compatibility for older toolbar event name
 window.addEventListener('toggleTocOutline', handleToggleTocPane);
 
-// Handle copy as markdown from toolbar button
-const handleCopyAsMarkdown = () => {
-  if (!editor) return;
-  copySelectionAsMarkdown(editor);
-};
-window.addEventListener('copyAsMarkdown', handleCopyAsMarkdown);
+// Set up clipboard handlers (copy, paste, copyAsMarkdown)
+const cleanupClipboard = setupClipboardHandlers(() => editor);
 
 const handleExportTableCsv = () => {
   if (!editor) {
@@ -1587,14 +1401,14 @@ const handleExportTableCsv = () => {
   const matrix = getCurrentTableMatrix(editor.state);
   if (!matrix) {
     vscode.postMessage({
-      type: 'showError',
+      type: MessageType.SHOW_ERROR,
       message: 'Place the cursor inside a table before exporting CSV.',
     });
     return;
   }
 
   vscode.postMessage({
-    type: 'exportTableCsv',
+    type: MessageType.EXPORT_TABLE_CSV,
     csv: serializeTableMatrix(matrix, ','),
   });
 };
@@ -1603,13 +1417,13 @@ window.addEventListener('exportTableCsv', handleExportTableCsv);
 // Handle open source view from toolbar button
 const handleOpenSourceView = () => {
   devLog('[DK-AI] Opening source view...');
-  vscode.postMessage({ type: 'openSourceView' });
+  vscode.postMessage({ type: MessageType.OPEN_SOURCE_VIEW });
 };
 window.addEventListener('openSourceView', handleOpenSourceView);
 
 // Handle settings button from toolbar -> open VS Code settings UI
 const handleOpenExtensionSettings = () => {
-  vscode.postMessage({ type: 'openExtensionSettings' });
+  vscode.postMessage({ type: MessageType.OPEN_EXTENSION_SETTINGS });
 };
 window.addEventListener('openExtensionSettings', handleOpenExtensionSettings);
 
@@ -1617,14 +1431,14 @@ window.addEventListener('openExtensionSettings', handleOpenExtensionSettings);
 const handleUpdateSetting = (event: Event) => {
   const detail = (event as CustomEvent).detail;
   if (detail?.key && detail?.value !== undefined) {
-    vscode.postMessage({ type: 'updateSetting', key: detail.key, value: detail.value });
+    vscode.postMessage({ type: MessageType.UPDATE_SETTING, key: detail.key, value: detail.value });
   }
 };
 window.addEventListener('updateSetting', handleUpdateSetting);
 
 // Handle attachments button from toolbar -> open attachments folder in OS explorer
 const handleOpenAttachmentsFolder = () => {
-  vscode.postMessage({ type: 'openAttachmentsFolder' });
+  vscode.postMessage({ type: MessageType.OPEN_ATTACHMENTS_FOLDER });
 };
 window.addEventListener('openAttachmentsFolder', handleOpenAttachmentsFolder);
 
@@ -1644,7 +1458,7 @@ const handleExportDocument = async (event: Event) => {
 
     // Send to extension for export
     vscode.postMessage({
-      type: 'exportDocument',
+      type: MessageType.EXPORT_DOCUMENT,
       format,
       html: exportData.html,
       mermaidImages: exportData.mermaidImages,
@@ -1653,7 +1467,7 @@ const handleExportDocument = async (event: Event) => {
   } catch (error) {
     console.error('[DK-AI] Export failed:', error);
     vscode.postMessage({
-      type: 'showError',
+      type: MessageType.SHOW_ERROR,
       message: 'Failed to prepare document for export. See console for details.',
     });
   }
@@ -1666,7 +1480,6 @@ window.addEventListener('exportDocument', handleExportDocument);
 const customEventCleanup: Array<[string, EventListener]> = [
   ['toggleTocPane', handleToggleTocPane],
   ['toggleTocOutline', handleToggleTocPane],
-  ['copyAsMarkdown', handleCopyAsMarkdown],
   ['exportTableCsv', handleExportTableCsv],
   ['openSourceView', handleOpenSourceView],
   ['openExtensionSettings', handleOpenExtensionSettings],
@@ -1674,141 +1487,6 @@ const customEventCleanup: Array<[string, EventListener]> = [
   ['openAttachmentsFolder', handleOpenAttachmentsFolder],
   ['exportDocument', handleExportDocument as EventListener],
 ];
-
-// Handle paste - convert markdown to HTML for proper TipTap rendering
-// Must use capture phase to intercept BEFORE TipTap's default handling
-document.addEventListener(
-  'copy',
-  (event: ClipboardEvent) => {
-    if (!editor || !event.clipboardData || isEmbeddedEditorTarget(event.target)) {
-      return;
-    }
-
-    if (!isTableSelection(editor.state.selection)) {
-      return;
-    }
-
-    const matrix = getCurrentTableMatrix(editor.state);
-    if (!matrix) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.clipboardData.setData('text/plain', serializeTableMatrix(matrix, '\t'));
-    event.clipboardData.setData('text/csv', serializeTableMatrix(matrix, ','));
-    event.clipboardData.setData('text/markdown', serializeTableMatrixAsMarkdown(matrix));
-  },
-  true
-);
-
-document.addEventListener(
-  'paste',
-  (event: ClipboardEvent) => {
-    if (!editor || isEmbeddedEditorTarget(event.target)) return;
-
-    const clipboardData = event.clipboardData;
-    if (!clipboardData) return;
-
-    // If cursor is inside a code block, handle specially
-    if (editor.isActive('codeBlock')) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const plainText = clipboardData.getData('text/plain') || '';
-
-      // Check if pasted content is a fenced code block
-      const fenced = parseFencedCode(plainText);
-      const codeToInsert = fenced ? fenced.content : plainText;
-
-      // Insert as plain text (TipTap will handle it correctly in code block)
-      editor.commands.insertContent(codeToInsert);
-      return;
-    }
-
-    const tableText =
-      clipboardData.getData('text/tab-separated-values') ||
-      clipboardData.getData('text/csv') ||
-      clipboardData.getData('text/plain') ||
-      '';
-    const parsedTable = parseClipboardTable(tableText);
-    if (parsedTable) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const activeTable = findTable(editor.state.selection.$from);
-      if (activeTable) {
-        // Paste into existing table cells at cursor position
-        const tr = pasteIntoCells(editor.state, parsedTable);
-        if (tr) {
-          editor.view.dispatch(tr);
-        }
-      } else {
-        const html = renderTableMatrixAsHtml(parsedTable);
-        editor.commands.insertContent(html);
-      }
-      return;
-    }
-
-    // Check if HTML clipboard contains a table — parse it into a clean matrix
-    // to avoid <tbody> leaking through when TipTap processes the raw HTML
-    const clipboardHtml = clipboardData.getData('text/html') || '';
-    if (clipboardHtml && /<table[\s>]/i.test(clipboardHtml)) {
-      const htmlTable = parseHtmlTable(clipboardHtml);
-      if (htmlTable) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        const activeTable = findTable(editor.state.selection.$from);
-        if (activeTable) {
-          const tr = pasteIntoCells(editor.state, htmlTable);
-          if (tr) {
-            editor.view.dispatch(tr);
-          }
-        } else {
-          const html = renderTableMatrixAsHtml(htmlTable);
-          editor.commands.insertContent(html);
-        }
-        return;
-      }
-
-      // parseHtmlTable failed (e.g. single-column table) but HTML does contain
-      // a <table>.  Let TipTap handle it — our Table extension's parseHTML
-      // contentElement hook unwraps <thead>/<tbody>/<tfoot> at the DOM level.
-      // MUST preventDefault here — otherwise ProseMirror's native handler
-      // processes the raw HTML separately.
-      event.preventDefault();
-      event.stopPropagation();
-      editor.commands.insertContent(clipboardHtml);
-      return;
-    }
-
-    const result = processPasteContent(clipboardData);
-
-    // Images handled by imageDragDrop - don't interfere
-    if (result.isImage) {
-      return;
-    }
-
-    // If content is raw markdown, use TipTap's Markdown parser for accurate conversion
-    if (result.wasConverted && result.content && result.isMarkdown) {
-      event.preventDefault();
-      event.stopPropagation();
-      editor.commands.insertContent(result.content, { contentType: 'markdown' });
-      return;
-    }
-
-    // If we need to convert content (rich HTML), intercept early
-    if (result.wasConverted && result.content && result.isHtml) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Insert HTML - TipTap parses it into proper nodes (tables, lists, etc.)
-      editor.commands.insertContent(result.content);
-    }
-    // Otherwise: default paste behavior for plain text
-  },
-  true // Capture phase - runs BEFORE TipTap's handlers
-);
 
 // Global error handler
 window.addEventListener('error', event => {

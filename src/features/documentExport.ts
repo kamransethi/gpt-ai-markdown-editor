@@ -13,6 +13,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { toErrorMessage } from '../shared/errorUtils';
 import * as os from 'os';
 import { spawn } from 'child_process';
 import { imageSize } from 'image-size';
@@ -156,7 +157,7 @@ export async function exportDocument(
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = toErrorMessage(error);
         vscode.window.showErrorMessage(`Export failed: ${errorMessage}`);
         console.error('[DK-AI] Export error:', error);
       }
