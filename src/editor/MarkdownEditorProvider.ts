@@ -178,7 +178,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       highlightSyntax: this.getConfig<string>('highlightSyntax', 'obsidian'),
       preserveHtmlComments: this.getConfig<boolean>('preserveHtmlComments', false),
       editorZoomLevel: this.getConfig<number>('editorZoomLevel', 1),
-      showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', true),
+      showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
     };
   }
 

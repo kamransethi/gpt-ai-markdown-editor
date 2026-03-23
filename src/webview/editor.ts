@@ -34,6 +34,7 @@ import { GitHubAlerts } from './extensions/githubAlerts';
 import { ImageEnterSpacing } from './extensions/imageEnterSpacing';
 import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
+import { TaskItemClipboardFix } from './extensions/taskItemClipboardFix';
 import { TableCellEnterHandler } from './extensions/tableCellEnterHandler';
 import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservation';
 import {
@@ -310,7 +311,7 @@ let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
 let highlightSyntax: 'obsidian' | 'github' = 'obsidian';
-let showSelectionToolbar = true;
+let showSelectionToolbar = false;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
 // Guard: suppress floating bar until first real user interaction
@@ -641,6 +642,9 @@ function initializeEditor(initialContent: string) {
     if (!floatingBarController) {
       floatingBarController = createFloatingFormattingBar(() => editor);
       floatingFormattingBar = floatingBarController.element;
+      // Start hidden — the BubbleMenu plugin will show it when shouldShow returns true
+      floatingFormattingBar.style.visibility = 'hidden';
+      floatingFormattingBar.style.opacity = '0';
       document.body.appendChild(floatingFormattingBar);
     }
 
@@ -775,10 +779,9 @@ function initializeEditor(initialContent: string) {
         }),
         ListKit.configure({
           orderedList: false,
-          taskItem: {
-            nested: true,
-          },
+          taskItem: false, // Replaced by TaskItemClipboardFix below
         }),
+        TaskItemClipboardFix.configure({ nested: true }),
         OrderedListMarkdownFix,
         TabIndentation, // Enable Tab/Shift+Tab for list indentation
         ImageEnterSpacing, // Handle Enter key around images and gap cursor
@@ -811,12 +814,13 @@ function initializeEditor(initialContent: string) {
             return currentEditor.isEditable;
           },
           options: {
-            placement: 'top-start',
+            placement: 'top',
             offset: {
               crossAxis: 0,
-              mainAxis: 20,
+              mainAxis: 10,
             },
-            flip: {},
+            shift: { padding: 8 },
+            flip: false,
           },
           updateDelay: 120,
         }),
@@ -1163,6 +1167,13 @@ function applyWebviewSettings(message: any) {
 
   if (typeof message.showSelectionToolbar === 'boolean') {
     showSelectionToolbar = message.showSelectionToolbar;
+    // Immediately hide the floating toolbar when the setting is turned off,
+    // rather than waiting for the next selection change to re-evaluate shouldShow.
+    if (!showSelectionToolbar && floatingFormattingBar) {
+      floatingFormattingBar.style.visibility = 'hidden';
+      floatingFormattingBar.style.opacity = '0';
+      floatingFormattingBar.remove();
+    }
   }
 
   if (typeof message.editorZoomLevel === 'number') {

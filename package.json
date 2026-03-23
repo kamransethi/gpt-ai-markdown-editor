@@ -2,7 +2,7 @@
   "name": "gpt-ai-markdown-editor",
   "displayName": "Visual AI Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "publisher": "kamransethi",
   "author": {
     "name": "DK-AI",
@@ -281,8 +281,8 @@
         },
         "gptAiMarkdownEditor.showSelectionToolbar": {
           "type": "boolean",
-          "default": true,
-          "markdownDescription": "**Selection Toolbar**: Show a floating formatting toolbar when text is selected. Provides quick access to Bold, Italic, Highlight, and other formatting options."
+          "default": false,
+          "markdownDescription": "**Selection Toolbar (Beta)**: Show a floating formatting toolbar when text is selected. Provides quick access to Bold, Italic, Highlight, and other formatting options."
         },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",

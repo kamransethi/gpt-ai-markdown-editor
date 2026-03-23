@@ -58,14 +58,17 @@ describe('Bug 1 fix: Table with empty last cell', () => {
     expect(parsed![2]).toEqual(['A2', 'B2', '']);
   });
 
-  test('CSV roundtrip preserves empty cell', () => {
+  test('CSV roundtrip: serialization works but paste parsing is disabled', () => {
     const matrix = [
       ['Feature Type', 'Description / Details', 'Status'],
       ['Formatting', '- Test Highlight', 'qwewq'],
       ['Logic', '- Logical operators', ''],
     ];
     const csv = serializeTableMatrix(matrix, ',');
-    expect(parseClipboardTable(csv)).toEqual(matrix);
+    // CSV serialization still produces valid output for copy-to-clipboard
+    expect(csv).toContain('Feature Type');
+    // But CSV paste parsing is intentionally disabled to avoid false positives
+    expect(parseClipboardTable(csv)).toBeNull();
   });
 
   test('Markdown roundtrip preserves empty cell', () => {

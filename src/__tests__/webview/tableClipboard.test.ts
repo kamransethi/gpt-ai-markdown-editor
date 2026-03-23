@@ -114,11 +114,34 @@ describe('tableClipboard utilities', () => {
     ]);
   });
 
-  it('parses CSV clipboard data into a new table matrix', () => {
-    expect(parseClipboardTable('Name,Type\n"My File",CSV')).toEqual([
-      ['Name', 'Type'],
-      ['My File', 'CSV'],
-    ]);
+  it('does NOT parse CSV clipboard data (CSV support removed for robustness)', () => {
+    // CSV was removed because commas in prose caused false-positive table detection
+    expect(parseClipboardTable('Name,Type\n"My File",CSV')).toBeNull();
+  });
+
+  it('does NOT parse prose text with incidental commas as a table', () => {
+    const proseWithCommas = [
+      'Write failing tests FIRST',
+      'Verify tests fail (confirms tests work)',
+      'Implement feature to make tests pass',
+      'Cover positive, negative, edge cases',
+      'If bugs found: audit/debug, not quick fixes',
+    ].join('\n');
+    expect(parseClipboardTable(proseWithCommas)).toBeNull();
+  });
+
+  it('does NOT parse single line with a comma as a table', () => {
+    expect(parseClipboardTable('Hello, world')).toBeNull();
+  });
+
+  it('does NOT parse any comma-delimited text as a table', () => {
+    const csv = 'A,B,C\n1,2,3\n4,5,6';
+    expect(parseClipboardTable(csv)).toBeNull();
+  });
+
+  it('does NOT parse plain text without tabs as a table', () => {
+    expect(parseClipboardTable('Just some regular text')).toBeNull();
+    expect(parseClipboardTable('Line 1\nLine 2\nLine 3')).toBeNull();
   });
 
   describe('pasteIntoCells', () => {
@@ -365,15 +388,17 @@ describe('tableClipboard utilities', () => {
       expect(parsed).toEqual(original);
     });
 
-    it('serialized CSV round-trips through parseClipboardTable', () => {
+    it('serialized CSV does NOT round-trip through parseClipboardTable (CSV paste removed)', () => {
       const original = [
         ['Name', 'Description'],
         ['Item 1', 'A simple item'],
         ['Item 2', 'Another item'],
       ];
       const csv = serializeTableMatrix(original, ',');
-      const parsed = parseClipboardTable(csv);
-      expect(parsed).toEqual(original);
+      // CSV serialization still works for copy-to-clipboard
+      expect(csv).toBe('Name,Description\nItem 1,A simple item\nItem 2,Another item');
+      // But parsing CSV on paste is intentionally disabled
+      expect(parseClipboardTable(csv)).toBeNull();
     });
 
     it('renderTableMatrixAsHtml output can be re-parsed by parseHtmlTable', () => {

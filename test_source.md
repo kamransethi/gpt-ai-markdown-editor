@@ -2,15 +2,6 @@
 
 Welcome to the **Ultimate Markdown Stress Test**. This document is designed to push the boundaries of your markdown editor by combining every standard and extended element available.
 
-
-| 1      | 2      | 3     |
-| ------ | ------ | ----- |
-| qweqw  | eqweqw | eqwe  |
-| eqw    | qweqw  | qweqe |
-| e      | qwewqe | qe    |
-| fsdfsd | dsfsd  |       |
-
-
 ## 1. Text Formatting & Styles
 
 - **Bold Text** using double asterisks or double underscores.

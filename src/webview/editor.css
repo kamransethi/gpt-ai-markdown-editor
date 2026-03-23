@@ -2104,37 +2104,37 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   height: 16px;
 }
 
-/* TipTap BubbleMenu floating format bar */
+/* TipTap BubbleMenu floating format bar — compact 4-button version */
 .floating-formatting-bar {
   position: relative;
   z-index: 1300;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 6px;
-  border-radius: 10px;
+  gap: 1px;
+  padding: 3px;
+  border-radius: 8px;
   border: 1px solid var(--md-border);
   background: var(--md-background);
-  box-shadow: 0 8px 22px var(--md-shadow-color);
+  box-shadow: 0 4px 12px var(--md-shadow-color);
 }
 
 .floating-toolbar-button {
   border: 1px solid transparent;
   background: transparent;
   color: var(--md-foreground);
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 
 .floating-toolbar-button .toolbar-svg-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .floating-toolbar-button:hover {
@@ -2144,149 +2144,6 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
 .floating-toolbar-button.active {
   background: var(--md-button-bg);
   color: var(--md-button-fg);
-}
-
-.floating-toolbar-separator {
-  width: 1px;
-  height: 18px;
-  background: var(--md-border);
-  opacity: 0.8;
-  margin: 0 4px;
-}
-
-/* Dismiss button at the end of the floating bar */
-.floating-toolbar-dismiss {
-  opacity: 0.5;
-  width: 24px;
-  height: 24px;
-}
-
-.floating-toolbar-dismiss:hover {
-  opacity: 1;
-}
-
-.floating-toolbar-dismiss .toolbar-svg-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.floating-toolbar-dropdown {
-  position: relative;
-}
-
-.floating-toolbar-color-group {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--md-border);
-  border-radius: 7px;
-  overflow: visible;
-}
-
-.floating-toolbar-button.color-primary {
-  width: 30px;
-  position: relative;
-}
-
-.floating-toolbar-button.color-toggle {
-  width: 22px;
-  border-left: 1px solid var(--md-border);
-  border-radius: 0;
-}
-
-.floating-color-underline {
-  position: absolute;
-  left: 7px;
-  right: 7px;
-  bottom: 5px;
-  height: 2px;
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.floating-toolbar-color-menu {
-  display: none;
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  padding: 8px;
-  gap: 6px;
-  flex-wrap: wrap;
-  width: 142px;
-  border-radius: 8px;
-  border: 1px solid var(--md-dropdown-border);
-  background: var(--md-dropdown-bg);
-  box-shadow: var(--ui-shadow-lg);
-  z-index: 1200;
-}
-
-.floating-color-swatch {
-  width: 20px;
-  height: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  border-radius: 999px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--md-foreground);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.floating-color-swatch.default-swatch {
-  background: transparent;
-}
-
-.floating-color-swatch.active {
-  outline: 2px solid var(--md-focus);
-  outline-offset: 1px;
-}
-
-.floating-toolbar-button.style-button {
-  width: auto;
-  padding: 0 8px;
-  gap: 4px;
-}
-
-.floating-toolbar-button .menu-caret {
-  font-size: var(--ui-font-sm);
-  opacity: 0.8;
-}
-
-.floating-toolbar-menu {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  min-width: 136px;
-  border-radius: 8px;
-  border: 1px solid var(--md-dropdown-border);
-  background: var(--md-dropdown-bg);
-  box-shadow: var(--ui-shadow-lg);
-  overflow: hidden;
-  z-index: 1200;
-}
-
-.floating-toolbar-menu-item {
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--md-dropdown-fg);
-  text-align: left;
-  padding: 8px 10px;
-  font-size: var(--ui-font-sm);
-  cursor: pointer;
-}
-
-.floating-toolbar-menu-item:hover {
-  background: var(--md-hover-bg);
-}
-
-.floating-toolbar-menu-item.active {
-  background-color: var(--md-button-bg);
-  color: var(--md-button-fg);
-  font-weight: 600;
 }
 
 /* Custom underline icon fallback (Codicon doesn't have one) */

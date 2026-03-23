@@ -31,6 +31,7 @@ jest.mock('@tiptap/extension-list', () => ({
   __esModule: true,
   ListKit: { configure: () => ({}) },
   OrderedList: { extend: (config: unknown) => config },
+  TaskItem: { extend: () => ({ configure: () => ({}) }) },
 }));
 jest.mock('@tiptap/extension-link', () => ({
   __esModule: true,

@@ -1,7 +1,7 @@
 # Instructions for AI Agents
 
-> **Project:** VS Code WYSIWYG Markdown Editor (medium.com-style reading/writing experience)
-> **Status:** MVP ~85% complete | **Core value:** Write markdown naturally—focus on content, not syntax
+> **Project:** VS Code WYSIWYG Markdown Editor (medium.com-style reading/writing experience)  
+> **Status:** MVP ~85% complete | **Core value:** Write markdown naturally—focus on content, not syntax  
 > **Source of Truth (order):** Code + tests → plan file (`roadmap/pipeline/*.md` or `roadmap/shipped/*.md`) → these instructions. Prefer source over docs when in doubt.
 
 **Start here (quick boot-up):**
@@ -115,8 +115,8 @@ Load only what the current task requires.
 
 **Plan Management:**
 
-- [ ] Plan file created and moved to `roadmap/pipeline/[name].md` when ready
-- [ ] Update plan with implementation progress
+- [x] Plan file created and moved to `roadmap/pipeline/[name].md` when ready
+- [x] Update plan with implementation progress
 - [ ] Document decisions and test approach in plan
 
 **Testing (MANDATORY - TDD Required):**

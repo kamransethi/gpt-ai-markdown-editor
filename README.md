@@ -59,8 +59,6 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 
 ### Visual Tables
 
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/table_operations_with_right_click_menu.gif)
-
 - Resize columns by dragging
 - Insert and delete rows or columns from context menus
 - Use toolbar controls for fast structure changes
@@ -70,8 +68,6 @@ You work on the table itself, not the Markdown syntax behind it.
 
 ### Images Without File Management Pain
 
-<img src="https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/large_size_image_size_suggestion.gif" alt="Visual AI Markdown Editor image resize workflow" height="250" />
-
 - Drag and drop local images directly into the document
 - Resize visually with live feedback
 - Get file-size guidance for oversized assets
@@ -80,11 +76,7 @@ You work on the table itself, not the Markdown syntax behind it.
 
 > Original images are backed up before resize operations.
 
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/image_rename_functionality.gif)
-
 ### Real WYSIWYG Markdown Writing
-
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/basic_introduction.gif)
 
 - Persistent formatting toolbar
 - Contextual controls where you need them
@@ -100,7 +92,7 @@ You work on the table itself, not the Markdown syntax behind it.
 - GitHub-style alert blocks for notes, warnings, and tips
 - Outline sidebar for heading-based navigation
 
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/mermaid_diagram_with_one_diagram_only.gif)![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/outline_feature_with_sidebar_display.gif)![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/integration/marketplace-assets/gifs/github_alerts.gif)
+![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/outline_feature_with_sidebar_display.gif)
 
 ---
 

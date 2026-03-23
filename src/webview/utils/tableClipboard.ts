@@ -154,9 +154,13 @@ export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
     .join('')}</table>`;
 }
 
-type DelimiterDetection = '\t' | ',' | null;
-
-function detectClipboardDelimiter(text: string): DelimiterDetection {
+/**
+ * Parse tab-separated plain text into a table matrix.
+ * Only supports TSV (tab-delimited) — CSV is intentionally NOT supported
+ * because commas in prose ("positive, negative, edge cases") produce
+ * false-positive table detection. For CSV data, use HTML table paste instead.
+ */
+export function parseClipboardTable(text: string): TableMatrix | null {
   const lines = text
     .split(/\r?\n/)
     .map(line => line.trimEnd())
@@ -166,63 +170,15 @@ function detectClipboardDelimiter(text: string): DelimiterDetection {
     return null;
   }
 
-  if (lines.some(line => line.includes('\t'))) {
-    return '\t';
-  }
-
-  const commaStructuredLines = lines.filter(line => line.includes(','));
-  if (commaStructuredLines.length >= 1) {
-    return ',';
-  }
-
-  return null;
-}
-
-function parseCsvLine(line: string): string[] {
-  const values: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    const next = line[index + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        index += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (char === ',' && !inQuotes) {
-      values.push(current);
-      current = '';
-      continue;
-    }
-
-    current += char;
-  }
-
-  values.push(current);
-  return values;
-}
-
-export function parseClipboardTable(text: string): TableMatrix | null {
-  const delimiter = detectClipboardDelimiter(text);
-  if (!delimiter) {
+  // Only detect tabs — they are unambiguous (prose never contains literal tabs)
+  const hasTabLines = lines.some(line => line.includes('\t'));
+  if (!hasTabLines) {
     return null;
   }
 
-  const rows = text
-    .split(/\r?\n/)
-    .filter(line => line.length > 0)
-    .map(line => (delimiter === '\t' ? line.split('\t') : parseCsvLine(line)));
-
+  const rows = lines.map(line => line.split('\t'));
   const maxColumns = Math.max(...rows.map(row => row.length), 0);
-  if (rows.length === 0 || maxColumns < 2) {
+  if (maxColumns < 2) {
     return null;
   }
 

@@ -43,22 +43,41 @@ turndown.addRule('highlight', {
   replacement: content => `==${content}==`,
 });
 
-// Add rule for task lists (checkboxes) - must have actual checkbox input
+// Add rule for task lists (checkboxes) - handles both standard HTML checkboxes
+// and TipTap's specific task list rendering with data-checked, <label>, <div> wrappers.
 turndown.addRule('taskListItem', {
   filter: (node: HTMLElement) => {
     if (node.nodeName !== 'LI') return false;
-    // Must have checkbox input somewhere in the li
+    // TipTap uses data-type="taskItem" with data-checked attribute
+    if (node.getAttribute('data-type') === 'taskItem') return true;
+    // Standard HTML: <li> containing an <input type="checkbox">
     const checkbox = node.querySelector('input[type="checkbox"]');
     if (!checkbox) return false;
-    // Verify it's actually a checkbox (not just any input)
     return (checkbox as HTMLInputElement).type === 'checkbox';
   },
-  replacement: (content: string, node: HTMLElement) => {
-    const checkbox = node.querySelector('input[type="checkbox"]') as HTMLInputElement;
-    const isChecked = checkbox?.checked ?? false;
-    // Remove the checkbox from content and trim
-    const cleanContent = content.replace(/^\s*\[[ x]\]\s*/i, '').trim();
-    return `- [${isChecked ? 'x' : ' '}] ${cleanContent}\n`;
+  replacement: (_content: string, node: HTMLElement) => {
+    // Determine checked state: TipTap uses data-checked="true", standard uses input.checked
+    let isChecked = false;
+    const dataChecked = node.getAttribute('data-checked');
+    if (dataChecked !== null) {
+      isChecked = dataChecked === 'true';
+    } else {
+      const checkbox = node.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      isChecked = checkbox?.checked ?? false;
+    }
+    // Extract text content, ignoring <label>/<input>/<span> wrappers from TipTap.
+    // TipTap structure: <li><label><input><span></span></label><div><p>text</p></div></li>
+    // We want only the text from the <div> (content container), not the <label>.
+    const contentDiv = node.querySelector(':scope > div');
+    let text: string;
+    if (contentDiv) {
+      // TipTap structure: get text from the content <div>, ignoring the <label>
+      text = contentDiv.textContent?.trim() || '';
+    } else {
+      // Standard HTML structure: get all text, strip checkbox notation
+      text = (node.textContent || '').replace(/^\s*\[[ x]\]\s*/i, '').trim();
+    }
+    return `- [${isChecked ? 'x' : ' '}] ${text}\n`;
   },
 });
 
@@ -318,19 +337,20 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
   const plainText = getPlainText(clipboardData);
 
   // Case 1: Rich HTML from external source (Google Docs, Word, etc.)
-  // Convert HTML → Markdown → HTML (to normalize formatting)
+  // Convert HTML → Markdown, then let TipTap's Markdown parser handle insertion.
+  // This avoids a lossy markdown-it round-trip that loses task list semantics
+  // (markdown-it doesn't render `- [x]` as proper checkboxes, so TipTap
+  // wouldn't create taskItem nodes from the resulting HTML).
   if (html && isRichHtml(html, plainText)) {
     try {
       const markdown = htmlToMarkdown(html);
       if (markdown) {
-        // Convert back to HTML for TipTap insertion
-        const cleanHtml = markdownToHtml(markdown);
         return {
-          content: cleanHtml,
+          content: markdown,
           wasConverted: true,
           isImage: false,
-          isHtml: true,
-          isMarkdown: false,
+          isHtml: false,
+          isMarkdown: true,
         };
       }
     } catch {

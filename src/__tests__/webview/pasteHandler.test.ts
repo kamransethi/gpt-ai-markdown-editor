@@ -132,6 +132,46 @@ describe('pasteHandler', () => {
       expect(result).toContain('Italic text');
       expect(result).toContain('[Link](https://google.com)');
     });
+
+    it('should convert standard HTML task list items', () => {
+      const html = `<ul><li><input type="checkbox" checked> Task done</li><li><input type="checkbox"> Task todo</li></ul>`;
+      const result = htmlToMarkdown(html);
+      expect(result).toContain('- [x] Task done');
+      expect(result).toContain('- [ ] Task todo');
+    });
+
+    it('should convert TipTap task list HTML with data-checked and label/div wrappers', () => {
+      const html = `
+<ul data-type="taskList">
+  <li data-type="taskItem" data-checked="true">
+    <label><input type="checkbox" checked="checked"><span></span></label>
+    <div><p>Plan file created</p></div>
+  </li>
+  <li data-type="taskItem" data-checked="false">
+    <label><input type="checkbox"><span></span></label>
+    <div><p>Document decisions</p></div>
+  </li>
+</ul>`;
+      const result = htmlToMarkdown(html);
+      expect(result).toContain('- [x] Plan file created');
+      expect(result).toContain('- [ ] Document decisions');
+      expect(result).not.toContain('<label>');
+      expect(result).not.toContain('<div>');
+    });
+
+    it('should handle TipTap task list with bold content in items', () => {
+      const html = `
+<ul data-type="taskList">
+  <li data-type="taskItem" data-checked="false">
+    <label><input type="checkbox"><span></span></label>
+    <div><p><strong>Write failing tests FIRST</strong> (src/__tests__/)</p></div>
+  </li>
+</ul>`;
+      const result = htmlToMarkdown(html);
+      expect(result).toMatch(/- \[ \].*Write failing tests FIRST/);
+      expect(result).not.toContain('<label>');
+      expect(result).not.toContain('<div>');
+    });
   });
 
   describe('hasHtmlContent', () => {
@@ -207,15 +247,16 @@ describe('pasteHandler', () => {
       expect(result.wasConverted).toBe(false);
     });
 
-    it('should convert HTML to HTML (via markdown normalization)', () => {
+    it('should convert rich HTML to markdown for TipTap markdown parser', () => {
       const mockDataTransfer = createMockDataTransfer({
         'text/html': '<strong>Bold</strong> and <em>italic</em>',
         'text/plain': 'Bold and italic',
       });
       const result = processPasteContent(mockDataTransfer);
       expect(result.wasConverted).toBe(true);
-      expect(result.isHtml).toBe(true);
-      expect(result.content).toContain('<strong>'); // HTML output
+      expect(result.isMarkdown).toBe(true);
+      expect(result.isHtml).toBe(false);
+      expect(result.content).toContain('**Bold**'); // Markdown output
       expect(result.isImage).toBe(false);
     });
 
@@ -261,6 +302,35 @@ describe('pasteHandler', () => {
       expect(result.wasConverted).toBe(false);
       expect(result.isHtml).toBe(false);
       expect(result.content).toBe('Plain text content');
+    });
+
+    it('should convert external HTML with checkboxes to markdown (not HTML)', () => {
+      const mockDataTransfer = createMockDataTransfer({
+        'text/html': '<ul><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Write code</li></ul>',
+        'text/plain': 'Buy milk\nWrite code',
+      });
+      const result = processPasteContent(mockDataTransfer);
+      expect(result.wasConverted).toBe(true);
+      expect(result.isMarkdown).toBe(true);
+      expect(result.isHtml).toBe(false);
+      expect(result.content).toContain('- [x] Buy milk');
+      expect(result.content).toContain('- [ ] Write code');
+    });
+
+    it('should convert TipTap task list HTML to markdown (not HTML)', () => {
+      const tiptapHtml = `<ul data-type="taskList"><li data-type="taskItem" data-checked="true"><label><input type="checkbox" checked><span></span></label><div><p>Done task</p></div></li><li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Todo task</p></div></li></ul>`;
+      const mockDataTransfer = createMockDataTransfer({
+        'text/html': tiptapHtml,
+        'text/plain': 'Done task\nTodo task',
+      });
+      const result = processPasteContent(mockDataTransfer);
+      expect(result.wasConverted).toBe(true);
+      expect(result.isMarkdown).toBe(true);
+      expect(result.isHtml).toBe(false);
+      expect(result.content).toContain('- [x] Done task');
+      expect(result.content).toContain('- [ ] Todo task');
+      expect(result.content).not.toContain('<label>');
+      expect(result.content).not.toContain('<div>');
     });
   });
 

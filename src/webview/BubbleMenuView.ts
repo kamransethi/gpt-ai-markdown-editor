@@ -330,6 +330,7 @@ export function updateToolbarStates() {
 
 /**
  * Create compact floating formatting bar used by TipTap BubbleMenu.
+ * Minimal: Bold, Italic, Highlight, Link only.
  */
 export function createFloatingFormattingBar(getEditor: () => Editor | null): {
   element: HTMLElement;
@@ -338,36 +339,10 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
 } {
   ensureCodiconFont();
 
-  let preservedSelection: { from: number; to: number } | null = null;
-
-  const rememberSelection = () => {
-    const activeEditor = getEditor();
-    if (!activeEditor) return;
-    const { from, to, empty } = activeEditor.state.selection;
-    if (!empty) {
-      preservedSelection = { from, to };
-    }
-  };
-
-  const buildSelectionChain = (activeEditor: Editor) => {
-    const { empty } = activeEditor.state.selection;
-    let chain = activeEditor.chain();
-    if (empty && preservedSelection) {
-      chain = chain.setTextSelection(preservedSelection);
-    }
-    return chain.focus();
-  };
-
   const container = document.createElement('div');
   container.className = 'floating-formatting-bar';
   container.setAttribute('role', 'toolbar');
   container.setAttribute('aria-label', 'Selection formatting');
-
-  const createDivider = () => {
-    const divider = document.createElement('div');
-    divider.className = 'floating-toolbar-separator';
-    return divider;
-  };
 
   const createButton = (options: {
     className: string;
@@ -384,8 +359,6 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
     button.append(createIconElement(options.icon, 'toolbar-icon'));
 
     button.onmousedown = e => {
-      // Keep selection stable while formatting from bubble UI.
-      rememberSelection();
       e.preventDefault();
     };
 
@@ -401,211 +374,6 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
       isActive: options.isActive,
     };
   };
-
-  const headingMenu = document.createElement('div');
-  headingMenu.className = 'floating-toolbar-menu';
-
-  const colorMenu = document.createElement('div');
-  colorMenu.className = 'floating-toolbar-color-menu';
-  const colorSwatches: Array<{ value: string; element: HTMLButtonElement }> = [];
-
-  const getStoredColor = () => getPreferredTextColor();
-
-  const getSelectionColor = () => {
-    const activeEditor = getEditor();
-    if (!activeEditor) return '';
-    return getEditorTextColor(activeEditor);
-  };
-
-  const applyFontColor = (value: string) => {
-    const activeEditor = getEditor();
-    if (!activeEditor) return;
-
-    rememberSelection();
-
-    setPreferredTextColor(value);
-
-    const chain = buildSelectionChain(activeEditor);
-    if (!value) {
-      chain.unsetColor().run();
-      return;
-    }
-    chain.setColor(value).run();
-  };
-
-  const colorGroup = document.createElement('div');
-  colorGroup.className = 'floating-toolbar-color-group';
-
-  const colorPrimary = document.createElement('button');
-  colorPrimary.type = 'button';
-  colorPrimary.className = 'floating-toolbar-button color-primary';
-  colorPrimary.title = 'Toggle font color';
-  colorPrimary.setAttribute('aria-label', 'Toggle font color');
-  const colorPrimaryIcon = createIconElement(
-    { name: 'symbol-color', fallback: 'A' },
-    'toolbar-icon'
-  );
-  const colorPrimaryUnderline = document.createElement('span');
-  colorPrimaryUnderline.className = 'floating-color-underline';
-  colorPrimary.append(colorPrimaryIcon, colorPrimaryUnderline);
-
-  colorPrimary.onmousedown = e => {
-    rememberSelection();
-    e.preventDefault();
-  };
-  colorPrimary.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const activeEditor = getEditor();
-    if (!activeEditor) return;
-
-    rememberSelection();
-    const currentColor = normalizeColor(getSelectionColor());
-    const selectedColor = normalizeColor(getStoredColor());
-    if (currentColor && currentColor === selectedColor) {
-      buildSelectionChain(activeEditor).unsetColor().run();
-    } else {
-      applyFontColor(selectedColor);
-    }
-    refresh();
-  };
-
-  const colorToggle = document.createElement('button');
-  colorToggle.type = 'button';
-  colorToggle.className = 'floating-toolbar-button color-toggle';
-  colorToggle.title = 'Font color options';
-  colorToggle.setAttribute('aria-label', 'Font color options');
-  colorToggle.append(
-    createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
-  );
-  colorToggle.onmousedown = e => {
-    rememberSelection();
-    e.preventDefault();
-  };
-  colorToggle.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    const open = colorMenu.style.display === 'flex';
-    headingMenu.style.display = 'none';
-    colorMenu.style.display = open ? 'none' : 'flex';
-  };
-
-  TEXT_COLOR_OPTIONS.forEach(option => {
-    const swatch = document.createElement('button');
-    swatch.type = 'button';
-    swatch.className = 'floating-color-swatch';
-    swatch.title = option.label;
-    swatch.setAttribute('aria-label', option.label);
-    swatch.onmousedown = e => {
-      rememberSelection();
-      e.preventDefault();
-    };
-
-    if (option.value) {
-      swatch.style.backgroundColor = option.value;
-    } else {
-      swatch.classList.add('default-swatch');
-      swatch.textContent = 'A';
-    }
-
-    swatch.onclick = e => {
-      e.preventDefault();
-      e.stopPropagation();
-      applyFontColor(option.value);
-      colorMenu.style.display = 'none';
-      refresh();
-    };
-
-    colorMenu.appendChild(swatch);
-    colorSwatches.push({ value: option.value, element: swatch });
-  });
-
-  colorGroup.append(colorPrimary, colorToggle, colorMenu);
-
-  const styleButton = document.createElement('button');
-  styleButton.type = 'button';
-  styleButton.className = 'floating-toolbar-button style-button';
-  styleButton.title = 'Text style';
-  styleButton.setAttribute('aria-label', 'Text style');
-  styleButton.append(
-    createIconElement({ name: 'text-size', fallback: 'A' }, 'toolbar-icon'),
-    createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
-  );
-
-  const setHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => {
-    const activeEditor = getEditor();
-    if (!activeEditor) return;
-    activeEditor.chain().focus().setHeading({ level }).run();
-  };
-
-  const setParagraph = () => {
-    const activeEditor = getEditor();
-    if (!activeEditor) return;
-    activeEditor.chain().focus().setParagraph().run();
-  };
-
-  const styleItems = [
-    {
-      label: 'Paragraph',
-      action: () => setParagraph(),
-      isActive: () => !getEditor()?.isActive('heading'),
-    },
-    {
-      label: 'Heading 1',
-      action: () => setHeading(1),
-      isActive: () => Boolean(getEditor()?.isActive('heading', { level: 1 })),
-    },
-    {
-      label: 'Heading 2',
-      action: () => setHeading(2),
-      isActive: () => Boolean(getEditor()?.isActive('heading', { level: 2 })),
-    },
-    {
-      label: 'Heading 3',
-      action: () => setHeading(3),
-      isActive: () => Boolean(getEditor()?.isActive('heading', { level: 3 })),
-    },
-  ];
-
-  const styleItemButtons: Array<{ button: HTMLButtonElement; isActive: () => boolean }> = [];
-
-  styleItems.forEach(item => {
-    const itemButton = document.createElement('button');
-    itemButton.type = 'button';
-    itemButton.className = 'floating-toolbar-menu-item';
-    itemButton.textContent = item.label;
-    itemButton.title = item.label;
-    itemButton.onmousedown = e => {
-      rememberSelection();
-      e.preventDefault();
-    };
-    itemButton.onclick = e => {
-      e.preventDefault();
-      e.stopPropagation();
-      item.action();
-      headingMenu.style.display = 'none';
-      refresh();
-    };
-    headingMenu.appendChild(itemButton);
-    styleItemButtons.push({ button: itemButton, isActive: item.isActive });
-  });
-
-  styleButton.onmousedown = e => {
-    rememberSelection();
-    e.preventDefault();
-  };
-  styleButton.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    const open = headingMenu.style.display === 'block';
-    colorMenu.style.display = 'none';
-    headingMenu.style.display = open ? 'none' : 'block';
-  };
-
-  const styleWrapper = document.createElement('div');
-  styleWrapper.className = 'floating-toolbar-dropdown';
-  styleWrapper.append(styleButton, headingMenu);
 
   const boldButton = createButton({
     className: 'bold',
@@ -631,30 +399,6 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
     isActive: () => Boolean(getEditor()?.isActive('highlight')),
   });
 
-  const strikeButton = createButton({
-    className: 'strike',
-    title: 'Strikethrough',
-    icon: { name: 'strikethrough', fallback: 'S' },
-    action: () => getEditor()?.chain().focus().toggleStrike().run(),
-    isActive: () => Boolean(getEditor()?.isActive('strike')),
-  });
-
-  const underlineButton = createButton({
-    className: 'underline',
-    title: 'Underline',
-    icon: { name: 'underline', fallback: 'U' },
-    action: () => getEditor()?.chain().focus().toggleUnderline().run(),
-    isActive: () => Boolean(getEditor()?.isActive('underline')),
-  });
-
-  const inlineCodeButton = createButton({
-    className: 'inline-code',
-    title: 'Inline code',
-    icon: { name: 'code', fallback: '<>' },
-    action: () => getEditor()?.chain().focus().toggleCode().run(),
-    isActive: () => Boolean(getEditor()?.isActive('code')),
-  });
-
   const linkButton = createButton({
     className: 'link',
     title: 'Insert link',
@@ -667,84 +411,14 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
     isActive: () => Boolean(getEditor()?.isActive('link')),
   });
 
-  const clearFormattingButton = createButton({
-    className: 'clear-formatting',
-    title: 'Clear formatting',
-    icon: { name: 'clear-all', fallback: 'Clr' },
-    action: () => {
-      const activeEditor = getEditor();
-      if (!activeEditor) return;
-      activeEditor.chain().focus().unsetAllMarks().run();
-    },
-  });
-
-  // Keep shared control order aligned with the header toolbar:
-  // Bold -> Italic -> Highlight -> Text Color -> Strike -> Underline -> Inline Code -> Headings
   container.appendChild(boldButton.element);
   container.appendChild(italicButton.element);
   container.appendChild(highlightButton.element);
-  container.appendChild(colorGroup);
-  container.appendChild(strikeButton.element);
-  container.appendChild(underlineButton.element);
-  container.appendChild(inlineCodeButton.element);
-  container.appendChild(styleWrapper);
-  container.appendChild(createDivider());
   container.appendChild(linkButton.element);
-  container.appendChild(clearFormattingButton.element);
-  container.appendChild(createDivider());
 
-  // Dismiss button to close the floating bar
-  const dismissButton = document.createElement('button');
-  dismissButton.type = 'button';
-  dismissButton.className = 'floating-toolbar-button floating-toolbar-dismiss';
-  dismissButton.title = 'Dismiss';
-  dismissButton.setAttribute('aria-label', 'Dismiss selection toolbar');
-  dismissButton.append(createIconElement({ svgName: 'close', fallback: '×' }, 'toolbar-icon'));
-  dismissButton.onmousedown = e => e.preventDefault();
-  dismissButton.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Collapse selection to dismiss the bubble menu
-    const activeEditor = getEditor();
-    if (activeEditor) {
-      const { to } = activeEditor.state.selection;
-      activeEditor.chain().setTextSelection(to).run();
-    }
-  };
-  container.appendChild(dismissButton);
-
-  const buttons = [
-    boldButton,
-    italicButton,
-    highlightButton,
-    strikeButton,
-    underlineButton,
-    inlineCodeButton,
-    linkButton,
-    clearFormattingButton,
-  ];
-
-  const closeMenuOnOutsideClick = (event: MouseEvent) => {
-    const target = event.target as HTMLElement | null;
-    if (!target || !container.contains(target)) {
-      headingMenu.style.display = 'none';
-      colorMenu.style.display = 'none';
-    }
-  };
-  document.addEventListener('click', closeMenuOnOutsideClick);
+  const buttons = [boldButton, italicButton, highlightButton, linkButton];
 
   const refresh = () => {
-    const currentColor = normalizeColor(getSelectionColor());
-    const selectedColor = getStoredColor();
-    colorPrimaryUnderline.style.backgroundColor = currentColor || selectedColor;
-    colorPrimary.classList.toggle('active', Boolean(currentColor));
-
-    colorSwatches.forEach(({ value, element }) => {
-      const normalized = normalizeColor(value);
-      const isSelected = (currentColor || normalizeColor(selectedColor)) === normalized;
-      element.classList.toggle('active', isSelected);
-    });
-
     buttons.forEach(({ element, isActive }) => {
       if (!isActive) {
         element.classList.remove('active');
@@ -752,18 +426,12 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
       }
       element.classList.toggle('active', Boolean(isActive()));
     });
-
-    styleItemButtons.forEach(({ button, isActive }) => {
-      button.classList.toggle('active', isActive());
-    });
   };
 
   return {
     element: container,
     refresh,
-    destroy: () => {
-      document.removeEventListener('click', closeMenuOnOutsideClick);
-    },
+    destroy: () => {},
   };
 }
 
@@ -2117,31 +1785,6 @@ function showAboutModal(): void {
     }
   };
   document.addEventListener('keydown', handleEsc);
-}
-
-/**
- * Position bubble menu near selection
- */
-export function positionBubbleMenu(menu: HTMLElement) {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) {
-    menu.style.display = 'none';
-    return;
-  }
-
-  const range = selection.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-
-  if (rect.width === 0 && rect.height === 0) {
-    menu.style.display = 'none';
-    return;
-  }
-
-  menu.style.display = 'flex';
-  menu.style.position = 'fixed'; // Use fixed instead of absolute
-  menu.style.left = `${rect.left + rect.width / 2}px`;
-  menu.style.top = `${rect.top - 45}px`; // Position above selection
-  menu.style.transform = 'translateX(-50%)'; // Center horizontally
 }
 
 /**

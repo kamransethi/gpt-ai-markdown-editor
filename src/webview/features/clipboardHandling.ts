@@ -121,12 +121,37 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
       return;
     }
 
-    // ── PRIORITY 1: Explicit table formats (from spreadsheets, our copy handler) ──
-    // These are intentionally set by the source app and are the most reliable.
-    const explicitTableText =
-      clipboardData.getData('text/tab-separated-values') || clipboardData.getData('text/csv');
-    if (explicitTableText) {
-      const parsedTable = parseClipboardTable(explicitTableText);
+    // ── PRIORITY 0: ProseMirror's own clipboard (within-editor copy-paste) ──
+    // ProseMirror marks its clipboard HTML with data-pm-slice for lossless
+    // round-tripping. Let ProseMirror handle it natively — it preserves
+    // node types, attributes (checked state, etc.), and structure far better
+    // than any HTML→Markdown→HTML conversion we could do.
+    const clipboardHtml = clipboardData.getData('text/html') || '';
+    if (clipboardHtml && /data-pm-slice/i.test(clipboardHtml)) {
+      // Exception: if explicit table formats are also present (e.g. our copy
+      // handler sets TSV/CSV alongside data-pm-slice for table selections),
+      // still handle those — but only for table-specific paste-into-cells.
+      const explicitTsv = clipboardData.getData('text/tab-separated-values');
+      if (explicitTsv && findTable(editor.state.selection.$from)) {
+        const parsedTable = parseClipboardTable(explicitTsv);
+        if (parsedTable) {
+          event.preventDefault();
+          event.stopPropagation();
+          insertTableMatrix(editor, parsedTable);
+          return;
+        }
+      }
+      // Let ProseMirror's native paste handler take over
+      return;
+    }
+
+    // ── PRIORITY 1: Explicit TSV format (from spreadsheets, our copy handler) ──
+    // Tab-separated values are intentionally set by the source app and are
+    // unambiguous. CSV is NOT parsed from clipboard to avoid false positives
+    // with prose that contains commas.
+    const explicitTsv = clipboardData.getData('text/tab-separated-values');
+    if (explicitTsv) {
+      const parsedTable = parseClipboardTable(explicitTsv);
       if (parsedTable) {
         event.preventDefault();
         event.stopPropagation();
@@ -138,7 +163,6 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // ── PRIORITY 2: HTML clipboard with table(s) ──
     // Check HTML BEFORE text/plain to avoid greedily parsing mixed
     // content (text + multiple tables) as a single tab-separated table.
-    const clipboardHtml = clipboardData.getData('text/html') || '';
     if (clipboardHtml && /<table[\s>]/i.test(clipboardHtml)) {
       // Single isolated table → normalize through matrix roundtrip.
       // This strips <tbody>/<thead> wrappers and <colgroup> artifacts.
@@ -156,7 +180,6 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
       // or parseHtmlTable failed (e.g. single-column table):
       // Let ProseMirror's native paste handler deal with it.
       // - ProseMirror strips <meta>, <colgroup>, <style>, etc.
-      // - ProseMirror preserves data-pm-slice for within-editor round-trips
       // - Our Table extension's contentElement hook handles <tbody>/<thead>/<tfoot>
       return;
     }
