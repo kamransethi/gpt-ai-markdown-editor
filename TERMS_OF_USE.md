@@ -20,12 +20,12 @@ You agree to use the Extension only for lawful purposes and in accordance with t
 
 1. **Violate Laws:** Use the Extension in any way that violates any applicable federal, state, local, or international law or regulation
 2. **Harmful Activities:** Use the Extension to process, transmit, distribute, or store any material that:
-   - Is illegal, harmful, threatening, abusive, defamatory, or violates any applicable laws
-   - Infringes on intellectual property rights, copyrights, trademarks, or patents
-   - Contains viruses, malware, spyware, or other harmful code
-   - Violates privacy rights, data protection laws, or confidentiality obligations
-   - Contains sensitive personal information, financial data, or confidential information without proper authorization
-   - Violates export control laws or regulations
+  - Is illegal, harmful, threatening, abusive, defamatory, or violates any applicable laws
+  - Infringes on intellectual property rights, copyrights, trademarks, or patents
+  - Contains viruses, malware, spyware, or other harmful code
+  - Violates privacy rights, data protection laws, or confidentiality obligations
+  - Contains sensitive personal information, financial data, or confidential information without proper authorization
+  - Violates export control laws or regulations
 3. **Reverse Engineering:** Reverse engineer, decompile, or disassemble the Extension for malicious purposes
 4. **Interference:** Interfere with or disrupt the operation of the Extension or any related services
 5. **Unauthorized Access:** Attempt to gain unauthorized access to any systems or networks
@@ -96,6 +96,7 @@ The Extension and its original content, features, and functionality are owned by
 ## Modifications to Terms
 
 DK-AI reserves the right to modify these Terms at any time. We will notify users of material changes by:
+
 - Updating the "Last Updated" date
 - Posting a notice in the Extension's repository
 - Including a notice in Extension updates (when applicable)
@@ -109,6 +110,7 @@ DK-AI may terminate or suspend your access to the Extension immediately, without
 ## Open Source Contributions
 
 The Extension is open source. If you contribute code, documentation, or other materials:
+
 - You grant DK-AI and users a perpetual, worldwide, non-exclusive license to use your contributions under the MIT License
 - You represent that you have the right to grant such license
 - You agree that your contributions will be subject to the same Terms and License as the Extension
@@ -128,6 +130,7 @@ These Terms shall be governed by and construed in accordance with the laws of In
 ## Dispute Resolution
 
 Any disputes arising out of or relating to these Terms or the Extension shall be resolved through:
+
 1. Good faith negotiation
 2. If negotiation fails, binding arbitration in accordance with the Arbitration and Conciliation Act, 2015 of India
 3. Jurisdiction: Any disputes shall be subject to the exclusive jurisdiction of the courts located in Jaipur, Rajasthan, India
@@ -145,9 +148,9 @@ These Terms, together with the EULA (EULA.md) and Privacy Policy (PRIVACY_POLICY
 For questions about these Terms, please contact:
 
 **DK-AI**  
-**Email:** kamransethi@hotmail.com  
-**Website:** https://github.com/kamransethi/gpt-ai-markdown-editor  
-**GitHub:** https://github.com/kamransethi/gpt-ai-markdown-editor
+**Email:** [kamransethi@hotmail.com](mailto:kamransethi@hotmail.com)  
+**Website:** [https://github.com/kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)  
+**GitHub:** [https://github.com/kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)
 
 ---
 
