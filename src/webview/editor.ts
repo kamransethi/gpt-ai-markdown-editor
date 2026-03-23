@@ -814,15 +814,11 @@ function initializeEditor(initialContent: string) {
             return currentEditor.isEditable;
           },
           options: {
-            placement: 'top',
-            offset: {
-              crossAxis: 0,
-              mainAxis: 10,
-            },
+            placement: 'bottom',
+            offset: 6,
             shift: { padding: 8 },
-            flip: false,
           },
-          updateDelay: 120,
+          updateDelay: 100,
         }),
         TableOfContents.configure({
           anchorTypes: ['heading'],

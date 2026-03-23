@@ -306,7 +306,8 @@ describe('pasteHandler', () => {
 
     it('should convert external HTML with checkboxes to markdown (not HTML)', () => {
       const mockDataTransfer = createMockDataTransfer({
-        'text/html': '<ul><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Write code</li></ul>',
+        'text/html':
+          '<ul><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Write code</li></ul>',
         'text/plain': 'Buy milk\nWrite code',
       });
       const result = processPasteContent(mockDataTransfer);
