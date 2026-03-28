@@ -21,7 +21,7 @@ jest.mock('@tiptap/pm/view', () => {
   const Decoration = {
     inline: jest.fn(() => ({})),
   };
-  type MockDecorationSet = { map: jest.Mock };
+  type MockDecorationSet = { map: ReturnType<typeof jest.fn> };
   const makeSet = (): MockDecorationSet => ({
     map: jest.fn(() => makeSet()),
   });
@@ -61,24 +61,24 @@ import {
 
 type MockEditor = {
   view: {
-    dispatch: jest.Mock;
-    coordsAtPos: jest.Mock;
-    domAtPos: jest.Mock;
+    dispatch: ReturnType<typeof jest.fn>;
+    coordsAtPos: ReturnType<typeof jest.fn>;
+    domAtPos: ReturnType<typeof jest.fn>;
   };
   commands: {
-    setTextSelection: jest.Mock;
-    focus: jest.Mock;
+    setTextSelection: ReturnType<typeof jest.fn>;
+    focus: ReturnType<typeof jest.fn>;
   };
   state: {
-    tr: { scrollIntoView: jest.Mock };
+    tr: { scrollIntoView: ReturnType<typeof jest.fn> };
     plugins: unknown[];
     selection: { from: number; to: number };
     doc: {
-      descendants: jest.Mock;
-      textBetween: jest.Mock;
+      descendants: ReturnType<typeof jest.fn>;
+      textBetween: ReturnType<typeof jest.fn>;
     };
   };
-  registerPlugin: jest.Mock;
+  registerPlugin: ReturnType<typeof jest.fn>;
 };
 
 // Minimal DOM + editor mocks for UI behavior tests
@@ -88,7 +88,7 @@ function createMockEditorWithView(text: string): MockEditor {
   const domAtPos = jest.fn().mockReturnValue({
     node: (() => {
       const el = document.createElement('div');
-      (el as unknown as { scrollIntoView?: jest.Mock }).scrollIntoView = jest.fn();
+      (el as unknown as { scrollIntoView?: ReturnType<typeof jest.fn> }).scrollIntoView = jest.fn();
       return el;
     })(),
     offset: 0,
@@ -102,9 +102,9 @@ function createMockEditorWithView(text: string): MockEditor {
 
   const tr: {
     mapping: Record<string, unknown>;
-    scrollIntoView: jest.Mock;
-    setMeta: jest.Mock;
-    getMeta: jest.Mock;
+    scrollIntoView: ReturnType<typeof jest.fn>;
+    setMeta: ReturnType<typeof jest.fn>;
+    getMeta: ReturnType<typeof jest.fn>;
   } = {
     mapping: {},
     scrollIntoView: jest.fn(() => tr),
@@ -355,14 +355,14 @@ describe('Search Overlay UI behaviors', () => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
 
     // First match selected on initial search
-    const firstSelection = editor.commands.setTextSelection.mock.calls.at(-1)?.[0];
+    const firstSelection = editor.commands.setTextSelection.mock.calls.slice(-1)[0]?.[0];
     expect(firstSelection?.from).toBeDefined();
 
     // Press Enter to go to next match
     const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
     input.dispatchEvent(enter);
 
-    const secondSelection = editor.commands.setTextSelection.mock.calls.at(-1)?.[0];
+    const secondSelection = editor.commands.setTextSelection.mock.calls.slice(-1)[0]?.[0];
     expect(secondSelection?.from).toBeGreaterThan(firstSelection.from);
     expect(document.activeElement).toBe(input);
   });

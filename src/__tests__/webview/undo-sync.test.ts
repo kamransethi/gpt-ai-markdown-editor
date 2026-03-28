@@ -16,7 +16,10 @@ jest.mock('@tiptap/core', () => ({
 }));
 jest.mock('@tiptap/starter-kit', () => ({ __esModule: true, default: { configure: () => ({}) } }));
 jest.mock('@tiptap/markdown', () => ({ Markdown: { configure: () => ({}) } }));
-jest.mock('lowlight', () => ({ __esModule: true, lowlight: { registerLanguage: jest.fn() } }));
+jest.mock('lowlight', () => ({
+  __esModule: true,
+  createLowlight: () => ({ register: jest.fn() }),
+}));
 jest.mock('@tiptap/extension-table', () => ({
   __esModule: true,
   TableKit: { configure: () => ({}) },

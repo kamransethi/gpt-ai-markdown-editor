@@ -32,6 +32,7 @@ module.exports = {
     moduleNameMapper: {
         '^vscode$': '<rootDir>/src/__mocks__/vscode.ts',
         '^mermaid$': '<rootDir>/src/__mocks__/mermaid.ts',
+        '^marked$': '<rootDir>/node_modules/marked/lib/marked.umd.js',
         '\\.(css|less|scss)$': '<rootDir>/src/__mocks__/styleMock.ts'
     },
     setupFiles: ['<rootDir>/src/__tests__/setup.ts'],

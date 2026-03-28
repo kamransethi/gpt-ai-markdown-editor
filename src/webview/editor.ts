@@ -22,9 +22,9 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
 import Typography from '@tiptap/extension-typography';
 import DragHandle from '@tiptap/extension-drag-handle';
-import { marked as markedInstance } from 'marked';
+import { marked as markedInstance, Marked } from 'marked';
 import { CustomImage } from './extensions/customImage';
-import { lowlight } from 'lowlight';
+import { createLowlight } from 'lowlight';
 import { Mermaid } from './extensions/mermaid';
 import { CodeBlockWithUi } from './extensions/codeBlockWithUi';
 import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
@@ -203,20 +203,22 @@ import java from 'highlight.js/lib/languages/java';
 import go from 'highlight.js/lib/languages/go';
 import rust from 'highlight.js/lib/languages/rust';
 
+const lowlight = createLowlight();
+
 // Register languages with lowlight
-lowlight.registerLanguage('javascript', javascript);
-lowlight.registerLanguage('typescript', typescript);
-lowlight.registerLanguage('python', python);
-lowlight.registerLanguage('bash', bash);
-lowlight.registerLanguage('json', json);
-lowlight.registerLanguage('markdown', markdown);
-lowlight.registerLanguage('css', css);
-lowlight.registerLanguage('html', xml);
-lowlight.registerLanguage('xml', xml);
-lowlight.registerLanguage('sql', sql);
-lowlight.registerLanguage('java', java);
-lowlight.registerLanguage('go', go);
-lowlight.registerLanguage('rust', rust);
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('python', python);
+lowlight.register('bash', bash);
+lowlight.register('json', json);
+lowlight.register('markdown', markdown);
+lowlight.register('css', css);
+lowlight.register('html', xml);
+lowlight.register('xml', xml);
+lowlight.register('sql', sql);
+lowlight.register('java', java);
+lowlight.register('go', go);
+lowlight.register('rust', rust);
 
 // VS Code API type definitions
 type VsCodeApi = {
@@ -726,6 +728,16 @@ function initializeEditor(initialContent: string) {
           tabSize: 2, // 2 spaces per tab (cleaner for markdown code blocks)
         }),
         Markdown.configure({
+          // Pass a fresh isolated Marked instance to prevent marked@17 inline token
+          // corruption. When the taskList block tokenizer (from @tiptap/extension-list)
+          // calls lexer.inlineTokens() internally, it corrupts the global marked singleton's
+          // inline tokenizer state. All subsequent tokens (tables, blockquotes, bullet lists)
+          // end up with empty tokens:[]. Using a fresh instance scopes the tokenizer
+          // registration and lexer state to this instance, preventing cross-contamination.
+          // The Marked class instance satisfies all properties actually used by MarkdownManager
+          // (setOptions, use, lexer, Lexer) but TypeScript doesn't see it as typeof marked
+          // because marked is typed as a function+namespace, not a class instance.
+          marked: new Marked() as unknown as typeof markedInstance,
           markedOptions: {
             gfm: true, // GitHub Flavored Markdown for tables, task lists
             breaks: true, // Preserve single newlines as <br>

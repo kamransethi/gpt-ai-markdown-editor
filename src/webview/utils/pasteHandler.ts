@@ -57,7 +57,7 @@ turndown.addRule('taskListItem', {
   },
   replacement: (_content: string, node: HTMLElement) => {
     // Determine checked state: TipTap uses data-checked="true", standard uses input.checked
-    let isChecked = false;
+    let isChecked: boolean;
     const dataChecked = node.getAttribute('data-checked');
     if (dataChecked !== null) {
       isChecked = dataChecked === 'true';
