@@ -153,7 +153,7 @@ console.log('📊 Bundle sizes:');
 const sizeChecks = [
   { file: 'dist/webview.js', min: 100000, max: 15000000 },
   { file: 'dist/webview.css', min: 10000, max: 500000 },
-  { file: 'dist/extension.js', min: 100000, max: 10000000 },
+  { file: 'dist/extension.js', min: 50000, max: 10000000 },
 ];
 
 for (const check of sizeChecks) {

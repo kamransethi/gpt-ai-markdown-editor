@@ -13,18 +13,19 @@
  */
 
 import { MERMAID_TEMPLATES } from './mermaidTemplates';
-import { MessageType } from '../shared/messageTypes';
 import { showTableInsertDialog } from './features/tableInsert';
 import { showLinkDialog } from './features/linkDialog';
-import { showImageInsertDialog } from './features/imageInsertDialog';
+import { showImagePicker } from './features/imagePicker';
 import { showEmojiPicker } from './features/emojiPicker';
 import type { Editor } from '@tiptap/core';
 import { modLabel as modKeyLabel } from './utils/platform';
 import { TIPTAP_ICONS, createSvgIcon } from './icons/tiptapIcons';
 import { buildSharedTableOps } from './utils/sharedTableOps';
+import { ToolbarStateHandler } from './handlers/ToolbarStateHandler';
+import { ToolbarAuxControlsFactory } from './factories/ToolbarAuxControlsFactory';
 
-// Store reference to refresh function so it can be called externally
-let toolbarRefreshFunction: (() => void) | null = null;
+// Store reference to refresh functions so they can be called externally
+const toolbarRefreshFunctions: Array<() => void> = [];
 
 /**
  * Normalize selection and create a code block
@@ -76,11 +77,6 @@ function setCodeBlockNormalized(editor: Editor, language: string): void {
     })
     .run();
 }
-
-// Track editor focus state
-let isEditorFocused = false;
-let focusChangeListener: ((e: Event) => void) | null = null;
-let dirtyChangeListener: ((e: Event) => void) | null = null;
 
 function isDocumentDirty(): boolean {
   return Boolean((window as any).__docDirty);
@@ -149,9 +145,27 @@ type ToolbarColorPicker = {
   isEnabled?: () => boolean;
 };
 
+type ToolbarSplitButton = {
+  type: 'splitButton';
+  label: string;
+  title?: string;
+  icon: ToolbarIcon;
+  className?: string;
+  requiresFocus?: boolean;
+  isEnabled?: () => boolean;
+  isActive?: () => boolean;
+  action: () => void;
+  dropdownItems: ToolbarDropdownItem[];
+};
+
 type ToolbarSeparator = { type: 'separator' };
 
-type ToolbarItem = ToolbarActionButton | ToolbarDropdown | ToolbarColorPicker | ToolbarSeparator;
+type ToolbarItem =
+  | ToolbarActionButton
+  | ToolbarDropdown
+  | ToolbarColorPicker
+  | ToolbarSplitButton
+  | ToolbarSeparator;
 
 type TextColorOption = {
   label: string;
@@ -162,13 +176,14 @@ const FLOATING_COLOR_STORAGE_KEY = 'gptai-floating-font-color';
 const DEFAULT_FLOATING_TEXT_COLOR = '#0078d4';
 const TEXT_COLOR_OPTIONS: TextColorOption[] = [
   { label: 'Default', value: '' },
-  { label: 'Red', value: '#e81123' },
-  { label: 'Orange', value: '#ea5a00' },
-  { label: 'Yellow', value: '#fce100' },
-  { label: 'Green', value: '#107c10' },
-  { label: 'Blue', value: '#0078d4' },
-  { label: 'Purple', value: '#8e562e' },
-  { label: 'Pink', value: '#c239b3' },
+  { label: 'Red (Pastel)', value: '#EF9A9A' },
+  { label: 'Pink (Pastel)', value: '#F48FB1' },
+  { label: 'Purple (Pastel)', value: '#CE93D8' },
+  { label: 'Blue (Pastel)', value: '#90CAF9' },
+  { label: 'Teal (Pastel)', value: '#80CBC4' },
+  { label: 'Green (Pastel)', value: '#A5D6A7' },
+  { label: 'Yellow (Pastel)', value: '#FFF59D' },
+  { label: 'Orange (Pastel)', value: '#FFCC80' },
 ];
 
 function normalizeColor(value: string | null | undefined): string {
@@ -312,6 +327,10 @@ function closeAllDropdowns(options?: { keepOverflow?: boolean }) {
     (menu as HTMLElement).style.display = 'none';
   });
 
+  document.querySelectorAll('.toolbar-split-menu').forEach(menu => {
+    (menu as HTMLElement).style.display = 'none';
+  });
+
   document.querySelectorAll('.toolbar-color-menu').forEach(menu => {
     (menu as HTMLElement).style.display = 'none';
   });
@@ -335,192 +354,15 @@ function closeAllDropdowns(options?: { keepOverflow?: boolean }) {
  * Update toolbar active states (can be called from outside)
  */
 export function updateToolbarStates() {
-  if (toolbarRefreshFunction) {
-    toolbarRefreshFunction();
-  }
+  toolbarRefreshFunctions.forEach(fn => fn());
 }
 
 /**
  * Create compact floating formatting bar used by TipTap BubbleMenu.
  * Minimal: Bold, Italic, Highlight, Link only.
  */
-export function createFloatingFormattingBar(getEditor: () => Editor | null): {
-  element: HTMLElement;
-  refresh: () => void;
-  destroy: () => void;
-} {
-  ensureCodiconFont();
-
-  const container = document.createElement('div');
-  container.className = 'floating-formatting-bar';
-  container.setAttribute('role', 'toolbar');
-  container.setAttribute('aria-label', 'Selection formatting');
-
-  const createButton = (options: {
-    className: string;
-    title: string;
-    icon: ToolbarIcon;
-    action: () => void;
-    isActive?: () => boolean;
-  }) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `floating-toolbar-button ${options.className}`;
-    button.title = options.title;
-    button.setAttribute('aria-label', options.title);
-    button.append(createIconElement(options.icon, 'toolbar-icon'));
-
-    button.onmousedown = e => {
-      e.preventDefault();
-    };
-
-    button.onclick = e => {
-      e.preventDefault();
-      e.stopPropagation();
-      options.action();
-      refresh();
-    };
-
-    return {
-      element: button,
-      isActive: options.isActive,
-    };
-  };
-
-  const boldButton = createButton({
-    className: 'bold',
-    title: 'Bold',
-    icon: { name: 'bold', fallback: 'B' },
-    action: () => getEditor()?.chain().focus().toggleBold().run(),
-    isActive: () => Boolean(getEditor()?.isActive('bold')),
-  });
-
-  const italicButton = createButton({
-    className: 'italic',
-    title: 'Italic',
-    icon: { name: 'italic', fallback: 'I' },
-    action: () => getEditor()?.chain().focus().toggleItalic().run(),
-    isActive: () => Boolean(getEditor()?.isActive('italic')),
-  });
-
-  const highlightButton = createButton({
-    className: 'highlight',
-    title: 'Toggle highlight',
-    icon: { name: 'paintcan', fallback: 'Hl' },
-    action: () => getEditor()?.chain().focus().toggleHighlight().run(),
-    isActive: () => Boolean(getEditor()?.isActive('highlight')),
-  });
-
-  const linkButton = createButton({
-    className: 'link',
-    title: 'Insert link',
-    icon: { name: 'link', fallback: 'Link' },
-    action: () => {
-      const activeEditor = getEditor();
-      if (!activeEditor) return;
-      showLinkDialog(activeEditor);
-    },
-    isActive: () => Boolean(getEditor()?.isActive('link')),
-  });
-
-  container.appendChild(boldButton.element);
-  container.appendChild(italicButton.element);
-  container.appendChild(highlightButton.element);
-  container.appendChild(linkButton.element);
-
-  const buttons = [boldButton, italicButton, highlightButton, linkButton];
-
-  const refresh = () => {
-    buttons.forEach(({ element, isActive }) => {
-      if (!isActive) {
-        element.classList.remove('active');
-        return;
-      }
-      element.classList.toggle('active', Boolean(isActive()));
-    });
-  };
-
-  return {
-    element: container,
-    refresh,
-    destroy: () => {},
-  };
-}
-
-/**
- * Create compact formatting toolbar with clean, minimal design.
- *
- * @param editor - TipTap editor instance
- * @returns HTMLElement containing the toolbar
- */
-/** Current editor zoom level (default 0.9 = 90% for comfortable reading baseline) */
-let editorZoomLevel = 0.9;
-
-const ZOOM_MIN = 0.7;
-const ZOOM_MAX = 1.5;
-
-export function setEditorZoom(level: number, persist = true) {
-  // Clamp and round to avoid floating point drift
-  const clamped = Math.round(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level)) * 100) / 100;
-  editorZoomLevel = clamped;
-  const editorEl = document.querySelector('.markdown-editor') as HTMLElement;
-  if (editorEl) {
-    editorEl.style.zoom = String(clamped);
-  }
-  // Update any visible zoom section label
-  document.querySelectorAll('.zoom-level-display').forEach(el => {
-    el.textContent = `Zoom (${Math.round(clamped * 100)}%)`;
-  });
-  if (persist) {
-    window.dispatchEvent(
-      new CustomEvent('updateSetting', {
-        detail: { key: 'gptAiMarkdownEditor.editorZoomLevel', value: clamped },
-      })
-    );
-  }
-}
-
-export function getEditorZoom(): number {
-  return editorZoomLevel;
-}
-
-// getSharedTableOperations removed — table ops now use buildSharedTableOps
-// from utils/sharedTableOps.ts for identical rendering in toolbar + context menu.
-
-export function createFormattingToolbar(editor: Editor): HTMLElement {
-  ensureCodiconFont();
-
-  const toolbar = document.createElement('div');
-  toolbar.className = 'formatting-toolbar';
-
-  // Prevent clicks on toolbar background (gaps between buttons) from stealing editor focus
-  toolbar.addEventListener('mousedown', e => {
-    // Only prevent default on the toolbar itself, not on child interactive elements
-    if (e.target === toolbar || (e.target as HTMLElement)?.classList?.contains('toolbar-group')) {
-      e.preventDefault();
-    }
-  });
-
-  const buttons: ToolbarItem[] = [
-    // --- Save Button (first in toolbar) ---
-    {
-      type: 'button',
-      label: '',
-      title: 'Save file',
-      icon: { name: 'save', fallback: 'Save' },
-      className: 'save-button',
-      requiresFocus: false,
-      isActive: () => false,
-      isEnabled: () => isDocumentDirty(),
-      action: () => {
-        const vscodeApi = window.vscode;
-        if (vscodeApi) {
-          vscodeApi.postMessage({ type: 'save' });
-        }
-      },
-    },
-    { type: 'separator' },
-    // --- Heading Level Dropdown (shows current style) ---
+export function getSharedFormattingControls(editor: Editor): ToolbarItem[] {
+  return [
     {
       type: 'dropdown',
       label: 'Paragraph',
@@ -568,8 +410,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         },
       ],
     },
-    { type: 'separator' },
-    // --- Text Formatting ---
+    { type: 'separator' as any },
     {
       type: 'button',
       label: '',
@@ -601,22 +442,22 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       className: 'underline',
     },
     {
+      type: 'button',
+      label: '',
+      title: 'Toggle highlight',
+      icon: { name: 'paintcan', fallback: 'Hl' },
+      action: () => editor.chain().focus().toggleHighlight().run(),
+      isActive: () => editor.isActive('highlight'),
+      requiresFocus: true,
+      className: 'highlight',
+    },
+    {
       type: 'colorPicker',
       label: '',
       title: 'Choose text color',
-      icon: { name: 'symbol-color', fallback: '' },
+      icon: { svgName: 'text-color-letter', fallback: 'A' },
       requiresFocus: true,
       isEnabled: () => true,
-    },
-    {
-      type: 'button',
-      label: '',
-      title: 'Inline code',
-      icon: { name: 'code', fallback: '' },
-      action: () => editor.chain().focus().toggleCode().run(),
-      isActive: () => editor.isActive('code'),
-      requiresFocus: true,
-      className: 'inline-code',
     },
     {
       type: 'button',
@@ -628,323 +469,476 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       requiresFocus: true,
       className: 'strikethrough',
     },
-    { type: 'separator' },
-    // --- Lists (flat buttons) ---
     {
       type: 'button',
       label: '',
-      title: 'Bullet list',
-      icon: { name: 'list-unordered', fallback: '•' },
-      action: () => editor.chain().focus().toggleBulletList().run(),
-      isActive: () => editor.isActive('bulletList'),
+      title: 'Inline code',
+      icon: { name: 'code', fallback: '' },
+      action: () => editor.chain().focus().toggleCode().run(),
+      isActive: () => editor.isActive('code'),
       requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: '',
-      title: 'Numbered list',
-      icon: { name: 'list-ordered', fallback: '1.' },
-      action: () => editor.chain().focus().toggleOrderedList().run(),
-      isActive: () => editor.isActive('orderedList'),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: '',
-      title: 'Task list',
-      icon: { name: 'tasklist', fallback: '☐' },
-      action: () => editor.chain().focus().toggleTaskList().run(),
-      isActive: () => editor.isActive('taskList'),
-      requiresFocus: true,
-    },
-    { type: 'separator' },
-    // --- Insert ---
-    {
-      type: 'button',
-      label: '',
-      title: 'Insert image',
-      icon: { name: 'file-media', fallback: '📷' },
-      action: () => {
-        const vscodeApi = window.vscode;
-        if (vscodeApi && editor) {
-          showImageInsertDialog(editor, vscodeApi).catch(error => {
-            console.error('[DK-AI] Failed to show image insert dialog:', error);
-          });
-        }
-      },
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: '',
-      title: `Insert/edit link (${modKeyLabel}+K)`,
-      icon: { name: 'link', fallback: '🔗' },
-      action: () => showLinkDialog(editor),
-      requiresFocus: true,
-    },
-    {
-      type: 'button',
-      label: '',
-      title: 'Insert emoji',
-      icon: { name: 'smiley', fallback: '😀' },
-      className: 'emoji-button',
-      action: () => {
-        const emojiBtn = toolbar.querySelector('.toolbar-button.emoji-button') as HTMLElement;
-        showEmojiPicker(editor, emojiBtn || undefined);
-      },
-      requiresFocus: true,
-    },
-    {
-      type: 'dropdown',
-      label: '',
-      title: 'Insert and edit table',
-      icon: { name: 'table', fallback: 'Tbl' },
-      requiresFocus: true,
-      isActive: () => editor.isActive('table'),
-      items: [
-        { label: 'Table', action: () => {}, isSectionLabel: true },
-        {
-          label: 'Insert table',
-          icon: { name: 'add', fallback: '+' },
-          action: () => showTableInsertDialog(editor),
-          isEnabled: () => !editor.isActive('table'),
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        {
-          label: 'Table operations',
-          action: () => {},
-          isEnabled: () => editor.isActive('table'),
-          isCustomWidget: true,
-          customRender: (refreshFn: () => void) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'table-ops-widget';
-            buildSharedTableOps(wrapper, editor, {
-              onItemClick: () => {
-                closeAllDropdowns();
-                refreshFn();
-              },
-            });
-            return wrapper;
-          },
-        },
-      ],
-    },
-    // --- Blocks and Alerts (merged dropdown) ---
-    {
-      type: 'dropdown',
-      label: '',
-      title: 'Blocks and alerts',
-      icon: { name: 'quote', fallback: '"' },
-      requiresFocus: true,
-      isActive: () =>
-        editor.isActive('blockquote') ||
-        editor.isActive('githubAlert') ||
-        editor.isActive('codeBlock'),
-      isEnabled: () => !editor.isActive('table'),
-      items: [
-        {
-          label: 'Block quote',
-          icon: { name: 'quote', fallback: '"' },
-          action: () => editor.chain().focus().toggleBlockquote().run(),
-          isActive: () => editor.isActive('blockquote'),
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        { label: 'Alerts', action: () => {}, isSectionLabel: true },
-        {
-          label: '',
-          action: () => {},
-          isButtonRow: true,
-          buttons: [
-            {
-              icon: { name: 'info', fallback: 'ℹ' },
-              title: 'Note alert',
-              action: () =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleAlert('NOTE' as any)
-                  .run(),
-              isActive: () => editor.isActive('githubAlert', { alertType: 'NOTE' }),
-            },
-            {
-              icon: { name: 'lightbulb', fallback: '💡' },
-              title: 'Tip alert',
-              action: () =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleAlert('TIP' as any)
-                  .run(),
-              isActive: () => editor.isActive('githubAlert', { alertType: 'TIP' }),
-            },
-            {
-              icon: { name: 'megaphone', fallback: '📢' },
-              title: 'Important alert',
-              action: () =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleAlert('IMPORTANT' as any)
-                  .run(),
-              isActive: () => editor.isActive('githubAlert', { alertType: 'IMPORTANT' }),
-            },
-            {
-              icon: { name: 'warning', fallback: '⚠' },
-              title: 'Warning alert',
-              action: () =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleAlert('WARNING' as any)
-                  .run(),
-              isActive: () => editor.isActive('githubAlert', { alertType: 'WARNING' }),
-            },
-            {
-              icon: { name: 'error', fallback: '🛑' },
-              title: 'Caution alert',
-              action: () =>
-                editor
-                  .chain()
-                  .focus()
-                  .toggleAlert('CAUTION' as any)
-                  .run(),
-              isActive: () => editor.isActive('githubAlert', { alertType: 'CAUTION' }),
-            },
-          ],
-        },
-        {
-          label: 'Remove alert',
-          icon: { name: 'close', fallback: '×' },
-          action: () => {
-            editor.chain().focus().lift('githubAlert').run();
-          },
-          isEnabled: () => editor.isActive('githubAlert'),
-          className: 'danger',
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        { label: 'Code Blocks', action: () => {}, isSectionLabel: true },
-        {
-          label: 'Plain text',
-          icon: { name: 'code', fallback: '{}' },
-          action: () => setCodeBlockNormalized(editor, 'plaintext'),
-          isEnabled: () => !editor.isActive('table'),
-        },
-        {
-          label: 'TypeScript',
-          icon: { name: 'code', fallback: '{}' },
-          action: () => setCodeBlockNormalized(editor, 'typescript'),
-          isEnabled: () => !editor.isActive('table'),
-        },
-        {
-          label: 'Python',
-          icon: { name: 'code', fallback: '{}' },
-          action: () => setCodeBlockNormalized(editor, 'python'),
-          isEnabled: () => !editor.isActive('table'),
-        },
-        {
-          label: 'JSON',
-          icon: { name: 'code', fallback: '{}' },
-          action: () => setCodeBlockNormalized(editor, 'json'),
-          isEnabled: () => !editor.isActive('table'),
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        { label: 'Diagrams', action: () => {}, isSectionLabel: true },
-        {
-          label: 'Mermaid (empty)',
-          icon: { name: 'pie-chart', fallback: 'Mer' },
-          action: () => setCodeBlockNormalized(editor, 'mermaid'),
-          isEnabled: () => !editor.isActive('table'),
-        },
-        {
-          label: 'Mermaid flowchart',
-          icon: { name: 'pie-chart', fallback: 'Mer' },
-          action: () => {
-            editor
-              .chain()
-              .focus()
-              .insertContent(
-                `\`\`\`mermaid\n${MERMAID_TEMPLATES[0]?.diagram ?? 'graph TD\nA-->B'}\n\`\`\``,
-                {
-                  contentType: 'markdown',
-                }
-              )
-              .run();
-          },
-          isEnabled: () => !editor.isActive('table'),
-        },
-      ],
-    },
-    // --- Separator before AI Explain and View menu ---
-    { type: 'separator' },
-    // --- AI Explain Button ---
-    {
-      type: 'button',
-      label: '',
-      title: 'AI Explain Document',
-      icon: { name: 'sparkle', fallback: '✨' },
-      requiresFocus: false,
-      isActive: () => false,
-      isEnabled: () => true,
-      action: () => {
-        editor.commands.explainDocument();
-      },
-    },
-    // --- View Menu Dropdown ---
-    {
-      type: 'dropdown',
-      label: '',
-      title: 'View',
-      icon: { name: 'panel-left', fallback: '☰' },
-      requiresFocus: false,
-      isActive: () => false,
-      isEnabled: () => true,
-      items: [
-        { label: 'Display', action: () => {}, isSectionLabel: true },
-        {
-          label: 'Source view',
-          icon: { name: 'file-code', fallback: '</>' },
-          action: () => window.dispatchEvent(new CustomEvent('openSourceView')),
-        },
-        {
-          label: 'Navigation pane',
-          icon: { name: 'panel-left', fallback: '☰' },
-          action: () => window.dispatchEvent(new CustomEvent('toggleTocPane')),
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        {
-          label: `Zoom (${Math.round(getEditorZoom() * 100)}%)`,
-          action: () => {},
-          isSectionLabel: true,
-          className: 'zoom-level-display',
-        },
-        {
-          label: 'Zoom in',
-          icon: { name: 'zoom-in', fallback: '+' },
-          action: () => setEditorZoom(getEditorZoom() + 0.1),
-          isEnabled: () => getEditorZoom() < ZOOM_MAX,
-        },
-        {
-          label: 'Zoom out',
-          icon: { name: 'zoom-out', fallback: '-' },
-          action: () => setEditorZoom(getEditorZoom() - 0.1),
-          isEnabled: () => getEditorZoom() > ZOOM_MIN,
-        },
-        {
-          label: 'Reset zoom',
-          icon: { name: 'view', fallback: '100%' },
-          action: () => setEditorZoom(1),
-          isEnabled: () => Math.abs(getEditorZoom() - 1) > 0.001,
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        { label: 'Preferences', action: () => {}, isSectionLabel: true },
-        {
-          label: 'Configuration',
-          icon: { name: 'settings-gear', fallback: '⚙' },
-          action: () => window.dispatchEvent(new CustomEvent('openExtensionSettings')),
-        },
-      ],
+      className: 'inline-code',
     },
   ];
+}
+
+export function createFloatingFormattingBar(getEditor: () => Editor | null): {
+  element: HTMLElement;
+  refresh: () => void;
+  destroy: () => void;
+} {
+  ensureCodiconFont();
+  const editor = getEditor();
+  if (!editor) {
+    const fallback = document.createElement('div');
+    return { element: fallback, refresh: () => {}, destroy: () => {} };
+  }
+
+  const toolbar = createFormattingToolbar(editor, 'floating');
+  toolbar.className = 'floating-formatting-bar';
+  toolbar.setAttribute('role', 'toolbar');
+  toolbar.setAttribute('aria-label', 'Selection formatting');
+
+  return {
+    element: toolbar,
+    refresh: () => updateToolbarStates(),
+    destroy: () => {},
+  };
+}
+
+/**
+ * Create compact formatting toolbar with clean, minimal design.
+ *
+ * @param editor - TipTap editor instance
+ * @returns HTMLElement containing the toolbar
+ */
+/** Current editor zoom level (default 0.9 = 90% for comfortable reading baseline) */
+let editorZoomLevel = 0.9;
+
+const ZOOM_MIN = 0.7;
+const ZOOM_MAX = 1.5;
+
+export function setEditorZoom(level: number, persist = true) {
+  // Clamp and round to avoid floating point drift
+  const clamped = Math.round(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level)) * 100) / 100;
+  editorZoomLevel = clamped;
+  const editorEl = document.querySelector('.markdown-editor') as HTMLElement;
+  if (editorEl) {
+    editorEl.style.zoom = String(clamped);
+  }
+  // Update any visible zoom section label
+  document.querySelectorAll('.zoom-level-display').forEach(el => {
+    el.textContent = `Zoom (${Math.round(clamped * 100)}%)`;
+  });
+  if (persist) {
+    window.dispatchEvent(
+      new CustomEvent('updateSetting', {
+        detail: { key: 'gptAiMarkdownEditor.editorZoomLevel', value: clamped },
+      })
+    );
+  }
+}
+
+export function getEditorZoom(): number {
+  return editorZoomLevel;
+}
+
+// getSharedTableOperations removed — table ops now use buildSharedTableOps
+// from utils/sharedTableOps.ts for identical rendering in toolbar + context menu.
+
+export function createFormattingToolbar(
+  editor: Editor,
+  mode: 'main' | 'floating' = 'main'
+): HTMLElement {
+  ensureCodiconFont();
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'formatting-toolbar';
+
+  // Prevent clicks on toolbar background (gaps between buttons) from stealing editor focus
+  toolbar.addEventListener('mousedown', e => {
+    // Only prevent default on the toolbar itself, not on child interactive elements
+    if (e.target === toolbar || (e.target as HTMLElement)?.classList?.contains('toolbar-group')) {
+      e.preventDefault();
+    }
+  });
+
+  const sharedControls = getSharedFormattingControls(editor);
+
+  let buttons: ToolbarItem[];
+
+  if (mode === 'floating') {
+    buttons = [
+      ...sharedControls,
+      {
+        type: 'button',
+        label: '',
+        title: `Insert/edit link (${modKeyLabel}+K)`,
+        icon: { name: 'link', fallback: '🔗' },
+        action: () => showLinkDialog(editor),
+        isActive: () => editor.isActive('link'),
+        requiresFocus: true,
+        className: 'link',
+      },
+    ];
+  } else {
+    buttons = [
+      // --- Save Button (split button with export dropdown) ---
+      {
+        type: 'splitButton',
+        label: '',
+        title: 'Save file',
+        icon: { name: 'save', fallback: 'Save' },
+        className: 'save-button',
+        requiresFocus: false,
+        isActive: () => false,
+        isEnabled: () => isDocumentDirty(),
+        action: () => {
+          const vscodeApi = window.vscode;
+          if (vscodeApi) {
+            vscodeApi.postMessage({ type: 'save' });
+          }
+        },
+        dropdownItems: [
+          { label: 'Export', action: () => {}, isSectionLabel: true },
+          {
+            label: 'Microsoft Word',
+            icon: { svgName: 'export', fallback: 'W' },
+            action: () =>
+              window.dispatchEvent(
+                new CustomEvent('exportDocument', { detail: { format: 'docx' } })
+              ),
+          },
+          {
+            label: 'PDF',
+            icon: { svgName: 'export', fallback: 'PDF' },
+            action: () =>
+              window.dispatchEvent(
+                new CustomEvent('exportDocument', { detail: { format: 'pdf' } })
+              ),
+          },
+        ],
+      },
+      { type: 'separator' },
+      ...sharedControls,
+      { type: 'separator' },
+      // --- Lists (flat buttons) ---
+      {
+        type: 'button',
+        label: '',
+        title: 'Bullet list',
+        icon: { name: 'list-unordered', fallback: '•' },
+        action: () => editor.chain().focus().toggleBulletList().run(),
+        isActive: () => editor.isActive('bulletList'),
+        requiresFocus: true,
+      },
+      {
+        type: 'button',
+        label: '',
+        title: 'Numbered list',
+        icon: { name: 'list-ordered', fallback: '1.' },
+        action: () => editor.chain().focus().toggleOrderedList().run(),
+        isActive: () => editor.isActive('orderedList'),
+        requiresFocus: true,
+      },
+      {
+        type: 'button',
+        label: '',
+        title: 'Task list',
+        icon: { name: 'tasklist', fallback: '☐' },
+        action: () => editor.chain().focus().toggleTaskList().run(),
+        isActive: () => editor.isActive('taskList'),
+        requiresFocus: true,
+      },
+      { type: 'separator' },
+      // --- Insert ---
+      {
+        type: 'button',
+        label: '',
+        title: 'Insert image',
+        icon: { name: 'file-media', fallback: '📷' },
+        action: () => {
+          const vscodeApi = window.vscode;
+          if (vscodeApi && editor) {
+            showImagePicker(editor, vscodeApi).catch(error => {
+              console.error('[DK-AI] Failed to show image picker:', error);
+            });
+          }
+        },
+        requiresFocus: true,
+      },
+      {
+        type: 'button',
+        label: '',
+        title: `Insert/edit link (${modKeyLabel}+K)`,
+        icon: { name: 'link', fallback: '🔗' },
+        action: () => showLinkDialog(editor),
+        requiresFocus: true,
+      },
+      {
+        type: 'button',
+        label: '',
+        title: 'Insert emoji',
+        icon: { name: 'smiley', fallback: '😀' },
+        className: 'emoji-button',
+        action: () => {
+          const emojiBtn = toolbar.querySelector('.toolbar-button.emoji-button') as HTMLElement;
+          showEmojiPicker(editor, emojiBtn || undefined);
+        },
+        requiresFocus: true,
+      },
+      {
+        type: 'dropdown',
+        label: '',
+        title: 'Insert and edit table',
+        icon: { name: 'table', fallback: 'Tbl' },
+        requiresFocus: true,
+        isActive: () => editor.isActive('table'),
+        items: [
+          { label: 'Table', action: () => {}, isSectionLabel: true },
+          {
+            label: 'Insert table',
+            icon: { name: 'add', fallback: '+' },
+            action: () => showTableInsertDialog(editor),
+            isEnabled: () => !editor.isActive('table'),
+          },
+          { label: '', action: () => {}, isSeparator: true },
+          {
+            label: 'Table operations',
+            action: () => {},
+            isEnabled: () => editor.isActive('table'),
+            isCustomWidget: true,
+            customRender: (refreshFn: () => void) => {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'table-ops-widget';
+              buildSharedTableOps(wrapper, editor, {
+                onItemClick: () => {
+                  closeAllDropdowns();
+                  refreshFn();
+                },
+              });
+              return wrapper;
+            },
+          },
+        ],
+      },
+      // --- Blocks and Alerts (merged dropdown) ---
+      {
+        type: 'dropdown',
+        label: '',
+        title: 'Blocks and alerts',
+        icon: { name: 'quote', fallback: '"' },
+        requiresFocus: true,
+        isActive: () =>
+          editor.isActive('blockquote') ||
+          editor.isActive('githubAlert') ||
+          editor.isActive('codeBlock'),
+        isEnabled: () => !editor.isActive('table'),
+        items: [
+          {
+            label: 'Block quote',
+            icon: { name: 'quote', fallback: '"' },
+            action: () => editor.chain().focus().toggleBlockquote().run(),
+            isActive: () => editor.isActive('blockquote'),
+          },
+          { label: '', action: () => {}, isSeparator: true },
+          { label: 'Alerts', action: () => {}, isSectionLabel: true },
+          {
+            label: '',
+            action: () => {},
+            isButtonRow: true,
+            buttons: [
+              {
+                icon: { name: 'info', fallback: 'ℹ' },
+                title: 'Note alert',
+                action: () =>
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleAlert('NOTE' as any)
+                    .run(),
+                isActive: () => editor.isActive('githubAlert', { alertType: 'NOTE' }),
+              },
+              {
+                icon: { name: 'lightbulb', fallback: '💡' },
+                title: 'Tip alert',
+                action: () =>
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleAlert('TIP' as any)
+                    .run(),
+                isActive: () => editor.isActive('githubAlert', { alertType: 'TIP' }),
+              },
+              {
+                icon: { name: 'megaphone', fallback: '📢' },
+                title: 'Important alert',
+                action: () =>
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleAlert('IMPORTANT' as any)
+                    .run(),
+                isActive: () => editor.isActive('githubAlert', { alertType: 'IMPORTANT' }),
+              },
+              {
+                icon: { name: 'warning', fallback: '⚠' },
+                title: 'Warning alert',
+                action: () =>
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleAlert('WARNING' as any)
+                    .run(),
+                isActive: () => editor.isActive('githubAlert', { alertType: 'WARNING' }),
+              },
+              {
+                icon: { name: 'error', fallback: '🛑' },
+                title: 'Caution alert',
+                action: () =>
+                  editor
+                    .chain()
+                    .focus()
+                    .toggleAlert('CAUTION' as any)
+                    .run(),
+                isActive: () => editor.isActive('githubAlert', { alertType: 'CAUTION' }),
+              },
+            ],
+          },
+          {
+            label: 'Remove alert',
+            icon: { name: 'close', fallback: '×' },
+            action: () => {
+              editor.chain().focus().lift('githubAlert').run();
+            },
+            isEnabled: () => editor.isActive('githubAlert'),
+            className: 'danger',
+          },
+          { label: '', action: () => {}, isSeparator: true },
+          { label: 'Code Blocks', action: () => {}, isSectionLabel: true },
+          {
+            label: 'Plain text',
+            icon: { name: 'code', fallback: '{}' },
+            action: () => setCodeBlockNormalized(editor, 'plaintext'),
+            isEnabled: () => !editor.isActive('table'),
+          },
+          {
+            label: 'TypeScript',
+            icon: { name: 'code', fallback: '{}' },
+            action: () => setCodeBlockNormalized(editor, 'typescript'),
+            isEnabled: () => !editor.isActive('table'),
+          },
+          {
+            label: 'Python',
+            icon: { name: 'code', fallback: '{}' },
+            action: () => setCodeBlockNormalized(editor, 'python'),
+            isEnabled: () => !editor.isActive('table'),
+          },
+          {
+            label: 'JSON',
+            icon: { name: 'code', fallback: '{}' },
+            action: () => setCodeBlockNormalized(editor, 'json'),
+            isEnabled: () => !editor.isActive('table'),
+          },
+          { label: '', action: () => {}, isSeparator: true },
+          { label: 'Diagrams', action: () => {}, isSectionLabel: true },
+          {
+            label: 'Mermaid (empty)',
+            icon: { name: 'pie-chart', fallback: 'Mer' },
+            action: () => setCodeBlockNormalized(editor, 'mermaid'),
+            isEnabled: () => !editor.isActive('table'),
+          },
+          {
+            label: 'Mermaid flowchart',
+            icon: { name: 'pie-chart', fallback: 'Mer' },
+            action: () => {
+              editor
+                .chain()
+                .focus()
+                .insertContent(
+                  `\`\`\`mermaid\n${MERMAID_TEMPLATES[0]?.diagram ?? 'graph TD\nA-->B'}\n\`\`\``,
+                  {
+                    contentType: 'markdown',
+                  }
+                )
+                .run();
+            },
+            isEnabled: () => !editor.isActive('table'),
+          },
+        ],
+      },
+      // --- Separator before AI Explain and View menu ---
+      { type: 'separator' },
+      // --- AI Explain Button ---
+      {
+        type: 'button',
+        label: '',
+        title: 'AI Explain Document',
+        icon: { name: 'sparkle', fallback: '✨' },
+        requiresFocus: false,
+        isActive: () => false,
+        isEnabled: () => true,
+        action: () => {
+          editor.commands.explainDocument();
+        },
+      },
+      // --- View Menu Dropdown ---
+      {
+        type: 'dropdown',
+        label: '',
+        title: 'View',
+        icon: { name: 'panel-left', fallback: '☰' },
+        requiresFocus: false,
+        isActive: () => false,
+        isEnabled: () => true,
+        items: [
+          { label: 'Display', action: () => {}, isSectionLabel: true },
+          {
+            label: 'Source view',
+            icon: { name: 'file-code', fallback: '</>' },
+            action: () => window.dispatchEvent(new CustomEvent('openSourceView')),
+          },
+          {
+            label: 'Navigation pane',
+            icon: { name: 'panel-left', fallback: '☰' },
+            action: () => window.dispatchEvent(new CustomEvent('toggleTocPane')),
+          },
+          { label: '', action: () => {}, isSeparator: true },
+          {
+            label: `Zoom (${Math.round(getEditorZoom() * 100)}%)`,
+            action: () => {},
+            isSectionLabel: true,
+            className: 'zoom-level-display',
+          },
+          {
+            label: 'Zoom in',
+            icon: { name: 'zoom-in', fallback: '+' },
+            action: () => setEditorZoom(getEditorZoom() + 0.1),
+            isEnabled: () => getEditorZoom() < ZOOM_MAX,
+          },
+          {
+            label: 'Zoom out',
+            icon: { name: 'zoom-out', fallback: '-' },
+            action: () => setEditorZoom(getEditorZoom() - 0.1),
+            isEnabled: () => getEditorZoom() > ZOOM_MIN,
+          },
+          {
+            label: 'Reset zoom',
+            icon: { name: 'view', fallback: '100%' },
+            action: () => setEditorZoom(1),
+            isEnabled: () => Math.abs(getEditorZoom() - 1) > 0.001,
+          },
+          { label: '', action: () => {}, isSeparator: true },
+          { label: 'Preferences', action: () => {}, isSectionLabel: true },
+          {
+            label: 'Configuration',
+            icon: { name: 'settings-gear', fallback: '⚙' },
+            action: () => window.dispatchEvent(new CustomEvent('openExtensionSettings')),
+          },
+        ],
+      },
+    ]; // end of else (main toolbar)
+  }
 
   const actionButtons: Array<{ config: ToolbarActionButton; element: HTMLButtonElement }> = [];
   const dropdownButtons: Array<{ config: ToolbarDropdown; element: HTMLButtonElement }> = [];
@@ -958,113 +952,15 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     swatches: Array<{ value: string; element: HTMLButtonElement }>;
   }> = [];
 
+  // Initialised after buttons are rendered (refreshActiveStates captures it via closure)
+  let stateHandler: ToolbarStateHandler | null = null;
+
   let currentGroup = document.createElement('div');
   currentGroup.className = 'toolbar-group';
   toolbar.appendChild(currentGroup);
 
   const refreshActiveStates = () => {
-    // Update action buttons active and enabled states
-    actionButtons.forEach(({ config, element }) => {
-      const active = config.isActive ? config.isActive() : false;
-      element.classList.toggle('active', Boolean(active));
-      element.setAttribute('aria-pressed', String(Boolean(active)));
-
-      // Check if button requires focus
-      let enabled = config.requiresFocus ? isEditorFocused : true;
-      if (enabled && config.isEnabled) {
-        enabled = config.isEnabled();
-      }
-      element.disabled = !enabled;
-      element.classList.toggle('disabled', !enabled);
-      element.setAttribute('aria-disabled', String(!enabled));
-
-      // Update title to explain why disabled
-      if (!enabled && config.requiresFocus && !isEditorFocused) {
-        element.title = 'Focus editor first';
-      } else if (!enabled) {
-        element.title = 'Not available here';
-      } else {
-        element.title = config.title || config.label;
-      }
-    });
-
-    // Update dropdown buttons enabled states
-    dropdownButtons.forEach(({ config, element }) => {
-      const active = config.isActive ? config.isActive() : false;
-      element.classList.toggle('active', Boolean(active));
-      element.setAttribute('aria-pressed', String(Boolean(active)));
-
-      let enabled = config.requiresFocus ? isEditorFocused : true;
-      if (enabled && config.isEnabled) {
-        enabled = config.isEnabled();
-      }
-      element.disabled = !enabled;
-      element.classList.toggle('disabled', !enabled);
-      element.setAttribute('aria-disabled', String(!enabled));
-
-      // Update title to explain why disabled
-      if (!enabled && config.requiresFocus && !isEditorFocused) {
-        element.title = 'Focus editor first';
-      } else if (!enabled) {
-        element.title = 'Not available here';
-      } else {
-        element.title = config.title || config.label;
-      }
-    });
-
-    // Update dropdown item disabled/active states
-    dropdownItems.forEach(({ config, element }) => {
-      const enabled = config.isEnabled ? config.isEnabled() : true;
-      element.disabled = !enabled;
-      element.classList.toggle('disabled', !enabled);
-      element.setAttribute('aria-disabled', String(!enabled));
-
-      const active = config.isActive ? config.isActive() : false;
-      element.classList.toggle('active', Boolean(active));
-      element.setAttribute('aria-pressed', String(Boolean(active)));
-    });
-
-    // Update color pickers
-    colorPickers.forEach(({ config, root, primary, toggle, underline, swatches }) => {
-      let enabled = config.requiresFocus ? isEditorFocused : true;
-      if (enabled && config.isEnabled) {
-        enabled = config.isEnabled();
-      }
-
-      root.classList.toggle('disabled', !enabled);
-      primary.disabled = !enabled;
-      toggle.disabled = !enabled;
-      primary.classList.toggle('disabled', !enabled);
-      toggle.classList.toggle('disabled', !enabled);
-
-      const currentColor = normalizeColor(getEditorTextColor(editor));
-      const preferredColor = getPreferredTextColor();
-      underline.style.backgroundColor = currentColor || preferredColor;
-      primary.classList.toggle('active', Boolean(currentColor));
-
-      swatches.forEach(({ value, element }) => {
-        const normalized = normalizeColor(value);
-        const isSelected = (currentColor || normalizeColor(preferredColor)) === normalized;
-        element.classList.toggle('active', isSelected);
-      });
-    });
-
-    // Update heading level dropdown label dynamically
-    dropdownButtons.forEach(({ config, element }) => {
-      if (config.className?.includes('heading-level-dropdown')) {
-        const labelEl = element.querySelector('.toolbar-button-label');
-        if (labelEl) {
-          let text = 'Paragraph';
-          for (let lvl = 1; lvl <= 5; lvl++) {
-            if (editor.isActive('heading', { level: lvl })) {
-              text = `Heading ${lvl}`;
-              break;
-            }
-          }
-          labelEl.textContent = text;
-        }
-      }
-    });
+    stateHandler?.refresh();
   };
 
   buttons.forEach(btn => {
@@ -1261,6 +1157,119 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       return;
     }
 
+    if (btn.type === 'splitButton') {
+      const splitRoot = document.createElement('div');
+      splitRoot.className = 'toolbar-split-group' + (btn.className ? ` ${btn.className}` : '');
+
+      const splitPrimary = document.createElement('button');
+      splitPrimary.type = 'button';
+      splitPrimary.className = 'toolbar-button toolbar-split-primary';
+      splitPrimary.setAttribute('data-tooltip', btn.title || btn.label);
+      splitPrimary.setAttribute('aria-label', btn.title || btn.label);
+      splitPrimary.onmousedown = e => {
+        e.preventDefault();
+      };
+      splitPrimary.append(createIconElement(btn.icon, 'toolbar-icon'));
+
+      const splitMenu = document.createElement('div');
+      splitMenu.className = 'toolbar-split-menu';
+
+      const splitToggle = document.createElement('button');
+      splitToggle.type = 'button';
+      splitToggle.className = 'toolbar-button toolbar-split-toggle';
+      splitToggle.setAttribute('data-tooltip', 'Export options');
+      splitToggle.setAttribute('aria-label', 'Export options');
+      splitToggle.setAttribute('aria-haspopup', 'true');
+      splitToggle.setAttribute('aria-expanded', 'false');
+      splitToggle.onmousedown = e => {
+        e.preventDefault();
+      };
+      splitToggle.append(
+        createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
+      );
+
+      btn.dropdownItems.forEach(item => {
+        if (item.isSeparator) {
+          const sep = document.createElement('div');
+          sep.className = 'toolbar-dropdown-separator';
+          sep.setAttribute('role', 'separator');
+          splitMenu.appendChild(sep);
+          return;
+        }
+        if (item.isSectionLabel) {
+          const lbl = document.createElement('div');
+          lbl.className = 'toolbar-dropdown-section-label';
+          lbl.textContent = item.label;
+          splitMenu.appendChild(lbl);
+          return;
+        }
+        const menuItem = document.createElement('button');
+        menuItem.type = 'button';
+        menuItem.className = 'toolbar-dropdown-item' + (item.className ? ` ${item.className}` : '');
+        menuItem.title = item.label;
+        menuItem.setAttribute('aria-label', item.label);
+        menuItem.onmousedown = e => {
+          e.preventDefault();
+        };
+        if (item.icon) {
+          const ic = createIconElement(item.icon, 'toolbar-dropdown-icon');
+          const txt = document.createElement('span');
+          txt.className = 'toolbar-dropdown-label';
+          txt.textContent = item.label;
+          menuItem.append(ic, txt);
+        } else {
+          menuItem.textContent = item.label;
+        }
+        menuItem.onclick = e => {
+          e.preventDefault();
+          e.stopPropagation();
+          if ((menuItem as HTMLButtonElement).disabled) return;
+          item.action();
+          closeAllDropdowns();
+        };
+        splitMenu.appendChild(menuItem);
+      });
+
+      splitPrimary.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (splitPrimary.disabled) return;
+        btn.action();
+        refreshActiveStates();
+      };
+
+      splitToggle.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (splitToggle.disabled) return;
+        const isMenuVisible = splitMenu.style.display === 'block';
+        closeAllDropdowns({ keepOverflow: true });
+        splitMenu.style.display = isMenuVisible ? 'none' : 'block';
+        splitToggle.setAttribute('aria-expanded', isMenuVisible ? 'false' : 'true');
+      };
+
+      splitRoot.append(splitPrimary, splitToggle, splitMenu);
+
+      // Track primary for enabled/active state
+      actionButtons.push({
+        config: {
+          type: 'button',
+          label: btn.label,
+          title: btn.title,
+          icon: btn.icon,
+          action: btn.action,
+          isActive: btn.isActive,
+          isEnabled: btn.isEnabled,
+          requiresFocus: btn.requiresFocus,
+          className: btn.className,
+        },
+        element: splitPrimary,
+      });
+
+      currentGroup.appendChild(splitRoot);
+      return;
+    }
+
     if (btn.type === 'colorPicker') {
       const root = document.createElement('div');
       root.className = 'toolbar-color-group';
@@ -1278,9 +1287,6 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       underline.className = 'toolbar-color-underline';
       primary.append(createIconElement(btn.icon, 'toolbar-icon'), underline);
 
-      const menu = document.createElement('div');
-      menu.className = 'toolbar-color-menu';
-
       const toggle = document.createElement('button');
       toggle.type = 'button';
       toggle.className = 'toolbar-button toolbar-color-toggle';
@@ -1293,22 +1299,49 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         createIconElement({ name: 'chevron-down', fallback: 'v' }, 'toolbar-icon menu-caret')
       );
 
+      const popup = document.createElement('div');
+      popup.className = 'toolbar-color-menu';
+      popup.style.display = 'none';
+      popup.style.position = 'absolute';
+      popup.style.top = '100%';
+      popup.style.left = '0';
+      popup.style.zIndex = '100';
+      popup.style.background = 'var(--md-background)';
+      popup.style.border = '1px solid var(--md-border)';
+      popup.style.borderRadius = '6px';
+      popup.style.padding = '8px';
+      popup.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+      popup.style.width = '140px';
+      popup.style.display = 'grid';
+      popup.style.gridTemplateColumns = 'repeat(5, 1fr)';
+      popup.style.gap = '6px';
+
+      // Hide initially since grid overrides the initial 'none' above for layout
+      popup.style.display = 'none';
+
+      // Create swatches
       const swatches: Array<{ value: string; element: HTMLButtonElement }> = [];
       TEXT_COLOR_OPTIONS.forEach(option => {
         const swatch = document.createElement('button');
+        swatch.className = 'color-swatch-button';
         swatch.type = 'button';
-        swatch.className = 'toolbar-color-swatch';
         swatch.title = option.label;
-        swatch.setAttribute('aria-label', option.label);
-        swatch.onmousedown = e => {
-          e.preventDefault();
-        };
+        swatch.style.width = '20px';
+        swatch.style.height = '20px';
+        swatch.style.borderRadius = '4px';
+        swatch.style.border = '1px solid var(--md-border)';
+        swatch.style.cursor = 'pointer';
+        swatch.style.padding = '0';
+        swatch.style.display = 'flex';
+        swatch.style.alignItems = 'center';
+        swatch.style.justifyContent = 'center';
 
-        if (option.value) {
-          swatch.style.backgroundColor = option.value;
+        if (option.value === '') {
+          swatch.style.background = 'transparent';
+          swatch.innerHTML =
+            '<svg width="14" height="14" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22" stroke="var(--md-error-fg)" stroke-width="2"/></svg>';
         } else {
-          swatch.classList.add('default-swatch');
-          swatch.textContent = 'A';
+          swatch.style.background = option.value;
         }
 
         swatch.onclick = e => {
@@ -1316,12 +1349,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           e.stopPropagation();
           applyTextColor(editor, option.value);
           setPreferredTextColor(option.value);
-          menu.style.display = 'none';
           refreshActiveStates();
+          closeAllDropdowns();
         };
 
-        menu.appendChild(swatch);
         swatches.push({ value: option.value, element: swatch });
+        popup.appendChild(swatch);
       });
 
       primary.onclick = e => {
@@ -1344,15 +1377,22 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       toggle.onclick = e => {
         e.preventDefault();
         e.stopPropagation();
-        if (toggle.disabled) {
-          return;
-        }
-        const isVisible = menu.style.display === 'flex';
+        if (toggle.disabled) return;
+
+        const isMenuVisible = popup.style.display === 'grid';
         closeAllDropdowns({ keepOverflow: true });
-        menu.style.display = isVisible ? 'none' : 'flex';
+
+        popup.style.display = isMenuVisible ? 'none' : 'grid';
+        toggle.setAttribute('aria-expanded', isMenuVisible ? 'false' : 'true');
+
+        if (!isMenuVisible) {
+          // Highlight current selected color if we wanted to
+        }
       };
 
-      root.append(primary, toggle, menu);
+      // Wrap in a relative container so popup absolute positioning works correctly
+      root.style.position = 'relative';
+      root.append(primary, toggle, popup);
       colorPickers.push({ config: btn, root, primary, toggle, underline, swatches });
       currentGroup.appendChild(root);
       return;
@@ -1382,49 +1422,18 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     currentGroup.appendChild(button);
   });
 
-  toolbarRefreshFunction = refreshActiveStates;
-
-  editor.on('selectionUpdate', refreshActiveStates);
-
-  // Listen for editor focus changes
-  const handleEditorFocusChange = (e: Event) => {
-    const customEvent = e as CustomEvent<{ focused: boolean }>;
-    isEditorFocused = customEvent.detail.focused;
-    refreshActiveStates();
-  };
-
-  // Ensure we don't accumulate multiple listeners if toolbar is recreated
-  if (focusChangeListener) {
-    window.removeEventListener('editorFocusChange', focusChangeListener);
-  }
-  focusChangeListener = handleEditorFocusChange;
-  window.addEventListener('editorFocusChange', handleEditorFocusChange);
-
-  const handleDocumentDirtyChange = () => {
-    refreshActiveStates();
-  };
-  if (dirtyChangeListener) {
-    window.removeEventListener('documentDirtyChange', dirtyChangeListener);
-  }
-  dirtyChangeListener = handleDocumentDirtyChange;
-  window.addEventListener('documentDirtyChange', handleDocumentDirtyChange);
-
-  // Clean up listeners when editor is destroyed
-  editor.on('destroy', () => {
-    if (focusChangeListener) {
-      window.removeEventListener('editorFocusChange', focusChangeListener);
-      focusChangeListener = null;
-    }
-
-    if (dirtyChangeListener) {
-      window.removeEventListener('documentDirtyChange', dirtyChangeListener);
-      dirtyChangeListener = null;
-    }
-
-    if (typeof editor.off === 'function') {
-      editor.off('selectionUpdate', refreshActiveStates);
-    }
+  stateHandler = new ToolbarStateHandler({
+    editor,
+    actionButtons,
+    dropdownButtons,
+    dropdownItems,
+    colorPickers,
+    getEditorTextColor,
+    getPreferredTextColor,
+    normalizeColor,
   });
+  stateHandler.attach();
+  toolbarRefreshFunctions.push(refreshActiveStates);
 
   refreshActiveStates();
 
@@ -1512,178 +1521,9 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   // Initial layout after first paint
   requestAnimationFrame(() => updateOverflow());
 
-  // --- Theme toggle button (sun/moon) at the far right ---
-  const themeToggleGroup = document.createElement('div');
-  themeToggleGroup.className = 'toolbar-group toolbar-theme-toggle-group toolbar-no-overflow';
-  themeToggleGroup.style.marginLeft = 'auto';
-
-  const themeToggleBtn = document.createElement('button');
-  themeToggleBtn.type = 'button';
-  themeToggleBtn.className = 'toolbar-button theme-toggle';
-  themeToggleBtn.setAttribute('data-tooltip', 'Toggle light/dark theme');
-  themeToggleBtn.setAttribute('aria-label', 'Toggle light/dark theme');
-  themeToggleBtn.onmousedown = e => e.preventDefault();
-
-  function isCurrentThemeDark(): boolean {
-    const override = (window as any).gptAiCurrentThemeOverride;
-    if (override) return override === 'dark';
-    return (
-      document.body.getAttribute('data-theme') === 'dark' ||
-      document.body.classList.contains('vscode-dark')
-    );
-  }
-
-  function updateThemeIcon() {
-    themeToggleBtn.innerHTML = '';
-    const icon = document.createElement('span');
-    icon.className = 'toolbar-icon';
-    const dark = isCurrentThemeDark();
-    icon.innerHTML = dark
-      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>'
-      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-    themeToggleBtn.appendChild(icon);
-  }
-  updateThemeIcon();
-
-  themeToggleBtn.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    const newTheme = isCurrentThemeDark() ? 'light' : 'dark';
-    // Apply theme via the global helper (sets data-theme attribute + fires event)
-    if (typeof (window as any).gptAiApplyTheme === 'function') {
-      (window as any).gptAiApplyTheme(newTheme);
-    }
-    // Persist to VS Code settings
-    const vscodeApi = (window as any).vscode;
-    if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
-      vscodeApi.postMessage({ type: MessageType.UPDATE_THEME_OVERRIDE, theme: newTheme });
-    }
-    updateThemeIcon();
-  };
-
-  // Keep icon in sync when theme is changed externally
-  window.addEventListener('gptAiThemeChanged', () => updateThemeIcon());
-
-  // --- Help / About button (?) to the left of the theme toggle ---
-  const helpBtn = document.createElement('button');
-  helpBtn.type = 'button';
-  helpBtn.className = 'toolbar-button help-about-button';
-  helpBtn.setAttribute('data-tooltip', 'About this editor');
-  helpBtn.setAttribute('aria-label', 'About this editor');
-  helpBtn.onmousedown = e => e.preventDefault();
-  const helpIcon = document.createElement('span');
-  helpIcon.className = 'toolbar-icon';
-  helpIcon.innerHTML =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
-  helpBtn.appendChild(helpIcon);
-  helpBtn.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    showAboutModal();
-  };
-
-  themeToggleGroup.appendChild(helpBtn);
-  themeToggleGroup.appendChild(themeToggleBtn);
-  toolbar.appendChild(themeToggleGroup);
+  ToolbarAuxControlsFactory.appendTo(toolbar, editor);
 
   return toolbar;
-}
-
-const REPO_URL = 'https://github.com/kamransethi/gpt-ai-markdown-editor';
-
-/**
- * Show the About modal with version info and helpful links.
- */
-function showAboutModal(): void {
-  // Remove existing modal if any
-  document.querySelector('.about-modal-overlay')?.remove();
-
-  const version = document.body.getAttribute('data-extension-version') || 'unknown';
-
-  const overlay = document.createElement('div');
-  overlay.className = 'about-modal-overlay';
-
-  const dialog = document.createElement('div');
-  dialog.className = 'about-modal';
-  dialog.setAttribute('role', 'dialog');
-  dialog.setAttribute('aria-label', 'About Visual AI Markdown Editor');
-
-  dialog.innerHTML = `
-    <div class="about-modal-header">
-      <h2 class="about-modal-title">Visual AI Markdown Editor</h2>
-      <button class="about-modal-close" aria-label="Close" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="about-modal-body">
-      <div class="about-modal-version">
-        <span class="about-modal-label">Version</span>
-        <span class="about-modal-value">${version}</span>
-      </div>
-      <div class="about-modal-version">
-        <span class="about-modal-label">Publisher</span>
-        <span class="about-modal-value">DK-AI</span>
-      </div>
-      <div class="about-modal-version">
-        <span class="about-modal-label">License</span>
-        <span class="about-modal-value">MIT</span>
-      </div>
-      <div class="about-modal-divider"></div>
-      <div class="about-modal-links">
-        <a class="about-modal-link" data-url="${REPO_URL}#readme">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          Documentation
-        </a>
-        <a class="about-modal-link" data-url="${REPO_URL}/blob/main/CHANGELOG.md">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Changelog
-        </a>
-        <a class="about-modal-link" data-url="${REPO_URL}/blob/main/FEATURES.md">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Features
-        </a>
-        <a class="about-modal-link" data-url="${REPO_URL}/issues">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Report an Issue
-        </a>
-        <a class="about-modal-link" data-url="${REPO_URL}/discussions">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Community Discussions
-        </a>
-      </div>
-    </div>
-  `;
-
-  overlay.appendChild(dialog);
-  document.body.appendChild(overlay);
-
-  // Wire up link clicks to open externally via VS Code
-  dialog.querySelectorAll('.about-modal-link[data-url]').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      const url = (link as HTMLElement).getAttribute('data-url');
-      if (url) {
-        const vscodeApi = (window as any).vscode;
-        if (vscodeApi && typeof vscodeApi.postMessage === 'function') {
-          vscodeApi.postMessage({ type: MessageType.OPEN_EXTERNAL_LINK, url });
-        }
-      }
-    });
-  });
-
-  // Close handlers
-  const close = () => overlay.remove();
-  overlay.querySelector('.about-modal-close')!.addEventListener('click', close);
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) close();
-  });
-  const handleEsc = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      close();
-      document.removeEventListener('keydown', handleEsc);
-    }
-  };
-  document.addEventListener('keydown', handleEsc);
 }
 
 /**

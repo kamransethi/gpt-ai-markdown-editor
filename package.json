@@ -2,7 +2,7 @@
   "name": "gpt-ai-markdown-editor",
   "displayName": "Visual AI Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "2.0.14",
+  "version": "2.0.22",
   "publisher": "kamransethi",
   "author": {
     "name": "DK-AI",
@@ -180,38 +180,20 @@
           "default": "",
           "markdownDescription": "Path to Google Chrome or Chromium executable for PDF export. Leave empty to auto-detect.\n\n**Download Chrome:**\n- [Windows/Mac/Linux](https://www.google.com/chrome/)\n- [Chromium (open source)](https://www.chromium.org/getting-involved/download-chromium/)\n\n**Common paths:**\n- **Mac:** `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`\n- **Windows:** `C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe`\n- **Linux:** `/usr/bin/google-chrome` or `/usr/bin/chromium`"
         },
+        "gptAiMarkdownEditor.pandocPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to Pandoc executable for DOCX export. Leave empty to auto-detect.\n\n**Install Pandoc:**\n- [Download](https://pandoc.org/installing.html)\n\n**Common paths:**\n- **Mac:** `/usr/local/bin/pandoc` or `/opt/homebrew/bin/pandoc`\n- **Windows:** `C:\\Program Files\\Pandoc\\pandoc.exe`\n- **Linux:** `/usr/bin/pandoc`"
+        },
+        "gptAiMarkdownEditor.pandocTemplatePath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional path to a Pandoc template (.docx or .dotx) for DOCX export. If specified, Pandoc will use this template as the base for styling. Leave empty to use Pandoc's default template."
+        },
         "gptAiMarkdownEditor.imageResize.skipWarning": {
           "type": "boolean",
           "default": false,
           "description": "Skip the warning dialog when resizing images. When enabled, images will be resized immediately without confirmation."
-        },
-        "gptAiMarkdownEditor.lineSpacing": {
-          "type": "number",
-          "default": 1,
-          "minimum": 1,
-          "maximum": 3,
-          "description": "Line height multiplier for body text in the editor (e.g., 1.7 = 170% of font size)."
-        },
-        "gptAiMarkdownEditor.paragraphSpacing": {
-          "type": "number",
-          "default": 1,
-          "minimum": 0,
-          "maximum": 3,
-          "description": "Extra bottom margin between paragraphs, in em units."
-        },
-        "gptAiMarkdownEditor.tableCellSpacing": {
-          "type": "number",
-          "default": 0.1,
-          "minimum": 0,
-          "maximum": 2,
-          "description": "Vertical padding inside table cells, in em units."
-        },
-        "gptAiMarkdownEditor.tableCellHorizontalSpacing": {
-          "type": "number",
-          "default": 0.2,
-          "minimum": 0,
-          "maximum": 3,
-          "description": "Horizontal padding inside table cells, in em units."
         },
         "gptAiMarkdownEditor.themeOverride": {
           "type": "string",

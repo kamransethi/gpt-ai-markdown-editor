@@ -169,10 +169,6 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     return {
       mediaPath: this.getConfig<string>('mediaPath', 'media'),
       mediaPathBase: this.getConfig<string>('mediaPathBase', 'sameNameFolder'),
-      lineSpacing: this.getConfig<number>('lineSpacing', 1),
-      paragraphSpacing: this.getConfig<number>('paragraphSpacing', 1),
-      tableCellSpacing: this.getConfig<number>('tableCellSpacing', 0.1),
-      tableCellHorizontalSpacing: this.getConfig<number>('tableCellHorizontalSpacing', 0.5),
       themeOverride: this.getConfig<string>('themeOverride', 'light'),
       developerMode: this.getConfig<boolean>('developerMode', true),
       tocMaxDepth: this.getConfig<number>('tocMaxDepth', 3),
@@ -385,17 +381,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           typeof message.requestId === 'string' && message.requestId.trim().length > 0
             ? message.requestId
             : 'save-unknown';
-        const docUri = document.uri.toString();
-        console.log(
-          `[DK-AI][SAVE][${requestId}] Received saveAndEdit (content len: ${contentStr.length}, uri: ${docUri})`
-        );
+
         void this.sync.enqueueEdit(document.uri.toString(), async () => {
           try {
-            const success = await this.sync.applyEdit(contentStr, document);
-            console.log(`[DK-AI][SAVE][${requestId}] applyEdit result: ${success}`);
-
+            await this.sync.applyEdit(contentStr, document);
             const saved = await document.save();
-            console.log(`[DK-AI][SAVE][${requestId}] document.save() result: ${saved}`);
 
             // Send signal back. We send it for 'success' (content matches) OR 'saved' (disk write).
             // This ensures the toolbar can gray out if the document state is now congruent.
@@ -415,11 +405,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       }
       case MessageType.SAVE:
-        console.log('[DK-AI] Received save message');
         void this.sync.enqueueEdit(document.uri.toString(), async () => {
           try {
             const saved = await document.save();
-            console.log(`[DK-AI] document.save() result: ${saved}`);
             webview.postMessage({ type: MessageType.SAVED });
 
             if (saved) {
@@ -484,7 +472,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         } else if (level === 'warn') {
           console.warn(`[DK-AI][WEBVIEW] ${text}`, details);
         } else {
-          console.log(`[DK-AI][WEBVIEW] ${text}`, details);
+          console.warn(`[DK-AI][WEBVIEW] ${text}`, details);
         }
         break;
       }

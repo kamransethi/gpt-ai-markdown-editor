@@ -130,7 +130,7 @@ body {
     Arial,
     sans-serif;
   font-size: var(--md-base-size);
-  line-height: var(--gptai-line-spacing);
+  line-height: 1.3;
 }
 
 /* ============================================
@@ -358,12 +358,29 @@ body[data-theme="dark"] {
   font-size: var(--ui-font-base);
 }
 
-.toc-pane-level-1 { padding-left: 10px; }
-.toc-pane-level-2 { padding-left: 20px; }
-.toc-pane-level-3 { padding-left: 30px; }
-.toc-pane-level-4 { padding-left: 40px; }
-.toc-pane-level-5 { padding-left: 50px; }
-.toc-pane-level-6 { padding-left: 60px; }
+.toc-pane-level-1 {
+  padding-left: 10px;
+}
+
+.toc-pane-level-2 {
+  padding-left: 20px;
+}
+
+.toc-pane-level-3 {
+  padding-left: 30px;
+}
+
+.toc-pane-level-4 {
+  padding-left: 40px;
+}
+
+.toc-pane-level-5 {
+  padding-left: 50px;
+}
+
+.toc-pane-level-6 {
+  padding-left: 60px;
+}
 
 /* Heading-level colors to match document headings */
 .toc-pane-level-1 .toc-pane-item-text {
@@ -400,7 +417,7 @@ body[data-theme="dark"] {
 }
 
 .markdown-editor {
-  line-height: 1.58;
+  line-height: 1.3;
   letter-spacing: -0.003em;
   color: var(--md-foreground);
   background-color: var(--md-background);
@@ -439,8 +456,8 @@ body[data-theme="dark"] {
      ============================================ */
 
 .markdown-editor :is(h1, h2, h3, h4, h5, h6) {
-  line-height: 1.25;
-  margin: 0.75em 0 0.35em;
+  line-height: 1.2;
+  margin: 0.5em 0 0.1em;
 }
 
 .markdown-editor h1 {
@@ -480,7 +497,7 @@ body[data-theme="dark"] {
 
 .markdown-editor p {
   margin: 0;
-  line-height: 1.58;
+  line-height: 1.3;
   font-size: calc(var(--md-base-size) * 1.2);
 }
 
@@ -488,9 +505,9 @@ body[data-theme="dark"] {
   margin-top: 0;
 }
 
-/* Consistent spacing after headings */
-.markdown-editor :is(h1, h2, h3, h4, h5, h6)+p {
-  margin-top: 0.5em;
+/* Consistent spacing after headings for all block elements — ensure uniform tight gap */
+.markdown-editor :is(h1, h2, h3, h4, h5, h6) + :is(p, table, ul, ol, pre, .code-block-ui, .code-block-highlighted, blockquote, .github-alert) {
+  margin-top: 0.15em;
 }
 
 /* ============================================
@@ -500,12 +517,12 @@ body[data-theme="dark"] {
 .markdown-editor ul,
 .markdown-editor ol {
   padding-left: 30px;
-  margin: 0.75em 0;
+  margin: 0.25em 0;
 }
 
 .markdown-editor li {
-  margin: 0.25em 0;
-  line-height: 1.58;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .markdown-editor li>p {
@@ -581,14 +598,14 @@ body[data-theme="dark"] {
   padding: 20px;
   border-radius: var(--ui-radius-md);
   overflow-x: auto;
-  margin: 1em 0;
+  margin: 0.75em 0;
   line-height: 1.5;
   color: var(--md-code-fg) !important;
   position: relative;
 }
 
 .code-block-ui {
-  margin: 1em 0;
+  margin: 0.75em 0;
 }
 
 .code-block-ui-header,
@@ -774,7 +791,7 @@ body[data-theme="dark"] {
   background-color: var(--md-quote-bg);
   padding-right: 20px;
   padding-left: 16px;
-  margin: 1em 0;
+  margin: 0.75em 0;
   font-style: italic;
   color: var(--md-foreground);
   line-height: 1.58;
@@ -799,7 +816,7 @@ body[data-theme="dark"] {
   border-left: 4px solid;
   background-color: rgba(0, 0, 0, 0.05);
   padding: 16px 20px;
-  margin: 1em 0;
+  margin: 0.75em 0;
   border-radius: var(--ui-radius-md);
   font-style: normal;
   color: var(--md-foreground);
@@ -808,7 +825,7 @@ body[data-theme="dark"] {
 
 .ProseMirror p {
   margin-top: 0;
-  margin-bottom: var(--gptai-paragraph-spacing);
+  margin-bottom: 0.2em;
 }
 
 /* Headings */
@@ -839,13 +856,6 @@ body[data-theme="dark"] {
 }
 
 :root {
-  --gptai-header-spacing: 1.5;
-
-  /* Configurable spacing variables with fallbacks */
-  --gptai-line-spacing: 1;
-  --gptai-paragraph-spacing: 1em;
-  --gptai-table-cell-spacing: 0.1em;
-  --gptai-table-cell-horizontal-spacing: 0.2em;
   --gptai-table-vertical-border: rgba(127, 127, 127, 0.22);
 }
 
@@ -961,7 +971,7 @@ body[data-theme="dark"] .github-alert {
   border-spacing: 0;
   width: auto;
   max-width: 100%;
-  margin: 1em 0;
+  margin: 0.75em 0;
   overflow: hidden;
   border-radius: var(--ui-radius-md);
   border: 1px solid var(--md-border);
@@ -974,32 +984,32 @@ body[data-theme="dark"] .github-alert {
   border-left: none;
   border-right: none;
   border-top: none;
-  padding: var(--gptai-table-cell-spacing, 0.1em) var(--gptai-table-cell-horizontal-spacing, 0.2em);
+  padding: 0.1em 0.2em;
   margin: 0;
   box-sizing: border-box;
   position: relative;
 }
 
 /* First row has no top border (outer border handles it) */
-.ProseMirror tr:first-child > th,
-.ProseMirror tr:first-child > td {
+.ProseMirror tr:first-child>th,
+.ProseMirror tr:first-child>td {
   border-top: none;
 }
 
 /* Last row has no bottom border (outer border handles it) */
-.ProseMirror tr:last-child > th,
-.ProseMirror tr:last-child > td {
+.ProseMirror tr:last-child>th,
+.ProseMirror tr:last-child>td {
   border-bottom: none;
 }
 
-.ProseMirror tr > th:not(:last-child),
-.ProseMirror tr > td:not(:last-child) {
+.ProseMirror tr>th:not(:last-child),
+.ProseMirror tr>td:not(:last-child) {
   border-right: 1px solid var(--gptai-table-vertical-border, rgba(127, 127, 127, 0.2));
 }
 
 /* Inner rows get top border to separate from previous row */
-.ProseMirror tr:not(:first-child) > th,
-.ProseMirror tr:not(:first-child) > td {
+.ProseMirror tr:not(:first-child)>th,
+.ProseMirror tr:not(:first-child)>td {
   border-top: 1px solid var(--md-border);
 }
 
@@ -1839,6 +1849,88 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   opacity: var(--md-disabled-opacity);
 }
 
+/* ── Split button (save + export dropdown) ──────────────────────────── */
+.toolbar-split-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-md);
+  overflow: visible;
+}
+
+.toolbar-split-group:hover {
+  border-color: var(--md-border);
+}
+
+.toolbar-split-group .toolbar-button {
+  height: 28px;
+}
+
+.toolbar-split-primary {
+  padding-right: 2px;
+}
+
+.toolbar-split-toggle {
+  width: 16px;
+  padding: 0 2px;
+  border-left: 1px solid var(--md-border);
+  border-radius: 0 var(--ui-radius-md) var(--ui-radius-md) 0;
+}
+
+.toolbar-split-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--md-dropdown-bg);
+  border: 1px solid var(--md-dropdown-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--md-shadow-color);
+  z-index: 1000;
+}
+
+/* ── Color picker anchor (thednp/color-picker) ───────────────────────── */
+.color-picker-anchor {
+  position: absolute;
+  /* Position below the toggle button — the library will auto-position */
+  top: calc(100% + 4px);
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1200;
+}
+
+.color-picker-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Theme overrides for @thednp/color-picker to match VS Code theme */
+.color-picker {
+  --color-picker-bg: var(--md-dropdown-bg);
+  --color-picker-border: var(--md-dropdown-border);
+  --color-picker-color: var(--md-foreground);
+  font-family: var(--md-font-family);
+  z-index: 1200;
+}
+
+.color-picker .color-picker-arrow {
+  display: none;
+}
+
+/* Ensure the picker dropdown sits above toolbar */
+.color-picker.show {
+  z-index: 1200;
+}
+
 .toolbar-dropdown-menu {
   display: none;
   position: absolute;
@@ -2617,7 +2709,9 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
 }
 
 @keyframes ai-refine-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================
@@ -3301,6 +3395,35 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   margin-top: 0.25em;
 }
 
+/* Missing image indicator */
+.image-wrapper.image-missing {
+  outline: 1px dashed rgba(220, 20, 60, 0.25);
+}
+
+.image-wrapper.image-missing .markdown-image {
+  opacity: 0.35;
+  filter: grayscale(100%);
+}
+
+.image-wrapper.image-missing::after {
+  content: '!';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--md-error-bg, #c62828);
+  color: var(--md-error-fg, #ffffff);
+  font-weight: 700;
+  font-size: 12px;
+  z-index: 30;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
 /* Image menu button - three-dots menu (replaces resize icon) */
 .image-menu-button {
   position: absolute;
@@ -3785,16 +3908,16 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
 
 .emoji-picker-overlay {
   position: fixed;
-  inset: 0;
   z-index: 10000;
-  background: transparent;
+  pointer-events: none;
 }
 
 .emoji-picker-container {
   position: fixed;
   z-index: 10001;
+  pointer-events: auto;
   border-radius: 12px;
-  box-shadow: 0 8px 32px var(--md-shadow-color), 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 32px var(--md-shadow-color), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .emoji-picker-container emoji-picker {
@@ -3891,7 +4014,17 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   background-color: var(--md-subtle-bg);
   border: 1px solid var(--md-border);
   border-radius: 10px;
-  box-shadow: 0 8px 32px var(--md-shadow-color);
+  /* Visible focus/glow similar to image/mermaid selection */
+  outline: 2px solid var(--md-focus);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--md-focus),
+    0 8px 32px var(--md-shadow-color),
+    0 0 12px var(--ui-glow),
+    0 0 24px var(--ui-glow-dim),
+    /* Subtle purple tint commonly used for AI dialogs */
+    0 0 36px rgba(130,80,223,0.08);
+  transition: box-shadow 0.18s ease, outline 0.18s ease;
   display: flex;
   flex-direction: column;
   font-family: var(--md-font-family);
@@ -3948,9 +4081,17 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   color: var(--md-foreground);
 }
 
-.ai-explain-body h1 { font-size: 18px; }
-.ai-explain-body h2 { font-size: 16px; }
-.ai-explain-body h3 { font-size: 14px; }
+.ai-explain-body h1 {
+  font-size: 18px;
+}
+
+.ai-explain-body h2 {
+  font-size: 16px;
+}
+
+.ai-explain-body h3 {
+  font-size: 14px;
+}
 
 .ai-explain-body h1:first-child,
 .ai-explain-body h2:first-child,
@@ -4050,4 +4191,38 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
 .global-drag-handle svg {
   width: 14px;
   height: 14px;
+}
+
+/* Draggable block handle for images and Mermaid blocks */
+.block-drag-handle {
+  position: absolute;
+  left: -32px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: grab;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+
+.block-drag-handle:hover,
+.block-drag-handle:active {
+  opacity: 1;
+  background: var(--md-hover-bg);
+  border-radius: 50%;
+}
+
+/* Highlight dragged block */
+.tiptap-block-dragging {
+  background: var(--md-selection);
+  opacity: 0.7;
+  box-shadow: 0 4px 12px var(--ui-shadow-sm);
+  border: 1px dashed var(--md-border);
 }

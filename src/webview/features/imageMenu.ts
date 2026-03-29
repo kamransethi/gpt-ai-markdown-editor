@@ -59,6 +59,10 @@ export function createImageMenu(isLocal: boolean = true): HTMLElement {
       <span class="codicon codicon-edit menu-icon"></span>
       <span class="menu-label">Rename</span>
     </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="replace">
+      <span class="codicon codicon-repo-push menu-icon"></span>
+      <span class="menu-label">Replace...</span>
+    </div>
     <div class="menu-item" role="menuitem" tabindex="0" data-action="revert">
       <span class="codicon codicon-refresh menu-icon"></span>
       <span class="menu-label">Revert to original size</span>
@@ -153,6 +157,24 @@ export function showImageMenu(
 
     if (menuItem) {
       const action = menuItem.getAttribute('data-action');
+
+      if (action === 'replace') {
+        hideImageMenu(menu);
+        // Mark the clicked image as the pending replace target so the
+        // file picker result can update the correct node when the
+        // extension returns `LOCAL_FILE_SELECTED`.
+        try {
+          (window as any)._pendingImageReplaceTarget = img;
+        } catch {
+          (window as any)._pendingImageReplaceTarget = img;
+        }
+
+        if (vscodeApi && typeof (vscodeApi as any).postMessage === 'function') {
+          (vscodeApi as any).postMessage({ type: MessageType.BROWSE_LOCAL_FILE });
+        }
+
+        return;
+      }
 
       if (action === 'revert') {
         hideImageMenu(menu);

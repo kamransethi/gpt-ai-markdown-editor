@@ -292,18 +292,37 @@ export const CustomImage = Image.extend({
       // Track if image is loaded
       let isImageLoaded = dom.complete;
 
-      // Update loaded state when image loads
+      // Update loaded state when image loads; clear any missing state
       if (!isImageLoaded) {
         dom.addEventListener(
           'load',
           () => {
             isImageLoaded = true;
             dom.removeAttribute('data-loading');
+            wrapper.classList.remove('image-missing');
           },
           { once: true }
         );
         dom.setAttribute('data-loading', 'true');
       }
+
+      // If the image fails to load (missing file / bad path), show a clear error indicator
+      dom.addEventListener(
+        'error',
+        () => {
+          dom.removeAttribute('data-loading');
+          wrapper.classList.add('image-missing');
+          // Ensure screen readers get useful text
+          dom.alt = node.attrs.alt || 'Image not found';
+          // Hide metadata footer if present
+          try {
+            hideImageMetadataFooter(wrapper);
+          } catch {
+            // ignore
+          }
+        },
+        { once: true }
+      );
 
       // Only show menu button on hover if image is loaded and not external
       const handleMouseEnter = () => {

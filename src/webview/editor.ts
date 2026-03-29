@@ -66,6 +66,7 @@ import { createLinkClickHandler } from './features/linkHandling';
 import { SearchAndReplace } from './extensions/searchAndReplace';
 import { SlashCommand } from './extensions/slashCommand';
 import { AiExplain, handleAiExplainResult } from './extensions/aiExplain';
+import { DraggableBlocks } from './extensions/draggableBlocks';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
@@ -848,6 +849,7 @@ function initializeEditor(initialContent: string) {
       SearchAndReplace,
       SlashCommand,
       AiExplain,
+      DraggableBlocks, // Custom extension for block drag handles and highlighting
     ];
 
     const extensions = rawExtensions.map(normalizeExtensionPluginList);
@@ -1001,7 +1003,13 @@ function initializeEditor(initialContent: string) {
     });
     editorDom.addEventListener('blur', (event: FocusEvent) => {
       const relatedTarget = event.relatedTarget as HTMLElement | null;
-      const stayingInToolbar = Boolean(relatedTarget && formattingToolbar?.contains(relatedTarget));
+      const stayingInToolbar = Boolean(
+        relatedTarget &&
+        (relatedTarget === editorDom ||
+          formattingToolbar?.contains(relatedTarget) ||
+          relatedTarget.closest('.emoji-picker-overlay') ||
+          relatedTarget.closest('.toolbar-color-menu'))
+      );
 
       if (stayingInToolbar) {
         return;
@@ -1010,7 +1018,13 @@ function initializeEditor(initialContent: string) {
       // relatedTarget can be null; wait a tick to see where focus actually lands
       setTimeout(() => {
         const activeElement = document.activeElement as HTMLElement | null;
-        if (activeElement && formattingToolbar?.contains(activeElement)) {
+        if (
+          activeElement &&
+          (activeElement === editorDom ||
+            formattingToolbar?.contains(activeElement) ||
+            activeElement.closest('.emoji-picker-overlay') ||
+            activeElement.closest('.toolbar-color-menu'))
+        ) {
           return;
         }
         window.dispatchEvent(new CustomEvent('editorFocusChange', { detail: { focused: false } }));
@@ -1151,24 +1165,6 @@ function applyWebviewSettings(message: any) {
   }
   if (typeof message.developerMode === 'boolean') {
     window.gptaiDeveloperMode = message.developerMode;
-  }
-
-  // Apply spacing variables
-  const root = document.documentElement;
-  if (typeof message.lineSpacing === 'number') {
-    root.style.setProperty('--gptai-line-spacing', message.lineSpacing.toString());
-  }
-  if (typeof message.paragraphSpacing === 'number') {
-    root.style.setProperty('--gptai-paragraph-spacing', `${message.paragraphSpacing}em`);
-  }
-  if (typeof message.tableCellSpacing === 'number') {
-    root.style.setProperty('--gptai-table-cell-spacing', `${message.tableCellSpacing}em`);
-  }
-  if (typeof message.tableCellHorizontalSpacing === 'number') {
-    root.style.setProperty(
-      '--gptai-table-cell-horizontal-spacing',
-      `${message.tableCellHorizontalSpacing}em`
-    );
   }
 
   if (typeof message.tocMaxDepth === 'number') {

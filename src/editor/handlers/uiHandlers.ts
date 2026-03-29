@@ -70,6 +70,20 @@ export async function handleExportDocument(
   const mermaidImages = message.mermaidImages as any[];
   const title = message.title as string;
 
+  console.log(
+    '[DK-AI] handleExportDocument extension side: format=',
+    format,
+    'mermaidImages=',
+    mermaidImages?.length || 0
+  );
+  if (mermaidImages && mermaidImages.length > 0) {
+    mermaidImages.forEach((img, i) => {
+      console.log(
+        `[DK-AI]   Image ${i}: id=${img?.id}, dataUrl length=${img?.pngDataUrl?.length || 0}`
+      );
+    });
+  }
+
   // Import dynamically to avoid loading heavy dependencies on startup
   const { exportDocument } = await import('../../features/documentExport');
 

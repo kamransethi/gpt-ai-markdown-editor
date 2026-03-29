@@ -22,6 +22,12 @@ This document lists the third-party open source software components used in Visu
 - **Repository:** https://github.com/ueberdosis/tiptap
 - **License URL:** https://github.com/ueberdosis/tiptap/blob/main/LICENSE
 
+### @thednp/color-picker
+- **License:** MIT
+- **Copyright:** © 2023 thednp
+- **Repository:** https://github.com/thednp/color-picker
+- **License URL:** https://github.com/thednp/color-picker/blob/master/LICENSE
+
 ### cheerio
 - **License:** MIT
 - **Copyright:** © 2024 cheeriojs

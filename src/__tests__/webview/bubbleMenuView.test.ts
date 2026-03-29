@@ -179,7 +179,10 @@ describe('BubbleMenuView', () => {
       const editor = createMockEditor();
       const toolbar = createFormattingToolbar(editor);
 
-      const saveButton = toolbar.querySelector('button.save-button') as HTMLButtonElement;
+      // Save is now a split-button; the primary action button is inside .save-button
+      const saveButton = toolbar.querySelector(
+        '.save-button .toolbar-split-primary'
+      ) as HTMLButtonElement;
       expect(saveButton).toBeTruthy();
       expect(saveButton.disabled).toBe(true);
       expect(saveButton.classList.contains('disabled')).toBe(true);

@@ -18,12 +18,12 @@ const SYSTEM_PROMPT =
   'Use this format:\n' +
   '# Summary\nA 2-3 sentence overview of what the document is about.\n\n' +
   '## Key Points\n- Bullet point for each major concept or takeaway\n\n' +
-  '## Technical Details\n- Bullet points explaining technical terms or concepts ' +
+  '## Details\n- Bullet points explaining terms or concepts ' +
   'in simple language\n\n' +
   'Keep the explanation concise (under 500 words). ' +
   'Use **bold** for important terms. ' +
   'Do NOT include markdown code fences around the output. ' +
-  'Write as if explaining to a competent developer who is new to this specific topic.';
+  'Write as if explaining to a competent technologist who is new to this specific topic.';
 
 /**
  * Handle an AI explain request from the webview.

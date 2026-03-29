@@ -12,7 +12,36 @@ function isImageFileName(fileName: string): boolean {
   return /\.(png|jpe?g|gif|webp|svg|bmp|ico|tiff?)$/i.test(fileName);
 }
 
-function extractPathFromDataTransfer(
+function isLikelyFilePath(candidate: string): boolean {
+  const value = candidate.trim();
+  if (!value) {
+    return false;
+  }
+
+  // File URIs from explorer/Finder drops
+  if (value.startsWith('file://')) {
+    return true;
+  }
+
+  // Absolute POSIX paths
+  if (value.startsWith('/')) {
+    return true;
+  }
+
+  // Windows absolute paths
+  if (/^[A-Za-z]:\\\\/.test(value)) {
+    return true;
+  }
+
+  // Relative filesystem paths
+  if (value.startsWith('./') || value.startsWith('../')) {
+    return true;
+  }
+
+  return false;
+}
+
+export function extractPathFromDataTransfer(
   dt: DataTransfer
 ): { sourcePath: string; fileName: string } | null {
   const uriList = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
@@ -21,7 +50,7 @@ function extractPathFromDataTransfer(
     .map(line => line.trim())
     .find(Boolean);
 
-  if (firstLine && !isImageFileName(firstLine)) {
+  if (firstLine && isLikelyFilePath(firstLine) && !isImageFileName(firstLine)) {
     const normalized = firstLine.startsWith('file://')
       ? decodeURIComponent(firstLine.replace('file://', ''))
       : firstLine;

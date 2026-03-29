@@ -64,6 +64,7 @@ export const MessageType = {
   OPEN_FILE_LINK: 'openFileLink',
   OPEN_EXTERNAL_LINK: 'openExternalLink',
   OPEN_IMAGE: 'openImage',
+  OPEN_IMAGE_PICKER: 'openImagePicker',
 
   // ── UI commands ──
   OPEN_SOURCE_VIEW: 'openSourceView',

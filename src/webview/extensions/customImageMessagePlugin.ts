@@ -203,6 +203,47 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             }
             break;
           }
+          case MessageType.LOCAL_FILE_SELECTED: {
+            // If an image replace operation is pending, update that image node
+            const pending = (window as any)._pendingImageReplaceTarget as
+              | HTMLElement
+              | undefined
+              | null;
+            if (!pending) break;
+            try {
+              const relativePathRaw = message.path as string;
+              if (!relativePathRaw) break;
+              let normalizedPath = relativePathRaw.replace(/\\/g, '/');
+              if (
+                !normalizedPath.startsWith('./') &&
+                !normalizedPath.startsWith('../') &&
+                !normalizedPath.startsWith('/') &&
+                !normalizedPath.match(/^[A-Za-z]:/)
+              ) {
+                normalizedPath = './' + normalizedPath;
+              }
+
+              const imgElement = pending as HTMLImageElement;
+              const pos = editor.view.posAtDOM(imgElement, 0);
+              if (pos === undefined || pos === null) break;
+              const node = editor.state.doc.nodeAt(pos);
+              if (!node || node.type.name !== 'image') break;
+
+              editor
+                .chain()
+                .setNodeSelection(pos)
+                .updateAttributes('image', { src: normalizedPath, 'markdown-src': normalizedPath })
+                .run();
+
+              imgElement.setAttribute('data-markdown-src', normalizedPath);
+              imgElement.setAttribute('src', normalizedPath);
+              delete (imgElement as any)._pendingDownloadPlaceholderId;
+            } catch (error) {
+              console.error('[DK-AI] Failed to replace image after file selection:', error);
+            }
+            delete (window as any)._pendingImageReplaceTarget;
+            break;
+          }
           case MessageType.IMAGE_URI_RESOLVED: {
             const callback = uriResolveCallbacks.get(message.requestId);
             if (callback) {

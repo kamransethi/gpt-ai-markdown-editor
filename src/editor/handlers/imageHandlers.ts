@@ -17,6 +17,7 @@ import {
   getImageStorageBasePath,
   resolveMediaTargetFolder,
   isWithinWorkspace,
+  getWorkspaceFolderPath,
   isValidRelativePath,
   fileExists,
 } from '../utils/pathUtils';
@@ -35,6 +36,7 @@ export function registerImageHandlers(router: MessageRouter): void {
   router.register(MessageType.REVEAL_IMAGE_IN_OS, handleRevealImageInOS);
   router.register(MessageType.REVEAL_IMAGE_IN_EXPLORER, handleRevealImageInExplorer);
   router.register(MessageType.COPY_LOCAL_IMAGE_TO_WORKSPACE, handleCopyLocalImageToWorkspace);
+  router.register(MessageType.OPEN_IMAGE_PICKER, handleOpenImagePicker);
 }
 
 /**
@@ -106,8 +108,11 @@ export async function handleWorkspaceImage(
   const normalizedSource = path.normalize(sourcePath);
   const normalizedBase = path.normalize(basePath);
 
-  // Check if image is within workspace/document directory
-  const withinWorkspace = isWithinWorkspace(normalizedSource, normalizedBase);
+  // Get the workspace folder for strict "within workspace" check
+  const workspacePath = getWorkspaceFolderPath(document);
+  const withinWorkspace = workspacePath
+    ? isWithinWorkspace(normalizedSource, workspacePath)
+    : isWithinWorkspace(normalizedSource, normalizedBase);
 
   // Compute relative path from document base to image
   let relativePath = path.relative(normalizedBase, normalizedSource);
@@ -1055,5 +1060,40 @@ export async function handleCopyLocalImageToWorkspace(
       placeholderId,
       error: errorMessage,
     });
+  }
+}
+/**
+ * Open native VS Code file picker to select images.
+ * Delegates to handleWorkspaceImage for each selected file to determine
+ * if it should be linked (if in workspace) or copied (if outside).
+ */
+export async function handleOpenImagePicker(
+  message: { type: string; [key: string]: unknown },
+  ctx: HandlerContext
+): Promise<void> {
+  const options: vscode.OpenDialogOptions = {
+    canSelectMany: true,
+    openLabel: 'Insert Images',
+    filters: {
+      Images: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'],
+    },
+  };
+
+  const fileUris = await vscode.window.showOpenDialog(options);
+  if (!fileUris || fileUris.length === 0) {
+    return;
+  }
+
+  for (const uri of fileUris) {
+    // Use the existing logic to decide between linking or copying
+    await handleWorkspaceImage(
+      {
+        type: MessageType.HANDLE_WORKSPACE_IMAGE,
+        sourcePath: uri.fsPath,
+        fileName: path.basename(uri.fsPath),
+        insertPosition: message.insertPosition as number | undefined,
+      },
+      ctx
+    );
   }
 }

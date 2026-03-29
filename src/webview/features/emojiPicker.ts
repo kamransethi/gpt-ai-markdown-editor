@@ -103,27 +103,47 @@ export function showEmojiPicker(editor: Editor, anchorEl?: HTMLElement): void {
   document.body.appendChild(overlay);
   pickerOverlay = overlay;
 
-  // Close on overlay background click
-  overlay.addEventListener('mousedown', e => {
-    if (e.target === overlay) {
+  // Close on outside click
+  const handleOutsideClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't close if clicking the picker itself or the anchor button (let the button handle toggle)
+    if (
+      pickerOverlay &&
+      !pickerOverlay.contains(target) &&
+      (!anchorEl || !anchorEl.contains(target))
+    ) {
       closeEmojiPicker();
     }
-  });
+  };
 
   // Close on Escape
   const handleEsc = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       closeEmojiPicker();
-      document.removeEventListener('keydown', handleEsc);
     }
   };
+
+  document.addEventListener('mousedown', handleOutsideClick);
   document.addEventListener('keydown', handleEsc);
+
+  // Store listeners for cleanup in closeEmojiPicker
+  (overlay as any)._cleanup = () => {
+    document.removeEventListener('mousedown', handleOutsideClick);
+    document.removeEventListener('keydown', handleEsc);
+  };
 }
 
 export function closeEmojiPicker(): void {
   if (pickerOverlay) {
+    if ((pickerOverlay as any)._cleanup) {
+      (pickerOverlay as any)._cleanup();
+    }
     pickerOverlay.remove();
     pickerOverlay = null;
   }
-  currentEditor = null;
+  if (currentEditor) {
+    // Return focus to editor to prevent toolbar disabling/caret loss
+    currentEditor.commands.focus();
+    currentEditor = null;
+  }
 }

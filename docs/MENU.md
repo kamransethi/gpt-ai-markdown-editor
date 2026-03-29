@@ -18,13 +18,10 @@ The formatting toolbar is arranged left-to-right with logical groupings separate
 
 ### 2. **Text Style** (Dropdown)
 - Dropdown showing the current block style (e.g., "Paragraph", "Heading 1")
-- **Items:**
-  - Paragraph (regular text, not bold)
-  - Heading 1 (preview shows largest)
-  - Heading 2 (preview shows larger)
-  - Heading 3 (preview shows medium)
-  - Heading 4 (preview shows smaller)
-  - Heading 5 (preview shows smallest)
+- **Layout**: Positioned immediately after the Save button for quick logical access to structure.
+- **Items**:
+  - Paragraph
+  - Heading 1 through Heading 5
 - Active item is highlighted
 - Only enabled when editor has focus
 
@@ -43,11 +40,12 @@ The formatting toolbar is arranged left-to-right with logical groupings separate
   - Toggles underline formatting
   - Active button shows current state
 
-- **Font Color** (Color Picker with Dropdown)
-  - Shows current text color as an underline
-  - Displays palette of available colors: Default, Red, Orange, Yellow, Green, Blue, Purple, Pink
-  - Remembers user's preferred color choice in localStorage
-  - Only enabled when editor has focus
+- **Font Color** (Color Grid Dropdown)
+  - Shows current text color as an underline on the icon.
+  - Displays a grid of **Material Design pastel colors** (Red, Pink, Purple, Blue, Teal, Green, Yellow, Orange).
+  - Selected color is applied immediately to selection or new text.
+  - Remembers the user's last-used color across sessions.
+  - Only enabled when editor has focus.
 
 - **Inline Code** (Button)
   - Wraps selected text in backticks (`` ` ``)
@@ -77,14 +75,12 @@ The formatting toolbar is arranged left-to-right with logical groupings separate
 
 ### 5. **Insert Media & Objects** (Flat Buttons)
 - **Image** (Button)
-  - Opens image insertion dialog
-  - Supports:
-    - Drag-and-drop from Finder/File Explorer
-    - File picker dialog
-    - Paste from clipboard
-    - Network URLs
-  - Can resize images inline with handles
-  - Only enabled when editor has focus
+  - Opens the **native OS file picker** (multi-select) directly.
+  - No intermediate dialog; images are inserted immediately at the cursor.
+  - **Smart Linking**:
+    - Automatically creates **relative links** for images inside the workspace.
+    - Automatically **copies external images** to the project's media folder to prevent broken links.
+  - Only enabled when editor has focus.
 
 - **Link** (Button)
   - Opens link insertion/editing dialog
@@ -157,9 +153,10 @@ The formatting toolbar is arranged left-to-right with logical groupings separate
 ---
 
 ### 8. **AI Explain** (Button)
-- Opens AI explanation panel for the document
-- Shows structured analysis in a read-only webview
-- Always enabled (does not require editor focus)
+- Opens AI explanation panel for the document.
+- **Icon**: Sparkle icon (`wand_stars`).
+- Shows structured analysis in a side panel.
+- Always enabled.
 
 ---
 
@@ -325,7 +322,7 @@ Left to right:
 2. (Separator)
 3. Text Style Dropdown
 4. (Separator)
-5. Bold, Italic, Underline, Color, Code, Strikethrough
+5. Bold, Italic, Underline, Highlight, Color, Strikethrough, Inline Code
 6. (Separator)
 7. Bullet List, Numbered List, Task List
 8. (Separator)
@@ -336,4 +333,4 @@ Left to right:
 
 ---
 
-Last updated: 2026-03-28
+Last updated: 2026-03-29

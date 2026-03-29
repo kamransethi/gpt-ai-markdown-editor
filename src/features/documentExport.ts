@@ -6,7 +6,7 @@
 
 /**
  * @file documentExport.ts - PDF and Word document export
- * @description Handles exporting markdown documents to PDF (via local Chrome) and Word (via docx).
+ * @description Handles exporting markdown documents to PDF (via local Chrome) and Word (via Pandoc).
  * Applies export theme settings and embeds Mermaid diagrams as high-quality images.
  */
 
@@ -15,8 +15,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { toErrorMessage } from '../shared/errorUtils';
 import * as os from 'os';
-import { spawn } from 'child_process';
-import { imageSize } from 'image-size';
+import { spawn, spawnSync } from 'child_process';
+import { ensurePandocPath, getPandocTemplatePath, getLuaFiltersDir } from './pandocHelper';
+import { convertMermaidToImages, extractMermaidBlocks } from './mermaidToImages';
 
 /**
  * Mermaid image data
@@ -25,6 +26,8 @@ interface MermaidImage {
   id: string;
   pngDataUrl: string;
   originalSvg: string;
+  width?: number; // Rendered width in pixels
+  height?: number; // Rendered height in pixels
 }
 
 /**
@@ -81,6 +84,10 @@ export async function exportDocument(
     return; // User cancelled
   }
 
+  const docBasePath = getDocumentBasePath(document);
+  // Transform HTML images to use absolute paths to ensure Chrome renderer finds them
+  const resolvedHtml = resolveHtmlImagePaths(html, docBasePath);
+
   // Convert all images (local and remote) to data URLs for embedding
   // html = await convertImagesToDataUrls(html, document);
 
@@ -88,12 +95,15 @@ export async function exportDocument(
   const exportTheme = 'light';
 
   // Show file save dialog
-  const defaultFilename = title.replace(/[<>:"/\\|?*]/g, '-') || 'document';
+  const sourceFileName =
+    document.uri.scheme === 'file'
+      ? path.basename(document.uri.fsPath, path.extname(document.uri.fsPath))
+      : title;
+  const defaultFilename = (sourceFileName || 'document').replace(/[<>:"/\\|?*]/g, '-');
   const extension = format === 'pdf' ? 'pdf' : 'docx';
   const filters: Record<string, string[]> = {};
   filters[format === 'pdf' ? 'PDF Document' : 'Word Document'] = [extension];
 
-  const docBasePath = getDocumentBasePath(document);
   const saveUri = await vscode.window.showSaveDialog({
     defaultUri: vscode.Uri.file(path.join(docBasePath, `${defaultFilename}.${extension}`)),
     filters,
@@ -118,7 +128,7 @@ export async function exportDocument(
 
         if (format === 'pdf') {
           exportSucceeded = await exportToPDF(
-            html,
+            resolvedHtml,
             mermaidImages,
             exportTheme,
             uri.fsPath,
@@ -128,7 +138,7 @@ export async function exportDocument(
           );
         } else if (format === 'docx') {
           exportSucceeded = await exportToWord(
-            html,
+            resolvedHtml,
             mermaidImages,
             exportTheme,
             uri.fsPath,
@@ -139,20 +149,30 @@ export async function exportDocument(
 
         // Only show success message if export actually completed
         if (exportSucceeded) {
-          vscode.window.showInformationMessage(
-            `Document exported successfully to ${path.basename(uri.fsPath)}`
+          const fileName = path.basename(uri.fsPath);
+          const openLabel = 'Open';
+          const showInFolderLabel = 'Show in Folder';
+          const choice = await vscode.window.showInformationMessage(
+            `Document exported successfully to ${fileName}`,
+            openLabel,
+            showInFolderLabel
           );
-
-          // Auto-open PDF in default viewer (only for PDF format)
-          if (format === 'pdf') {
+          if (choice === openLabel) {
             try {
-              // Verify file exists before opening
               if (fs.existsSync(uri.fsPath)) {
                 await vscode.env.openExternal(vscode.Uri.file(uri.fsPath));
               }
             } catch (error) {
-              // Log error but don't fail export - opening is a convenience feature
-              console.warn('[DK-AI] Failed to open PDF:', error);
+              console.warn('[DK-AI] Failed to open file:', error);
+            }
+          } else if (choice === showInFolderLabel) {
+            try {
+              if (fs.existsSync(uri.fsPath)) {
+                // Reveal in system file manager
+                await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(uri.fsPath));
+              }
+            } catch (error) {
+              console.warn('[DK-AI] Failed to reveal file:', error);
             }
           }
         }
@@ -253,11 +273,11 @@ export async function validateChromePath(chromePath: string): Promise<ChromeVali
     await new Promise<void>((resolve, reject) => {
       const chromeProcess = spawn(executablePath, ['--version'], { stdio: 'ignore' });
 
-      chromeProcess.once('error', error => {
+      chromeProcess.once('error', (error: Error) => {
         reject(new Error(`Failed to execute Chrome: ${error.message}`));
       });
 
-      chromeProcess.once('exit', code => {
+      chromeProcess.once('exit', (code: number | null) => {
         if (code === 0) {
           resolve();
         } else {
@@ -466,9 +486,9 @@ async function exportToPDF(
   try {
     await fs.promises.writeFile(tempHtmlPath, htmlWithBase, 'utf8');
   } catch (error) {
-    const wrapped = new Error(
-      `Failed to write temporary HTML for export: ${error}`
-    ) as Error & { cause?: unknown };
+    const wrapped = new Error(`Failed to write temporary HTML for export: ${error}`) as Error & {
+      cause?: unknown;
+    };
     wrapped.cause = error;
     throw wrapped;
   }
@@ -636,56 +656,258 @@ export async function findChromeExecutable(): Promise<ChromeDetectionResult> {
 }
 
 /**
- * Export to Word using docx library
+ * Export to Word using Pandoc
  *
  * @returns true if export succeeded
  */
 async function exportToWord(
-  html: string,
-  _mermaidImages: MermaidImage[],
-  theme: string,
+  _html: string,
+  mermaidImages: MermaidImage[],
+  _theme: string,
   outputPath: string,
   progress: vscode.Progress<{ message?: string; increment?: number }>,
   document: vscode.TextDocument
 ): Promise<boolean> {
-  progress.report({ message: 'Converting to Word format...', increment: 30 });
+  progress.report({ message: 'Initializing Pandoc...', increment: 20 });
+
+  console.log('[DK-AI] exportToWord: mermaidImages length=', mermaidImages?.length || 0);
+
+  // Ensure Pandoc is available
+  let pandocPath = vscode.workspace
+    .getConfiguration('gptAiMarkdownEditor')
+    .get<string>('pandocPath');
+
+  if (!pandocPath) {
+    // Try to find Pandoc
+    const tokenSource = new vscode.CancellationTokenSource();
+    pandocPath = (await ensurePandocPath(progress, tokenSource.token)) ?? undefined;
+
+    if (!pandocPath) {
+      throw new Error('Pandoc not found. Please install Pandoc or configure its path in settings.');
+    }
+  }
+
+  progress.report({ message: 'Preparing markdown source...', increment: 15 });
+
+  // Document directory used to resolve relative image paths during export
+  const docDir = getDocumentBasePath(document);
+
+  // Use the source markdown directly to preserve tables, callouts, and markdown-native syntax.
+  // Convert relative image paths to absolute to ensure Pandoc finds them.
+  let markdown = resolveMarkdownImagePaths(document.getText(), docDir);
+
+  // Also resolve raw HTML image tags scattered in the markdown
+  markdown = resolveHtmlImagePaths(markdown, docDir);
+
+  // Convert mermaid blocks to images
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pandoc-export-'));
+  let processedMarkdown = markdown;
 
   try {
-    const docxModule = await import('docx');
-    const docx = (docxModule as any).default ?? docxModule;
+    const mermaidBlocks = extractMermaidBlocks(markdown);
 
-    progress.report({ message: 'Building document...', increment: 30 });
+    console.log(
+      '[DK-AI] Found mermaid blocks:',
+      mermaidBlocks.length,
+      'provided images:',
+      mermaidImages?.length || 0
+    );
 
-    // Parse HTML and convert to docx elements
-    const children = await htmlToDocx(html, docx, theme, document);
-
-    const doc = new docx.Document({
-      sections: [
-        {
-          properties: {},
-          children,
-        },
-      ],
-    });
-
-    progress.report({ message: 'Saving Word document...', increment: 20 });
-
-    // Generate buffer and write to file
-    const buffer = await docx.Packer.toBuffer(doc);
-    fs.writeFileSync(outputPath, buffer);
-
-    progress.report({ increment: 20 });
-    return true; // Export succeeded
-  } catch (error) {
-    if (error && (error as any).code === 'MODULE_NOT_FOUND') {
-      const wrapped = new Error(
-        'Word export requires docx library. Install with: npm install docx'
-      ) as Error & { cause?: unknown };
-      wrapped.cause = error;
-      throw wrapped;
+    // First preference: use already-rendered Mermaid PNGs from the webview payload.
+    // This avoids environment/PATH issues in extension host mmdc execution.
+    if (mermaidBlocks.length > 0 && mermaidImages.length > 0) {
+      console.log('[DK-AI] Replacing Mermaid blocks with provided images...');
+      processedMarkdown = replaceMermaidBlocksWithProvidedImages(
+        processedMarkdown,
+        mermaidImages,
+        tmpDir
+      );
+      const afterReplace = extractMermaidBlocks(processedMarkdown);
+      console.log('[DK-AI] After replacement: remaining Mermaid blocks:', afterReplace.length);
     }
-    throw error;
+
+    // Second preference: for any remaining Mermaid code blocks, try CLI conversion.
+    if (extractMermaidBlocks(processedMarkdown).length > 0) {
+      console.log('[DK-AI] Converting remaining Mermaid blocks with mmdc...');
+      processedMarkdown = await convertMermaidToImages(processedMarkdown, tmpDir);
+    }
+
+    if (mermaidBlocks.length > 0) {
+      const replacedMermaidImages = (processedMarkdown.match(/!\[Mermaid Diagram\]\(/g) || [])
+        .length;
+      console.log(
+        '[DK-AI] Mermaid replacement result: found',
+        replacedMermaidImages,
+        'image references in output'
+      );
+      if (replacedMermaidImages === 0) {
+        void vscode.window.showWarningMessage(
+          'Mermaid diagrams could not be converted to images. Install mermaid-cli (mmdc) or ensure it is available in PATH. Export will include Mermaid code blocks instead.'
+        );
+      }
+    }
+  } catch (error) {
+    console.warn('[DK-AI] Mermaid conversion failed, continuing without images:', error);
+    // Continue with original markdown if mermaid conversion fails
   }
+
+  progress.report({ message: 'Writing temporary markdown file...', increment: 15 });
+
+  // Write markdown to temporary file
+  // Reduce extra blank lines between list items to produce tighter lists
+  // This helps reduce vertical spacing in generated DOCX when no reference
+  // document is provided. It collapses multiple blank lines that separate
+  // list items while leaving other structure untouched.
+  try {
+    processedMarkdown = processedMarkdown.replace(/\n{2,}(\s*([-*+]|\d+\.)\s+)/g, '\n$1');
+  } catch {
+    // Non-fatal; continue with original markdown
+  }
+
+  const tmpMarkdownPath = path.join(tmpDir, 'document.md');
+  fs.writeFileSync(tmpMarkdownPath, processedMarkdown, 'utf-8');
+
+  progress.report({ message: 'Running Pandoc...', increment: 20 });
+
+  // Build Pandoc command
+  const pandocArgs: string[] = [
+    tmpMarkdownPath,
+    '-o',
+    outputPath,
+    '-t',
+    'docx',
+    '-f',
+    'gfm+alerts+raw_html+pipe_tables+task_lists+strikeout+emoji+tex_math_dollars+footnotes',
+  ];
+
+  // Add lua filters
+  const luaFiltersDir = getLuaFiltersDir();
+  const filters = ['github_alerts.lua', 'text_color.lua', 'mermaid_images.lua'];
+
+  for (const filter of filters) {
+    const filterPath = path.join(luaFiltersDir, filter);
+    if (fs.existsSync(filterPath)) {
+      pandocArgs.push('--lua-filter', filterPath);
+    }
+  }
+
+  // Add template if configured
+  const templatePath = getPandocTemplatePath();
+  if (templatePath) {
+    pandocArgs.push('--reference-doc', templatePath);
+  }
+
+  // If no reference doc is provided, mark metadata so Lua filters
+  // can apply fallback styling (e.g., table borders) for DOCX output.
+  if (!templatePath) {
+    pandocArgs.push('-M', 'no_reference_doc=true');
+  }
+
+  // Ensure Pandoc can resolve local images referenced by relative paths
+  // by adding the document directory (and temporary dir) to resource-path.
+  try {
+    const resourcePath = `${tmpDir}${path.delimiter}${docDir}`;
+    pandocArgs.push(`--resource-path=${resourcePath}`);
+  } catch (e) {
+    console.warn('[DK-AI] Failed to set Pandoc resource-path:', e);
+  }
+
+  // Run Pandoc
+  const result = spawnSync(pandocPath, pandocArgs, {
+    stdio: 'pipe',
+    encoding: 'utf-8',
+  });
+
+  // Cleanup temporary directory
+  try {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  } catch (error) {
+    console.warn('[DK-AI] Failed to cleanup temp directory:', error);
+  }
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`Pandoc failed: ${result.stderr || 'Unknown error'}`);
+  }
+
+  if (!fs.existsSync(outputPath)) {
+    throw new Error('Pandoc did not produce output file');
+  }
+
+  progress.report({ increment: 30 });
+  return true; // Export succeeded
+}
+
+function replaceMermaidBlocksWithProvidedImages(
+  markdown: string,
+  mermaidImages: MermaidImage[],
+  tmpDir: string
+): string {
+  const blocks = extractMermaidBlocks(markdown);
+  console.log(
+    '[DK-AI] replaceMermaidBlocksWithProvidedImages: blocks=',
+    blocks.length,
+    'images=',
+    mermaidImages.length
+  );
+
+  if (blocks.length === 0 || mermaidImages.length === 0) {
+    console.log('[DK-AI] No blocks or no images, returning unchanged markdown');
+    return markdown;
+  }
+
+  let result = markdown;
+  const count = Math.min(blocks.length, mermaidImages.length);
+
+  for (let i = 0; i < count; i++) {
+    const block = blocks[i];
+    const image = mermaidImages[i];
+
+    console.log(
+      `[DK-AI] Block ${i}: raw length=${block.raw?.length}, image.pngDataUrl length=${image?.pngDataUrl?.length || 0}, width=${image?.width}, height=${image?.height}`
+    );
+
+    if (!image?.pngDataUrl) {
+      console.log(`[DK-AI] Block ${i}: No pngDataUrl, skipping`);
+      continue;
+    }
+
+    const match = image.pngDataUrl.match(/^data:image\/[A-Za-z0-9.+-]+;base64,(.+)$/);
+    if (!match) {
+      console.log(`[DK-AI] Block ${i}: Failed to match base64 pattern in pngDataUrl`);
+      continue;
+    }
+
+    try {
+      const imagePath = path.join(tmpDir, `mermaid-provided-${i + 1}.png`);
+      const buffer = Buffer.from(match[1], 'base64');
+      fs.writeFileSync(imagePath, buffer);
+      console.log(`[DK-AI] Block ${i}: Wrote PNG to ${imagePath}, size=${buffer.length} bytes`);
+
+      // Build markdown image syntax with Pandoc-compatible attributes for sizing
+      // Use percentage widths which Pandoc respects better in DOCX export
+      let imageMarkdown = `![Mermaid Diagram](${imagePath})`;
+      if (image.width && image.height) {
+        // Use width percentage based on approximate page width (7.5 inches at 96 DPI = ~720px)
+        const pageWidthPx = 720;
+        const widthPercent = Math.min(100, Math.round((image.width / pageWidthPx) * 100));
+        imageMarkdown += `{width=${widthPercent}%}`;
+        console.log(
+          `[DK-AI] Block ${i}: Using width ${widthPercent}% (${image.width}px diagram, ${pageWidthPx}px page)`
+        );
+      }
+
+      result = result.replace(block.raw, imageMarkdown);
+      console.log(`[DK-AI] Block ${i}: Replaced markdown, new length=${result.length}`);
+    } catch (error) {
+      console.warn('[DK-AI] Failed to write provided Mermaid image for export:', error);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -752,7 +974,7 @@ function getExportStyles(theme: string): string {
     h6 { font-size: 1em; }
 
     p {
-      margin-bottom: 1em;
+      margin-bottom: 0.9em;
     }
 
     code {
@@ -801,12 +1023,16 @@ function getExportStyles(theme: string): string {
     }
 
     ul, ol {
-      margin-left: 2em;
-      margin-bottom: 1em;
+      margin-left: 1.4em;
+      margin-bottom: 0.5em;
     }
 
     li {
-      margin-bottom: 0.5em;
+      margin-bottom: 0.25em;
+    }
+
+    li p {
+      margin-bottom: 0.2em;
     }
 
     img, .mermaid-export-image {
@@ -829,257 +1055,74 @@ function getExportStyles(theme: string): string {
 }
 
 /**
- * Convert HTML to docx elements using Cheerio for reliable parsing
- * Handles headings, paragraphs, lists, tables, and images with nested tags
+ * Resolve relative image paths in markdown to absolute paths
+ *
+ * @param markdown The raw markdown content
+ * @param baseDir The base directory resolving relative paths against
+ * @returns Markdown string with image references pointing to absolute local paths
  */
-async function htmlToDocx(
-  html: string,
-  docx: any,
-  theme: string,
-  document: vscode.TextDocument
-): Promise<any[]> {
-  const children: any[] = [];
+export function resolveMarkdownImagePaths(markdown: string, baseDir: string): string {
+  // Regex extracts: 1=alt text, 2=url, 3=optional title with quotes
+  const imgRegex = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+("[^"]*"))?\)/g;
 
-  // Parse HTML with Cheerio (proper DOM parser, handles nested tags)
-  // Lazy-load to keep module init and test transforms lightweight.
-  const cheerioModule = await import('cheerio');
-  const cheerio = (cheerioModule as any).default ?? cheerioModule;
-  const $ = cheerio.load(html);
+  return markdown.replace(imgRegex, (match, alt, url, title) => {
+    let imgUrl = url;
+    const imgTitle = title ? ` ${title}` : '';
 
-  // Select all block-level elements we care about, maintaining document order
-  // Cheerio traverses in document order automatically
-  // Select all block-level elements we care about
-  // We need to use a loop that supports await
-  const elements = $('h1, h2, h3, h4, h5, h6, p, li, blockquote, table').toArray();
-
-  for (const element of elements) {
-    const $el = $(element);
-    const tagName = element.tagName.toLowerCase();
-
-    // Skip elements inside other processed elements (e.g. p inside blockquote handled by blockquote)
-    if ($el.parents('blockquote, li').length > 0) {
-      continue;
+    // Skip absolute URLs or data URIs
+    if (
+      imgUrl.startsWith('http://') ||
+      imgUrl.startsWith('https://') ||
+      imgUrl.startsWith('data:') ||
+      imgUrl.startsWith('file://') ||
+      path.isAbsolute(imgUrl) // Mac/Linux '/' or Windows 'C:\'
+    ) {
+      return match;
     }
 
-    if (tagName.match(/^h[1-6]$/)) {
-      // Heading
-      const textContent = $el.text().trim();
-      if (textContent) {
-        children.push(
-          new docx.Paragraph({
-            text: textContent,
-            heading: getHeadingLevel(tagName, docx),
-            spacing: { before: 400, after: 200 },
-          })
-        );
-      }
-    } else if (tagName === 'p') {
-      // Paragraph - handle mixed content (text, images, links)
-      const paragraphChildren = await parseParagraphChildren($, element, docx, document);
-      if (paragraphChildren.length > 0) {
-        children.push(
-          new docx.Paragraph({
-            children: paragraphChildren,
-            spacing: { after: 200 },
-          })
-        );
-      }
-    } else if (tagName === 'li') {
-      // List item
-      const paragraphChildren = await parseParagraphChildren($, element, docx, document);
-      if (paragraphChildren.length > 0) {
-        children.push(
-          new docx.Paragraph({
-            children: paragraphChildren,
-            bullet: { level: 0 },
-            spacing: { after: 100 },
-          })
-        );
-      }
-    } else if (tagName === 'blockquote') {
-      // Blockquote
-      const textContent = $el.text().trim();
-      if (textContent) {
-        children.push(
-          new docx.Paragraph({
-            text: textContent,
-            italics: true,
-            spacing: { before: 200, after: 200, left: 400 },
-            border: {
-              left: {
-                color: theme === 'editor' ? '444444' : 'DDDDDD',
-                space: 1,
-                value: 'single',
-                size: 24,
-              },
-            },
-          })
-        );
-      }
+    try {
+      // Decode encoded URIs (e.g %20 -> space)
+      imgUrl = decodeURIComponent(imgUrl);
+    } catch {
+      // Ignore decoding errors
     }
-  }
 
-  return children;
+    // Convert relative path to absolute
+    const absolutePath = path.join(baseDir, imgUrl);
+    return `![${alt}](${absolutePath}${imgTitle})`;
+  });
 }
 
 /**
- * Helper to get heading level
+ * Resolve relative image paths in HTML to absolute paths
+ *
+ * @param html The raw HTML string
+ * @param baseDir The base directory to resolve relative paths against
+ * @returns HTML string with img src attributes pointing to absolute local paths
  */
-function getHeadingLevel(tagName: string, docx: any): any {
-  switch (tagName) {
-    case 'h1':
-      return docx.HeadingLevel.HEADING_1;
-    case 'h2':
-      return docx.HeadingLevel.HEADING_2;
-    case 'h3':
-      return docx.HeadingLevel.HEADING_3;
-    case 'h4':
-      return docx.HeadingLevel.HEADING_4;
-    case 'h5':
-      return docx.HeadingLevel.HEADING_5;
-    case 'h6':
-      return docx.HeadingLevel.HEADING_6;
-    default:
-      return docx.HeadingLevel.HEADING_1;
-  }
-}
+export function resolveHtmlImagePaths(html: string, baseDir: string): string {
+  // Regex extracts: 1=quote type (single or double), 2=url
+  const imgRegex = /<img[^>]+src=(['"])(.*?)\1/g;
 
-/**
- * Parse children of a paragraph-like element (p, li) into docx Runs
- */
-async function parseParagraphChildren(
-  $: any,
-  element: any,
-  docx: any,
-  document: vscode.TextDocument
-): Promise<any[]> {
-  const runs: any[] = [];
-  const contents = $(element).contents();
-
-  // Process nodes sequentially to handle async image loading
-  for (let i = 0; i < contents.length; i++) {
-    const node = contents[i];
-
-    if (node.type === 'text') {
-      // Text node
-      const text = $(node).text();
-      if (text) {
-        runs.push(new docx.TextRun({ text }));
-      }
-    } else if (node.type === 'tag') {
-      const tagName = $(node).prop('tagName').toLowerCase();
-      if (tagName === 'img') {
-        // Image
-        const src = $(node).attr('src');
-        const markdownSrc = $(node).attr('data-markdown-src');
-        const resolvableSrc = markdownSrc || src;
-
-        if (resolvableSrc) {
-          try {
-            let buffer: Buffer | undefined;
-
-            if (resolvableSrc.startsWith('data:')) {
-              // Data URL
-              const matches = resolvableSrc.match(/^data:([A-Za-z+/-]+);base64,(.+)$/);
-              if (matches && matches.length === 3) {
-                buffer = Buffer.from(matches[2], 'base64');
-              }
-            } else if (
-              resolvableSrc.startsWith('http://') ||
-              resolvableSrc.startsWith('https://')
-            ) {
-              // KNOWN LIMITATION: Remote images (HTTP/HTTPS URLs) are not embedded in Word exports.
-              // This is intentional to avoid network dependencies during export and potential
-              // security concerns with fetching arbitrary remote resources.
-              // Workaround: Download images locally before exporting to Word.
-              // TODO: Consider adding a user-facing warning when document contains remote images.
-              console.warn(`[DK-AI] Word export: Skipping remote image: ${resolvableSrc}`);
-            } else {
-              // Local file or vscode-webview://
-              let absolutePath = resolvableSrc;
-
-              if (resolvableSrc.startsWith('vscode-webview://')) {
-                // const docDir = path.dirname(document.uri.fsPath);
-                // const decodedSrc = decodeURIComponent(resolvableSrc);
-                // This is a simplification. Real webview resolution is complex.
-                // But if we have data-markdown-src (which we prioritize), it usually has the original path
-                // If resolvableSrc is still webview://, it means we didn't have data-markdown-src
-                // In that case, we might fail to resolve.
-              } else if (!path.isAbsolute(resolvableSrc)) {
-                const docDir = getDocumentBasePath(document);
-                absolutePath = path.resolve(docDir, decodeURIComponent(resolvableSrc));
-              }
-
-              if (fs.existsSync(absolutePath)) {
-                buffer = fs.readFileSync(absolutePath);
-              }
-            }
-
-            if (buffer) {
-              // Get dimensions
-              let width = 400;
-              let height = 300;
-
-              try {
-                const dimensions = imageSize(buffer);
-                if (dimensions.width && dimensions.height) {
-                  // Scale down if too large (e.g. max width 600px)
-                  const maxWidth = 600;
-                  if (dimensions.width > maxWidth) {
-                    const ratio = maxWidth / dimensions.width;
-                    width = maxWidth;
-                    height = Math.round(dimensions.height * ratio);
-                  } else {
-                    width = dimensions.width;
-                    height = dimensions.height;
-                  }
-                }
-              } catch (e) {
-                console.warn('[DK-AI] Failed to get image dimensions:', e);
-              }
-
-              runs.push(
-                new docx.ImageRun({
-                  data: buffer,
-                  transformation: { width, height },
-                })
-              );
-            }
-          } catch (e) {
-            console.error('[DK-AI] Failed to process image in paragraph:', e);
-          }
-        }
-      } else if (tagName === 'strong' || tagName === 'b') {
-        // Bold
-        runs.push(
-          new docx.TextRun({
-            text: $(node).text(),
-            bold: true,
-          })
-        );
-      } else if (tagName === 'em' || tagName === 'i') {
-        // Italic
-        runs.push(
-          new docx.TextRun({
-            text: $(node).text(),
-            italics: true,
-          })
-        );
-      } else if (tagName === 'code') {
-        // Inline code
-        runs.push(
-          new docx.TextRun({
-            text: $(node).text(),
-            font: 'Courier New',
-            color: 'C7254E', // Red-ish color for code
-          })
-        );
-      } else {
-        // Other tags - just treat as text for now
-        runs.push(new docx.TextRun({ text: $(node).text() }));
-      }
+  return html.replace(imgRegex, (match, quote, url) => {
+    // Skip absolute URLs or data URIs
+    if (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('data:') ||
+      url.startsWith('file://') ||
+      path.isAbsolute(url)
+    ) {
+      return match;
     }
-  }
 
-  return runs;
+    try {
+      url = decodeURIComponent(url);
+    } catch {
+      // Ignore
+    }
+
+    const absolutePath = path.join(baseDir, url);
+    return match.replace(`src=${quote}${url}${quote}`, `src=${quote}${absolutePath}${quote}`);
+  });
 }

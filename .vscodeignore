@@ -77,6 +77,12 @@ Desktop.ini
 .windsurf/**
 .cursor/**
 .agent/**
+.gemini/**
+
+# Exclude test files and folders
+test_*
+test-*
+test_pasted/**
 
 # Include only essential files for marketplace
 !dist/**
@@ -85,11 +91,7 @@ Desktop.ini
 !package.json
 !CHANGELOG.md
 !icon.png
-demo.html
-test_doc.md
-test-tags.ts
-test-tags2.ts
-test-list-serialization.ts
+!demo.html
 
 # Exclude VSIX from package even if in dist/
 dist/*.vsix
