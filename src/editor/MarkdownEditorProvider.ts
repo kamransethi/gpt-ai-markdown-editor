@@ -10,6 +10,7 @@ import * as os from 'os';
 import { outlineViewProvider } from '../features/outlineView';
 import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText } from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
+import { handleAiExplainRequest } from '../features/aiExplain';
 import { getNonce } from './utils';
 import { MessageType } from '../shared/messageTypes';
 import { toErrorMessage } from '../shared/errorUtils';
@@ -496,6 +497,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           to: message.to as number,
         });
         break;
+
+      case MessageType.AI_EXPLAIN:
+        void handleAiExplainRequest(webview, {
+          documentText: message.documentText as string,
+        });
+        break;
     }
   }
 
@@ -503,13 +510,15 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Generate HTML for webview
    */
   private getHtmlForWebview(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.js')
-    );
-
-    const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.css')
-    );
+    const cacheBustToken = String(Date.now());
+    const scriptUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.js'))
+      .toString();
+    const styleUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.css'))
+      .toString();
+    const scriptUriWithVersion = `${scriptUri}${scriptUri.includes('?') ? '&' : '?'}v=${cacheBustToken}`;
+    const styleUriWithVersion = `${styleUri}${styleUri.includes('?') ? '&' : '?'}v=${cacheBustToken}`;
 
     // Read the current theme from config
     const themeOverride = this.getConfig<string>('themeOverride', 'light');
@@ -526,12 +535,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         <meta http-equiv="Content-Security-Policy"
               content="default-src 'none';
                        style-src ${webview.cspSource} 'unsafe-inline';
-                       script-src 'nonce-${nonce}';
-                 connect-src ${webview.cspSource};
+                 script-src 'nonce-${nonce}' 'wasm-unsafe-eval' 'unsafe-eval';
+                 connect-src ${webview.cspSource} https://cdn.jsdelivr.net;
                        font-src ${webview.cspSource};
                        img-src ${webview.cspSource} https: data: blob:;">
         
-        <link href="${styleUri}" rel="stylesheet">
+        <link href="${styleUriWithVersion}" rel="stylesheet">
         
         <script nonce="${nonce}">
           window.gptAiApplyTheme = function(theme) {
@@ -558,7 +567,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       </head>
       <body data-extension-version="${this.context.extension?.packageJSON?.version || ''}">
         <div id="editor"></div>
-        <script nonce="${nonce}" src="${scriptUri}"></script>
+        <script nonce="${nonce}" src="${scriptUriWithVersion}"></script>
       </body>
       </html>
     `;

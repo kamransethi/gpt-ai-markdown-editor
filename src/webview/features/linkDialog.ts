@@ -655,16 +655,16 @@ export function createLinkDialog(): HTMLElement {
       <label class="export-settings-label">Type</label>
       <div class="link-dialog-mode-group">
         <label class="link-dialog-mode-option">
-          <input type="radio" name="link-mode" value="url" id="link-mode-url" checked />
-          <span>URL</span>
+          <input type="radio" name="link-mode" value="headings" id="link-mode-headings" checked />
+          <span>Heading</span>
         </label>
         <label class="link-dialog-mode-option">
           <input type="radio" name="link-mode" value="file" id="link-mode-file" />
           <span>File</span>
         </label>
         <label class="link-dialog-mode-option">
-          <input type="radio" name="link-mode" value="headings" id="link-mode-headings" />
-          <span>Heading</span>
+          <input type="radio" name="link-mode" value="url" id="link-mode-url" />
+          <span>URL</span>
         </label>
       </div>
     </div>

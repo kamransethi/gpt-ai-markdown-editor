@@ -85,6 +85,8 @@ export const MessageType = {
   // ── AI ──
   AI_REFINE: 'aiRefine',
   AI_REFINE_RESULT: 'aiRefineResult',
+  AI_EXPLAIN: 'aiExplain',
+  AI_EXPLAIN_RESULT: 'aiExplainResult',
 
   // ── Mermaid ──
   EDIT_MERMAID_SOURCE: 'editMermaidSource',

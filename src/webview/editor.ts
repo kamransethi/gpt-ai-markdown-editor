@@ -24,9 +24,8 @@ import Typography from '@tiptap/extension-typography';
 import DragHandle from '@tiptap/extension-drag-handle';
 import { marked as markedInstance, Marked } from 'marked';
 import { CustomImage } from './extensions/customImage';
-import { createLowlight } from 'lowlight';
+import CodeBlockShiki from 'tiptap-extension-code-block-shiki';
 import { Mermaid } from './extensions/mermaid';
-import { CodeBlockWithUi } from './extensions/codeBlockWithUi';
 import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
 import { SpaceFriendlyImagePaths } from './extensions/spaceFriendlyImagePaths';
 import { TabIndentation } from './extensions/tabIndentation';
@@ -64,6 +63,10 @@ import { createTocPane, type TocPaneAnchor } from './features/tocPane';
 import { setupClipboardHandlers } from './features/clipboardHandling';
 import { createKeydownHandler } from './features/keyboardShortcuts';
 import { createLinkClickHandler } from './features/linkHandling';
+import { SearchAndReplace } from './extensions/searchAndReplace';
+import { SlashCommand } from './extensions/slashCommand';
+import { AiExplain, handleAiExplainResult } from './extensions/aiExplain';
+import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
@@ -73,7 +76,6 @@ import { collectExportContent, getDocumentTitle } from './utils/exportContent';
 import { MessageType } from '../shared/messageTypes';
 import { toErrorMessage } from '../shared/errorUtils';
 import { debounce, rafThrottle } from './utils/debounce';
-import Underline from '@tiptap/extension-underline';
 
 /**
  * Tags that TipTap handles natively — never strip these.
@@ -189,37 +191,6 @@ function reconstructFromTokens(
     .join('');
 }
 
-// Import common languages for syntax highlighting
-import javascript from 'highlight.js/lib/languages/javascript';
-import typescript from 'highlight.js/lib/languages/typescript';
-import python from 'highlight.js/lib/languages/python';
-import bash from 'highlight.js/lib/languages/bash';
-import json from 'highlight.js/lib/languages/json';
-import markdown from 'highlight.js/lib/languages/markdown';
-import css from 'highlight.js/lib/languages/css';
-import xml from 'highlight.js/lib/languages/xml';
-import sql from 'highlight.js/lib/languages/sql';
-import java from 'highlight.js/lib/languages/java';
-import go from 'highlight.js/lib/languages/go';
-import rust from 'highlight.js/lib/languages/rust';
-
-const lowlight = createLowlight();
-
-// Register languages with lowlight
-lowlight.register('javascript', javascript);
-lowlight.register('typescript', typescript);
-lowlight.register('python', python);
-lowlight.register('bash', bash);
-lowlight.register('json', json);
-lowlight.register('markdown', markdown);
-lowlight.register('css', css);
-lowlight.register('html', xml);
-lowlight.register('xml', xml);
-lowlight.register('sql', sql);
-lowlight.register('java', java);
-lowlight.register('go', go);
-lowlight.register('rust', rust);
-
 // VS Code API type definitions
 type VsCodeApi = {
   postMessage: (message: unknown) => void;
@@ -325,7 +296,9 @@ function getActiveTocHeadingId(anchors: TocPaneAnchor[]): string | null {
   }
 
   // Keep marker below the sticky top toolbar for expected active heading behavior.
-  const scrollMarker = window.scrollY + 72;
+  const toolbar = document.querySelector('.formatting-toolbar');
+  const toolbarOffset = toolbar ? toolbar.getBoundingClientRect().height + 24 : 72;
+  const scrollMarker = window.scrollY + toolbarOffset;
   let activeId: string | null = null;
 
   for (const anchor of anchors) {
@@ -652,206 +625,236 @@ function initializeEditor(initialContent: string) {
 
     devLog('[DK-AI] Initializing editor...');
 
+    const normalizeExtensionPluginList = (extension: any) => {
+      if (!extension || typeof extension.extend !== 'function') return extension;
+
+      return extension.extend({
+        addProseMirrorPlugins(this: any) {
+          const baseResult = this.parent?.();
+
+          if (baseResult == null) return [];
+          if (Array.isArray(baseResult)) return baseResult;
+
+          console.warn(
+            '[DK-AI] Normalized non-array plugin return for extension:',
+            extension.name || this.name || 'unknown'
+          );
+          return [baseResult];
+        },
+      });
+    };
+
+    const rawExtensions = [
+      // Mermaid must be before CodeBlockShiki to intercept mermaid code blocks
+      Mermaid,
+      // Must be before CodeBlockShiki to intercept indented "code" tokens containing images
+      IndentedImageCodeBlock,
+      // Fallback: treat standalone image lines with spaces in the path as images.
+      SpaceFriendlyImagePaths,
+      // GitHubAlerts must be before StarterKit to intercept alert blockquotes
+      GitHubAlerts,
+      Highlight.extend({
+        renderMarkdown(node: any, h: any) {
+          const open = highlightSyntax === 'github' ? '<mark>' : '==';
+          const close = highlightSyntax === 'github' ? '</mark>' : '==';
+          return `${open}${h.renderChildren(node)}${close}`;
+        },
+      }).configure({
+        HTMLAttributes: {
+          class: 'highlight',
+        },
+      }),
+      Typography,
+      Placeholder.configure({
+        placeholder: 'Start writing markdown...',
+        emptyEditorClass: 'is-editor-empty',
+        emptyNodeClass: 'is-empty',
+        showOnlyCurrent: false,
+      }),
+      CharacterCount,
+      GenericHTMLInline,
+      GenericHTMLBlock,
+      HtmlCommentInline,
+      HtmlCommentBlock,
+      DragHandle.configure({
+        render() {
+          const element = document.createElement('div');
+          element.classList.add('custom-drag-handle');
+          element.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+          return element;
+        },
+      }),
+      GlobalDragHandle.configure({
+        dragHandleWidth: 20,
+      }),
+      CustomTextStyle,
+      TextColorMark,
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3, 4, 5, 6],
+        },
+        paragraph: false, // Disable default paragraph, using MarkdownParagraph instead
+        codeBlock: false, // Disable default CodeBlock, using CodeBlockShiki instead
+        // ListKit is registered separately to support task lists; disable StarterKit's list
+        // extensions to avoid duplicate names (which can break markdown parsing, e.g. `1)` lists).
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        listKeymap: false,
+        // Disable StarterKit's Link - we configure our own with shouldAutoLink validation
+        link: false,
+        // In Tiptap v3, 'history' was renamed to 'undoRedo'
+        undoRedo: {
+          depth: 100,
+        },
+      }),
+      MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
+      CodeBlockShiki.configure({
+        defaultTheme: 'github-dark',
+        themes: {
+          light: 'github-light',
+          dark: 'github-dark',
+        },
+        defaultLanguage: null,
+        HTMLAttributes: {
+          class: 'code-block-highlighted',
+        },
+      }),
+      Markdown.configure({
+        // Pass a fresh isolated Marked instance to prevent marked@17 inline token
+        // corruption. When the taskList block tokenizer (from @tiptap/extension-list)
+        // calls lexer.inlineTokens() internally, it corrupts the global marked singleton's
+        // inline tokenizer state. All subsequent tokens (tables, blockquotes, bullet lists)
+        // end up with empty tokens:[]. Using a fresh instance scopes the tokenizer
+        // registration and lexer state to this instance, preventing cross-contamination.
+        // The Marked class instance satisfies all properties actually used by MarkdownManager
+        // (setOptions, use, lexer, Lexer) but TypeScript doesn't see it as typeof marked
+        // because marked is typed as a function+namespace, not a class instance.
+        marked: new Marked() as unknown as typeof markedInstance,
+        markedOptions: {
+          gfm: true, // GitHub Flavored Markdown for tables, task lists
+          breaks: true, // Preserve single newlines as <br>
+        },
+      }),
+      // Custom Table extension that handles <br /> correctly and
+      // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>
+      // for content rows (browsers auto-insert <tbody> during DOM parsing,
+      // which would otherwise cause literal "<tbody>" text in cells).
+      Table.extend({
+        renderMarkdown(node, h) {
+          return renderTableToMarkdownWithBreaks(node, h);
+        },
+        parseHTML() {
+          return [
+            {
+              tag: 'table',
+              // Browsers auto-insert <tbody> when parsing <table> HTML via
+              // innerHTML. ProseMirror's DOMParser has no rule for these
+              // section wrappers so they'd leak as literal text.  Unwrap them
+              // before ProseMirror reads children of the <table> element.
+              contentElement(node: HTMLElement) {
+                // Remove <colgroup> — only contains <col> styling hints,
+                // no content for ProseMirror. Would leak as literal text.
+                node.querySelectorAll(':scope > colgroup').forEach(el => el.remove());
+
+                const sections = node.querySelectorAll(
+                  ':scope > thead, :scope > tbody, :scope > tfoot'
+                );
+                for (const section of Array.from(sections)) {
+                  while (section.firstChild) {
+                    node.insertBefore(section.firstChild, section);
+                  }
+                  section.remove();
+                }
+                return node;
+              },
+            },
+          ];
+        },
+      }).configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'markdown-table',
+        },
+      }),
+      // Still use TableKit for rows and cells, but disable its internal table
+      // to avoid duplicate registration of the 'table' node
+      TableKit.configure({
+        table: false,
+      }),
+      ListKit.configure({
+        orderedList: false,
+        taskItem: false, // Replaced by TaskItemClipboardFix below
+      }),
+      TaskItemClipboardFix.configure({ nested: true }),
+      OrderedListMarkdownFix,
+      TabIndentation, // Enable Tab/Shift+Tab for list indentation
+      ImageEnterSpacing, // Handle Enter key around images and gap cursor
+      TableCellEnterHandler, // Make Enter in table cells insert <br /> instead of new paragraph
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'markdown-link',
+        },
+        shouldAutoLink,
+      }),
+      CustomImage.configure({
+        allowBase64: true, // Allow base64 for preview
+        HTMLAttributes: {
+          class: 'markdown-image',
+        },
+      }),
+      BubbleMenuExtension.configure({
+        element: floatingFormattingBar as HTMLElement,
+        shouldShow: ({ editor: currentEditor, state }) => {
+          // Respect configuration toggle
+          if (!showSelectionToolbar) return false;
+          // Suppress during initial editor creation to prevent flash
+          if (!editorFullyInitialized) return false;
+          const { from, to, empty } = state.selection;
+          // Never show when selection is empty or collapsed
+          if (empty || from === to) return false;
+          // Don't show for node selections (images, code blocks, etc.)
+          if (state.selection.constructor.name === 'NodeSelection') return false;
+          return currentEditor.isEditable;
+        },
+        options: {
+          placement: 'top',
+          offset: 8,
+          shift: { padding: 8 },
+        },
+        updateDelay: 100,
+      }),
+      TableOfContents.configure({
+        anchorTypes: ['heading'],
+        scrollParent: () => window,
+        onUpdate: (anchors: TableOfContentData) => {
+          if (!tocPaneController) return;
+
+          const normalizedAnchors: TocPaneAnchor[] = anchors.map(anchor => ({
+            id: anchor.id,
+            textContent: anchor.textContent,
+            level: anchor.originalLevel || anchor.level,
+            itemIndex: anchor.itemIndex,
+            pos: anchor.pos,
+            isActive: anchor.isActive,
+          }));
+
+          tocAnchors = normalizedAnchors;
+          scheduleTocPaneSelectionRefresh();
+        },
+      }),
+      SearchAndReplace,
+      SlashCommand,
+      AiExplain,
+    ];
+
+    const extensions = rawExtensions.map(normalizeExtensionPluginList);
+
     const editorInstance = new Editor({
       element: editorElement,
-      extensions: [
-        // Mermaid must be before CodeBlockLowlight to intercept mermaid code blocks
-        Mermaid,
-        // Must be before CodeBlockLowlight to intercept indented "code" tokens containing images
-        IndentedImageCodeBlock,
-        // Fallback: treat standalone image lines with spaces in the path as images.
-        SpaceFriendlyImagePaths,
-        // GitHubAlerts must be before StarterKit to intercept alert blockquotes
-        GitHubAlerts,
-        Highlight.extend({
-          renderMarkdown(node: any, h: any) {
-            const open = highlightSyntax === 'github' ? '<mark>' : '==';
-            const close = highlightSyntax === 'github' ? '</mark>' : '==';
-            return `${open}${h.renderChildren(node)}${close}`;
-          },
-        }).configure({
-          HTMLAttributes: {
-            class: 'highlight',
-          },
-        }),
-        Typography,
-        Underline,
-        Placeholder.configure({
-          placeholder: 'Start writing markdown...',
-          emptyEditorClass: 'is-editor-empty',
-          emptyNodeClass: 'is-empty',
-          showOnlyCurrent: false,
-        }),
-        CharacterCount,
-        GenericHTMLInline,
-        GenericHTMLBlock,
-        HtmlCommentInline,
-        HtmlCommentBlock,
-        DragHandle.configure({
-          render() {
-            const element = document.createElement('div');
-            element.classList.add('custom-drag-handle');
-            element.innerHTML =
-              '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
-            return element;
-          },
-        }),
-        CustomTextStyle,
-        TextColorMark,
-        StarterKit.configure({
-          heading: {
-            levels: [1, 2, 3, 4, 5, 6],
-          },
-          paragraph: false, // Disable default paragraph, using MarkdownParagraph instead
-          codeBlock: false, // Disable default CodeBlock, using CodeBlockLowlight instead
-          // ListKit is registered separately to support task lists; disable StarterKit's list
-          // extensions to avoid duplicate names (which can break markdown parsing, e.g. `1)` lists).
-          bulletList: false,
-          orderedList: false,
-          listItem: false,
-          listKeymap: false,
-          // Disable StarterKit's Link - we configure our own with shouldAutoLink validation
-          link: false,
-          // In Tiptap v3, 'history' was renamed to 'undoRedo'
-          undoRedo: {
-            depth: 100,
-          },
-        }),
-        MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
-        CodeBlockWithUi.configure({
-          lowlight,
-          HTMLAttributes: {
-            class: 'code-block-highlighted',
-          },
-          defaultLanguage: 'plaintext',
-          enableTabIndentation: true, // Enable Tab key for indentation
-          tabSize: 2, // 2 spaces per tab (cleaner for markdown code blocks)
-        }),
-        Markdown.configure({
-          // Pass a fresh isolated Marked instance to prevent marked@17 inline token
-          // corruption. When the taskList block tokenizer (from @tiptap/extension-list)
-          // calls lexer.inlineTokens() internally, it corrupts the global marked singleton's
-          // inline tokenizer state. All subsequent tokens (tables, blockquotes, bullet lists)
-          // end up with empty tokens:[]. Using a fresh instance scopes the tokenizer
-          // registration and lexer state to this instance, preventing cross-contamination.
-          // The Marked class instance satisfies all properties actually used by MarkdownManager
-          // (setOptions, use, lexer, Lexer) but TypeScript doesn't see it as typeof marked
-          // because marked is typed as a function+namespace, not a class instance.
-          marked: new Marked() as unknown as typeof markedInstance,
-          markedOptions: {
-            gfm: true, // GitHub Flavored Markdown for tables, task lists
-            breaks: true, // Preserve single newlines as <br>
-          },
-        }),
-        // Custom Table extension that handles <br /> correctly and
-        // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>
-        // for content rows (browsers auto-insert <tbody> during DOM parsing,
-        // which would otherwise cause literal "<tbody>" text in cells).
-        Table.extend({
-          renderMarkdown(node, h) {
-            return renderTableToMarkdownWithBreaks(node, h);
-          },
-          parseHTML() {
-            return [
-              {
-                tag: 'table',
-                // Browsers auto-insert <tbody> when parsing <table> HTML via
-                // innerHTML. ProseMirror's DOMParser has no rule for these
-                // section wrappers so they'd leak as literal text.  Unwrap them
-                // before ProseMirror reads children of the <table> element.
-                contentElement(node: HTMLElement) {
-                  // Remove <colgroup> — only contains <col> styling hints,
-                  // no content for ProseMirror. Would leak as literal text.
-                  node.querySelectorAll(':scope > colgroup').forEach(el => el.remove());
-
-                  const sections = node.querySelectorAll(
-                    ':scope > thead, :scope > tbody, :scope > tfoot'
-                  );
-                  for (const section of Array.from(sections)) {
-                    while (section.firstChild) {
-                      node.insertBefore(section.firstChild, section);
-                    }
-                    section.remove();
-                  }
-                  return node;
-                },
-              },
-            ];
-          },
-        }).configure({
-          resizable: true,
-          HTMLAttributes: {
-            class: 'markdown-table',
-          },
-        }),
-        // Still use TableKit for rows and cells, but disable its internal table
-        // to avoid duplicate registration of the 'table' node
-        TableKit.configure({
-          table: false,
-        }),
-        ListKit.configure({
-          orderedList: false,
-          taskItem: false, // Replaced by TaskItemClipboardFix below
-        }),
-        TaskItemClipboardFix.configure({ nested: true }),
-        OrderedListMarkdownFix,
-        TabIndentation, // Enable Tab/Shift+Tab for list indentation
-        ImageEnterSpacing, // Handle Enter key around images and gap cursor
-        TableCellEnterHandler, // Make Enter in table cells insert <br /> instead of new paragraph
-        Link.configure({
-          openOnClick: false,
-          HTMLAttributes: {
-            class: 'markdown-link',
-          },
-          shouldAutoLink,
-        }),
-        CustomImage.configure({
-          allowBase64: true, // Allow base64 for preview
-          HTMLAttributes: {
-            class: 'markdown-image',
-          },
-        }),
-        BubbleMenuExtension.configure({
-          element: floatingFormattingBar as HTMLElement,
-          shouldShow: ({ editor: currentEditor, state }) => {
-            // Respect configuration toggle
-            if (!showSelectionToolbar) return false;
-            // Suppress during initial editor creation to prevent flash
-            if (!editorFullyInitialized) return false;
-            const { from, to, empty } = state.selection;
-            // Never show when selection is empty or collapsed
-            if (empty || from === to) return false;
-            // Don't show for node selections (images, code blocks, etc.)
-            if (state.selection.constructor.name === 'NodeSelection') return false;
-            return currentEditor.isEditable;
-          },
-          options: {
-            placement: 'bottom',
-            offset: 6,
-            shift: { padding: 8 },
-          },
-          updateDelay: 100,
-        }),
-        TableOfContents.configure({
-          anchorTypes: ['heading'],
-          scrollParent: () => window,
-          onUpdate: (anchors: TableOfContentData) => {
-            if (!tocPaneController) return;
-
-            const normalizedAnchors: TocPaneAnchor[] = anchors.map(anchor => ({
-              id: anchor.id,
-              textContent: anchor.textContent,
-              level: anchor.originalLevel || anchor.level,
-              itemIndex: anchor.itemIndex,
-              pos: anchor.pos,
-              isActive: anchor.isActive,
-            }));
-
-            tocAnchors = normalizedAnchors;
-            scheduleTocPaneSelectionRefresh();
-          },
-        }),
-      ],
+      extensions,
       // Don't pass content here - we'll set it after init with contentType: 'markdown'
       editorProps: {
         attributes: {
@@ -982,6 +985,14 @@ function initializeEditor(initialContent: string) {
     if (editorContainer && editorContainer.parentElement) {
       editorContainer.parentElement.insertBefore(formattingToolbar, editorContainer);
     }
+
+    // Publish toolbar height as CSS variable so the TOC pane can track it
+    requestAnimationFrame(() => {
+      if (formattingToolbar) {
+        const h = formattingToolbar.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--toolbar-height', `${h}px`);
+      }
+    });
 
     // Track editor focus state for toolbar and keep toolbar enabled while interacting with it
     const editorDom = editorInstance.view.dom;
@@ -1270,6 +1281,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         if (editor) {
           handleAiRefineResult(editor, message as any);
         }
+        break;
+      case MessageType.AI_EXPLAIN_RESULT:
+        handleAiExplainResult(message as any);
         break;
       case MessageType.INSERT_EMOJI:
         if (editor && typeof message.emoji === 'string') {

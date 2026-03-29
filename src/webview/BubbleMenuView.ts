@@ -17,8 +17,8 @@ import { MessageType } from '../shared/messageTypes';
 import { showTableInsertDialog } from './features/tableInsert';
 import { showLinkDialog } from './features/linkDialog';
 import { showImageInsertDialog } from './features/imageInsertDialog';
+import { showEmojiPicker } from './features/emojiPicker';
 import type { Editor } from '@tiptap/core';
-import { getSelectedTableLines } from './utils/tableSelectionUtils';
 import { modLabel as modKeyLabel } from './utils/platform';
 import { TIPTAP_ICONS, createSvgIcon } from './icons/tiptapIcons';
 import { buildSharedTableOps } from './utils/sharedTableOps';
@@ -253,6 +253,13 @@ const CODICON_TO_SVG: Record<string, string> = {
   close: 'close',
   export: 'export',
   'layout-sidebar-right': 'view',
+  'panel-left': 'panel-left',
+  'file-code': 'file-code',
+  'zoom-in': 'zoom-in',
+  'zoom-out': 'zoom-out',
+  sparkle: 'sparkle',
+  'settings-gear': 'settings-gear',
+  'sidebar-list': 'panel-left',
   'chevron-down': 'chevron-down',
   ellipsis: 'ellipsis',
   'clear-all': 'clear-formatting',
@@ -436,111 +443,14 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
 }
 
 /**
- * Custom table bullet toggler that adds "- " after every hardBreak in the cell.
- */
-function toggleTableBullet(editor: Editor) {
-  const { state, dispatch } = editor.view;
-  const result = getSelectedTableLines(state, state.selection);
-  if (!result) return;
-  const { selectedLines, tr } = result;
-
-  const lineStarts = selectedLines.map(l => l.start);
-
-  let allHaveBullet = true;
-  for (const pos of lineStarts) {
-    const nextNode = tr.doc.nodeAt(pos);
-    if (nextNode && nextNode.isText) {
-      if (!nextNode.text?.startsWith('- ')) {
-        allHaveBullet = false;
-        break;
-      }
-    } else {
-      allHaveBullet = false;
-      break;
-    }
-  }
-
-  if (lineStarts.length === 1) {
-    const nextNode = tr.doc.nodeAt(lineStarts[0]);
-    if (!nextNode) {
-      allHaveBullet = false;
-    }
-  }
-
-  const originalFrom = state.selection.from;
-  const originalTo = state.selection.to;
-  const isEmpty = state.selection.empty;
-
-  for (let i = lineStarts.length - 1; i >= 0; i--) {
-    const pos = lineStarts[i];
-    if (allHaveBullet) {
-      const nextNode = tr.doc.nodeAt(pos);
-      if (nextNode && nextNode.isText && nextNode.text?.startsWith('- ')) {
-        tr.delete(pos, pos + 2);
-      }
-    } else {
-      const nextNode = tr.doc.nodeAt(pos);
-      if (!nextNode || (nextNode.isText && !nextNode.text?.startsWith('- '))) {
-        tr.insertText('- ', pos);
-      } else if (nextNode && !nextNode.isText) {
-        tr.insertText('- ', pos);
-      }
-    }
-  }
-
-  dispatch(tr);
-
-  // Remap original selection to keep exactly what the user selected, shifted by the bullet insertions
-  if (!isEmpty) {
-    const newFrom = tr.mapping.map(originalFrom, -1);
-    const newTo = tr.mapping.map(originalTo, 1);
-
-    // Check if newTo is valid
-    if (newTo > newFrom) {
-      editor.chain().setTextSelection({ from: newFrom, to: newTo }).focus().run();
-    } else {
-      editor.chain().focus().run();
-    }
-  } else {
-    editor.chain().focus().run();
-  }
-}
-
-function isTableBulletActive(editor: Editor): boolean {
-  if (!editor.isActive('table')) return false;
-
-  const { state } = editor;
-  const result = getSelectedTableLines(state, state.selection);
-  if (!result) return false;
-  const { selectedLines, tr } = result;
-
-  const lineStarts = selectedLines.map(l => l.start);
-
-  if (lineStarts.length === 1 && !tr.doc.nodeAt(lineStarts[0])) {
-    return false; // Empty cell
-  }
-
-  for (const pos of lineStarts) {
-    const nextNode = tr.doc.nodeAt(pos);
-    if (!nextNode || !nextNode.isText || !nextNode.text?.startsWith('- ')) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
  * Create compact formatting toolbar with clean, minimal design.
  *
  * @param editor - TipTap editor instance
  * @returns HTMLElement containing the toolbar
  */
-/** Current editor zoom level */
-let editorZoomLevel = 1;
+/** Current editor zoom level (default 0.9 = 90% for comfortable reading baseline) */
+let editorZoomLevel = 0.9;
 
-/** Zoom increment/decrement step */
-const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.7;
 const ZOOM_MAX = 1.5;
 
@@ -552,9 +462,9 @@ export function setEditorZoom(level: number, persist = true) {
   if (editorEl) {
     editorEl.style.zoom = String(clamped);
   }
-  // Update any visible zoom label
-  document.querySelectorAll('.zoom-level-label').forEach(el => {
-    el.textContent = `${Math.round(clamped * 100)}%`;
+  // Update any visible zoom section label
+  document.querySelectorAll('.zoom-level-display').forEach(el => {
+    el.textContent = `Zoom (${Math.round(clamped * 100)}%)`;
   });
   if (persist) {
     window.dispatchEvent(
@@ -565,47 +475,8 @@ export function setEditorZoom(level: number, persist = true) {
   }
 }
 
-function getEditorZoom(): number {
+export function getEditorZoom(): number {
   return editorZoomLevel;
-}
-
-/** Build a Chrome-style zoom widget: [ − ] 100% [ + ] */
-function buildZoomWidget(refreshFn: () => void): HTMLElement {
-  const row = document.createElement('div');
-  row.className = 'zoom-widget';
-
-  const minus = document.createElement('button');
-  minus.type = 'button';
-  minus.className = 'zoom-widget-btn';
-  minus.title = 'Zoom out';
-  minus.textContent = '−';
-  minus.onmousedown = e => e.preventDefault();
-  minus.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditorZoom(getEditorZoom() - ZOOM_STEP);
-    refreshFn();
-  };
-
-  const label = document.createElement('span');
-  label.className = 'zoom-level-label';
-  label.textContent = `${Math.round(getEditorZoom() * 100)}%`;
-
-  const plus = document.createElement('button');
-  plus.type = 'button';
-  plus.className = 'zoom-widget-btn';
-  plus.title = 'Zoom in';
-  plus.textContent = '+';
-  plus.onmousedown = e => e.preventDefault();
-  plus.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditorZoom(getEditorZoom() + ZOOM_STEP);
-    refreshFn();
-  };
-
-  row.append(minus, label, plus);
-  return row;
 }
 
 // getSharedTableOperations removed — table ops now use buildSharedTableOps
@@ -617,33 +488,83 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   const toolbar = document.createElement('div');
   toolbar.className = 'formatting-toolbar';
 
+  // Prevent clicks on toolbar background (gaps between buttons) from stealing editor focus
+  toolbar.addEventListener('mousedown', e => {
+    // Only prevent default on the toolbar itself, not on child interactive elements
+    if (e.target === toolbar || (e.target as HTMLElement)?.classList?.contains('toolbar-group')) {
+      e.preventDefault();
+    }
+  });
+
   const buttons: ToolbarItem[] = [
+    // --- Save Button (first in toolbar) ---
     {
       type: 'button',
       label: '',
-      title: `Save document ${modKeyLabel}+S`,
+      title: 'Save file',
       icon: { name: 'save', fallback: 'Save' },
-      action: () => {
-        if ((window as any).saveDocument) {
-          (window as any).saveDocument();
-        }
-      },
-      isActive: () => false,
-      isEnabled: () => !!(window as any).__docDirty,
       className: 'save-button',
       requiresFocus: false,
-    },
-    {
-      type: 'button',
-      label: '',
-      title: `Undo ${modKeyLabel}+Z`,
-      icon: { name: 'discard', fallback: '↩' },
-      action: () => editor.chain().focus().undo().run(),
       isActive: () => false,
-      isEnabled: () => editor.can().undo(),
-      requiresFocus: true,
+      isEnabled: () => true,
+      action: () => {
+        const vscodeApi = window.vscode;
+        if (vscodeApi) {
+          vscodeApi.postMessage({ type: 'save' });
+        }
+      },
     },
     { type: 'separator' },
+    // --- Heading Level Dropdown (shows current style) ---
+    {
+      type: 'dropdown',
+      label: 'Paragraph',
+      title: 'Text style',
+      className: 'heading-level-dropdown',
+      icon: { name: 'text-size', fallback: '' },
+      requiresFocus: true,
+      isActive: () => editor.isActive('heading'),
+      items: [
+        {
+          label: 'Paragraph',
+          action: () => editor.chain().focus().setParagraph().run(),
+          className: 'heading-preview heading-preview-p',
+          isActive: () => !editor.isActive('heading') && !editor.isActive('codeBlock'),
+        },
+        {
+          label: 'Heading 1',
+          action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+          className: 'heading-preview heading-preview-1',
+          isActive: () => editor.isActive('heading', { level: 1 }),
+        },
+        {
+          label: 'Heading 2',
+          action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+          className: 'heading-preview heading-preview-2',
+          isActive: () => editor.isActive('heading', { level: 2 }),
+        },
+        {
+          label: 'Heading 3',
+          action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+          className: 'heading-preview heading-preview-3',
+          isActive: () => editor.isActive('heading', { level: 3 }),
+        },
+        {
+          label: 'Heading 4',
+          action: () => editor.chain().focus().toggleHeading({ level: 4 }).run(),
+          className: 'heading-preview heading-preview-4',
+          isActive: () => editor.isActive('heading', { level: 4 }),
+        },
+        {
+          label: 'Heading 5',
+          action: () => editor.chain().focus().toggleHeading({ level: 5 }).run(),
+          className: 'heading-preview heading-preview-5',
+          isActive: () => editor.isActive('heading', { level: 5 }),
+        },
+      ],
+    },
+    { type: 'separator' },
+    // --- Text Formatting ---
     {
       type: 'button',
       label: '',
@@ -675,24 +596,12 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       className: 'underline',
     },
     {
-      type: 'button',
+      type: 'colorPicker',
       label: '',
-      title: 'Highlight',
-      icon: { name: 'paintcan', fallback: '' },
-      action: () => editor.chain().focus().toggleHighlight().run(),
-      isActive: () => editor.isActive('highlight'),
+      title: 'Choose text color',
+      icon: { name: 'symbol-color', fallback: '' },
       requiresFocus: true,
-      className: 'highlight',
-    },
-    {
-      type: 'button',
-      label: '',
-      title: 'Strikethrough',
-      icon: { name: 'strikethrough', fallback: '' },
-      action: () => editor.chain().focus().toggleStrike().run(),
-      isActive: () => editor.isActive('strike'),
-      requiresFocus: true,
-      className: 'strikethrough',
+      isEnabled: () => true,
     },
     {
       type: 'button',
@@ -705,62 +614,46 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       className: 'inline-code',
     },
     {
-      type: 'colorPicker',
+      type: 'button',
       label: '',
-      title: 'Choose text color',
-      icon: { name: 'symbol-color', fallback: '' },
+      title: 'Strikethrough',
+      icon: { name: 'strikethrough', fallback: '' },
+      action: () => editor.chain().focus().toggleStrike().run(),
+      isActive: () => editor.isActive('strike'),
       requiresFocus: true,
-      isEnabled: () => true,
+      className: 'strikethrough',
     },
+    { type: 'separator' },
+    // --- Lists (flat buttons) ---
     {
-      type: 'dropdown',
+      type: 'button',
       label: '',
-      title: 'Heading levels',
-      icon: { name: 'text-size', fallback: '' },
+      title: 'Bullet list',
+      icon: { name: 'list-unordered', fallback: '•' },
+      action: () => editor.chain().focus().toggleBulletList().run(),
+      isActive: () => editor.isActive('bulletList'),
       requiresFocus: true,
-      isActive: () => editor.isActive('heading'),
-      isEnabled: () => !editor.isActive('table'),
-      items: [
-        {
-          label: 'Heading 1',
-          action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
-          isActive: () => editor.isActive('heading', { level: 1 }),
-        },
-        {
-          label: 'Heading 2',
-          action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-          isActive: () => editor.isActive('heading', { level: 2 }),
-        },
-        {
-          label: 'Heading 3',
-          action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
-          isActive: () => editor.isActive('heading', { level: 3 }),
-        },
-        {
-          label: 'Heading 4',
-          action: () => editor.chain().focus().toggleHeading({ level: 4 }).run(),
-          isActive: () => editor.isActive('heading', { level: 4 }),
-        },
-        {
-          label: 'Heading 5',
-          action: () => editor.chain().focus().toggleHeading({ level: 5 }).run(),
-          isActive: () => editor.isActive('heading', { level: 5 }),
-        },
-        {
-          label: 'Heading 6',
-          action: () => editor.chain().focus().toggleHeading({ level: 6 }).run(),
-          isActive: () => editor.isActive('heading', { level: 6 }),
-        },
-      ],
     },
     {
       type: 'button',
       label: '',
-      title: `Insert/edit link (${modKeyLabel}+K)`,
-      icon: { name: 'link', fallback: '🔗' },
-      action: () => showLinkDialog(editor),
+      title: 'Numbered list',
+      icon: { name: 'list-ordered', fallback: '1.' },
+      action: () => editor.chain().focus().toggleOrderedList().run(),
+      isActive: () => editor.isActive('orderedList'),
       requiresFocus: true,
     },
+    {
+      type: 'button',
+      label: '',
+      title: 'Task list',
+      icon: { name: 'tasklist', fallback: '☐' },
+      action: () => editor.chain().focus().toggleTaskList().run(),
+      isActive: () => editor.isActive('taskList'),
+      requiresFocus: true,
+    },
+    { type: 'separator' },
+    // --- Insert ---
     {
       type: 'button',
       label: '',
@@ -779,66 +672,69 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     {
       type: 'button',
       label: '',
+      title: `Insert/edit link (${modKeyLabel}+K)`,
+      icon: { name: 'link', fallback: '🔗' },
+      action: () => showLinkDialog(editor),
+      requiresFocus: true,
+    },
+    {
+      type: 'button',
+      label: '',
       title: 'Insert emoji',
       icon: { name: 'smiley', fallback: '😀' },
+      className: 'emoji-button',
       action: () => {
-        const vscodeApi = window.vscode;
-        if (vscodeApi) {
-          vscodeApi.postMessage({ type: MessageType.SHOW_EMOJI_PICKER });
-        }
+        const emojiBtn = toolbar.querySelector('.toolbar-button.emoji-button') as HTMLElement;
+        showEmojiPicker(editor, emojiBtn || undefined);
       },
       requiresFocus: true,
     },
-    { type: 'separator' },
     {
       type: 'dropdown',
       label: '',
-      title: 'Lists and checklists',
-      icon: { name: 'list-unordered', fallback: 'L' },
+      title: 'Insert and edit table',
+      icon: { name: 'table', fallback: 'Tbl' },
       requiresFocus: true,
-      isActive: () =>
-        editor.isActive('bulletList') ||
-        editor.isActive('orderedList') ||
-        editor.isActive('taskList') ||
-        isTableBulletActive(editor),
+      isActive: () => editor.isActive('table'),
       items: [
+        { label: 'Table', action: () => {}, isSectionLabel: true },
         {
-          label: 'Bullet list',
-          icon: { name: 'list-unordered', fallback: '•' },
-          action: () => editor.chain().focus().toggleBulletList().run(),
+          label: 'Insert table',
+          icon: { name: 'add', fallback: '+' },
+          action: () => showTableInsertDialog(editor),
           isEnabled: () => !editor.isActive('table'),
-          isActive: () => editor.isActive('bulletList'),
         },
+        { label: '', action: () => {}, isSeparator: true },
         {
-          label: 'Numbered list',
-          icon: { name: 'list-ordered', fallback: '1.' },
-          action: () => editor.chain().focus().toggleOrderedList().run(),
-          isEnabled: () => !editor.isActive('table'),
-          isActive: () => editor.isActive('orderedList'),
-        },
-        {
-          label: 'Task list',
-          icon: { name: 'tasklist', fallback: '☐' },
-          action: () => editor.chain().focus().toggleTaskList().run(),
-          isEnabled: () => !editor.isActive('table'),
-          isActive: () => editor.isActive('taskList'),
-        },
-        {
-          label: 'Table bullet',
-          icon: { name: 'list-unordered', fallback: '•' },
-          action: () => toggleTableBullet(editor),
+          label: 'Table operations',
+          action: () => {},
           isEnabled: () => editor.isActive('table'),
-          isActive: () => isTableBulletActive(editor),
+          isCustomWidget: true,
+          customRender: (refreshFn: () => void) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-ops-widget';
+            buildSharedTableOps(wrapper, editor, {
+              onItemClick: () => {
+                closeAllDropdowns();
+                refreshFn();
+              },
+            });
+            return wrapper;
+          },
         },
       ],
     },
+    // --- Blocks and Alerts (merged dropdown) ---
     {
       type: 'dropdown',
       label: '',
-      title: 'Block formatting',
+      title: 'Blocks and alerts',
       icon: { name: 'quote', fallback: '"' },
       requiresFocus: true,
-      isActive: () => editor.isActive('blockquote') || editor.isActive('githubAlert'),
+      isActive: () =>
+        editor.isActive('blockquote') ||
+        editor.isActive('githubAlert') ||
+        editor.isActive('codeBlock'),
       isEnabled: () => !editor.isActive('table'),
       items: [
         {
@@ -911,7 +807,6 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
             },
           ],
         },
-
         {
           label: 'Remove alert',
           icon: { name: 'close', fallback: '×' },
@@ -921,16 +816,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
           isEnabled: () => editor.isActive('githubAlert'),
           className: 'danger',
         },
-      ],
-    },
-    {
-      type: 'dropdown',
-      label: '',
-      title: 'Code blocks and diagrams',
-      icon: { name: 'add', fallback: '+' },
-      requiresFocus: true,
-      isEnabled: () => true,
-      items: [
+        { label: '', action: () => {}, isSeparator: true },
         { label: 'Code Blocks', action: () => {}, isSectionLabel: true },
         {
           label: 'Plain text',
@@ -983,97 +869,73 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         },
       ],
     },
+    // --- Separator before AI Explain and View menu ---
+    { type: 'separator' },
+    // --- AI Explain Button ---
+    {
+      type: 'button',
+      label: '',
+      title: 'AI Explain Document',
+      icon: { name: 'sparkle', fallback: '✨' },
+      requiresFocus: false,
+      isActive: () => false,
+      isEnabled: () => true,
+      action: () => {
+        editor.commands.explainDocument();
+      },
+    },
+    // --- View Menu Dropdown ---
     {
       type: 'dropdown',
       label: '',
-      title: 'Insert and edit table',
-      icon: { name: 'table', fallback: 'Tbl' },
-      requiresFocus: true,
-      isActive: () => editor.isActive('table'),
+      title: 'View',
+      icon: { name: 'panel-left', fallback: '☰' },
+      requiresFocus: false,
+      isActive: () => false,
+      isEnabled: () => true,
       items: [
+        { label: 'Display', action: () => {}, isSectionLabel: true },
         {
-          label: 'Insert table',
-          icon: { name: 'add', fallback: '+' },
-          action: () => showTableInsertDialog(editor),
-          isEnabled: () => !editor.isActive('table'),
+          label: 'Source view',
+          icon: { name: 'file-code', fallback: '</>' },
+          action: () => window.dispatchEvent(new CustomEvent('openSourceView')),
+        },
+        {
+          label: 'Navigation pane',
+          icon: { name: 'panel-left', fallback: '☰' },
+          action: () => window.dispatchEvent(new CustomEvent('toggleTocPane')),
         },
         { label: '', action: () => {}, isSeparator: true },
         {
-          label: 'Table operations',
+          label: `Zoom (${Math.round(getEditorZoom() * 100)}%)`,
           action: () => {},
-          isEnabled: () => editor.isActive('table'),
-          isCustomWidget: true,
-          customRender: (refreshFn: () => void) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'table-ops-widget';
-            buildSharedTableOps(wrapper, editor, {
-              onItemClick: () => {
-                closeAllDropdowns();
-                refreshFn();
-              },
-            });
-            return wrapper;
-          },
-        },
-      ],
-    },
-    { type: 'separator' },
-    {
-      type: 'dropdown',
-      label: '',
-      title: 'Outline, source, and settings',
-      icon: { name: 'layout-sidebar-right', fallback: 'View' },
-      items: [
-        {
-          label: 'Toggle outline pane',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('toggleTocPane'));
-          },
+          isSectionLabel: true,
+          className: 'zoom-level-display',
         },
         {
-          label: 'Open source view',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('openSourceView'));
-          },
+          label: 'Zoom in',
+          icon: { name: 'zoom-in', fallback: '+' },
+          action: () => setEditorZoom(getEditorZoom() + 0.1),
+          isEnabled: () => getEditorZoom() < ZOOM_MAX,
         },
         {
-          label: 'Copy selection as Markdown',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('copyAsMarkdown'));
-          },
+          label: 'Zoom out',
+          icon: { name: 'zoom-out', fallback: '-' },
+          action: () => setEditorZoom(getEditorZoom() - 0.1),
+          isEnabled: () => getEditorZoom() > ZOOM_MIN,
         },
+        {
+          label: 'Reset zoom',
+          icon: { name: 'view', fallback: '100%' },
+          action: () => setEditorZoom(1),
+          isEnabled: () => Math.abs(getEditorZoom() - 1) > 0.001,
+        },
+        { label: '', action: () => {}, isSeparator: true },
+        { label: 'Preferences', action: () => {}, isSectionLabel: true },
         {
           label: 'Configuration',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('openExtensionSettings'));
-          },
-        },
-        { label: '', action: () => {}, isSeparator: true },
-        {
-          label: 'Zoom',
-          action: () => {},
-          isCustomWidget: true,
-          customRender: (refreshFn: () => void) => buildZoomWidget(refreshFn),
-        },
-      ],
-    },
-    {
-      type: 'dropdown',
-      label: '',
-      title: 'Export document',
-      icon: { name: 'export', fallback: 'Export' },
-      items: [
-        {
-          label: 'Export as PDF',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('exportDocument', { detail: { format: 'pdf' } }));
-          },
-        },
-        {
-          label: 'Export as Word',
-          action: () => {
-            window.dispatchEvent(new CustomEvent('exportDocument', { detail: { format: 'docx' } }));
-          },
+          icon: { name: 'settings-gear', fallback: '⚙' },
+          action: () => window.dispatchEvent(new CustomEvent('openExtensionSettings')),
         },
       ],
     },
@@ -1181,6 +1043,23 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         element.classList.toggle('active', isSelected);
       });
     });
+
+    // Update heading level dropdown label dynamically
+    dropdownButtons.forEach(({ config, element }) => {
+      if (config.className?.includes('heading-level-dropdown')) {
+        const labelEl = element.querySelector('.toolbar-button-label');
+        if (labelEl) {
+          let text = 'Paragraph';
+          for (let lvl = 1; lvl <= 5; lvl++) {
+            if (editor.isActive('heading', { level: lvl })) {
+              text = `Heading ${lvl}`;
+              break;
+            }
+          }
+          labelEl.textContent = text;
+        }
+      }
+    });
   };
 
   buttons.forEach(btn => {
@@ -1237,7 +1116,8 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
         // Render section labels (non-interactive headers)
         if (item.isSectionLabel) {
           const label = document.createElement('div');
-          label.className = 'toolbar-dropdown-section-label';
+          label.className =
+            'toolbar-dropdown-section-label' + (item.className ? ` ${item.className}` : '');
           label.textContent = item.label;
           menu.appendChild(label);
           return;

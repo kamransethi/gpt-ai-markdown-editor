@@ -42,7 +42,7 @@ describe('HTML Preservation Markdown Parsing', () => {
 
     // If testing environments don't support the full tiptap markdown serialization,
     // we bypass it and just check HTML parsing (the actual point of the test)
-    let markdown = '';
+    let markdown: string;
     try {
       markdown =
         (editor as any).storage?.markdown?.getMarkdown() || (editor as any).getMarkdown?.() || '';

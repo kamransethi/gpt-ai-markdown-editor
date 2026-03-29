@@ -69,7 +69,7 @@ export async function handleSearchFiles(
   message: { type: string; [key: string]: unknown },
   ctx: HandlerContext
 ): Promise<void> {
-  const { webview } = ctx;
+  const { webview, document } = ctx;
   try {
     const query = (message.query as string) || '';
     const requestId = (message.requestId as number) || 0;
@@ -186,7 +186,15 @@ export async function handleSearchFiles(
 
     const results = sortedFiles.slice(0, 20).map(uri => {
       const filename = path.basename(uri.fsPath);
-      const relativePath = getRelativePath(uri, workspaceFolders[0].uri);
+      // Compute path relative to the current document's directory so markdown
+      // links work correctly (e.g. `./sibling.md` instead of `dir/sibling.md`
+      // from workspace root).
+      const docDir = path.dirname(document.uri.fsPath);
+      let relativePath = path.relative(docDir, uri.fsPath).replace(/\\/g, '/');
+      // Fallback: if path.relative produced an empty string (same file), use filename
+      if (!relativePath) {
+        relativePath = filename;
+      }
       return {
         filename,
         path: relativePath,
@@ -557,16 +565,9 @@ export async function handleBrowseLocalFile(
     const pathModule = await import('path');
 
     let finalUri = selectedUri;
-    let isOutsideWorkspace = false;
-
-    if (workspacePath) {
-      // Check if selected file is inside the workspace
-      isOutsideWorkspace =
-        !selectedPath.startsWith(workspacePath + pathModule.sep) && selectedPath !== workspacePath;
-    } else {
-      // No workspace open, consider it "outside" for the purpose of copying to a local folder
-      isOutsideWorkspace = true;
-    }
+    const isOutsideWorkspace = workspacePath
+      ? !selectedPath.startsWith(workspacePath + pathModule.sep) && selectedPath !== workspacePath
+      : true;
 
     if (isOutsideWorkspace) {
       // Copy file to workspace media folder

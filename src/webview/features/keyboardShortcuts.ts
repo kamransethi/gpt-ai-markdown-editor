@@ -10,7 +10,6 @@
 import type { Editor } from '@tiptap/core';
 import { isSaveShortcut } from '../utils/shortcutKeys';
 import { showLinkDialog } from '../features/linkDialog';
-import { toggleSearchOverlay } from '../features/searchOverlay';
 import { devLog } from '../utils/devLog';
 
 export interface KeyboardDeps {
@@ -84,14 +83,10 @@ export function createKeydownHandler(deps: KeyboardDeps): (e: KeyboardEvent) => 
       return;
     }
 
-    // Intercept Cmd/Ctrl+F for in-document search
+    // Intercept Cmd/Ctrl+F for in-document search (handled by SearchAndReplace extension)
     if (isMod && e.key === 'f') {
-      e.preventDefault();
-      e.stopPropagation();
-      devLog('[DK-AI] Search shortcut');
-      if (editor) {
-        toggleSearchOverlay(editor);
-      }
+      e.stopPropagation(); // Stop VS Code from capturing it
+      // Don't preventDefault — let TipTap handle it via the extension's keyboard shortcut
       return;
     }
   };

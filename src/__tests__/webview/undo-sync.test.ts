@@ -45,6 +45,19 @@ jest.mock('@tiptap/extension-code-block-lowlight', () => ({
   CodeBlockLowlight: { extend: () => ({}) },
   default: { configure: () => ({}) },
 }));
+jest.mock('tiptap-extension-code-block-shiki', () => ({
+  __esModule: true,
+  default: { configure: () => ({}) },
+}));
+jest.mock('tiptap-extension-global-drag-handle', () => ({
+  __esModule: true,
+  default: { configure: () => ({}) },
+}));
+jest.mock('@tiptap/suggestion', () => ({
+  __esModule: true,
+  Suggestion: jest.fn(() => []),
+  default: jest.fn(() => []),
+}));
 jest.mock('@tiptap/extension-highlight', () => ({
   __esModule: true,
   default: { configure: () => ({}) },
@@ -101,6 +114,12 @@ jest.mock('./../../webview/features/imageDragDrop', () => ({
 }));
 jest.mock('./../../webview/features/tocOverlay', () => ({ toggleTocOverlay: jest.fn() }));
 jest.mock('./../../webview/features/searchOverlay', () => ({ toggleSearchOverlay: jest.fn() }));
+jest.mock('./../../webview/extensions/searchAndReplace', () => ({ SearchAndReplace: {} }));
+jest.mock('./../../webview/extensions/slashCommand', () => ({ SlashCommand: {} }));
+jest.mock('./../../webview/extensions/aiExplain', () => ({
+  AiExplain: {},
+  handleAiExplainResult: jest.fn(),
+}));
 jest.mock('./../../webview/utils/exportContent', () => ({
   collectExportContent: jest.fn(),
   getDocumentTitle: jest.fn(),

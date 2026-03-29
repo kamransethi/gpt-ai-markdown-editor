@@ -32,6 +32,10 @@ jest.mock('../../webview/features/imageInsertDialog', () => ({
   showImageInsertDialog: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('../../webview/features/emojiPicker', () => ({
+  showEmojiPicker: jest.fn(),
+}));
+
 const moveSelectedTableRowMock = jest.fn();
 const moveSelectedTableColumnMock = jest.fn();
 
@@ -140,30 +144,23 @@ describe('BubbleMenuView', () => {
       expect(editor.on).toHaveBeenCalledWith('selectionUpdate', expect.any(Function));
     });
 
-    it('dispatches toggleTocPane when Outline button is clicked', () => {
+    it('renders heading level dropdown with preview items', () => {
       const editor = createMockEditor();
       const toolbar = createFormattingToolbar(editor);
-      const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
 
-      const viewButton = Array.from(toolbar.querySelectorAll('button')).find(button =>
-        button.getAttribute('aria-label')?.includes('Outline')
-      ) as HTMLButtonElement | undefined;
+      // The heading-level-dropdown class is on the trigger button itself
+      const headingTrigger = toolbar.querySelector(
+        'button.heading-level-dropdown'
+      ) as HTMLButtonElement;
+      expect(headingTrigger).toBeTruthy();
 
-      expect(viewButton).toBeTruthy();
+      // Click the dropdown trigger to open it
+      headingTrigger!.click();
 
-      viewButton!.click();
-
-      const outlineButton = Array.from(toolbar.querySelectorAll('.toolbar-dropdown-item')).find(
-        item => item.textContent?.includes('Toggle outline pane')
-      ) as HTMLButtonElement | undefined;
-
-      expect(outlineButton).toBeTruthy();
-
-      outlineButton!.click();
-
-      expect(dispatchSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
-      const dispatchedEvent = dispatchSpy.mock.calls[0][0] as CustomEvent;
-      expect(dispatchedEvent.type).toBe('toggleTocPane');
+      // Check that heading preview items exist in the parent dropdown container
+      const container = headingTrigger!.closest('.toolbar-dropdown');
+      const previewItems = container!.querySelectorAll('.heading-preview');
+      expect(previewItems.length).toBeGreaterThanOrEqual(5); // Paragraph + H1-H4/H5
     });
 
     it('renders grouped dropdown controls', () => {
@@ -171,7 +168,10 @@ describe('BubbleMenuView', () => {
       const toolbar = createFormattingToolbar(editor);
 
       expect(toolbar.querySelectorAll('.toolbar-group').length).toBeGreaterThan(1);
-      expect(toolbar.querySelectorAll('.toolbar-dropdown-trigger').length).toBeGreaterThan(4);
+      // Heading Level, Table, Blocks & Alerts dropdowns
+      expect(toolbar.querySelectorAll('.toolbar-dropdown-trigger').length).toBeGreaterThanOrEqual(
+        3
+      );
     });
   });
 

@@ -23,7 +23,8 @@ if (typeof BlobConstructor === 'undefined') {
     globalObj.Blob = BlobConstructor;
   } catch (error) {
     throw new Error(
-      `Blob is required for File polyfill but is not available: ${error instanceof Error ? error.message : String(error)}`
+      `Blob is required for File polyfill but is not available: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error }
     );
   }
 }

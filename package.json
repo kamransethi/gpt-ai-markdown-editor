@@ -2,7 +2,7 @@
   "name": "gpt-ai-markdown-editor",
   "displayName": "Visual AI Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "2.0.11",
+  "version": "2.0.14",
   "publisher": "kamransethi",
   "author": {
     "name": "DK-AI",
@@ -328,7 +328,7 @@
     "@tiptap/extension-table-row": "^3.20.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.5.0",
-    "@types/vscode": "^1.110.0",
+    "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
     "@vscode/vsce": "^3.7.1",
@@ -363,9 +363,11 @@
     "@tiptap/markdown": "^3.20.5",
     "@tiptap/pm": "^3.20.5",
     "@tiptap/starter-kit": "^3.20.5",
+    "@tiptap/suggestion": "^3.21.0",
     "@types/turndown": "^5.0.6",
     "cheerio": "^1.2.0",
     "docx": "^9.6.1",
+    "emoji-picker-element": "^1.29.1",
     "highlight.js": "^11.11.1",
     "image-size": "^2.0.2",
     "katex": "^0.16.43",
@@ -374,6 +376,9 @@
     "markdown-it-mark": "^4.0.0",
     "mermaid": "^11.13.0",
     "prosemirror-tables": "^1.8.5",
+    "shiki": "^3.23.0",
+    "tiptap-extension-code-block-shiki": "^1.1.0",
+    "tiptap-extension-global-drag-handle": "^0.1.18",
     "turndown": "^7.2.2"
   }
 }

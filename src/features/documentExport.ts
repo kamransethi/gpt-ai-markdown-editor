@@ -466,7 +466,7 @@ async function exportToPDF(
   try {
     await fs.promises.writeFile(tempHtmlPath, htmlWithBase, 'utf8');
   } catch (error) {
-    throw new Error(`Failed to write temporary HTML for export: ${error}`);
+    throw new Error(`Failed to write temporary HTML for export: ${error}`, { cause: error });
   }
 
   try {
@@ -493,7 +493,7 @@ async function exportToPDF(
     // Surface a user-friendly error
     const errMessage =
       error instanceof Error ? error.message : 'Unknown error while exporting to PDF';
-    throw new Error(errMessage);
+    throw new Error(errMessage, { cause: error });
   } finally {
     // Clean up temp files
     try {
@@ -672,7 +672,9 @@ async function exportToWord(
     return true; // Export succeeded
   } catch (error) {
     if (error && (error as any).code === 'MODULE_NOT_FOUND') {
-      throw new Error('Word export requires docx library. Install with: npm install docx');
+      throw new Error('Word export requires docx library. Install with: npm install docx', {
+        cause: error,
+      });
     }
     throw error;
   }
