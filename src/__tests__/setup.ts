@@ -22,10 +22,11 @@ if (typeof BlobConstructor === 'undefined') {
     BlobConstructor = buffer.Blob;
     globalObj.Blob = BlobConstructor;
   } catch (error) {
-    throw new Error(
-      `Blob is required for File polyfill but is not available: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error }
-    );
+    const wrapped = new Error(
+      `Blob is required for File polyfill but is not available: ${error instanceof Error ? error.message : String(error)}`
+    ) as Error & { cause?: unknown };
+    wrapped.cause = error;
+    throw wrapped;
   }
 }
 

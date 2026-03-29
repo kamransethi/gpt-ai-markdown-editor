@@ -80,6 +80,11 @@ function setCodeBlockNormalized(editor: Editor, language: string): void {
 // Track editor focus state
 let isEditorFocused = false;
 let focusChangeListener: ((e: Event) => void) | null = null;
+let dirtyChangeListener: ((e: Event) => void) | null = null;
+
+function isDocumentDirty(): boolean {
+  return Boolean((window as any).__docDirty);
+}
 
 type ToolbarIcon = {
   name?: string; // Codicon name (legacy) or SVG icon key
@@ -506,7 +511,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       className: 'save-button',
       requiresFocus: false,
       isActive: () => false,
-      isEnabled: () => true,
+      isEnabled: () => isDocumentDirty(),
       action: () => {
         const vscodeApi = window.vscode;
         if (vscodeApi) {
@@ -1395,11 +1400,25 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
   focusChangeListener = handleEditorFocusChange;
   window.addEventListener('editorFocusChange', handleEditorFocusChange);
 
+  const handleDocumentDirtyChange = () => {
+    refreshActiveStates();
+  };
+  if (dirtyChangeListener) {
+    window.removeEventListener('documentDirtyChange', dirtyChangeListener);
+  }
+  dirtyChangeListener = handleDocumentDirtyChange;
+  window.addEventListener('documentDirtyChange', handleDocumentDirtyChange);
+
   // Clean up listeners when editor is destroyed
   editor.on('destroy', () => {
     if (focusChangeListener) {
       window.removeEventListener('editorFocusChange', focusChangeListener);
       focusChangeListener = null;
+    }
+
+    if (dirtyChangeListener) {
+      window.removeEventListener('documentDirtyChange', dirtyChangeListener);
+      dirtyChangeListener = null;
     }
 
     if (typeof editor.off === 'function') {

@@ -173,6 +173,23 @@ describe('BubbleMenuView', () => {
         3
       );
     });
+
+    it('enables save button only when document is dirty', () => {
+      (window as any).__docDirty = false;
+      const editor = createMockEditor();
+      const toolbar = createFormattingToolbar(editor);
+
+      const saveButton = toolbar.querySelector('button.save-button') as HTMLButtonElement;
+      expect(saveButton).toBeTruthy();
+      expect(saveButton.disabled).toBe(true);
+      expect(saveButton.classList.contains('disabled')).toBe(true);
+
+      (window as any).__docDirty = true;
+      window.dispatchEvent(new CustomEvent('documentDirtyChange', { detail: { dirty: true } }));
+
+      expect(saveButton.disabled).toBe(false);
+      expect(saveButton.classList.contains('disabled')).toBe(false);
+    });
   });
 
   describe('createTableMenu', () => {
