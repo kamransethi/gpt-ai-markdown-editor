@@ -1,0 +1,35 @@
+name: Claude Code Review
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude-review:
+    name: Claude Code Review
+    # Only run when @claude is mentioned on a PR comment (not a regular issue comment)
+    if: |
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' &&
+       contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          trigger_phrase: '@claude'
+          use_sticky_comment: true
+          include_fix_links: true
+          claude_args: >
+            --model claude-opus-4-6
+            --disallowedTools Write,Edit,Bash
+            --system-prompt "You are a senior software engineer performing a deep code review on a VS Code extension built with TypeScript and TipTap. Review for: logic correctness and edge cases, security vulnerabilities (XSS, injection, data exposure), TypeScript type safety and VS Code extension API best practices, naming and readability, test coverage gaps, and performance concerns. Post structured inline comments on the specific lines where issues occur. Be direct and specific: cite the exact problem and suggest a concrete fix. Do not make code changes or push commits."
