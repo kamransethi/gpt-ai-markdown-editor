@@ -147,7 +147,7 @@ export function updateFilenameDimensions(
 export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   private static readonly CONFIG_SECTION = 'gptAiMarkdownEditor';
 
-  /** Document sync — edit queuing, feedback-loop prevention, frontmatter wrapping. */
+  /** Document sync — edit queuing, feedback-loop prevention, frontmatter handling. */
   readonly sync = new DocumentSync(() => this.getWebviewSettings());
 
   /** Central message router — handler modules register here. */
@@ -554,6 +554,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         <title>Visual AI Markdown Editor</title>
       </head>
       <body data-extension-version="${this.context.extension?.packageJSON?.version || ''}">
+        <div id="frontmatter-panel" class="frontmatter-panel">
+          <div class="frontmatter-panel-inner"></div>
+        </div>
         <div id="editor"></div>
         <script nonce="${nonce}" src="${scriptUriWithVersion}"></script>
       </body>

@@ -209,6 +209,7 @@ export const SearchAndReplace = Extension.create<
       nextSearchResult:
         () =>
         ({ editor }) => {
+          editor.commands.focus();
           const { results, resultIndex } = editor.storage.searchAndReplace;
           editor.storage.searchAndReplace.resultIndex = results.length
             ? (resultIndex + 1) % results.length
@@ -218,6 +219,7 @@ export const SearchAndReplace = Extension.create<
       previousSearchResult:
         () =>
         ({ editor }) => {
+          editor.commands.focus();
           const { results, resultIndex } = editor.storage.searchAndReplace;
           editor.storage.searchAndReplace.resultIndex = results.length
             ? (resultIndex - 1 + results.length) % results.length

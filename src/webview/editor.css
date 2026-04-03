@@ -74,6 +74,13 @@ body {
   --ui-font-base: 13px;
   --ui-gap: 8px;
 
+  /* Compact spacing tokens for content density */
+  --content-spacing-block: 0.75em;
+  --list-item-spacing: 0.12rem;
+  --content-spacing-between-lists: 0.5em;
+  --table-cell-padding: 3px 6px;
+  --table-line-height: 1.25;
+
   /* Image glow colors */
   --ui-glow: rgba(26, 115, 232, 0.4);
   --ui-glow-dim: rgba(26, 115, 232, 0.2);
@@ -95,8 +102,9 @@ body {
   --ui-shadow-lg: 0 6px 18px var(--md-shadow-color);
 
   /* Typography and layout */
-  --md-base-size: 14px;
-  --md-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --md-base-size: 16px;
+  --md-font-family: 'Charter', 'Georgia', 'Cambria', 'Times New Roman', serif;
+  --md-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --md-mono-font: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', Menlo, Courier, monospace;
 
   /* Syntax Highlighting */
@@ -120,17 +128,10 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  font-family:
-    var(--md-font-family),
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-size: var(--md-base-size);
-  line-height: 1.3;
+  font-family: var(--md-font-sans);
+  font-size: var(--ui-font-base);
+  line-height: 1.5;
+  overflow-x: hidden;
 }
 
 /* ============================================
@@ -218,6 +219,65 @@ body[data-theme="dark"] {
   --hljs-color-deletion-bg: rgba(240, 113, 120, 0.15);
 }
 
+/* ============================================
+   Common Content Spacing Utilities
+   Reusable classes for consistent spacing across doc elements
+   Ensures visual consistency and easy maintenance
+   ============================================ */
+
+/* Block spacing — standard vertical separation between elements */
+.block-spacing {
+  margin-bottom: var(--content-spacing-block);
+}
+
+/* Compact block spacing — reduced margins for tighter layouts */
+.block-spacing-compact {
+  margin-bottom: calc(var(--content-spacing-block) * 0.6);
+}
+
+/* List item spacing — minimal top/bottom margins within lists */
+.list-item-spacing {
+  margin: var(--content-spacing-list-item) 0;
+}
+
+/* Tight list spacing — even more compact for dense lists */
+.list-tight {
+  margin: 0;
+}
+
+/* List wrapper spacing — margin between list and surrounding content */
+.list-wrapper-spacing {
+  margin-bottom: var(--content-spacing-between-lists);
+}
+
+/* Table base spacing — padding for cells, margin for table wrapper */
+.table-spacing {
+  margin-bottom: var(--content-spacing-block);
+}
+
+.table-cell-compact {
+  padding: var(--table-cell-padding);
+  line-height: var(--table-line-height);
+}
+
+/* Text line height for density — slightly reduced for compactness */
+.line-height-compact {
+  line-height: var(--table-line-height);
+}
+
+.line-height-relaxed {
+  line-height: 1.6;
+}
+
+/* Utility class for common flex gap patterns */
+.gap-compact {
+  gap: 4px;
+}
+
+.gap-normal {
+  gap: var(--ui-gap);
+}
+
 .editor-layout {
   display: flex;
   align-items: stretch;
@@ -256,7 +316,7 @@ body[data-theme="dark"] {
   position: sticky;
   top: var(--toolbar-height, 44px);
   height: calc(100vh - var(--toolbar-height, 44px));
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   width: 0;
   opacity: 0;
   overflow: hidden;
@@ -307,7 +367,7 @@ body[data-theme="dark"] {
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.15s, color 0.15s, border-color 0.15s;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
 }
 
 .toc-pane-collapse-btn:hover {
@@ -417,8 +477,7 @@ body[data-theme="dark"] {
 }
 
 .markdown-editor {
-  line-height: 1.3;
-  letter-spacing: -0.003em;
+  line-height: 1.6;
   color: var(--md-foreground);
   background-color: var(--md-background);
 
@@ -427,7 +486,10 @@ body[data-theme="dark"] {
   word-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  margin: 10px 30px;
+  font-size: var(--md-base-size);
+  margin: 20px auto;
+  max-width: 900px;
+  padding: 0 30px;
 }
 
 /* ============================================
@@ -456,16 +518,23 @@ body[data-theme="dark"] {
      ============================================ */
 
 .markdown-editor :is(h1, h2, h3, h4, h5, h6) {
-  line-height: 1.2;
-  margin: 0.5em 0 0.1em;
+  font-family: var(--md-font-sans);
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 16px;
+  margin-bottom: 10px;
 }
 
 .markdown-editor h1 {
-  font-size: calc(var(--md-base-size) * 2.4);
+  font-size: 1.8em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--md-border);
 }
 
 .markdown-editor h2 {
-  font-size: calc(var(--md-base-size) * 2);
+  font-size: 1.4em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--md-border);
 }
 
 .markdown-editor :is(h1, h2) {
@@ -473,22 +542,20 @@ body[data-theme="dark"] {
 }
 
 .markdown-editor h3 {
-  font-size: calc(var(--md-base-size) * 1.6);
+  font-size: 1.25em;
 }
 
 .markdown-editor h4 {
-  font-size: calc(var(--md-base-size) * 1.35);
-  line-height: 1.2;
+  font-size: 1em;
 }
 
 .markdown-editor h5 {
-  font-size: calc(var(--md-base-size) * 1.15);
-  line-height: 1.2;
+  font-size: 0.875em;
 }
 
 .markdown-editor h6 {
-  font-size: calc(var(--md-base-size) * 1.05);
-  line-height: 1.2;
+  font-size: 0.85em;
+  color: var(--md-muted);
 }
 
 /* ============================================
@@ -496,18 +563,22 @@ body[data-theme="dark"] {
      ============================================ */
 
 .markdown-editor p {
-  margin: 0;
-  line-height: 1.3;
-  font-size: calc(var(--md-base-size) * 1.2);
-}
-
-.markdown-editor p:first-child {
   margin-top: 0;
+  margin-bottom: var(--content-spacing-block);
+  line-height: 1.5;
 }
 
-/* Consistent spacing after headings for all block elements — ensure uniform tight gap */
-.markdown-editor :is(h1, h2, h3, h4, h5, h6) + :is(p, table, ul, ol, pre, .code-block-ui, .code-block-highlighted, blockquote, .github-alert) {
-  margin-top: 0.15em;
+/* Consistent spacing for all block elements.
+   IMPORTANT: type-selectors only in :is() so specificity stays at 0,1,1,
+   allowing .markdown-editor li > p (0,1,2) to override it and strip margins inside lists. */
+.markdown-editor :is(p, table, pre, blockquote) {
+  margin-bottom: var(--content-spacing-block);
+}
+/* Class-based block elements — kept separate to avoid raising :is() specificity above li > p */
+.markdown-editor .code-block-ui,
+.markdown-editor .code-block-highlighted,
+.markdown-editor .github-alert {
+  margin-bottom: var(--content-spacing-block);
 }
 
 /* ============================================
@@ -516,41 +587,45 @@ body[data-theme="dark"] {
 
 .markdown-editor ul,
 .markdown-editor ol {
-  padding-left: 30px;
-  margin: 0.25em 0;
+  padding-left: 2em;
+  margin-top: 0;
+  margin-bottom: var(--content-spacing-between-lists);
 }
 
 .markdown-editor li {
-  margin: 0;
+  margin-bottom: var(--list-item-spacing);
   line-height: 1.5;
 }
 
-.markdown-editor li>p {
-  margin: 0.25em 0;
+/* Strip all p margin inside list items — they get spacing from `li { margin }` only */
+.markdown-editor li > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.markdown-editor li > :first-child {
+  margin-top: 0;
 }
 
 /* Nested lists */
 .markdown-editor li ul,
 .markdown-editor li ol {
-  margin: 0.25em 0;
-}
-
-.markdown-editor li li {
-  margin: 0.15em 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* Task Lists */
 .markdown-editor ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0;
-  margin: 0.5rem 0;
+  margin: 0.3rem 0;
 }
 
 .markdown-editor ul[data-type="taskList"] li {
   display: flex;
   align-items: center;
   /* Center horizontally/vertically */
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--list-item-spacing);
 }
 
 .markdown-editor ul[data-type="taskList"] li>label {
@@ -598,14 +673,14 @@ body[data-theme="dark"] {
   padding: 20px;
   border-radius: var(--ui-radius-md);
   overflow-x: auto;
-  margin: 0.75em 0;
+  margin: var(--content-spacing-block) 0;
   line-height: 1.5;
   color: var(--md-code-fg) !important;
   position: relative;
 }
 
 .code-block-ui {
-  margin: 0.75em 0;
+  margin: var(--content-spacing-block) 0;
 }
 
 .code-block-ui-header,
@@ -673,7 +748,7 @@ body[data-theme="dark"] {
   border: 1px solid var(--md-border);
   border-radius: var(--ui-radius-md);
   padding: 20px;
-  margin: 1em 0;
+  margin: var(--content-spacing-block) 0;
   font-family: var(--md-mono-font);
 
   line-height: 1.5;
@@ -787,15 +862,20 @@ body[data-theme="dark"] {
      ============================================ */
 
 .markdown-editor blockquote {
-  border-left: 4px solid var(--md-heading-primary-color);
+  padding: 0 1em;
   background-color: var(--md-quote-bg);
-  padding-right: 20px;
-  padding-left: 16px;
-  margin: 0.75em 0;
-  font-style: italic;
+  border-left: .25em solid var(--md-quote-border);
   color: var(--md-foreground);
-  line-height: 1.58;
-  position: relative;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.markdown-editor blockquote > :first-child {
+  margin-top: 0;
+}
+
+.markdown-editor blockquote > :last-child {
+  margin-bottom: 0;
 }
 
 /* ============================================
@@ -815,8 +895,8 @@ body[data-theme="dark"] {
 .markdown-editor .github-alert {
   border-left: 4px solid;
   background-color: rgba(0, 0, 0, 0.05);
-  padding: 16px 20px;
-  margin: 0.75em 0;
+  padding: 12px 16px;
+  margin: 0.5em 0;
   border-radius: var(--ui-radius-md);
   font-style: normal;
   color: var(--md-foreground);
@@ -952,7 +1032,7 @@ body[data-theme="dark"] .github-alert {
   height: 0;
   border: none;
   border-top: 1px solid var(--md-border);
-  margin: 2em 0;
+  margin: 1.2em 0;
   cursor: default;
   transition: border-color 0.1s;
   background: none;
@@ -971,71 +1051,66 @@ body[data-theme="dark"] .github-alert {
   border-spacing: 0;
   width: auto;
   max-width: 100%;
-  margin: 0.75em 0;
+  margin-top: 0;
+  margin-bottom: var(--content-spacing-block);
   overflow: hidden;
   border-radius: var(--ui-radius-md);
   border: 1px solid var(--md-border);
 }
 
-.ProseMirror th,
-.ProseMirror td {
-  min-width: 1em;
+/* .ProseMirror and .markdown-editor are the SAME element (TipTap adds both classes
+   to its root div). Use compound selector (no space) for specificity 0,2,1 — beats
+   ProseMirror's bundled `.ProseMirror td { vertical-align: top }` (0,1,1). */
+.ProseMirror.markdown-editor th,
+.ProseMirror.markdown-editor td {
+  padding: var(--table-cell-padding);
+  vertical-align: middle;
+  line-height: var(--table-line-height);
   border-bottom: 1px solid var(--md-border);
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  padding: 0.1em 0.2em;
-  margin: 0;
+  border-right: 1px solid var(--gptai-table-vertical-border, rgba(127, 127, 127, 0.2));
   box-sizing: border-box;
   position: relative;
 }
 
-/* First row has no top border (outer border handles it) */
-.ProseMirror tr:first-child>th,
-.ProseMirror tr:first-child>td {
-  border-top: none;
-}
-
-/* Last row has no bottom border (outer border handles it) */
-.ProseMirror tr:last-child>th,
-.ProseMirror tr:last-child>td {
+.ProseMirror.markdown-editor tr:last-child > th,
+.ProseMirror.markdown-editor tr:last-child > td {
   border-bottom: none;
 }
 
-.ProseMirror tr>th:not(:last-child),
-.ProseMirror tr>td:not(:last-child) {
-  border-right: 1px solid var(--gptai-table-vertical-border, rgba(127, 127, 127, 0.2));
+.ProseMirror.markdown-editor th:last-child,
+.ProseMirror.markdown-editor td:last-child {
+  border-right: none;
 }
 
-/* Inner rows get top border to separate from previous row */
-.ProseMirror tr:not(:first-child)>th,
-.ProseMirror tr:not(:first-child)>td {
-  border-top: 1px solid var(--md-border);
+.markdown-editor table tr {
+  /* No background color for rows */
+}
+
+.markdown-editor table tr:nth-child(2n) {
+  /* No background color for striped rows */
 }
 
 .markdown-editor table th {
-  background-color: var(--md-subtle-bg);
-  color: var(--md-foreground);
   font-weight: 600;
+  background-color: var(--md-subtle-bg);
   border-bottom: 2px solid var(--md-border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.markdown-editor table tr:hover {
-  background-color: var(--md-hover-bg);
 }
 
 .markdown-editor .tableWrapper {
   position: relative;
   overflow-x: auto;
-  margin: 1em 0;
+  margin: 0.5em 0;
   padding: 0;
 }
 
+/* Zero out ALL p margin/padding inside cells. Compound selector (0,2,2) beats
+   both `.markdown-editor p` (0,1,1) and `.ProseMirror p` (0,1,1). */
+.ProseMirror.markdown-editor td p,
+.ProseMirror.markdown-editor th p,
 .markdown-editor table p {
   margin: 0;
+  padding: 0;
+  line-height: inherit;
 }
 
 .markdown-editor .selectedCell,
@@ -1043,6 +1118,8 @@ body[data-theme="dark"] .github-alert {
 .markdown-editor th.selectedCell {
   position: relative;
 }
+
+
 
 .markdown-editor .selectedCell::after {
   content: '';
@@ -1486,7 +1563,7 @@ figcaption {
 
 .mermaid-split-wrapper {
   position: relative;
-  margin: 1em 0;
+  margin: 0.6em 0;
   border: 1px solid var(--md-border);
   border-radius: var(--ui-radius-md);
   background-color: var(--md-subtle-bg);
@@ -1531,7 +1608,7 @@ figcaption {
   font-style: italic;
 }
 
-/* Mermaid highlight on selection to match image highlight */
+/* Mermaid highlight on selection — uses border-glow class styling */
 .mermaid-split-wrapper.highlighted {
   border: 1px solid var(--md-focus);
   outline: 2px solid var(--md-focus);
@@ -1545,6 +1622,8 @@ figcaption {
   animation: image-select-pulse 0.25s ease-out;
   transition: box-shadow 0.2s ease, outline-color 0.2s ease;
 }
+
+
 
 /* Dark theme overrides for Mermaid highlight */
 body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
@@ -1586,6 +1665,50 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
 
 .markdown-editor s {
   text-decoration: line-through;
+}
+
+/* ============================================
+     Frontmatter Panel (top-of-document metadata)
+     Lightweight display of top-level YAML keys for quick visibility
+     ============================================ */
+
+.frontmatter-panel {
+  display: none; /* hidden by default, shown when frontmatter exists */
+  background-color: var(--md-subtle-bg);
+  border-bottom: 1px solid var(--md-border);
+  padding: 8px 30px;
+  margin: 0;
+  color: var(--md-muted);
+  font-family: var(--md-mono-font);
+  font-size: 13px;
+}
+
+.frontmatter-panel-inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.frontmatter-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--md-background);
+  border: 1px solid var(--md-border);
+  color: var(--md-foreground);
+}
+
+.frontmatter-key {
+  font-weight: 600;
+  color: var(--md-heading-primary-color);
+}
+
+.frontmatter-value {
+  color: var(--md-muted);
+  font-family: var(--md-font-sans);
 }
 
 /* ============================================
@@ -1719,7 +1842,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   background-color: var(--md-foreground);
   color: var(--md-background);
   font-size: 11px;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-weight: 500;
   line-height: 1.3;
   white-space: nowrap;
@@ -1918,7 +2041,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   --color-picker-bg: var(--md-dropdown-bg);
   --color-picker-border: var(--md-dropdown-border);
   --color-picker-color: var(--md-foreground);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   z-index: 1200;
 }
 
@@ -1949,7 +2072,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   align-items: center;
   gap: var(--ui-gap);
   width: 100%;
-  padding: 6px 10px;
+  padding: 5px 10px;
   background: transparent;
   border: none;
   color: var(--md-dropdown-fg);
@@ -2329,7 +2452,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   z-index: 1001;
   min-width: 220px;
   padding: 4px 0;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: 13px;
   color: var(--md-menu-fg);
   user-select: none;
@@ -2340,7 +2463,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 6px 14px;
+  padding: 5px 14px;
   border: none;
   background: none;
   color: var(--md-menu-fg);
@@ -2497,7 +2620,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   padding: 20px 24px;
   width: 400px;
   max-width: 90vw;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
 }
 
 .ai-refine-dialog-title {
@@ -2522,7 +2645,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   border-radius: var(--ui-radius-sm);
   background: var(--md-input-bg);
   color: var(--md-input-fg);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: 13px;
   resize: vertical;
 }
@@ -2545,7 +2668,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   border-radius: var(--ui-radius-sm);
   background: none;
   color: var(--md-menu-fg);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: 13px;
   cursor: pointer;
 }
@@ -2693,7 +2816,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   border-radius: var(--ui-radius-sm);
   box-shadow: 0 4px 12px var(--md-shadow-color);
   padding: 10px 16px;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: 13px;
   color: var(--md-menu-fg);
   z-index: 2000;
@@ -3034,7 +3157,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   border: none;
   cursor: pointer;
   border-radius: var(--ui-radius-sm);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: 13px;
 }
 
@@ -3280,7 +3403,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   box-shadow: 0 4px 16px var(--md-shadow-color);
   min-width: 340px;
   max-width: 440px;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
 }
 
 .search-replace-row {
@@ -3297,7 +3420,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   padding: 5px 8px;
   color: var(--md-input-fg);
   font-size: var(--ui-font-base);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   outline: none;
   min-width: 0;
 }
@@ -3327,7 +3450,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   border-radius: var(--ui-radius-sm);
   cursor: pointer;
   font-size: var(--ui-font-sm);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   white-space: nowrap;
   transition: background-color 0.12s ease;
 }
@@ -3517,7 +3640,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   box-shadow: 0 4px 12px var(--md-shadow-color);
   z-index: 1000;
   padding: 4px 0;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: 13px;
   color: var(--md-menu-fg);
   user-select: none;
@@ -3940,7 +4063,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   max-width: 320px;
   max-height: 340px;
   overflow-y: auto;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
 }
 
 .slash-command-empty {
@@ -3955,14 +4078,14 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 12px;
   background: transparent;
   border: none;
   border-radius: var(--ui-radius-sm);
   cursor: pointer;
   text-align: left;
   color: var(--md-foreground);
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   font-size: var(--ui-font-base);
   transition: background-color 0.1s ease;
 }
@@ -4027,7 +4150,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   transition: box-shadow 0.18s ease, outline 0.18s ease;
   display: flex;
   flex-direction: column;
-  font-family: var(--md-font-family);
+  font-family: var(--md-font-sans);
   overflow: hidden;
 }
 
@@ -4225,4 +4348,169 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
   opacity: 0.7;
   box-shadow: 0 4px 12px var(--ui-shadow-sm);
   border: 1px dashed var(--md-border);
+}
+
+/* ============================================
+   Frontmatter Modal
+   Beautiful, theme-aware modal for editing YAML frontmatter
+   ============================================ */
+
+.frontmatter-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: frontmatter-fade-in 0.15s ease-out;
+}
+
+@keyframes frontmatter-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.frontmatter-modal {
+  background: var(--md-background);
+  border: 1px solid var(--md-border);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  min-height: 600px;
+  animation: frontmatter-slide-up 0.2s ease-out;
+}
+
+@keyframes frontmatter-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.frontmatter-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--md-border);
+  flex-shrink: 0;
+}
+
+.frontmatter-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--md-foreground);
+  font-family: var(--md-font-sans);
+}
+
+.frontmatter-modal-textarea-wrapper {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.frontmatter-modal-textarea {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  outline: none;
+  background: var(--md-background);
+  color: var(--md-foreground);
+  font-family: var(--md-mono-font);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-border) transparent;
+}
+
+.frontmatter-modal-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.frontmatter-modal-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.frontmatter-modal-textarea::-webkit-scrollbar-thumb {
+  background: var(--md-border);
+  border-radius: 4px;
+}
+
+.frontmatter-modal-textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--md-foreground);
+  opacity: 0.6;
+}
+
+.frontmatter-modal-textarea::placeholder {
+  color: var(--md-muted);
+  opacity: 0.7;
+}
+
+.frontmatter-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--md-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  background: var(--md-subtle-bg);
+}
+
+.frontmatter-modal-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--md-font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  min-width: 80px;
+}
+
+.frontmatter-modal-button-save {
+  background: var(--md-button-bg);
+  color: var(--md-button-fg);
+  border-color: var(--md-button-bg);
+}
+
+.frontmatter-modal-button-save:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.frontmatter-modal-button-save:active {
+  transform: scale(0.98);
+}
+
+.frontmatter-modal-button-cancel {
+  background: transparent;
+  color: var(--md-foreground);
+  border-color: var(--md-border);
+}
+
+.frontmatter-modal-button-cancel:hover {
+  background: var(--md-hover-bg);
+}
+
+.frontmatter-modal-button-cancel:active {
+  transform: scale(0.98);
 }

@@ -30,6 +30,16 @@
 - Document tests in the plan file or test files
 - See: [vibe-coding-rules/testing.md](vibe-coding-rules/testing.md)
 
+### 2.1 CSS Changes — Verify Before Claiming Victory (MANDATORY)
+
+**Never claim a CSS fix is done without verifying the compiled output AND reasoning through specificity.**
+
+- After any CSS edit, check `dist/webview.css` with `grep` to confirm the change compiled correctly
+- For spacing/margin overrides: explicitly calculate CSS specificity of the overriding rule vs. the overridden rule — the override must have EQUAL OR HIGHER specificity to win
+- **`:is()` specificity trap**: `:is()` takes the specificity of its HIGHEST-specificity argument. If `:is()` contains class selectors (`.foo`), the whole `:is()` block gets class-level specificity (0,1,0), making it very hard to override. Keep type-only selectors (`p`, `table`, `pre`) in `:is()` — handle class selectors separately.
+- **Common specificity values**: `.class` = 0,1,0 | `element` = 0,0,1 | `.class element` = 0,1,1 | `.class el1 > el2` = 0,1,2 | `.class1.class2 el` = 0,2,1
+- Build with `npm run build:debug` then verify with `grep` before calling the task complete
+
 ### 3. Performance Budgets
 
 - <500ms editor initialization

@@ -867,13 +867,13 @@ export function createFormattingToolbar(
           },
         ],
       },
-      // --- Separator before AI Explain and View menu ---
+      // --- Separator before AI and View menu ---
       { type: 'separator' },
-      // --- AI Explain Button ---
+      // --- AI Explain Document button ---
       {
         type: 'button',
         label: '',
-        title: 'AI Explain Document',
+        title: 'AI Summary — Analyze and summarize this document',
         icon: { name: 'sparkle', fallback: '✨' },
         requiresFocus: false,
         isActive: () => false,
@@ -902,6 +902,18 @@ export function createFormattingToolbar(
             label: 'Navigation pane',
             icon: { name: 'panel-left', fallback: '☰' },
             action: () => window.dispatchEvent(new CustomEvent('toggleTocPane')),
+          },
+          {
+            label: 'Document Metadata',
+            icon: { name: 'file-code', fallback: '≡' },
+            action: () => {
+              const vscodeAny = window as any;
+              if (vscodeAny?.openFrontmatterEditor) {
+                vscodeAny.openFrontmatterEditor().catch((err: unknown) => {
+                  console.error('[DK-AI] Frontmatter editor error:', err);
+                });
+              }
+            },
           },
           { label: '', action: () => {}, isSeparator: true },
           {

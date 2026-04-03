@@ -1,3 +1,11 @@
+---
+marp: true
+theme: gaia
+class: invert
+paginate: true
+---
+
+
 # Comprehensive Markdown Stress Test Document
 
 Welcome to the **Ultimate Markdown Stress Test**. This document is designed to push the boundaries of your markdown editor by combining every standard and extended element available.
@@ -16,7 +24,7 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 - Press Ctrl + S to save.
 - [Sample Link](./Test.md)
 
----
+
 
 ## 2. Heading Hierarchy
 

@@ -672,173 +672,179 @@ async function exportToWord(
 
   console.log('[DK-AI] exportToWord: mermaidImages length=', mermaidImages?.length || 0);
 
-  // Ensure Pandoc is available
-  let pandocPath = vscode.workspace
-    .getConfiguration('gptAiMarkdownEditor')
-    .get<string>('pandocPath');
-
-  if (!pandocPath) {
-    // Try to find Pandoc
-    const tokenSource = new vscode.CancellationTokenSource();
-    pandocPath = (await ensurePandocPath(progress, tokenSource.token)) ?? undefined;
+  try {
+    // Ensure Pandoc is available
+    let pandocPath = vscode.workspace
+      .getConfiguration('gptAiMarkdownEditor')
+      .get<string>('pandocPath');
 
     if (!pandocPath) {
-      throw new Error('Pandoc not found. Please install Pandoc or configure its path in settings.');
-    }
-  }
+      // Try to find Pandoc
+      const tokenSource = new vscode.CancellationTokenSource();
+      pandocPath = (await ensurePandocPath(progress, tokenSource.token)) ?? undefined;
 
-  progress.report({ message: 'Preparing markdown source...', increment: 15 });
-
-  // Document directory used to resolve relative image paths during export
-  const docDir = getDocumentBasePath(document);
-
-  // Use the source markdown directly to preserve tables, callouts, and markdown-native syntax.
-  // Convert relative image paths to absolute to ensure Pandoc finds them.
-  let markdown = resolveMarkdownImagePaths(document.getText(), docDir);
-
-  // Also resolve raw HTML image tags scattered in the markdown
-  markdown = resolveHtmlImagePaths(markdown, docDir);
-
-  // Convert mermaid blocks to images
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pandoc-export-'));
-  let processedMarkdown = markdown;
-
-  try {
-    const mermaidBlocks = extractMermaidBlocks(markdown);
-
-    console.log(
-      '[DK-AI] Found mermaid blocks:',
-      mermaidBlocks.length,
-      'provided images:',
-      mermaidImages?.length || 0
-    );
-
-    // First preference: use already-rendered Mermaid PNGs from the webview payload.
-    // This avoids environment/PATH issues in extension host mmdc execution.
-    if (mermaidBlocks.length > 0 && mermaidImages.length > 0) {
-      console.log('[DK-AI] Replacing Mermaid blocks with provided images...');
-      processedMarkdown = replaceMermaidBlocksWithProvidedImages(
-        processedMarkdown,
-        mermaidImages,
-        tmpDir
-      );
-      const afterReplace = extractMermaidBlocks(processedMarkdown);
-      console.log('[DK-AI] After replacement: remaining Mermaid blocks:', afterReplace.length);
-    }
-
-    // Second preference: for any remaining Mermaid code blocks, try CLI conversion.
-    if (extractMermaidBlocks(processedMarkdown).length > 0) {
-      console.log('[DK-AI] Converting remaining Mermaid blocks with mmdc...');
-      processedMarkdown = await convertMermaidToImages(processedMarkdown, tmpDir);
-    }
-
-    if (mermaidBlocks.length > 0) {
-      const replacedMermaidImages = (processedMarkdown.match(/!\[Mermaid Diagram\]\(/g) || [])
-        .length;
-      console.log(
-        '[DK-AI] Mermaid replacement result: found',
-        replacedMermaidImages,
-        'image references in output'
-      );
-      if (replacedMermaidImages === 0) {
-        void vscode.window.showWarningMessage(
-          'Mermaid diagrams could not be converted to images. Install mermaid-cli (mmdc) or ensure it is available in PATH. Export will include Mermaid code blocks instead.'
+      if (!pandocPath) {
+        throw new Error(
+          'Pandoc not found. Please install Pandoc or configure its path in settings.'
         );
       }
     }
-  } catch (error) {
-    console.warn('[DK-AI] Mermaid conversion failed, continuing without images:', error);
-    // Continue with original markdown if mermaid conversion fails
-  }
 
-  progress.report({ message: 'Writing temporary markdown file...', increment: 15 });
+    progress.report({ message: 'Preparing markdown source...', increment: 15 });
 
-  // Write markdown to temporary file
-  // Reduce extra blank lines between list items to produce tighter lists
-  // This helps reduce vertical spacing in generated DOCX when no reference
-  // document is provided. It collapses multiple blank lines that separate
-  // list items while leaving other structure untouched.
-  try {
-    processedMarkdown = processedMarkdown.replace(/\n{2,}(\s*([-*+]|\d+\.)\s+)/g, '\n$1');
-  } catch {
-    // Non-fatal; continue with original markdown
-  }
+    // Document directory used to resolve relative image paths during export
+    const docDir = getDocumentBasePath(document);
 
-  const tmpMarkdownPath = path.join(tmpDir, 'document.md');
-  fs.writeFileSync(tmpMarkdownPath, processedMarkdown, 'utf-8');
+    // Use the source markdown directly to preserve tables, callouts, and markdown-native syntax.
+    // Convert relative image paths to absolute to ensure Pandoc finds them.
+    let markdown = resolveMarkdownImagePaths(document.getText(), docDir);
 
-  progress.report({ message: 'Running Pandoc...', increment: 20 });
+    // Also resolve raw HTML image tags scattered in the markdown
+    markdown = resolveHtmlImagePaths(markdown, docDir);
 
-  // Build Pandoc command
-  const pandocArgs: string[] = [
-    tmpMarkdownPath,
-    '-o',
-    outputPath,
-    '-t',
-    'docx',
-    '-f',
-    'gfm+alerts+raw_html+pipe_tables+task_lists+strikeout+emoji+tex_math_dollars+footnotes',
-  ];
+    // Convert mermaid blocks to images
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pandoc-export-'));
+    let processedMarkdown = markdown;
 
-  // Add lua filters
-  const luaFiltersDir = getLuaFiltersDir();
-  const filters = ['github_alerts.lua', 'text_color.lua', 'mermaid_images.lua'];
+    try {
+      const mermaidBlocks = extractMermaidBlocks(markdown);
 
-  for (const filter of filters) {
-    const filterPath = path.join(luaFiltersDir, filter);
-    if (fs.existsSync(filterPath)) {
-      pandocArgs.push('--lua-filter', filterPath);
+      console.log(
+        '[DK-AI] Found mermaid blocks:',
+        mermaidBlocks.length,
+        'provided images:',
+        mermaidImages?.length || 0
+      );
+
+      // First preference: use already-rendered Mermaid PNGs from the webview payload.
+      // This avoids environment/PATH issues in extension host mmdc execution.
+      if (mermaidBlocks.length > 0 && mermaidImages.length > 0) {
+        console.log('[DK-AI] Replacing Mermaid blocks with provided images...');
+        processedMarkdown = replaceMermaidBlocksWithProvidedImages(
+          processedMarkdown,
+          mermaidImages,
+          tmpDir
+        );
+        const afterReplace = extractMermaidBlocks(processedMarkdown);
+        console.log('[DK-AI] After replacement: remaining Mermaid blocks:', afterReplace.length);
+      }
+
+      // Second preference: for any remaining Mermaid code blocks, try CLI conversion.
+      if (extractMermaidBlocks(processedMarkdown).length > 0) {
+        console.log('[DK-AI] Converting remaining Mermaid blocks with mmdc...');
+        processedMarkdown = await convertMermaidToImages(processedMarkdown, tmpDir);
+      }
+
+      if (mermaidBlocks.length > 0) {
+        const replacedMermaidImages = (processedMarkdown.match(/!\[Mermaid Diagram\]\(/g) || [])
+          .length;
+        console.log(
+          '[DK-AI] Mermaid replacement result: found',
+          replacedMermaidImages,
+          'image references in output'
+        );
+        if (replacedMermaidImages === 0) {
+          void vscode.window.showWarningMessage(
+            'Mermaid diagrams could not be converted to images. Install mermaid-cli (mmdc) or ensure it is available in PATH. Export will include Mermaid code blocks instead.'
+          );
+        }
+      }
+    } catch (error) {
+      console.warn('[DK-AI] Mermaid conversion failed, continuing without images:', error);
+      // Continue with original markdown if mermaid conversion fails
     }
-  }
 
-  // Add template if configured
-  const templatePath = getPandocTemplatePath();
-  if (templatePath) {
-    pandocArgs.push('--reference-doc', templatePath);
-  }
+    progress.report({ message: 'Writing temporary markdown file...', increment: 15 });
 
-  // If no reference doc is provided, mark metadata so Lua filters
-  // can apply fallback styling (e.g., table borders) for DOCX output.
-  if (!templatePath) {
-    pandocArgs.push('-M', 'no_reference_doc=true');
-  }
+    // Write markdown to temporary file
+    // Reduce extra blank lines between list items to produce tighter lists
+    // This helps reduce vertical spacing in generated DOCX when no reference
+    // document is provided. It collapses multiple blank lines that separate
+    // list items while leaving other structure untouched.
+    try {
+      processedMarkdown = processedMarkdown.replace(/\n{2,}(\s*([-*+]|\d+\.)\s+)/g, '\n$1');
+    } catch {
+      // Non-fatal; continue with original markdown
+    }
 
-  // Ensure Pandoc can resolve local images referenced by relative paths
-  // by adding the document directory (and temporary dir) to resource-path.
-  try {
-    const resourcePath = `${tmpDir}${path.delimiter}${docDir}`;
-    pandocArgs.push(`--resource-path=${resourcePath}`);
-  } catch (e) {
-    console.warn('[DK-AI] Failed to set Pandoc resource-path:', e);
-  }
+    const tmpMarkdownPath = path.join(tmpDir, 'document.md');
+    fs.writeFileSync(tmpMarkdownPath, processedMarkdown, 'utf-8');
 
-  // Run Pandoc
-  const result = spawnSync(pandocPath, pandocArgs, {
-    stdio: 'pipe',
-    encoding: 'utf-8',
-  });
+    progress.report({ message: 'Running Pandoc...', increment: 20 });
 
-  // Cleanup temporary directory
-  try {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    // Build Pandoc command
+    const pandocArgs: string[] = [
+      tmpMarkdownPath,
+      '-o',
+      outputPath,
+      '-t',
+      'docx',
+      '-f',
+      'gfm+alerts+raw_html+pipe_tables+task_lists+strikeout+emoji+tex_math_dollars+footnotes',
+    ];
+
+    // Add lua filters
+    const luaFiltersDir = getLuaFiltersDir();
+    const filters = ['github_alerts.lua', 'text_color.lua', 'mermaid_images.lua'];
+
+    for (const filter of filters) {
+      const filterPath = path.join(luaFiltersDir, filter);
+      if (fs.existsSync(filterPath)) {
+        pandocArgs.push('--lua-filter', filterPath);
+      }
+    }
+
+    // Add template if configured
+    const templatePath = getPandocTemplatePath();
+    if (templatePath) {
+      pandocArgs.push('--reference-doc', templatePath);
+    }
+
+    // If no reference doc is provided, mark metadata so Lua filters
+    // can apply fallback styling (e.g., table borders) for DOCX output.
+    if (!templatePath) {
+      pandocArgs.push('-M', 'no_reference_doc=true');
+    }
+
+    // Ensure Pandoc can resolve local images referenced by relative paths
+    // by adding the document directory (and temporary dir) to resource-path.
+    try {
+      const resourcePath = `${tmpDir}${path.delimiter}${docDir}`;
+      pandocArgs.push(`--resource-path=${resourcePath}`);
+    } catch (e) {
+      console.warn('[DK-AI] Failed to set Pandoc resource-path:', e);
+    }
+
+    // Run Pandoc
+    const result = spawnSync(pandocPath, pandocArgs, {
+      stdio: 'pipe',
+      encoding: 'utf-8',
+    });
+
+    // Cleanup temporary directory
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch (error) {
+      console.warn('[DK-AI] Failed to cleanup temp directory:', error);
+    }
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (result.status !== 0) {
+      throw new Error(`Pandoc failed: ${result.stderr || 'Unknown error'}`);
+    }
+
+    if (!fs.existsSync(outputPath)) {
+      throw new Error('Pandoc did not produce output file');
+    }
+
+    progress.report({ increment: 30 });
+    return true; // Export succeeded
   } catch (error) {
-    console.warn('[DK-AI] Failed to cleanup temp directory:', error);
+    throw error;
   }
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (result.status !== 0) {
-    throw new Error(`Pandoc failed: ${result.stderr || 'Unknown error'}`);
-  }
-
-  if (!fs.existsSync(outputPath)) {
-    throw new Error('Pandoc did not produce output file');
-  }
-
-  progress.report({ increment: 30 });
-  return true; // Export succeeded
 }
 
 function replaceMermaidBlocksWithProvidedImages(

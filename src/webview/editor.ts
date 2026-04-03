@@ -136,11 +136,21 @@ function stripUnknownHtml(raw: string): string {
  * Pre-process markdown content using `marked`'s AST to safely strip unknown
  * HTML tags while NEVER touching content inside code blocks or inline code spans.
  *
+ * IMPORTANT: If content starts with YAML frontmatter (---), skip preprocessing
+ * entirely since `marked` does not understand YAML frontmatter and will corrupt it.
+ * TipTap's Markdown extension handles frontmatter natively, so pass it through unchanged.
+ *
  * The previous regex-based approach was fragile with nested backticks, escaped
  * characters, and indented code blocks. Using `marked.lexer()` leverages the
  * same parser TipTap uses, so code boundary detection is 100% accurate.
  */
 function preprocessMarkdownContent(content: string): string {
+  // If content starts with YAML frontmatter, skip preprocessing
+  // marked.lexer() doesn't understand YAML frontmatter and will corrupt it
+  if (content.trim().startsWith('---')) {
+    return content;
+  }
+
   const tokens = markedInstance.lexer(content);
   return reconstructFromTokens(tokens);
 }
@@ -361,6 +371,92 @@ let isDomReady = document.readyState !== 'loading';
 let lastSentContentHash: string | null = null;
 let lastSentTimestamp = 0;
 
+// Store frontmatter separately to preserve it during TipTap parsing
+let currentFrontmatter: string | null = null;
+
+/**
+ * Extract YAML frontmatter from markdown content.
+ * Matches: --- YAML content --- optionally followed by newline(s) then other content
+ */
+function extractAndStoreFrontmatter(markdown: string): {
+  content: string;
+  frontmatter: string | null;
+} {
+  if (!markdown.startsWith('---')) {
+    return { content: markdown, frontmatter: null };
+  }
+
+  // Match: ^--- then newline, then any content, then newline ---
+  // Supports LF (\n), CRLF (\r\n)
+  const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) {
+    return { content: markdown, frontmatter: null };
+  }
+
+  const frontmatter = match[1];
+  const contentStartIdx = match[0].length;
+  const content = markdown.substring(contentStartIdx);
+
+  return { content, frontmatter };
+}
+
+/**
+ * Restore frontmatter to the beginning of markdown content
+ */
+function restoreFrontmatter(markdown: string, frontmatter: string | null): string {
+  if (!frontmatter) {
+    return markdown;
+  }
+  return `---\n${frontmatter}\n---\n${markdown}`;
+}
+
+/**
+ * Safely escape text for HTML insertion to prevent XSS.
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Parse YAML frontmatter text into key-value pairs.
+ * Handles simple scalar assignments: `key: value` and `key : value` (spaces around colon).
+ * Values containing colons (e.g. URLs) are handled by splitting only on the first colon.
+ * Lines without a colon are skipped.
+ */
+function parseFrontmatterPairs(frontmatter: string): Array<[string, string]> {
+  const pairs: Array<[string, string]> = [];
+  const lines = frontmatter.split('\n');
+  for (const line of lines) {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) continue;
+    const key = line.substring(0, colonIdx).trim();
+    const value = line.substring(colonIdx + 1).trim();
+    if (!key) continue;
+    pairs.push([key, value]);
+  }
+  return pairs;
+}
+
+/**
+ * Update the frontmatter panel above the editor with key-value badges.
+ * Panel is always hidden — metadata is edited via the View menu instead.
+ * @deprecated Frontmatter panel is no longer displayed. Use View > Display > Edit Document Metadata instead.
+ */
+function updateFrontmatterPanel(frontmatter: string | null): void {
+  const panel = document.getElementById('frontmatter-panel');
+  if (!panel) return;
+  const inner = panel.querySelector('.frontmatter-panel-inner') as HTMLElement | null;
+  if (!inner) return;
+
+  // Always keep the panel hidden — frontmatter is now accessed via View menu
+  panel.style.display = 'none';
+  inner.innerHTML = '';
+}
+
 /**
  * Simple hash function (djb2 algorithm) for content deduplication
  */
@@ -482,7 +578,7 @@ function saveDocument() {
       return;
     }
 
-    trackSentContent(markdown);
+    trackSentContent(restoreFrontmatter(markdown, currentFrontmatter));
 
     devLog(
       `[DK-AI][SAVE][${saveRequestId}] Dispatching saveAndEdit (len=${markdown.length}, hash=${contentHash})`
@@ -491,7 +587,7 @@ function saveDocument() {
     // Send combined edit and save to avoid race conditions
     vscode.postMessage({
       type: MessageType.SAVE_AND_EDIT,
-      content: markdown,
+      content: restoreFrontmatter(markdown, currentFrontmatter),
       requestId: saveRequestId,
     });
     // Let the VS Code side send the 'saved' event to clear the dirty state
@@ -510,6 +606,44 @@ function saveDocument() {
 
 // Expose saveDocument globally for toolbar button
 (window as any).saveDocument = saveDocument;
+
+/**
+ * Open the frontmatter editor modal.
+ * Called by the toolbar button.
+ */
+async function openFrontmatterEditor(): Promise<void> {
+  try {
+    // Lazy-load the modal module to avoid circular dependencies
+    const { showFrontmatterModal } = await import('./features/frontmatterModal');
+
+    await showFrontmatterModal(currentFrontmatter, (newFrontmatter: string) => {
+      // Update the stored frontmatter
+      currentFrontmatter = newFrontmatter || null;
+
+      // Update the panel UI
+      updateFrontmatterPanel(currentFrontmatter);
+
+      // Trigger a document edit to mark as dirty and sync
+      if (editor) {
+        const markdown = getEditorMarkdownForSync(editor);
+        const withFrontmatter = restoreFrontmatter(markdown, currentFrontmatter);
+
+        // Send the update to VS Code
+        vscode.postMessage({
+          type: MessageType.EDIT,
+          content: withFrontmatter,
+        });
+        trackSentContent(withFrontmatter);
+      }
+    });
+  } catch (error) {
+    console.error('[DK-AI] Error opening frontmatter editor:', error);
+    showRuntimeErrorToUser('frontmatter-editor-error', 'Failed to open frontmatter editor.');
+  }
+}
+
+// Expose globally for toolbar button
+(window as any).openFrontmatterEditor = openFrontmatterEditor;
 
 /**
  * Debounced update sending edits to VS Code
@@ -555,10 +689,10 @@ function debouncedUpdate(markdown: string) {
 
       vscode.postMessage({
         type: MessageType.EDIT,
-        content: markdown,
+        content: restoreFrontmatter(markdown, currentFrontmatter),
       });
       updateTimeout = null;
-      trackSentContent(markdown);
+      trackSentContent(restoreFrontmatter(markdown, currentFrontmatter));
     } catch (error) {
       console.error('[DK-AI] Error in debounced update:', error);
     }
@@ -972,10 +1106,17 @@ function initializeEditor(initialContent: string) {
 
     // Set initial content as markdown (Tiptap v3 requires explicit contentType)
     if (initialContent) {
-      // Prevent onUpdate from firing during initialization - this was causing
-      // documents with frontmatter to be marked dirty even without user edits
+      // Extract and store frontmatter before passing to TipTap.
+      // TipTap would interpret `key: value\n---` as a setext H2 heading otherwise.
+      const { content, frontmatter } = extractAndStoreFrontmatter(initialContent);
+      if (frontmatter) {
+        currentFrontmatter = frontmatter;
+        updateFrontmatterPanel(frontmatter);
+      }
+
+      // Prevent onUpdate from firing during initialization
       isUpdating = true;
-      editor.commands.setContent(preprocessMarkdownContent(initialContent), {
+      editor.commands.setContent(preprocessMarkdownContent(content), {
         contentType: 'markdown',
       });
       isUpdating = false;
@@ -1211,7 +1352,7 @@ window.addEventListener('message', (event: MessageEvent) => {
     const message = event.data;
 
     switch (message.type) {
-      case MessageType.UPDATE:
+      case MessageType.UPDATE: {
         applyWebviewSettings(message);
 
         // Initialize editor with first payload to seed undo history correctly
@@ -1223,8 +1364,10 @@ window.addEventListener('message', (event: MessageEvent) => {
           }
           return;
         }
+
         updateEditorContent(message.content);
         break;
+      }
       case MessageType.SETTINGS_UPDATE: {
         applyWebviewSettings(message);
         break;
@@ -1341,9 +1484,21 @@ function updateEditorContent(markdown: string) {
 
     devLog(`[DK-AI] Updating content (${docSize} chars)...`);
 
-    // Skip if content is already in sync
+    // Always extract frontmatter from incoming content — TipTap must never see it because
+    // `key: value\n---` is interpreted as a setext H2 heading (markdown spec).
+    // Only update currentFrontmatter if frontmatter was found; don't clobber the stored
+    // value with null on echo updates that arrive without the frontmatter block.
+    const { content: incomingBody, frontmatter: extractedFrontmatter } =
+      extractAndStoreFrontmatter(markdown);
+    if (extractedFrontmatter) {
+      currentFrontmatter = extractedFrontmatter;
+      updateFrontmatterPanel(extractedFrontmatter);
+    }
+
+    // Compare body content only (both without frontmatter) to avoid spurious re-renders
+    // caused by the frontmatter block that TipTap never serializes back.
     const currentMarkdown = getEditorMarkdownForSync(editor);
-    if (currentMarkdown === markdown) {
+    if (currentMarkdown === incomingBody) {
       devLog('[DK-AI] Update skipped (content unchanged)');
       return;
     }
@@ -1352,8 +1507,10 @@ function updateEditorContent(markdown: string) {
     const { from, to } = editor.state.selection;
     devLog(`[DK-AI] Saving cursor position: ${from}-${to}`);
 
-    // Set content
-    editor.commands.setContent(preprocessMarkdownContent(markdown), { contentType: 'markdown' });
+    // Set content (without frontmatter, so TipTap doesn't render it as setext H2)
+    editor.commands.setContent(preprocessMarkdownContent(incomingBody), {
+      contentType: 'markdown',
+    });
 
     // Restore cursor position
     try {
@@ -1553,5 +1710,17 @@ export const __testing = {
   resetSyncState() {
     lastSentContentHash = null;
     lastSentTimestamp = 0;
+  },
+  resetFrontmatterForTests() {
+    currentFrontmatter = null;
+  },
+  extractAndStoreFrontmatterForTests(markdown: string) {
+    return extractAndStoreFrontmatter(markdown);
+  },
+  restoreFrontmatterForTests(markdown: string, frontmatter: string | null) {
+    return restoreFrontmatter(markdown, frontmatter);
+  },
+  parseFrontmatterPairsForTests(frontmatter: string) {
+    return parseFrontmatterPairs(frontmatter);
   },
 };
