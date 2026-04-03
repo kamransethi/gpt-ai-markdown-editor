@@ -9,7 +9,6 @@ on:
 jobs:
   claude-review:
     name: Claude Code Review
-    # Only run when @claude is mentioned on a PR comment (not a regular issue comment)
     if: |
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
@@ -21,7 +20,29 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch fork branch for cross-repo PR comments
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request != null
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.issue.number }}"
+          HEAD_REF=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json headRefName -q '.headRefName')
+          HEAD_OWNER=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json headRepositoryOwner -q '.headRepositoryOwner.login')
+          REPO_NAME=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json headRepository -q '.headRepository.name')
+          BASE_OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
+          if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
+            git remote add fork https://github.com/$HEAD_OWNER/$REPO_NAME.git || true
+            git fetch fork $HEAD_REF:$HEAD_REF
+          fi
+
       - uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
