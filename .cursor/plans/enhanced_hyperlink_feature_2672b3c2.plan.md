@@ -540,7 +540,7 @@ function generateHeadingSlug(text: string, existingSlugs: Set<string>): string {
 
 ### Flow 1: Linking to Local File
 
-1. User opens link dialog (Cmd/Ctrl+K)
+1. User opens link dialog (Cmd/Ctrl+K L)
 2. Dialog shows with URL mode selected (default)
 3. User selects "File" radio button
 4. Filter checkboxes appear below URL field

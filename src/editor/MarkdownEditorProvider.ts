@@ -345,7 +345,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       if (
         e.affectsConfiguration('markdownForHumans.imageResize.skipWarning') ||
         e.affectsConfiguration('markdownForHumans.imagePath') ||
-        e.affectsConfiguration('markdownForHumans.imagePathBase')
+        e.affectsConfiguration('markdownForHumans.imagePathBase') ||
+        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled')
       ) {
         const config = vscode.workspace.getConfiguration();
         const skipWarning = config.get<boolean>('markdownForHumans.imageResize.skipWarning', false);
@@ -354,11 +355,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePathBase',
           'relativeToDocument'
         );
+        const showImageHoverOverlay = config.get<boolean>('markdownForHumans.imagePreview.hover.enabled', true);
         webviewPanel.webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
+          showImageHoverOverlay: showImageHoverOverlay,
         });
       }
     });
@@ -420,6 +423,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       'markdownForHumans.imagePathBase',
       'relativeToDocument'
     );
+    const showImageHoverOverlay = config.get<boolean>('markdownForHumans.imagePreview.hover.enabled', true);
 
     webview.postMessage({
       type: 'update',
@@ -427,6 +431,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       skipResizeWarning: skipWarning,
       imagePath: imagePath,
       imagePathBase: imagePathBase,
+      showImageHoverOverlay: showImageHoverOverlay,
     });
   }
 
@@ -458,11 +463,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePathBase',
           'relativeToDocument'
         );
+        const showImageHoverOverlay = config.get<boolean>('markdownForHumans.imagePreview.hover.enabled', true);
         webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
+          showImageHoverOverlay: showImageHoverOverlay,
         });
         break;
       }
@@ -557,6 +564,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'openImage':
         void this.handleOpenImage(message, document);
         break;
+      case 'auditCheckFile':
+        void this.handleAuditCheckFile(message, document, webview);
+        break;
     }
   }
 
@@ -576,6 +586,48 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const { exportDocument } = await import('../features/documentExport');
 
     await exportDocument(format, html, mermaidImages, title, document);
+  }
+
+  /**
+   * Check if a file exists (used by Document Audit)
+   */
+  private async handleAuditCheckFile(
+    message: { type: string; [key: string]: unknown },
+    document: vscode.TextDocument,
+    webview: vscode.Webview
+  ): Promise<void> {
+    const rawRelativePath = message.relativePath as string;
+    const requestId = message.requestId as string;
+    const basePath = this.getImageBasePath(document);
+
+    if (!basePath) {
+      webview.postMessage({
+        type: 'auditCheckFileResult',
+        requestId,
+        exists: false,
+      });
+      return;
+    }
+
+    try {
+      // Basic normalization logic similar to handleResolveImageUri
+      const normalizedPath = rawRelativePath.replace(/%20/g, ' ');
+      const absolutePath = path.resolve(basePath, normalizedPath);
+      const fileUri = vscode.Uri.file(absolutePath);
+
+      await vscode.workspace.fs.stat(fileUri);
+      webview.postMessage({
+        type: 'auditCheckFileResult',
+        requestId,
+        exists: true,
+      });
+    } catch {
+      webview.postMessage({
+        type: 'auditCheckFileResult',
+        requestId,
+        exists: false,
+      });
+    }
   }
 
   /**

@@ -281,7 +281,12 @@ export const CustomImage = Image.extend({
 
       // Only show menu button on hover if image is loaded and not external
       const handleMouseEnter = () => {
-        if (isImageLoaded && dom.complete && !isExternal) {
+        if (
+          isImageLoaded &&
+          dom.complete &&
+          !isExternal &&
+          (window as any).showImageHoverOverlay !== false
+        ) {
           wrapper.classList.add('image-hover-active');
           // Show metadata footer
           const vscodeApi = (window as any).vscode;
@@ -301,9 +306,11 @@ export const CustomImage = Image.extend({
         if (relatedTarget && wrapper.contains(relatedTarget)) {
           return;
         }
-        wrapper.classList.remove('image-hover-active');
-        // Hide metadata footer
-        hideImageMetadataFooter(wrapper);
+        if ((window as any).showImageHoverOverlay !== false) {
+          wrapper.classList.remove('image-hover-active');
+          // Hide metadata footer
+          hideImageMetadataFooter(wrapper);
+        }
       };
 
       wrapper.addEventListener('mouseenter', handleMouseEnter);

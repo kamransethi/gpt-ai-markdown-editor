@@ -25,6 +25,7 @@ import { GitHubAlerts } from './extensions/githubAlerts';
 import { ImageEnterSpacing } from './extensions/imageEnterSpacing';
 import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
+import { DocumentAuditExtension } from './features/auditDocument';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
 import {
@@ -466,6 +467,7 @@ function initializeEditor(initialContent: string) {
             class: 'markdown-image',
           },
         }),
+        DocumentAuditExtension,
       ],
       // Don't pass content here - we'll set it after init with contentType: 'markdown'
       editorProps: {
@@ -616,6 +618,9 @@ function initializeEditor(initialContent: string) {
     };
 
     // Handle keyboard shortcuts
+    let ctrlKPressed = false;
+    let ctrlKTimer: number | null = null;
+
     const keydownHandler = (e: KeyboardEvent) => {
       const isMod = e.metaKey || e.ctrlKey; // Cmd on Mac, Ctrl on Windows/Linux
 
@@ -655,15 +660,45 @@ function initializeEditor(initialContent: string) {
         return;
       }
 
-      // Intercept Cmd+K for link in markdown context
+      // Handle Ctrl+K chord for link insertion
       if (isMod && e.key === 'k') {
+        // Start chord detection - set flag and timer
+        ctrlKPressed = true;
+        if (ctrlKTimer) {
+          clearTimeout(ctrlKTimer);
+        }
+        ctrlKTimer = window.setTimeout(() => {
+          ctrlKPressed = false;
+          ctrlKTimer = null;
+        }, 1000); // 1 second timeout for chord completion
+        console.log('[MD4H] Ctrl+K pressed, waiting for second key');
+        return;
+      }
+
+      // Check for Ctrl+K L chord completion
+      if (ctrlKPressed && isMod && e.key.toLowerCase() === 'l') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[MD4H] Link shortcut');
+        console.log('[MD4H] Link shortcut (Ctrl+K L)');
         if (editor) {
           showLinkDialog(editor);
         }
+        // Reset chord state
+        ctrlKPressed = false;
+        if (ctrlKTimer) {
+          clearTimeout(ctrlKTimer);
+          ctrlKTimer = null;
+        }
         return;
+      }
+
+      // Reset chord state on any other key press
+      if (ctrlKPressed && (!isMod || e.key !== 'l')) {
+        ctrlKPressed = false;
+        if (ctrlKTimer) {
+          clearTimeout(ctrlKTimer);
+          ctrlKTimer = null;
+        }
       }
 
       // Intercept Cmd/Ctrl+F for in-document search
@@ -857,6 +892,10 @@ window.addEventListener('message', (event: MessageEvent) => {
         if (typeof message.imagePathBase === 'string') {
           (window as any).imagePathBase = message.imagePathBase;
         }
+        // Update showImageHoverOverlay setting
+        if (typeof message.showImageHoverOverlay === 'boolean') {
+          (window as any).showImageHoverOverlay = message.showImageHoverOverlay;
+        }
         break;
       case 'imageResized': {
         // Handle image resize completion
@@ -1012,6 +1051,12 @@ window.addEventListener('message', (event: MessageEvent) => {
           callback(message as ImageRenameCheckPayload);
           imageRenameCheckCallbacks.delete(requestId);
         }
+        break;
+      }
+      case 'auditCheckFileResult': {
+        import('./features/auditDocument').then(({ handleAuditCheckResult }) => {
+          handleAuditCheckResult(message.requestId as string, message.exists as boolean);
+        });
         break;
       }
       case 'imageMetadata': {
@@ -1325,6 +1370,30 @@ window.addEventListener('toggleTocOutline', () => {
   if (editor) {
     toggleTocOverlay(editor);
     updateToolbarStates();
+  }
+});
+
+// Handle custom event for document audit from toolbar button
+window.addEventListener('auditDocument', async () => {
+  if (!editor) return;
+  console.log('[MD4H] Running document audit...');
+  try {
+    const { runAudit, auditPluginKey } = await import('./features/auditDocument');
+    const { showAuditOverlay } = await import('./features/auditOverlay');
+    
+    // Clear old decorations
+    editor.view.dispatch(editor.state.tr.setMeta(auditPluginKey, []));
+    
+    const issues = await runAudit(editor);
+    console.log('[MD4H] Audit complete, issues found:', issues.length);
+    showAuditOverlay(editor, issues);
+    
+    // Apply decorations
+    if (issues.length > 0) {
+      editor.view.dispatch(editor.state.tr.setMeta(auditPluginKey, issues));
+    }
+  } catch (error) {
+    console.error('[MD4H] Audit failed:', error);
   }
 });
 

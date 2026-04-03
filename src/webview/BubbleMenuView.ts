@@ -617,6 +617,17 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     { type: 'separator' },
     {
       type: 'button',
+      label: 'Audit',
+      title: 'Audit document for broken links and images',
+      icon: { name: 'check-all', fallback: '✓' },
+      action: () => {
+        window.dispatchEvent(new CustomEvent('auditDocument'));
+      },
+      isActive: () => false,
+      className: 'audit-button',
+    },
+    {
+      type: 'button',
       label: 'Export settings',
       title: 'Export settings',
       icon: { name: 'gear', fallback: '⚙' },

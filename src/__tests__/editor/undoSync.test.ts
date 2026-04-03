@@ -197,6 +197,7 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       skipResizeWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
+      showImageHoverOverlay: true,
     });
   });
 });

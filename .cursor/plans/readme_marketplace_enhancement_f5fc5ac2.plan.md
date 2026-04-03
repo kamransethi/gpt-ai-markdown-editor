@@ -123,7 +123,7 @@ The current README is text-heavy and lacks visual demonstrations. It doesn't qui
 
 4. **`link-dialog.gif`** (5-7 seconds) - **FOURTH GIF**
 
-- Select text and click link button (or Ctrl+K / Cmd+K)
+- Select text and click link button (or Ctrl+K L / Cmd+K L)
 - Show link dialog appearing
 - Enter URL and link text
 - Show link being created and clickable

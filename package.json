@@ -170,6 +170,11 @@
           "type": "boolean",
           "default": false,
           "description": "Skip the warning dialog when resizing images. When enabled, images will be resized immediately without confirmation."
+        },
+        "markdownForHumans.imagePreview.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the image hover overlay that shades images and displays metadata (resolution, file size, etc.) on hover."
         }
       }
     }

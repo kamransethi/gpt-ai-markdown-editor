@@ -144,6 +144,32 @@ Built on TipTap with a **human-first design philosophy**:
 
 ---
 
+## ⚙️ Configuration
+
+Customize the editor behavior through VS Code settings. Access via `Ctrl+,` (Settings) and search for "Markdown for Humans".
+
+### Image Settings
+
+- **`markdownForHumans.imagePreview.hover.enabled`** (default: `true`)
+  - Enable the image hover overlay that shades images and displays metadata (resolution, file size, etc.) on hover
+  - Set to `false` to disable hover effects and reduce visual distraction
+
+- **`markdownForHumans.imagePath`** (default: `"images"`)
+  - Folder path for saved images. Interpreted relative to `markdownForHumans.imagePathBase`.
+
+- **`markdownForHumans.imagePathBase`** (default: `"relativeToDocument"`)
+  - Controls whether Image Path is relative to the current markdown file folder or the workspace folder.
+
+- **`markdownForHumans.imageResize.skipWarning`** (default: `false`)
+  - Skip the warning dialog when resizing images. When enabled, images will be resized immediately without confirmation.
+
+### PDF Export Settings
+
+- **`markdownForHumans.chromePath`** (default: `""`)
+  - Path to Google Chrome or Chromium executable for PDF export. Leave empty to auto-detect.
+
+---
+
 ## More Features
 
 ### Enhanced Link Dialog

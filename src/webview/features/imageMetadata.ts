@@ -271,6 +271,11 @@ export function showImageMetadataFooter(
   wrapper: HTMLElement,
   vscodeApi: VsCodeApi
 ): void {
+  // Check if hover overlay is disabled
+  if (!(window as any).showImageHoverOverlay) {
+    return;
+  }
+
   // Check if footer already exists
   let footer = wrapper.querySelector('.image-metadata-footer') as HTMLElement;
   if (!footer) {
