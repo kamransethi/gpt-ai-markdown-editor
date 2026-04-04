@@ -18,27 +18,27 @@ function run() {
         console.log('\n--- Step 2: Running Release Build ---');
         execSync('npm run build:release', { stdio: 'inherit' });
 
-        console.log('\n--- Step 3: Packaging VSIX to dist/ ---');
-        // Ensure dist directory exists
-        const distDir = path.join(__dirname, '..', 'dist');
-        if (!fs.existsSync(distDir)) {
-            fs.mkdirSync(distDir);
+        console.log('\n--- Step 3: Packaging VSIX to releases/ ---');
+        // Ensure releases directory exists
+        const releasesDir = path.join(__dirname, '..', 'releases');
+        if (!fs.existsSync(releasesDir)) {
+            fs.mkdirSync(releasesDir);
         } else {
-            // Clean up existing VSIX files in dist to prevent them being included in the next package
-            const files = fs.readdirSync(distDir);
+            // Clean up existing VSIX files in releases to prevent them being included in the next package
+            const files = fs.readdirSync(releasesDir);
             files.forEach(file => {
                 if (file.endsWith('.vsix')) {
-                    fs.unlinkSync(path.join(distDir, file));
+                    fs.unlinkSync(path.join(releasesDir, file));
                 }
             });
-            console.log('🧹 Cleaned up old VSIX files in dist/');
+            console.log('🧹 Cleaned up old VSIX files in releases/');
         }
 
-        // Run vsce package and output to dist/
+        // Run vsce package and output to releases/
         // Matches the publisher and name from package.json
-        execSync(`npx vsce package --out dist/`, { stdio: 'inherit' });
+        execSync(`npx vsce package --out releases/`, { stdio: 'inherit' });
 
-        console.log('\n✅ Successfully recompiled and packaged into dist/');
+        console.log('\n✅ Successfully recompiled and packaged into releases/');
 
         // Read the version to show the new one
         const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
