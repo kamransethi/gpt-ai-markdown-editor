@@ -1,4 +1,8 @@
-import { resolveMarkdownImagePaths, resolveHtmlImagePaths, convertHtmlImagesToMarkdown } from '../../features/documentExport';
+import {
+  resolveMarkdownImagePaths,
+  resolveHtmlImagePaths,
+  convertHtmlImagesToMarkdown,
+} from '../../features/documentExport';
 import * as path from 'path';
 
 describe('Document Export Image Path Resolution', () => {
@@ -82,7 +86,9 @@ describe('Document Export Image Path Resolution', () => {
     it('preserves width and height as Pandoc attributes', () => {
       const md = '<img src="./photo.png" alt="Photo" width="463" height="463" />';
       const result = convertHtmlImagesToMarkdown(md, baseDir);
-      expect(result).toBe(`![Photo](${path.join(baseDir, 'photo.png')}){ width=463px height=463px }`);
+      expect(result).toBe(
+        `![Photo](${path.join(baseDir, 'photo.png')}){ width=463px height=463px }`
+      );
     });
 
     it('handles width-only attribute', () => {
@@ -128,7 +134,8 @@ describe('Document Export Image Path Resolution', () => {
     });
 
     it('converts multiple img tags in the same document', () => {
-      const md = '# Title\n\n<img src="./a.png" alt="A" />\n\nSome text\n\n<img src="./b.png" alt="B" width="100" />';
+      const md =
+        '# Title\n\n<img src="./a.png" alt="A" />\n\nSome text\n\n<img src="./b.png" alt="B" width="100" />';
       const result = convertHtmlImagesToMarkdown(md, baseDir);
       expect(result).toContain(`![A](${path.join(baseDir, 'a.png')})`);
       expect(result).toContain(`![B](${path.join(baseDir, 'b.png')}){ width=100px }`);

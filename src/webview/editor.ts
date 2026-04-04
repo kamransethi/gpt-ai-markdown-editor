@@ -412,17 +412,6 @@ function restoreFrontmatter(markdown: string, frontmatter: string | null): strin
 }
 
 /**
- * Safely escape text for HTML insertion to prevent XSS.
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/**
  * Parse YAML frontmatter text into key-value pairs.
  * Handles simple scalar assignments: `key: value` and `key : value` (spaces around colon).
  * Values containing colons (e.g. URLs) are handled by splitting only on the first colon.
@@ -447,7 +436,7 @@ function parseFrontmatterPairs(frontmatter: string): Array<[string, string]> {
  * Panel is always hidden — metadata is edited via the View menu instead.
  * @deprecated Frontmatter panel is no longer displayed. Use View > Display > Edit Document Metadata instead.
  */
-function updateFrontmatterPanel(frontmatter: string | null): void {
+function updateFrontmatterPanel(_frontmatter: string | null): void {
   const panel = document.getElementById('frontmatter-panel');
   if (!panel) return;
   const inner = panel.querySelector('.frontmatter-panel-inner') as HTMLElement | null;
@@ -867,7 +856,7 @@ function initializeEditor(initialContent: string) {
         markedOptions: {
           gfm: true, // GitHub Flavored Markdown for tables, task lists
           breaks: true, // Preserve single newlines as <br>
-       },
+        },
       }),
       // Custom Table extension that handles <br /> correctly and
       // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>

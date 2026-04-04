@@ -23,7 +23,7 @@ jest.mock('@tiptap/extension-code-block-lowlight', () => ({
         config,
         configure: () => ({ name: 'codeBlock', config }),
         addNodeView: config.addNodeView
-          ? () => (config.addNodeView as Function).call(extObj)
+          ? () => (config.addNodeView as unknown as (this: unknown) => unknown).call(extObj)
           : undefined,
       };
       return extObj;
@@ -59,11 +59,13 @@ describe('CodeBlockWithUi node view', () => {
     });
   });
 
-  function createView(overrides: Partial<{
-    language: string;
-    textContent: string;
-    getPos: () => number | undefined;
-  }> = {}) {
+  function createView(
+    overrides: Partial<{
+      language: string;
+      textContent: string;
+      getPos: () => number | undefined;
+    }> = {}
+  ) {
     const nodeViewFactory = getNodeViewFactory();
 
     const dispatch = jest.fn();
