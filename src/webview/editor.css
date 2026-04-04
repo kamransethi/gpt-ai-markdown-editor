@@ -681,9 +681,39 @@ body[data-theme="dark"] {
 
 .code-block-ui {
   margin: var(--content-spacing-block) 0;
+  /* Force dark syntax-highlighting colors inside code blocks regardless of
+     editor theme.  We override every --hljs-color-* variable here so the
+     <pre> inside always renders with dark-mode colours. */
+  --hljs-color-default: #e8eaed;
+  --hljs-color-keyword: #c792ea;
+  --hljs-color-title: #82aaff;
+  --hljs-color-literal: #89ddff;
+  --hljs-color-string: #c3e88d;
+  --hljs-color-symbol: #ffcb6b;
+  --hljs-color-comment: #676e95;
+  --hljs-color-tag: #f07178;
+  --hljs-color-subst: #e8eaed;
+  --hljs-color-bullet: #ffcb6b;
+  --hljs-color-addition-fg: #c3e88d;
+  --hljs-color-addition-bg: rgba(195, 232, 141, 0.15);
+  --hljs-color-deletion-fg: #f07178;
+  --hljs-color-deletion-bg: rgba(240, 113, 120, 0.15);
+  --md-code-bg: #1e1e2e;
+  --md-code-fg: #e8eaed;
 }
 
-.code-block-ui-header,
+/* Panel-less header: no background box, no border — controls float above the
+   code block using the bold design language shared with menus/toolbars. */
+.code-block-ui-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 2px 4px;
+  background: none;
+  border: none;
+}
+
 .mermaid-code-header {
   display: flex;
   align-items: center;
@@ -696,8 +726,50 @@ body[data-theme="dark"] {
   background: var(--md-subtle-bg);
 }
 
-.code-block-ui-language,
-.code-block-ui-copy,
+/* Language dropdown — bold menu style, no box */
+.code-block-ui-language {
+  border: none;
+  background: none;
+  color: var(--md-muted);
+  font: inherit;
+  font-family: var(--md-font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0;
+  cursor: pointer;
+  /* Suppress native arrow so it looks like a plain label until interacted with */
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.code-block-ui-language:hover,
+.code-block-ui-language:focus {
+  color: var(--md-foreground);
+  outline: none;
+}
+
+/* Copy button — bold menu style, no box */
+.code-block-ui-copy {
+  border: none;
+  background: none;
+  color: var(--md-muted);
+  font: inherit;
+  font-family: var(--md-font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0;
+  cursor: pointer;
+}
+
+.code-block-ui-copy:hover {
+  color: var(--md-foreground);
+}
+
+/* Mermaid edit button keeps its bordered style */
 .mermaid-edit-button {
   border: 1px solid var(--md-border);
   background: var(--md-background);
@@ -707,22 +779,16 @@ body[data-theme="dark"] {
   font-size: 11px;
   padding: 1px 6px;
   line-height: 1.4;
-}
-
-.code-block-ui-copy,
-.mermaid-edit-button {
   cursor: pointer;
 }
 
-.code-block-ui-copy:hover,
 .mermaid-edit-button:hover {
   background: var(--md-hover-bg);
 }
 
 .code-block-ui-pre {
+  /* Header is panel-less so pre keeps full border-radius on all corners */
   margin-top: 0;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
 }
 
 .mermaid-code-title {

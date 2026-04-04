@@ -21,11 +21,49 @@ function isMeaningfulInlineNode(node: JSONContent): boolean {
 }
 
 export const MarkdownParagraph = Paragraph.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      blankLine: {
+        default: false,
+        parseHTML: (el: Element) => el.hasAttribute('data-blank-line'),
+        renderHTML: (attrs: Record<string, unknown>) =>
+          attrs['blankLine'] ? { 'data-blank-line': '' } : {},
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      // High-priority rule: blank-line placeholder paragraphs
+      { tag: 'p[data-blank-line]', priority: 60, getAttrs: () => ({ blankLine: true }) },
+      // Default paragraph rule
+      { tag: 'p' },
+    ];
+  },
+
   renderMarkdown: ((
     node: JSONContent,
     helpers: MarkdownRendererHelpers,
     _context: RenderContext
   ) => {
+    // Blank-line placeholder: serialize as an empty string so @tiptap/markdown
+    // emits the surrounding \n\n block separators. The serialization post-processor
+    // in markdownSerialization.ts then collapses any ≥4 consecutive newlines down
+    // to exactly 3 (= one blank line in the saved file).
+    // Guard: only skip serialization when the node is actually empty — if the user
+    // typed text into the blank-line row the node still carries blankLine:true but
+    // now has real content that must not be discarded.
+    if (node.attrs?.blankLine === true) {
+      const hasMeaningfulContent =
+        Array.isArray(node.content) &&
+        node.content.some((child: JSONContent) => isMeaningfulInlineNode(child));
+      if (!hasMeaningfulContent) {
+        return '';
+      }
+      // Has content — fall through to normal paragraph rendering below
+    }
+
     const content = helpers.renderChildren(node.content || []);
 
     const hasMeaningfulContent =

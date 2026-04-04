@@ -24,7 +24,8 @@ import Typography from '@tiptap/extension-typography';
 import DragHandle from '@tiptap/extension-drag-handle';
 import { marked as markedInstance, Marked } from 'marked';
 import { CustomImage } from './extensions/customImage';
-import CodeBlockShiki from 'tiptap-extension-code-block-shiki';
+import { CodeBlockWithUi } from './extensions/codeBlockShikiWithUi';
+import { common, createLowlight } from 'lowlight';
 import { Mermaid } from './extensions/mermaid';
 import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
 import { SpaceFriendlyImagePaths } from './extensions/spaceFriendlyImagePaths';
@@ -830,7 +831,7 @@ function initializeEditor(initialContent: string) {
           levels: [1, 2, 3, 4, 5, 6],
         },
         paragraph: false, // Disable default paragraph, using MarkdownParagraph instead
-        codeBlock: false, // Disable default CodeBlock, using CodeBlockShiki instead
+        codeBlock: false, // Disable default CodeBlock, using CodeBlockWithUi instead
         // ListKit is registered separately to support task lists; disable StarterKit's list
         // extensions to avoid duplicate names (which can break markdown parsing, e.g. `1)` lists).
         bulletList: false,
@@ -845,13 +846,9 @@ function initializeEditor(initialContent: string) {
         },
       }),
       MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
-      CodeBlockShiki.configure({
-        defaultTheme: 'github-dark',
-        themes: {
-          light: 'github-light',
-          dark: 'github-dark',
-        },
-        defaultLanguage: null,
+      CodeBlockWithUi.configure({
+        lowlight: createLowlight(common),
+        defaultLanguage: 'plaintext',
         HTMLAttributes: {
           class: 'code-block-highlighted',
         },
@@ -870,7 +867,7 @@ function initializeEditor(initialContent: string) {
         markedOptions: {
           gfm: true, // GitHub Flavored Markdown for tables, task lists
           breaks: true, // Preserve single newlines as <br>
-        },
+       },
       }),
       // Custom Table extension that handles <br /> correctly and
       // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>

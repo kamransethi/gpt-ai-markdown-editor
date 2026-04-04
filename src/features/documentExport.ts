@@ -699,8 +699,9 @@ async function exportToWord(
     // Convert relative image paths to absolute to ensure Pandoc finds them.
     let markdown = resolveMarkdownImagePaths(document.getText(), docDir);
 
-    // Also resolve raw HTML image tags scattered in the markdown
-    markdown = resolveHtmlImagePaths(markdown, docDir);
+    // Convert HTML <img> tags to markdown image syntax so Pandoc's DOCX
+    // writer can embed them (it silently drops raw HTML).
+    markdown = convertHtmlImagesToMarkdown(markdown, docDir);
 
     // Convert mermaid blocks to images
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pandoc-export-'));
@@ -780,7 +781,7 @@ async function exportToWord(
       '-t',
       'docx',
       '-f',
-      'gfm+alerts+raw_html+pipe_tables+task_lists+strikeout+emoji+tex_math_dollars+footnotes',
+      'markdown+pipe_tables+task_lists+strikeout+emoji+tex_math_dollars+footnotes+backtick_code_blocks+fenced_code_blocks+fenced_code_attributes+autolink_bare_uris',
     ];
 
     // Add lua filters
@@ -1130,5 +1131,59 @@ export function resolveHtmlImagePaths(html: string, baseDir: string): string {
 
     const absolutePath = path.join(baseDir, url);
     return match.replace(`src=${quote}${url}${quote}`, `src=${quote}${absolutePath}${quote}`);
+  });
+}
+
+/**
+ * Converts HTML `<img>` tags to Pandoc-compatible markdown image syntax.
+ *
+ * Pandoc's DOCX writer silently drops raw HTML, so `<img src="...">` tags
+ * must be converted to `![alt](src){ width=Xpx height=Ypx }` before export.
+ * Relative `src` paths are resolved to absolute using `baseDir`.
+ *
+ * Requires Pandoc's `markdown` format (not `gfm`) for `link_attributes` support.
+ */
+export function convertHtmlImagesToMarkdown(markdown: string, baseDir: string): string {
+  // Match full <img ... /> or <img ...> tags
+  const imgTagRegex = /<img\s+([^>]*?)\s*\/?>/gi;
+
+  return markdown.replace(imgTagRegex, (_match, attrsStr: string) => {
+    const srcMatch = attrsStr.match(/src=(['"])(.*?)\1/);
+    if (!srcMatch) return _match; // No src attribute — leave as-is
+
+    let src = srcMatch[2];
+    const altMatch = attrsStr.match(/alt=(['"])(.*?)\1/);
+    const widthMatch = attrsStr.match(/width=["']?(\d+%?)["']?/);
+    const heightMatch = attrsStr.match(/height=["']?(\d+%?)["']?/);
+
+    const alt = altMatch ? altMatch[2] : '';
+
+    // Resolve relative paths to absolute
+    if (
+      !src.startsWith('http://') &&
+      !src.startsWith('https://') &&
+      !src.startsWith('data:') &&
+      !src.startsWith('file://') &&
+      !path.isAbsolute(src)
+    ) {
+      try {
+        src = decodeURIComponent(src);
+      } catch {
+        // Ignore decoding errors
+      }
+      src = path.join(baseDir, src);
+    }
+
+    let mdImage = `![${alt}](${src})`;
+
+    // Append Pandoc link_attributes for width/height sizing in DOCX
+    const attrs: string[] = [];
+    if (widthMatch) attrs.push(`width=${widthMatch[1]}px`);
+    if (heightMatch) attrs.push(`height=${heightMatch[1]}px`);
+    if (attrs.length > 0) {
+      mdImage += `{ ${attrs.join(' ')} }`;
+    }
+
+    return mdImage;
   });
 }

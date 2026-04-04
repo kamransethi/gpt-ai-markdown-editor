@@ -4,8 +4,6 @@ theme: gaia
 class: invert
 paginate: true
 ---
-
-
 # Comprehensive Markdown Stress Test Document
 
 Welcome to the **Ultimate Markdown Stress Test**. This document is designed to push the boundaries of your markdown editor by combining every standard and extended element available.
@@ -19,12 +17,10 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 - <mark>Highlighted Text</mark> to test highlight support (Mark extension).
 - `Inline Code` for short snippets.
 - Text with a ^superscript^ and a ~~subscript~~.
-- Text with underlining ++text++.
-- Underlined text can sometimes be represented with ++HTML tags++.
+- <span style="color: #a5d6a7">Text with underlining ++text++.</span>
+- <span style="color: #FFF59D">Underlined text can sometimes be represented with ++HTML tags++.</span>
 - Press Ctrl + S to save.
 - [Sample Link](./Test.md)
-
-
 
 ## 2. Heading Hierarchy
 
@@ -63,7 +59,7 @@ Welcome to the **Ultimate Markdown Stress Test**. This document is designed to p
 
 - [x] Completed task
 - [ ] Incomplete task
-- [ ] Task with *formatting* and <mark>highlight</mark>
+- [ ] Task with *formatting* and ==highlight==
 
 ---
 
@@ -86,7 +82,6 @@ This table contains cells with bullet points separated by `<br />-` elements as 
 | **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra      | 🌀     |
 | **Media**      | - Images<br />- Videos<br />- Audio files            | 🎬     |
 | **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes         | 🚀     |
-
 
 
 | Feature Type | Description / Details                                | Status |

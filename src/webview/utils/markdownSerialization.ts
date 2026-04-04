@@ -28,10 +28,31 @@ function isMeaningfulInlineNode(node: JSONContent): boolean {
 function isEmptyParagraph(node: JSONContent): boolean {
   if (node.type !== 'paragraph') return false;
 
+  // Blank-line placeholder nodes must be preserved in the output — they represent
+  // intentional blank lines in the document that the user wants kept on save.
+  if (node.attrs?.blankLine === true) return false;
+
   const content = node.content;
   if (!Array.isArray(content) || content.length === 0) return true;
 
   return !content.some(isMeaningfulInlineNode);
+}
+
+/**
+ * Collapse runs of 4+ consecutive newlines down to exactly 3 (= one blank line)
+ * in the regions outside fenced code blocks. This prevents blank-line placeholder
+ * nodes from emitting double blank lines (the serializer wraps each block with \n\n,
+ * so an empty paragraph produces \n\n\n\n which we normalize to \n\n\n).
+ */
+function normalizeBlankLines(markdown: string): string {
+  const segments = markdown.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g);
+  return segments
+    .map((seg, i) => {
+      // Odd-indexed segments are fenced code blocks — leave untouched
+      if (i % 2 === 1) return seg;
+      return seg.replace(/\n{4,}/g, '\n\n\n');
+    })
+    .join('');
 }
 
 export function stripEmptyDocParagraphsFromJson(doc: JSONContent): JSONContent {
@@ -82,7 +103,9 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     // @tiptap/markdown sometimes serializes hard breaks in tables as \x1F (Unit Separator).
     // Let's replace those with standard markdown <br /> tags so they don't corrupt the file.
     // eslint-disable-next-line no-control-regex
-    return content.replace(/\x1F/g, '<br />');
+    const sanitized = content.replace(/\x1F/g, '<br />');
+    // Collapse over-produced blank lines from blank-line placeholder nodes (≥4 \n → 3 \n)
+    return normalizeBlankLines(sanitized);
   };
 
   const trySerialize = (label: string, fn: () => string): string | null => {
