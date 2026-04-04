@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * Tests for Search Overlay - In-document Search Feature
  *

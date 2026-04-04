@@ -551,13 +551,15 @@ async function runChrome(executablePath: string, args: string[]): Promise<void> 
 
     const chromeProcess = spawn(executablePath, args, spawnOptions);
 
-    chromeProcess.once('error', error => {
+    chromeProcess.once('error', (error: unknown) => {
       reject(
-        new Error(`Failed to launch Chrome: ${error instanceof Error ? error.message : error}`)
+        new Error(
+          `Failed to launch Chrome: ${error instanceof Error ? error.message : String(error)}`
+        )
       );
     });
 
-    chromeProcess.once('exit', code => {
+    chromeProcess.once('exit', (code: number | null) => {
       if (code === 0) {
         resolve();
       } else {

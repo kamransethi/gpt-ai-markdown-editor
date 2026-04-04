@@ -129,8 +129,8 @@ export function createCustomImageMessagePlugin(editor: Editor) {
                   metadata.dimensions = preservedDimensions;
                 } else {
                   const images = document.querySelectorAll('.markdown-image');
-                  for (const img of images) {
-                    const imgElement = img as HTMLImageElement;
+                  for (let i = 0; i < images.length; i++) {
+                    const imgElement = images[i] as HTMLImageElement;
                     const imgPath =
                       imgElement.getAttribute('data-markdown-src') ||
                       imgElement.getAttribute('src') ||
@@ -161,8 +161,8 @@ export function createCustomImageMessagePlugin(editor: Editor) {
             const originalPath = message.originalPath as string;
             const images = document.querySelectorAll('.markdown-image');
             let imgElement: HTMLImageElement | null = null;
-            for (const img of images) {
-              const element = img as HTMLImageElement;
+            for (let i = 0; i < images.length; i++) {
+              const element = images[i] as HTMLImageElement;
               const imgSrc =
                 element.getAttribute('data-markdown-src') || element.getAttribute('src') || '';
               if (
@@ -195,8 +195,8 @@ export function createCustomImageMessagePlugin(editor: Editor) {
           }
           case MessageType.LOCAL_IMAGE_COPY_ERROR: {
             const images = document.querySelectorAll('.markdown-image');
-            for (const img of images) {
-              const imgElement = img as HTMLImageElement;
+            for (let i = 0; i < images.length; i++) {
+              const imgElement = images[i] as HTMLImageElement;
               if ((imgElement as any)._pendingDownloadPlaceholderId === message.placeholderId) {
                 delete (imgElement as any)._pendingDownloadPlaceholderId;
               }

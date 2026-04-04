@@ -149,6 +149,8 @@ jest.mock('@tiptap/extension-text-style', () => {
   return { __esModule: true, TextStyle: mockMark, default: mockMark };
 });
 
+export {};
+
 type TestingModule = {
   resetSyncState: () => void;
   setMockEditor: (editor: unknown) => void;

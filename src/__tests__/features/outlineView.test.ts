@@ -23,11 +23,11 @@ describe('OutlineViewProvider', () => {
       const roots = await provider.getChildren();
       expect(roots?.length).toBe(1);
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       expect(h1Children?.length).toBe(2);
       const h2 = h1Children?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h2Children = await provider.getChildren(h2 as any);
       expect(h2Children?.length).toBe(1);
     });
@@ -70,7 +70,6 @@ describe('OutlineViewProvider', () => {
       const roots = await provider.getChildren();
       let current = roots?.[0];
       for (let i = 0; i < 5; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const children = await provider.getChildren(current as any);
         expect(children?.length).toBe(1);
         current = children?.[0];
@@ -87,7 +86,7 @@ describe('OutlineViewProvider', () => {
 
       const children = await provider.getChildren();
       const h1 = children?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       const h2b = h1Children?.[1];
       expect(h2b?.contextValue).toBe('outlineActive');
@@ -114,12 +113,10 @@ describe('OutlineViewProvider', () => {
       const h1 = roots?.[0];
       expect(h1?.contextValue).toBe('outlineAncestor'); // H1 is ancestor
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const h1Children = await provider.getChildren(h1 as any);
       const h2 = h1Children?.[0];
       expect(h2?.contextValue).toBe('outlineAncestor'); // H2 is ancestor
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const h2Children = await provider.getChildren(h2 as any);
       const h3 = h2Children?.[0];
       expect(h3?.contextValue).toBe('outlineActive'); // H3 is active
@@ -132,10 +129,10 @@ describe('OutlineViewProvider', () => {
 
       const roots = await provider.getChildren();
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       const h2 = h1Children?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h2Children = await provider.getChildren(h2 as any);
       const h3 = h2Children?.[0];
       expect(h3?.contextValue).toBe('outlineActive');
@@ -148,10 +145,10 @@ describe('OutlineViewProvider', () => {
 
       const roots = await provider.getChildren();
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       const h2 = h1Children?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h2Children = await provider.getChildren(h2 as any);
       const h3 = h2Children?.[0];
       expect(h3?.contextValue).toBe('outlineActive');
@@ -176,7 +173,7 @@ describe('OutlineViewProvider', () => {
 
       const roots = await provider.getChildren();
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       const h2b = h1Children?.[1]; // Sibling of H2, not ancestor of H3
       expect(h2b?.contextValue).toBe('outlineItem');
@@ -197,7 +194,6 @@ describe('OutlineViewProvider', () => {
       const h1 = roots?.[0];
       expect(h1?.contextValue).toBe('outlineAncestor'); // Still ancestor
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const h1Children = await provider.getChildren(h1 as any);
       expect(h1Children?.[0]?.contextValue).toBe('outlineItem'); // H2 no longer ancestor
       expect(h1Children?.[1]?.contextValue).toBe('outlineActive'); // H2b is now active
@@ -213,7 +209,7 @@ describe('OutlineViewProvider', () => {
       const roots = await provider.getChildren();
       expect(roots?.length).toBe(1);
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       expect(h1Children?.length).toBe(1);
     });
@@ -234,7 +230,7 @@ describe('OutlineViewProvider', () => {
 
       const roots = await provider.getChildren();
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       expect(h1Children?.length).toBe(2); // Both H2 and H2b match
     });
@@ -246,14 +242,14 @@ describe('OutlineViewProvider', () => {
 
       // Filter active
       let roots = await provider.getChildren();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       let h1Children = await provider.getChildren(roots?.[0] as any);
       expect(h1Children?.length).toBe(1);
 
       // Clear filter
       provider.clearFilter();
       roots = await provider.getChildren();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       h1Children = await provider.getChildren(roots?.[0] as any);
       expect(h1Children?.length).toBe(2); // Back to full tree
     });
@@ -285,7 +281,7 @@ describe('OutlineViewProvider', () => {
     it('expands active node when revealing current', async () => {
       const mockView = { reveal: jest.fn() };
       const provider = new OutlineViewProvider();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       provider.setTreeView(mockView as any);
       provider.setOutline(sampleOutline);
       provider.setActiveSelection(65);
@@ -293,7 +289,7 @@ describe('OutlineViewProvider', () => {
       // Populate itemMap by traversing tree
       const roots = await provider.getChildren();
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       await provider.getChildren(h1 as any);
 
       provider.revealActive();
@@ -304,7 +300,7 @@ describe('OutlineViewProvider', () => {
     it('uses existing item from itemMap for reveal (not new instance)', async () => {
       const mockView = { reveal: jest.fn() };
       const provider = new OutlineViewProvider();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       provider.setTreeView(mockView as any);
       provider.setOutline(sampleOutline);
       provider.setActiveSelection(65); // H2b position
@@ -312,7 +308,7 @@ describe('OutlineViewProvider', () => {
       // Populate itemMap by calling getChildren
       const roots = await provider.getChildren();
       const h1 = roots?.[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(h1 as any);
       const h2bItem = h1Children?.[1];
 
@@ -326,7 +322,7 @@ describe('OutlineViewProvider', () => {
     it('does not reveal when no active selection', async () => {
       const mockView = { reveal: jest.fn() };
       const provider = new OutlineViewProvider();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       provider.setTreeView(mockView as any);
       provider.setOutline(sampleOutline);
       provider.setActiveSelection(null);
@@ -340,7 +336,7 @@ describe('OutlineViewProvider', () => {
     it('does not reveal when tree is empty', async () => {
       const mockView = { reveal: jest.fn() };
       const provider = new OutlineViewProvider();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       provider.setTreeView(mockView as any);
       provider.setActiveSelection(10);
 
@@ -352,7 +348,7 @@ describe('OutlineViewProvider', () => {
     it('creates item for reveal when not in itemMap (supports auto-expand)', async () => {
       const mockView = { reveal: jest.fn() };
       const provider = new OutlineViewProvider();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       provider.setTreeView(mockView as any);
       provider.setOutline(sampleOutline);
       provider.setActiveSelection(25); // H3 position (deeply nested)
@@ -388,7 +384,7 @@ describe('OutlineViewProvider', () => {
 
       const roots = await provider.getChildren();
       expect(roots?.length).toBe(1);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const h1Children = await provider.getChildren(roots?.[0] as any);
       expect(h1Children?.length).toBe(1);
       expect(h1Children?.[0]?.description).toBe('H3');

@@ -120,7 +120,7 @@ export enum ConfigurationTarget {
 }
 
 // Mock TextDocument
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function createMockTextDocument(content: string, languageId = 'markdown'): any {
   return {
     getText: jest.fn((range?: MockRange) => {
@@ -154,7 +154,7 @@ export class Selection {
 }
 
 // Mock TextEditor
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function createMockTextEditor(document: any, selection?: Selection): any {
   return {
     document,

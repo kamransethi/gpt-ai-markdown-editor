@@ -8,7 +8,7 @@
 // Polyfill File API for Node.js test environment
 // File is a browser API that's not available in Node.js by default
 // This polyfill MUST run before test files are loaded (setupFiles, not setupFilesAfterEnv)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const globalObj = globalThis as any;
 
 // Ensure Blob is available (Node 18+ has it globally)
