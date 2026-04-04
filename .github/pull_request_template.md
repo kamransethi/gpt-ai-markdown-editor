@@ -65,17 +65,17 @@ Fixes #
 - [ ] Updated README.md (if needed)
 - [ ] Updated CHANGELOG.md
 - [ ] Added/updated code comments
-- [ ] Updated documentation in `/docs` (if needed)
+- [ ] Updated documentation (if needed)
 
 ## Checklist
 
-- [ ] My code follows the project's coding standards (see `CONTRIBUTING.md` and `vibe-coding-rules/`)
+- [ ] My code follows the project's coding standards (see `CONTRIBUTING.md` and `.specify/memory/constitution.md`)
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] My changes generate no new warnings or errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
-- [ ] Error handling is implemented for async operations (see `vibe-coding-rules/coding-standards.md`)
+- [ ] Error handling is implemented for async operations (see `.specify/memory/constitution.md`)
 - [ ] No `console.log` statements added (or they're properly conditional for debug mode)
 - [ ] Any dependent changes have been merged and published
 - [ ] I have read and followed the TDD workflow if this is a new feature (write tests first)

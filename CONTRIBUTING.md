@@ -360,39 +360,22 @@ git commit -m "fix: resolve cursor jump after image insert"
 
 ### 📋 Planning Workflow
 
-We use a **planning-first approach** where features are planned before implementation. 
+This project uses [GitHub Spec Kit](https://github.com/github/spec-kit) for Spec-Driven Development.
 
-**📝 Start with the template:** Use [`roadmap/task-plan-template.md`](./roadmap/task-plan-template.md) as your starting point. It provides a structured format with hints for each section.
+**For new features, use the spec-kit workflow:**
 
-**Creating Plans:**
+1. `/speckit.specify` — Define what you want to build
+2. `/speckit.plan` — Create a technical implementation plan
+3. `/speckit.tasks` — Break down into actionable tasks
+4. `/speckit.implement` — Execute implementation
 
-1. **Use the template**: 
-   - Prompt your AI tool: "Create a task plan using `roadmap/task-plan-template.md` for [feature name]"
-   - Or copy the template and fill it in manually
-   - The template includes placeholders and hints to guide you
-
-2. **If your tool has a plan feature** (like Cursor):
-   - Use it — plans are typically created in tool-specific locations (e.g., `.cursor/plans/`)
-   - Move to pipeline when ready: `git mv [source]/[name].md roadmap/pipeline/[name].md`
-
-3. **If your tool doesn't have a plan mode:**
-   - Just **prompt the AI to create a markdown file** based on the template in `roadmap/pipeline/[name].md`
-   - Or create markdown files manually using the template as a guide
-
-4. **Best practice**: Create plans directly in `roadmap/pipeline/` to keep everything organized
-
-**Plan Lifecycle:**
-- **Draft** → Create plan using the template (tool-specific location or `roadmap/pipeline/`)
-- **Ready** → Move to `roadmap/pipeline/` when locked and ready for implementation
-- **Complete** → Move to `roadmap/shipped/` when feature is done and tests pass
-
-See [roadmap/README.md](./roadmap/README.md) for detailed planning workflow.
+See `.specify/memory/constitution.md` for project principles and constraints.
 
 ### 🔧 Submit Code
 
 1. **Fork** the repository
 2. **Create a branch**: `git checkout -b feature/my-feature`
-3. **Plan first** (recommended): Create a plan using [`roadmap/task-plan-template.md`](./roadmap/task-plan-template.md) in `roadmap/pipeline/` or your tool's plan location
+3. **Plan first** (recommended): Use `/speckit.specify` and `/speckit.plan` to define and plan the feature
 4. **Write tests** for your changes
 5. **Make changes** following code standards
 6. **Run tests**: `npm test`

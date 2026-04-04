@@ -7,12 +7,11 @@ dist/**/*.map
 
 # Development and documentation files
 docs/**
-roadmap/**
 wiki/**
-vibe-coding-rules/**
 prompts/**
 specs/**
 internal/**
+.specify/**
 marketplace-assets/**
 AGENTS.md
 CONTRIBUTING.md
@@ -22,7 +21,6 @@ EULA.md
 PRIVACY_POLICY.md
 TERMS_OF_USE.md
 THIRD_PARTY_LICENSES.md
-CLAUDE.md
 TODOs.md
 
 # Development files
