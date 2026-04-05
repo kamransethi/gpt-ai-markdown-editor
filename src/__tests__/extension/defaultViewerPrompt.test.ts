@@ -4,14 +4,11 @@
  * Specification: specs/001-default-markdown-viewer/spec.md (FR-001 through FR-008)
  * Plan: specs/001-default-markdown-viewer/plan.md
  *
- * This test suite implements Phase 1 (RED) of TDD for the default markdown viewer setup feature.
- * All tests are written first and expected to fail until implementation in Phase 2.
+ * This test suite implements TDD for the default markdown viewer setup feature.
+ * Tests verify all functional requirements and success criteria.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as vscode from 'vscode';
-import { showDefaultViewerPrompt } from '../../extension';
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 // Mock factory: Creates a mock ExtensionContext with globalState
 function createMockContext(): any {
