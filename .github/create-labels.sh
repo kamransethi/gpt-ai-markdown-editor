@@ -5,7 +5,7 @@
 
 set -e
 
-REPO=$(gh repo view --json nameWithOwner -q)
+REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 LABELS_FILE=".github/labels.json"
 
 if [ ! -f "$LABELS_FILE" ]; then

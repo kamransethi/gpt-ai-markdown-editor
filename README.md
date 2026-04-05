@@ -145,9 +145,11 @@ Use the `</>` toolbar button any time you want to jump to source.
 
 ### For Users
 
-- [Known Issues](./KNOWN_ISSUES.md)
+- [Feature Guide](./FEATURES.md)
+- [Community Guidelines](./COMMUNITY.md)
 - [Report Issues](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
-- [Get Help](https://github.com/kamransethi/gpt-ai-markdown-editor)
+- [GitHub Discussions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
+- [Security Policy](./SECURITY.md)
 
 ### For Developers
 
