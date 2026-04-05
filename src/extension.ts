@@ -11,7 +11,72 @@ import { getActiveWebviewPanel, getSelectedText } from './activeWebview';
 import { outlineViewProvider } from './features/outlineView';
 import { MessageType } from './shared/messageTypes';
 
+/**
+ * Constants for default markdown viewer prompt feature
+ */
+const DEFAULT_VIEWER_ID = 'kamransethi.gpt-ai-markdown-editor';
+const DEFAULT_VIEWER_CONFIG_KEY = 'markdown.preview.defaultPreviewPane';
+const HAS_SHOWN_PROMPT_KEY = 'defaultViewerPromptShown';
+
+/**
+ * Show prompt to set Visual Markdown Editor as default markdown viewer.
+ * Only shows on first activation; respects user's prior decision.
+ *
+ * Implements: FR-001 through FR-008
+ * See: specs/001-default-markdown-viewer/spec.md
+ *
+ * @param context Extension context with globalState for persistence
+ */
+export async function showDefaultViewerPrompt(context: vscode.ExtensionContext): Promise<void> {
+  try {
+    // FR-001: Check if user has already made a decision
+    const decision = context.globalState.get<string>(HAS_SHOWN_PROMPT_KEY);
+
+    // If user previously said "yes" or "no", don't prompt again
+    if (decision === 'yes' || decision === 'no') {
+      return;
+    }
+
+    // FR-002: Display modal dialog with Yes/No buttons
+    const message = 'Set Visual Markdown Editor as your default markdown viewer?';
+    const selectedAction = await vscode.window.showInformationMessage(
+      message,
+      { modal: true }, // FR-002: Must be blocking
+      'Yes',
+      'No'
+    );
+
+    // FR-003, FR-005: Handle user response
+    if (selectedAction === 'Yes') {
+      // FR-004: Update configuration when user clicks Yes
+      const config = vscode.workspace.getConfiguration();
+      await config.update(
+        DEFAULT_VIEWER_CONFIG_KEY,
+        DEFAULT_VIEWER_ID,
+        vscode.ConfigurationTarget.Workspace
+      );
+
+      // FR-007: Persist the user's explicit choice in globalState
+      await context.globalState.update(HAS_SHOWN_PROMPT_KEY, 'yes');
+    } else if (selectedAction === 'No') {
+      // FR-005: Do not modify configuration
+      // FR-007: Persist the explicit No decision
+      await context.globalState.update(HAS_SHOWN_PROMPT_KEY, 'no');
+    }
+    // If user dismisses (selectedAction === undefined), don't persist
+    // This allows re-prompting on next activation (intentional per spec)
+  } catch (error) {
+    // IX. Error Handling: Silent failure, log only
+    // Non-fatal: Don't interrupt extension activation
+    if (error instanceof Error) {
+      console.error(`[DK-AI] Default viewer prompt error: ${error.message}`);
+    }
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
+  // Show default viewer prompt on first activation (FR-001)
+  void showDefaultViewerPrompt(context);
   // Register the custom editor provider
   const provider = MarkdownEditorProvider.register(context);
   context.subscriptions.push(provider);
