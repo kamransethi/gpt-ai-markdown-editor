@@ -137,7 +137,7 @@ Logic:
      - Do nothing
 
 Integrate into activation:
-- In `activate(context)`, after extension is ready, call `showDefaultViewerPrompt(context)` with `await` (non-blocking; prompt is fire-and-forget)
+- In `activate(context)`, after extension is ready, call `showDefaultViewerPrompt(context)` with `.catch()` error handler (fire-and-forget; does not block activation)
 - Place after all essential services are initialized, so activation completes quickly
 
 **Files to modify**:

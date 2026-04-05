@@ -1053,7 +1053,7 @@ docs: add comprehensive JSDoc to showDefaultViewerPrompt()
 
 ### Task 3.3: Verify Performance & Activation Integration [D: 3.2]
 
-**File**: `src/extension.ts` (verify integration in `activate()`)  
+**File**: `src/extension.ts` (verify integration in `activate()`)
 **Refs**: Constitution (performance budgets), Plan (timing)  
 **Responsibility**: Verify fire-and-forget pattern doesn't block activation  
 **Est. Time**: 15 minutes
@@ -1074,7 +1074,7 @@ docs: add comprehensive JSDoc to showDefaultViewerPrompt()
    - Ensure modal display adds <50ms to activation
    - Ensure globalState check adds <5ms
 
-3. Add a performance test (optional, recommended):
+3. Add a performance test (required):
    ```typescript
    it("should not block extension activation (fire-and-forget)", async () => {
      // Measure time from call to return
@@ -1104,8 +1104,8 @@ docs: add comprehensive JSDoc to showDefaultViewerPrompt()
 
 **Acceptance Criteria**:
 - [ ] Fire-and-forget pattern confirmed in `activate()` call
-- [ ] Performance test added or manually verified
-- [ ] Activation time increase is <50ms
+- [ ] Performance test added and PASSING (required)
+- [ ] Activation time increase is <50ms (verified by test)
 - [ ] No blocking operations
 - [ ] All tests still PASS
 
@@ -1570,12 +1570,15 @@ Content structure:
 2. [ ] Press Cmd+Shift+P → "Developer: Reload Window" (multiple times)
 3. [ ] Verify modal never appears on reload (globalState is cached)
 
-### Case 4.2: Manual Config Change After Decision
+### Case 4.2: Manual Config Change After Decision (Core Behavior)
 1. [ ] Install extension, choose "Yes"
-2. [ ] Manually change "markdown.preview.defaultPreviewPane" to a different viewer via settings
-3. [ ] Close and reopen .md file preview
-4. [ ] Verify the manually-set viewer is used (user preference respected)
-5. [ ] No re-prompt occurs even though config was manually changed
+2. [ ] Verify config is set: Cmd/Ctrl+Comma → "markdown.preview.defaultPreviewPane" = "kamransethi.gpt-ai-markdown-editor"
+3. [ ] Manually change "markdown.preview.defaultPreviewPane" to a different viewer (e.g., VS Code default) via settings
+4. [ ] Close and reopen .md file preview
+5. [ ] Verify the manually-set viewer (not our extension) is used (user preference respected)
+6. [ ] **Close and restart VS Code**
+7. [ ] **Verify modal does NOT appear again** (globalState persists "yes" decision regardless of current config)
+8. [ ] This confirms: decision persists in globalState, not re-evaluated from config on each activation
 
 ### Case 4.3: User Changes Decision via Settings
 1. [ ] Install extension, choose "Yes"
