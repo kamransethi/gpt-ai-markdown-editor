@@ -1,0 +1,77 @@
+[
+  {
+    "name": "bug",
+    "color": "d73a4a",
+    "description": "Something isn't working"
+  },
+  {
+    "name": "enhancement",
+    "color": "a2eeef",
+    "description": "New feature or improvement"
+  },
+  {
+    "name": "discussion",
+    "color": "d4c5f9",
+    "description": "Community conversation or question"
+  },
+  {
+    "name": "documentation",
+    "color": "0075ca",
+    "description": "Improvements or additions to documentation"
+  },
+  {
+    "name": "good-first-issue",
+    "color": "7057ff",
+    "description": "Good for new contributors to tackle"
+  },
+  {
+    "name": "help-wanted",
+    "color": "008672",
+    "description": "Community input or contribution welcome"
+  },
+  {
+    "name": "priority-high",
+    "color": "ff4444",
+    "description": "Urgent or high-impact issue"
+  },
+  {
+    "name": "priority-medium",
+    "color": "ffaa00",
+    "description": "Medium priority"
+  },
+  {
+    "name": "priority-low",
+    "color": "cccccc",
+    "description": "Low priority or nice-to-have"
+  },
+  {
+    "name": "status-blocked",
+    "color": "fc2929",
+    "description": "Blocked by another issue or external factor"
+  },
+  {
+    "name": "status-in-progress",
+    "color": "ffc274",
+    "description": "Currently being worked on"
+  },
+  {
+    "name": "status-review",
+    "color": "a0e8a0",
+    "description": "Ready for review"
+  },
+  {
+    "name": "wontfix",
+    "color": "ffffff",
+    "description": "Not planned to be fixed"
+  },
+  {
+    "name": "duplicate",
+    "color": "cfd3d7",
+    "description": "Already reported or similar to another issue"
+  },
+  {
+    "name": "invalid",
+    "color": "e4e669",
+    "description": "Not a valid bug or feature request"
+  }
+]
