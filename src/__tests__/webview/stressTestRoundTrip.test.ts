@@ -156,8 +156,12 @@ function createRoundtripEditor(): Editor {
       Highlight.extend({
         // Disable ==text== markdown tokenizer — only <mark> HTML is supported.
         markdownTokenizer: undefined,
-        addInputRules() { return []; },
-        addPasteRules() { return []; },
+        addInputRules() {
+          return [];
+        },
+        addPasteRules() {
+          return [];
+        },
         renderMarkdown(node: any, h: any) {
           return `<mark>${h.renderChildren(node)}</mark>`;
         },
@@ -346,11 +350,7 @@ describe('STRESS_TEST_DOC.md roundtrip', () => {
   });
 
   it('serialized output preserves ordered list inline marks (OrderedListMarkdownFix)', () => {
-    const orderedListMd = [
-      '1. First Item',
-      '2. Second Item',
-      '3. Third Item',
-    ].join('\n');
+    const orderedListMd = ['1. First Item', '2. Second Item', '3. Third Item'].join('\n');
 
     editor = createRoundtripEditor();
     editor.commands.setContent(orderedListMd, { contentType: 'markdown' });

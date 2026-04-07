@@ -211,17 +211,6 @@
           "maximum": 6,
           "description": "Maximum heading depth shown in the Table of Contents pane (1 = H1 only, 3 = H1–H3, 6 = all levels)."
         },
-        "gptAiMarkdownEditor.highlightSyntax": {
-          "type": "string",
-          "enum": [
-            "github"
-          ],
-          "enumDescriptions": [
-            "GitHub-flavored: <mark>highlighted text</mark>"
-          ],
-          "default": "github",
-          "description": "Controls how highlighted text is saved to markdown. Only GitHub-flavored <mark> syntax is supported."
-        },
         "gptAiMarkdownEditor.preserveHtmlComments": {
           "type": "boolean",
           "default": true,
@@ -233,6 +222,13 @@
           "minimum": 0.7,
           "maximum": 1.5,
           "description": "Editor zoom level (0.7 = 70%, 1.0 = 100%, 1.5 = 150%). Persisted across all documents."
+        },
+        "gptAiMarkdownEditor.editorWidth": {
+          "type": "number",
+          "default": 1920,
+          "minimum": 800,
+          "maximum": 2560,
+          "description": "Maximum content width in pixels for the editor (800–2560px). At narrower viewport widths, content will be narrower than this maximum."
         },
         "gptAiMarkdownEditor.aiModel": {
           "type": "string",

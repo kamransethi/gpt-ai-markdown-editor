@@ -488,7 +488,7 @@ body[data-theme="dark"] {
   text-rendering: optimizeLegibility;
   font-size: var(--md-base-size);
   margin: 20px auto;
-  max-width: 1920px;
+  max-width: var(--md-editor-width, 1920px);
   padding: 0 30px;
 }
 

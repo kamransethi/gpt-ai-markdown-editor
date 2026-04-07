@@ -172,9 +172,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       themeOverride: this.getConfig<string>('themeOverride', 'light'),
       developerMode: this.getConfig<boolean>('developerMode', true),
       tocMaxDepth: this.getConfig<number>('tocMaxDepth', 3),
-      highlightSyntax: this.getConfig<string>('highlightSyntax', 'github'),
       preserveHtmlComments: this.getConfig<boolean>('preserveHtmlComments', false),
       editorZoomLevel: this.getConfig<number>('editorZoomLevel', 1),
+      editorWidth: this.getConfig<number>('editorWidth', 1920),
       showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
     };
   }
@@ -297,7 +297,6 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('gptAiMarkdownEditor.themeOverride') ||
         e.affectsConfiguration('gptAiMarkdownEditor.developerMode') ||
         e.affectsConfiguration('gptAiMarkdownEditor.tocMaxDepth') ||
-        e.affectsConfiguration('gptAiMarkdownEditor.highlightSyntax') ||
         e.affectsConfiguration('gptAiMarkdownEditor.preserveHtmlComments') ||
         e.affectsConfiguration('gptAiMarkdownEditor.editorZoomLevel') ||
         e.affectsConfiguration('gptAiMarkdownEditor.showSelectionToolbar')

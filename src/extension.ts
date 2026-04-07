@@ -19,7 +19,7 @@ const DEFAULT_VIEWER_CONFIG_KEY = 'markdown.preview.defaultPreviewPane';
 const HAS_SHOWN_PROMPT_KEY = 'defaultViewerPromptShown';
 
 /**
- * Show prompt to set Visual Markdown Editor as default markdown viewer.
+ * Show prompt to set Flux Flow Markdown Editor as default markdown viewer.
  * Only shows on first activation; respects user's prior decision.
  *
  * Implements: FR-001 through FR-008
@@ -38,7 +38,7 @@ export async function showDefaultViewerPrompt(context: vscode.ExtensionContext):
     }
 
     // FR-002: Display modal dialog with Yes/No buttons
-    const message = 'Set Visual Markdown Editor as your default markdown viewer?';
+    const message = 'Set Flux Flow Markdown Editor as your default markdown viewer?';
     const selectedAction = await vscode.window.showInformationMessage(
       message,
       { modal: true }, // FR-002: Must be blocking

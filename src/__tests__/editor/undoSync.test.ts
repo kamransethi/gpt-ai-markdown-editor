@@ -175,6 +175,5 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     // Ensure a few important settings are present
     expect(payload).toHaveProperty('developerMode');
     expect(payload).toHaveProperty('editorZoomLevel');
-    expect(payload).toHaveProperty('highlightSyntax');
   });
 });

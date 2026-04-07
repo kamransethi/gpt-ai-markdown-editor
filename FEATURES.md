@@ -213,16 +213,6 @@ Links work in three modes — here's a live demonstration:
 
 ---
 
-## Highlight Syntax
-
-Choose how <mark>highlighted text</mark> is saved to markdown via `gptAiMarkdownEditor.highlightSyntax`:
-
-
-| Style              | Markdown Syntax     | Best for                       |
-| ------------------ | ------------------- | ------------------------------ |
-| Obsidian (default) | `==text==`          | Obsidian vault compatibility   |
-| GitHub             | `<mark>text</mark>` | GitHub rendering compatibility |
-
 
 Both formats are loaded regardless of the setting — only the **save** format changes.
 
@@ -467,7 +457,6 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 | `tableCellHorizontalSpacing` | number  | `0.2`            | Table cell horizontal padding in em (0–3)              |
 | `themeOverride`              | enum    | `light`          | Editor theme: light or dark                            |
 | `tocMaxDepth`                | number  | `3`              | Max heading depth in outline (1–6)                     |
-| `highlightSyntax`            | enum    | `obsidian`       | Highlight format: obsidian (`==`) or github (`<mark>`) |
 | `preserveHtmlComments`       | boolean | `false`          | Preserve `<!-- -->` comments                           |
 | `editorZoomLevel`            | number  | `1`              | Editor zoom (0.7–1.5)                                  |
 | `aiModel`                    | enum    | `gpt-4.1`        | AI model for text refinement (8 options)               |

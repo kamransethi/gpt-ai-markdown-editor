@@ -126,7 +126,7 @@ const KNOWN_HTML_TAGS = new Set([
  * Converts `<mark>` → `==` for native Highlight support.
  */
 function stripUnknownHtml(raw: string): string {
-  let result = raw.replace(/<\/?([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*\/?>/g, (tag, tagName) => {
+  const result = raw.replace(/<\/?([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*\/?>/g, (tag, tagName) => {
     return KNOWN_HTML_TAGS.has(tagName.toLowerCase()) ? tag : '';
   });
   return result;
@@ -780,8 +780,12 @@ function initializeEditor(initialContent: string) {
         // Disable ==text== markdown tokenizer — only <mark> HTML is supported.
         // Any ==text== in a document should be treated as plain text.
         markdownTokenizer: undefined,
-        addInputRules() { return []; },
-        addPasteRules() { return []; },
+        addInputRules() {
+          return [];
+        },
+        addPasteRules() {
+          return [];
+        },
         renderMarkdown(node: any, h: any) {
           return `<mark>${h.renderChildren(node)}</mark>`;
         },
@@ -1302,6 +1306,12 @@ function applyWebviewSettings(message: any) {
 
   if (typeof message.preserveHtmlComments === 'boolean') {
     setPreserveHtmlComments(message.preserveHtmlComments);
+  }
+
+  if (typeof message.editorWidth === 'number') {
+    // Set the CSS custom property for editor max-width
+    // The value is in pixels 800–2560px range (enforced at VS Code settings level)
+    document.documentElement.style.setProperty('--md-editor-width', `${message.editorWidth}px`);
   }
 
   if (typeof message.showSelectionToolbar === 'boolean') {
