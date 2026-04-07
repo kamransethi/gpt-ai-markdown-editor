@@ -28,11 +28,11 @@ This is source code
 And it saves well
 ```
 
-## 1. Text Formatting & Styles
+## 1. Text Formatting &amp; Styles
 
 - **Bold Text** using double asterisks or double underscores.
 - *Italic Text* using single asterisks or single underscores.
-- ***Bold & Italic*** mixed together.
+- ***Bold &amp; Italic*** mixed together.
 - ~~Strikethrough~~ text to show deleted items.
 - <mark>Highlighted Text</mark> to test highlight support (Mark extension).
 - `Inline Code` for short snippets.
@@ -69,13 +69,24 @@ And it saves well
     - Layer 3 (deeply nested)
 - Back to Layer 1
 
-### Ordered List
+### Ordered List with Inline Marks (Tests Bandaid #1: OrderedListMarkdownFix)
 
-1. First Item
-2. Second Item
-3. Sub-item A
-4. Sub-item B
-5. Third Item
+Both `1.` (dot) and `1)` (paren) styles should preserve **bold**, *italic*, `code`, [links](https://example.com).
+
+1. First item with **bold**
+2. Second item with *italic*
+3. Third with ***both***
+4. Item with `code` and ~~strike~~
+5. Item with [link](https://example.com)
+  1. Nested first - **bold nested**
+  2. Nested second with *italic*
+  3. Nested third with `code`
+    - Back to bullets
+    - Another **bold** bullet
+    1. Ordered in bullets
+    2. Another ordered
+
+Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedListMarkdownFix works.
 
 ### Task List
 
@@ -108,6 +119,7 @@ This table contains cells with bullet points separated by `<br />-` elements as 
 | **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes         | 🚀     |
 
 
+
 | Feature Type | Description / Details                                | Status |
 | ------------ | ---------------------------------------------------- | ------ |
 | Formatting   | - Bold- Italic- Highlight                            | ✅      |
@@ -126,7 +138,7 @@ This table contains cells with bullet points separated by `<br />-` elements as 
 
 ---
 
-## 7. Media & Images
+## 7. Media &amp; Images
 
 Below are the generated images for aesthetic testing.
 
@@ -192,7 +204,7 @@ $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 
 ---
 
-## 10. Links & Footnotes
+## 10. Links &amp; Footnotes
 
 - [Standard Link](https://www.google.com)
 - [Reference Link][ref]
@@ -237,8 +249,11 @@ Inside this collapsible section, we can have more content:
 | Logic        | - Logical operators   |        |
 
 
+
 | Heading                   | Second | Third |
 | ------------------------- | ------ | ----- |
 | This iis a long first row |        |       |
 |                           |        |       |
 |                           |        |       |
+
+
