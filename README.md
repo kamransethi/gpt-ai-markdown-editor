@@ -1,6 +1,6 @@
-# Visual AI Markdown Editor
+# Flux Flow Markdown Editor
 
-**The most feature-rich visual Markdown editor for VS Code** — built for people who want Markdown files, not Markdown friction.
+**Flux Flow Markdown Editor** — The most feature-rich visual Markdown experience for VS Code, built for people who want Markdown files, not Markdown friction.
 
 ![](https://img.shields.io/badge/License-MIT-yellow.svg)![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
@@ -35,14 +35,14 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 
 ![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/basic_overview_of_features.gif)
 
-*A full visual Markdown workflow inside VS Code: writing, formatting, tables, images, and structured content in one editor.*
+*A complete Markdown workflow inside VS Code: visual editing, formatting, tables, images, and structured content in one seamless editor.*
 
 ---
 
 ## What Makes It Different
 
 
-| Capability        | Visual AI Markdown Editor           | Typical Markdown Extension     |
+| Capability        | Flux Flow Markdown Editor           | Typical Markdown Extension     |
 | ----------------- | ----------------------------------- | ------------------------------ |
 | **Editing model** | Full WYSIWYG editor                 | Source-first with preview      |
 | **Tables**        | Visual editing, resize, menus       | Manual Markdown syntax         |
@@ -98,7 +98,7 @@ You work on the table itself, not the Markdown syntax behind it.
 
 ## Included Features
 
-- Visual Markdown editing inside VS Code
+- Fast, intuitive Markdown editing inside VS Code
 - Source view toggle
 - Table editing with resizing and context actions
 - Drag-and-drop image insertion
@@ -122,7 +122,7 @@ You work on the table itself, not the Markdown syntax behind it.
 
 **VS Code Marketplace**
 
-1. Visit [Visual AI Markdown Editor on the Marketplace](https://marketplace.visualstudio.com/items?itemName=kamransethi.gpt-ai-markdown-editor)
+1. Visit [Flux Flow Markdown Editor on the Marketplace](https://marketplace.visualstudio.com/items?itemName=kamransethi.gpt-ai-markdown-editor)
 2. Click **Install**
 
 **Open VSX IDEs**
@@ -134,7 +134,7 @@ You work on the table itself, not the Markdown syntax behind it.
 ### Use
 
 1. Open any `.md` file
-2. Right-click and choose **Open with Visual AI Markdown Editor**
+2. Right-click and choose **Open with Flux Flow Markdown Editor**
 3. Write visually and keep clean Markdown underneath
 
 Use the `</>` toolbar button any time you want to jump to source.

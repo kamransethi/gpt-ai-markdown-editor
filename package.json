@@ -1,6 +1,6 @@
 {
   "name": "gpt-ai-markdown-editor",
-  "displayName": "Visual AI Markdown Editor",
+  "displayName": "Flux Flow Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
   "version": "2.0.26",
   "publisher": "kamransethi",
@@ -66,7 +66,7 @@
     "chatParticipants": [
       {
         "id": "gptAiMarkdownEditor.chat",
-        "fullName": "Visual AI Markdown Editor",
+        "fullName": "Flux Flow Markdown Editor",
         "name": "markdown-editor",
         "description": "Ask questions about your current markdown document",
         "isSticky": false
@@ -75,7 +75,7 @@
     "customEditors": [
       {
         "viewType": "gptAiMarkdownEditor.editor",
-        "displayName": "Visual AI Markdown Editor",
+        "displayName": "Flux Flow Markdown Editor",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -90,7 +90,7 @@
     "commands": [
       {
         "command": "gptAiMarkdownEditor.openFile",
-        "title": "Open with Visual AI Markdown Editor"
+        "title": "Open with Flux Flow Markdown Editor"
       },
       {
         "command": "gptAiMarkdownEditor.outline.revealCurrent",
@@ -113,14 +113,14 @@
       },
       {
         "command": "gptAiMarkdownEditor.getSelectedText",
-        "title": "Visual AI Markdown Editor: Get Selected Text"
+        "title": "Flux Flow Markdown Editor: Get Selected Text"
       }
     ],
     "views": {
       "explorer": [
         {
           "id": "gptAiMarkdownEditorOutline",
-          "name": "Visual AI Markdown Editor: Outline",
+          "name": "Flux Flow Markdown Editor: Outline",
           "when": "gptAiMarkdownEditor.isActive",
           "icon": "$(layout-sidebar-right)"
         }
@@ -153,7 +153,7 @@
       ]
     },
     "configuration": {
-      "title": "Visual AI Markdown Editor",
+      "title": "Flux Flow Markdown Editor",
       "properties": {
         "gptAiMarkdownEditor.mediaPath": {
           "type": "string",
@@ -214,15 +214,13 @@
         "gptAiMarkdownEditor.highlightSyntax": {
           "type": "string",
           "enum": [
-            "obsidian",
             "github"
           ],
           "enumDescriptions": [
-            "Obsidian-style: ==highlighted text==",
             "GitHub-flavored: <mark>highlighted text</mark>"
           ],
-          "default": "obsidian",
-          "description": "Controls how highlighted text is saved to markdown."
+          "default": "github",
+          "description": "Controls how highlighted text is saved to markdown. Only GitHub-flavored <mark> syntax is supported."
         },
         "gptAiMarkdownEditor.preserveHtmlComments": {
           "type": "boolean",
@@ -279,7 +277,7 @@
     "prepackage:release": "node scripts/clean-vsix-artifacts.js",
     "vscode:prepublish": "npm run build:release",
     "build:debug": "npm run build:extension:debug && npm run build:webview:debug",
-    "build:release": "npm run build:extension:release && npm run build:webview:release && npm run verify-build",
+    "build:release": "npm run build:extension:release && npm run build:webview:release && npm run test:roundtrip && npm run verify-build",
     "verify-build": "node scripts/verify-build.js",
     "build:extension:debug": "node scripts/build-extension.js",
     "build:extension:release": "node scripts/build-extension.js --prod --no-sourcemap",
@@ -291,6 +289,7 @@
     "lint": "eslint src --ext ts --max-warnings 600",
     "lint:fix": "eslint src --ext ts --fix",
     "test": "jest",
+    "test:roundtrip": "jest stressTestRoundTrip --testEnvironment=jsdom",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "precommit": "npm run lint && npm run test",

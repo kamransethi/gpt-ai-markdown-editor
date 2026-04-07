@@ -105,7 +105,7 @@ it("should show modal dialog on first activation (no prior decision)", async () 
 it("should display user-friendly dialog text", async () => {
   // GIVEN: no prior decision in globalState
   // WHEN: showDefaultViewerPrompt(mockContext) is called
-  // THEN: message text contains "Visual Markdown Editor" and "default markdown viewer"
+  // THEN: message text contains "Flux Flow Markdown Editor" and "default markdown viewer"
   // AND: message is clear and non-technical
 });
 ```
@@ -533,7 +533,7 @@ test: add edge case tests (RED phase complete)
 2. Add new exported function BEFORE the `activate()` function:
    ```typescript
    /**
-    * Prompts user to set Visual Markdown Editor as default markdown viewer on first activation.
+    * Prompts user to set Flux Flow Markdown Editor as default markdown viewer on first activation.
     * 
     * Uses globalState to persist decision (yes/no/pending).
     * Shows blocking modal dialog only on first activation; subsequent activations skip based on prior choice.
@@ -646,7 +646,7 @@ export async function showDefaultViewerPrompt(
   
   // Show blocking modal dialog
   const response = await vscode.window.showInformationMessage(
-    "Would you like to set Visual Markdown Editor as your default markdown viewer?",
+    "Would you like to set Flux Flow Markdown Editor as your default markdown viewer?",
     { modal: true },
     "Yes",
     "No"
@@ -944,7 +944,7 @@ Expand the JSDoc comment for `showDefaultViewerPrompt()` to include:
 
 ```typescript
 /**
- * Prompts user to set Visual Markdown Editor as default markdown viewer on first activation.
+ * Prompts user to set Flux Flow Markdown Editor as default markdown viewer on first activation.
  * 
  * This function executes once per extension installation and stores its result permanently
  * in ExtensionContext.globalState. It follows the first-time setup paradigm: one simple
@@ -1013,7 +1013,7 @@ if (priorDecision === "yes" || priorDecision === "no") {
 
 // First activation or prior dismissal; show modal dialog
 const response = await vscode.window.showInformationMessage(
-  "Would you like to set Visual Markdown Editor as your default markdown viewer?",
+  "Would you like to set Flux Flow Markdown Editor as your default markdown viewer?",
   { modal: true },
   "Yes",
   "No"
@@ -1188,7 +1188,7 @@ chore: apply linting and formatting standards
    /**
     * Test suite for showDefaultViewerPrompt()
     * 
-    * Tests the first-time setup flow that prompts users to set Visual Markdown Editor
+    * Tests the first-time setup flow that prompts users to set Flux Flow Markdown Editor
     * as their default markdown viewer. Covers:
     * - First activation with no prior decision
     * - User clicking "Yes" (config update + globalState persistence)
@@ -1496,7 +1496,7 @@ Content structure:
 ### Test Steps
 1. [ ] Install extension from VSIX: Extensions panel → "Install from VSIX"
 2. [ ] Wait for extension to activate (should take <2 seconds)
-3. [ ] Verify modal appears with message: "Would you like to set Visual Markdown Editor as your default markdown viewer?"
+3. [ ] Verify modal appears with message: "Would you like to set Flux Flow Markdown Editor as your default markdown viewer?"
 4. [ ] Verify modal has two buttons: "Yes" and "No"
 5. [ ] Verify modal is blocking (can't click other editor areas while modal is open)
 
@@ -1505,7 +1505,7 @@ Content structure:
 2. [ ] Modal closes
 3. [ ] Open any .md file (create new file and rename to .md if needed)
 4. [ ] Right-click on markdown file in sidebar → "Open Preview"
-5. [ ] Verify default viewer is now "Visual Markdown Editor" (extension shows up in editor area)
+5. [ ] Verify default viewer is now "Flux Flow Markdown Editor" (extension shows up in editor area)
 6. [ ] Close editor
 7. [ ] Restart VS Code
 8. [ ] Verify modal does NOT appear again (decision was persisted)

@@ -3,13 +3,13 @@
 **Feature Branch**: `001-default-markdown-viewer`  
 **Created**: April 5, 2026  
 **Status**: Draft  
-**Input**: User description: "After extension installation, prompt users to set Visual Markdown Editor as the default markdown viewer. Change configuration to make that happen if the user wants it. Do not make any changes otherwise"
+**Input**: User description: "After extension installation, prompt users to set Flux Flow Markdown Editor as the default markdown viewer. Change configuration to make that happen if the user wants it. Do not make any changes otherwise"
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - First-Time Installation Prompt (Priority: P1)
 
-When a user installs the Visual AI Markdown Editor extension for the first time, they should be greeted with a simple, non-intrusive prompt asking if they'd like to set it as their default markdown viewer.
+When a user installs the Flux Flow Markdown Editor extension for the first time, they should be greeted with a simple, non-intrusive prompt asking if they'd like to set it as their default markdown viewer.
 
 **Why this priority**: This is the core feature request. It provides immediate value by offering users a quick setup option right when they install the extension, reducing friction in the onboarding experience.
 
@@ -17,7 +17,7 @@ When a user installs the Visual AI Markdown Editor extension for the first time,
 
 **Acceptance Scenarios**:
 
-1. **Given** the extension is installed for the first time, **When** the extension activates, **Then** a prompt appears asking the user if they want to use Visual Markdown Editor as the default markdown viewer
+1. **Given** the extension is installed for the first time, **When** the extension activates, **Then** a prompt appears asking the user if they want to use Flux Flow Markdown Editor as the default markdown viewer
 2. **Given** the prompt is displayed, **When** the user clicks "Yes", **Then** the VS Code configuration is updated to set `markdown.preview.defaultPreviewPane` to the extension's ID
 3. **Given** the prompt is displayed, **When** the user clicks "No", **Then** no configuration changes are made
 4. **Given** the user has responded to the prompt, **When** the extension loads again, **Then** the same prompt does not appear again (the choice is remembered)
@@ -67,7 +67,7 @@ Users should be able to change their markdown viewer preference at any time thro
 ### Functional Requirements
 
 - **FR-001**: System MUST detect if this is the first time the extension has been activated ever (not per-update); use `globalState` to track this permanently
-- **FR-002**: System MUST display a blocking modal dialog with "Yes" and "No" buttons asking if user wants to set Visual Markdown Editor as the default markdown viewer
+- **FR-002**: System MUST display a blocking modal dialog with "Yes" and "No" buttons asking if user wants to set Flux Flow Markdown Editor as the default markdown viewer
 - **FR-003**: System MUST accept user's explicit choice via "Yes" or "No" button; if user dismisses the modal without selecting a button, treat as "pending" (not a decision)
 - **FR-004**: When user clicks "Yes", system MUST update VS Code's `markdown.preview.defaultPreviewPane` configuration to the string value `kamransethi.gpt-ai-markdown-editor`
 - **FR-005**: When user clicks "No" or dismisses the modal, system MUST NOT modify any configuration

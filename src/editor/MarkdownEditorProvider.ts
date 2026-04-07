@@ -172,7 +172,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       themeOverride: this.getConfig<string>('themeOverride', 'light'),
       developerMode: this.getConfig<boolean>('developerMode', true),
       tocMaxDepth: this.getConfig<number>('tocMaxDepth', 3),
-      highlightSyntax: this.getConfig<string>('highlightSyntax', 'obsidian'),
+      highlightSyntax: this.getConfig<string>('highlightSyntax', 'github'),
       preserveHtmlComments: this.getConfig<boolean>('preserveHtmlComments', false),
       editorZoomLevel: this.getConfig<number>('editorZoomLevel', 1),
       showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
@@ -551,7 +551,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           });
         </script>
         
-        <title>Visual AI Markdown Editor</title>
+        <title>Flux Flow Markdown Editor</title>
       </head>
       <body data-extension-version="${this.context.extension?.packageJSON?.version || ''}">
         <div id="frontmatter-panel" class="frontmatter-panel">

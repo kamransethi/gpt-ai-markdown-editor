@@ -105,7 +105,7 @@ _Goal: Implement the simplest code to make all tests pass without refactoring._
 
 ### Task 2.3: Implement Modal Dialog Display
 - [ ] T901 Call `vscode.window.showInformationMessage()`
-- [ ] T902 Message text: "Would you like to set Visual Markdown Editor as your default markdown viewer?"
+- [ ] T902 Message text: "Would you like to set Flux Flow Markdown Editor as your default markdown viewer?"
 - [ ] T903 Set `{ modal: true }` option
 - [ ] T904 Buttons: `["Yes", "No"]`
 - [ ] T905 Capture response (string or undefined)

@@ -28,10 +28,6 @@ jest.mock('../../webview/features/linkDialog', () => ({
   showLinkDialog: jest.fn(),
 }));
 
-jest.mock('../../webview/features/imageInsertDialog', () => ({
-  showImageInsertDialog: jest.fn().mockResolvedValue(undefined),
-}));
-
 jest.mock('../../webview/features/emojiPicker', () => ({
   showEmojiPicker: jest.fn(),
 }));

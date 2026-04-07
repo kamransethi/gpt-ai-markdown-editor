@@ -1,6 +1,6 @@
 # Third-Party Licenses
 
-This document lists the third-party open source software components used in Visual AI Markdown Editor and their respective licenses.
+This document lists the third-party open source software components used in Flux Flow Markdown Editor and their respective licenses.
 
 ## Dependencies
 

@@ -1,4 +1,4 @@
-# Visual AI Markdown Editor — Feature Guide
+# Flux Flow Markdown Editor — Feature Guide
 
 A premium WYSIWYG markdown editing experience inside VS Code. Write naturally, focus on content — not syntax.
 
@@ -495,7 +495,7 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 
 ### Context Menus
 
-- Right-click `.md` files → "Open with Visual AI Markdown Editor"
+- Right-click `.md` files → "Open with Flux Flow Markdown Editor"
 - Right-click in editor → Cut, Copy, Paste, Clear Formatting, Insert Emoji, Insert Link, AI Refine
 - Right-click in tables → Row/column operations, sort, move, export CSV
 - Right-click images → Resize, rename, open in Finder/Explorer

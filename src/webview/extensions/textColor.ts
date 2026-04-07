@@ -35,12 +35,17 @@ marked.use({ extensions: [colorSpanExtension as any] });
 
 // Extend TextStyle so that it serializes and deserializes the color as a span for markdown export
 const extensionConfig = {
-  parseMarkdown() {
+  // Tell @tiptap/markdown to look up this handler under the 'colorSpan' token
+  // type (produced by the colorSpanExtension registered with marked above).
+  // Without this the registry defaults to the extension's own name ('textStyle')
+  // and getHandlerForToken('colorSpan') never finds this handler.
+  markdownTokenName: 'colorSpan',
+  parseMarkdown(token: any, helpers: any) {
+    // @tiptap/markdown 3.x API: return { mark, attrs, content } directly.
     return {
       mark: 'textStyle',
-      getAttrs: (tok: any) => ({
-        color: tok.color,
-      }),
+      attrs: { color: token.color },
+      content: helpers.parseInline(token.tokens || []),
     };
   },
   /**

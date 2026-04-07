@@ -1,6 +1,6 @@
 # Community Guidelines
 
-Welcome to the Visual AI Markdown Editor community! 🎉
+Welcome to the Flux Flow Markdown Editor community! 🎉
 
 This guide explains how to engage with the project, report issues, suggest features, and contribute.
 

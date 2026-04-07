@@ -1,4 +1,4 @@
-# Contributing to Visual AI Markdown Editor
+# Contributing to Flux Flow Markdown Editor
 
 Welcome! This guide will help you set up the project, understand its architecture, and start contributing.
 

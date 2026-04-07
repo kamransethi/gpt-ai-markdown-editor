@@ -20,11 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Launch Release
 
-This is the major launch baseline for the current generation of Visual AI Markdown Editor.
+This is the major launch baseline for the current generation of Flux Flow Markdown Editor.
 
 ### Added
 
-- Feature-rich visual Markdown workflow inside VS Code with strong emphasis on direct manipulation instead of syntax-first editing
+- Flux Flow: A feature-rich visual Markdown workflow inside VS Code with strong emphasis on direct manipulation instead of syntax-first editing
 - Advanced table editing with resizing, context actions, and toolbar controls
 - Inline image management with drag and drop, resize, rename, and metadata workflows
 - Mermaid diagram support with rendering, templates, and source editing workflow

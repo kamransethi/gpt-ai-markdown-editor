@@ -126,8 +126,7 @@ const KNOWN_HTML_TAGS = new Set([
  * Converts `<mark>` → `==` for native Highlight support.
  */
 function stripUnknownHtml(raw: string): string {
-  let result = raw.replace(/<mark>/gi, '==').replace(/<\/mark>/gi, '==');
-  result = result.replace(/<\/?([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*\/?>/g, (tag, tagName) => {
+  let result = raw.replace(/<\/?([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*\/?>/g, (tag, tagName) => {
     return KNOWN_HTML_TAGS.has(tagName.toLowerCase()) ? tag : '';
   });
   return result;
@@ -295,7 +294,6 @@ let tableContextMenuCtrl: ReturnType<typeof createTableContextMenu> | null = nul
 let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
-let highlightSyntax: 'obsidian' | 'github' = 'obsidian';
 let showSelectionToolbar = false;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
@@ -779,10 +777,13 @@ function initializeEditor(initialContent: string) {
       // GitHubAlerts must be before StarterKit to intercept alert blockquotes
       GitHubAlerts,
       Highlight.extend({
+        // Disable ==text== markdown tokenizer — only <mark> HTML is supported.
+        // Any ==text== in a document should be treated as plain text.
+        markdownTokenizer: undefined,
+        addInputRules() { return []; },
+        addPasteRules() { return []; },
         renderMarkdown(node: any, h: any) {
-          const open = highlightSyntax === 'github' ? '<mark>' : '==';
-          const close = highlightSyntax === 'github' ? '</mark>' : '==';
-          return `${open}${h.renderChildren(node)}${close}`;
+          return `<mark>${h.renderChildren(node)}</mark>`;
         },
       }).configure({
         HTMLAttributes: {
@@ -1297,10 +1298,6 @@ function applyWebviewSettings(message: any) {
   if (typeof message.tocMaxDepth === 'number') {
     tocMaxDepth = message.tocMaxDepth;
     scheduleTocPaneSelectionRefresh();
-  }
-
-  if (typeof message.highlightSyntax === 'string') {
-    highlightSyntax = message.highlightSyntax as 'obsidian' | 'github';
   }
 
   if (typeof message.preserveHtmlComments === 'boolean') {

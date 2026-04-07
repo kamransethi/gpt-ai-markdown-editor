@@ -4,11 +4,11 @@
 
 ## Acceptance of Terms
 
-Welcome to Visual AI Markdown Editor. By accessing, downloading, installing, or using the Visual AI Markdown Editor extension ("Extension") for Visual Studio Code, you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not use the Extension.
+Welcome to Flux Flow Markdown Editor. By accessing, downloading, installing, or using the Flux Flow Markdown Editor extension ("Extension") for Visual Studio Code, you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not use the Extension.
 
 ## Description of Service
 
-Visual AI Markdown Editor is a free, open-source Visual Studio Code extension that provides WYSIWYG (What You See Is What You Get) markdown editing capabilities. The Extension is provided "as is" without any warranties or guarantees.
+Flux Flow Markdown Editor is a free, open-source Visual Studio Code extension that provides WYSIWYG (What You See Is What You Get) markdown editing capabilities. The Extension is provided "as is" without any warranties or guarantees.
 
 ## Use License
 

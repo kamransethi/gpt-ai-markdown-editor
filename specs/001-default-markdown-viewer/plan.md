@@ -124,7 +124,7 @@ Logic:
 1. Check `context.globalState.get("defaultViewerPromptDecision")`
 2. If value exists, return early (no prompt)
 3. Call `vscode.window.showInformationMessage()`
-   - Message: "Would you like to set Visual Markdown Editor as your default markdown viewer?"
+   - Message: "Would you like to set Flux Flow Markdown Editor as your default markdown viewer?"
    - Buttons: `["Yes", "No"]`
    - Modal: `true`
 4. Handle response:
@@ -247,7 +247,7 @@ Integrate into activation:
 ### Risk Mitigation Tactics
 
 1. **Add informative dialog text**:
-   - "Would you like to set Visual Markdown Editor as your default markdown viewer?"
+   - "Would you like to set Flux Flow Markdown Editor as your default markdown viewer?"
    - Subtitle (optional): "You can change this anytime in VS Code settings (Cmd/Ctrl+comma → markdown.preview.defaultPreviewPane)."
 
 2. **Idempotent config updates**:

@@ -6,6 +6,8 @@
 jest.mock('@tiptap/core', () => ({
   Editor: jest.fn(),
   Extension: { create: (config: unknown) => config },
+  Mark: { create: (config: unknown) => config },
+  Node: { create: (config: unknown) => config },
 }));
 jest.mock('@tiptap/starter-kit', () => ({ __esModule: true, default: { configure: () => ({}) } }));
 jest.mock('@tiptap/markdown', () => ({ Markdown: { configure: () => ({}) } }));
@@ -20,6 +22,8 @@ jest.mock('@tiptap/extension-table', () => ({
 jest.mock('@tiptap/extension-list', () => ({
   __esModule: true,
   ListKit: { configure: () => ({}) },
+  OrderedList: { extend: (config: unknown) => config },
+  TaskItem: { extend: () => ({ configure: () => ({}) }) },
 }));
 jest.mock('@tiptap/extension-link', () => ({
   __esModule: true,
@@ -117,19 +121,17 @@ jest.mock('./../../webview/utils/linkValidation', () => ({ shouldAutoLink: jest.
 jest.mock('./../../webview/features/linkDialog', () => ({ showLinkDialog: jest.fn() }));
 jest.mock('./../../webview/features/imageRenameDialog', () => ({}));
 
-jest.mock('@tiptap/extension-drag-handle', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Extension } = require('@tiptap/core');
-  const mockExtension = Extension.create({ name: 'dragHandle' });
-  return { __esModule: true, DragHandle: mockExtension, default: mockExtension };
-});
+jest.mock('@tiptap/extension-drag-handle', () => ({
+  __esModule: true,
+  DragHandle: { configure: () => ({}) },
+  default: { configure: () => ({}) },
+}));
 
-jest.mock('@tiptap/extension-text-style', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Mark } = require('@tiptap/core');
-  const mockMark = Mark.create({ name: 'textStyle' });
-  return { __esModule: true, TextStyle: mockMark, default: mockMark };
-});
+jest.mock('@tiptap/extension-text-style', () => ({
+  __esModule: true,
+  TextStyle: { configure: () => ({}) },
+  default: { configure: () => ({}) },
+}));
 
 describe('frontmatter editor integration', () => {
   it('openFrontmatterEditor is accessible on window', async () => {
