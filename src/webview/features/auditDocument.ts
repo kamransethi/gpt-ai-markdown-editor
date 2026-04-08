@@ -320,7 +320,7 @@ function checkFileExistence(relativePath: string): Promise<FileCheckResult> {
         auditCheckCallbacks.delete(requestId);
         resolve({ exists: false });
       }
-    }, 5000);
+    }, 2000);
 
     vscodeApi.postMessage({
       type: 'auditCheckFile',
@@ -348,7 +348,7 @@ function checkUrlStatus(url: string): Promise<boolean> {
         auditUrlCheckCallbacks.delete(requestId);
         resolve(false);
       }
-    }, 5000);
+    }, 2000);
 
     vscodeApi.postMessage({
       type: 'auditCheckUrl',

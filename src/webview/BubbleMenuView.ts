@@ -619,7 +619,7 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       type: 'button',
       label: 'Audit',
       title: 'Audit document for broken links and images',
-      icon: { name: 'check-all', fallback: '✓' },
+      icon: { name: 'shield', fallback: '🛡️' },
       action: () => {
         window.dispatchEvent(new CustomEvent('auditDocument'));
       },

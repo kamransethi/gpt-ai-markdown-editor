@@ -43,14 +43,95 @@ function getLevenshteinDistance(a: string, b: string): number {
 // Maximum number of suggestion pills to show per issue (keeps the UI clean).
 const MAX_SUGGESTION_PILLS = 5;
 
+// Toast auto-dismiss timeout in milliseconds
+const TOAST_AUTO_DISMISS_MS = 3000;
+
+/**
+ * Display a toast notification.
+ * Auto-dismisses after TOAST_AUTO_DISMISS_MS unless type is 'loading'.
+ *
+ * @param message - The message to display
+ * @param type - Toast type: 'success' | 'info' | 'loading' (affects styling and auto-dismiss)
+ * @returns id for dismissing the toast manually (only used for 'loading' type)
+ */
+export function showToast(message: string, type: 'success' | 'info' | 'loading' = 'info'): string {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toastId = `toast-${Date.now()}-${Math.random()}`;
+  const toast = document.createElement('div');
+  toast.id = toastId;
+  toast.className = `toast toast-${type}`;
+  toast.role = 'status';
+  toast.setAttribute('aria-live', 'polite');
+
+  const iconMap = {
+    success: '✓',
+    info: 'ℹ',
+    loading: '⏳',
+  };
+  const icon = iconMap[type];
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icon}</span>
+    <span class="toast-message">${message}</span>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  // Trigger animation
+  requestAnimationFrame(() => {
+    toast.classList.add('visible');
+  });
+
+  // Auto-dismiss only for non-loading toasts
+  if (type !== 'loading') {
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => {
+        toast.remove();
+      }, 200); // Wait for fade-out animation
+    }, TOAST_AUTO_DISMISS_MS);
+  }
+
+  return toastId;
+}
+
+/**
+ * Dismiss a toast by ID (returned from showToast).
+ *
+ * @param toastId - The ID returned by showToast()
+ */
+export function dismissToast(toastId: string): void {
+  const toast = document.getElementById(toastId);
+  if (toast) {
+    toast.classList.remove('visible');
+    setTimeout(() => {
+      toast.remove();
+    }, 200); // Wait for fade-out animation
+  }
+}
+
 /**
  * Show the audit results overlay panel.
- * Creates the element on first call, then reuses it on subsequent audits.
+ * When no issues are found, displays a toast notification instead.
+ * When issues are found, displays a modal panel with the list.
  *
  * @param editor - The active TipTap editor instance.
  * @param issues - Array of audit issues to display.
  */
 export function showAuditOverlay(editor: Editor, issues: AuditIssue[]) {
+  if (issues.length === 0) {
+    // Show toast instead of panel for no issues
+    showToast('Your document is healthy — no issues found!', 'success');
+    return;
+  }
+
   let overlay = document.getElementById('audit-overlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -59,52 +140,27 @@ export function showAuditOverlay(editor: Editor, issues: AuditIssue[]) {
     document.body.appendChild(overlay);
   }
 
-  if (issues.length === 0) {
-    overlay.innerHTML = `
-      <div class="audit-overlay-backdrop"></div>
-      <div class="audit-overlay-panel">
-        <div class="audit-overlay-header">
-          <h3 class="audit-overlay-title">Document Audit</h3>
-          <button class="audit-overlay-close" aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.708.708L7.293 8l-3.647 3.646.708.707L8 8.707z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="audit-overlay-content">
-          <div class="audit-overlay-empty">
-            <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor" style="color: var(--vscode-charts-green); margin-bottom: 16px;">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M13.854 3.646l-7.5 7.5L3.146 8.5l.708-.708 2.5 2.5 6.792-6.792.708.708z"/>
-            </svg>
-            <p>No issues found!</p>
-            <p class="audit-overlay-empty-hint">Your document is healthy.</p>
-          </div>
-        </div>
+  overlay.innerHTML = `
+    <div class="audit-overlay-backdrop"></div>
+    <div class="audit-overlay-panel">
+      <div class="audit-overlay-header">
+        <h3 class="audit-overlay-title">Document Audit (${issues.length} issues)</h3>
+        <button class="audit-overlay-close" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.708.708L7.293 8l-3.647 3.646.708.707L8 8.707z"/>
+          </svg>
+        </button>
       </div>
-    `;
-  } else {
-    overlay.innerHTML = `
-      <div class="audit-overlay-backdrop"></div>
-      <div class="audit-overlay-panel">
-        <div class="audit-overlay-header">
-          <h3 class="audit-overlay-title">Document Audit (${issues.length} issues)</h3>
-          <button class="audit-overlay-close" aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.708.708L7.293 8l-3.647 3.646.708.707L8 8.707z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="audit-overlay-list"></div>
-      </div>
-    `;
+      <div class="audit-overlay-list"></div>
+    </div>
+  `;
 
-    const listEl = overlay.querySelector('.audit-overlay-list');
-    if (listEl) {
-      issues.forEach(issue => {
-        const item = buildIssueItem(issue);
-        listEl.appendChild(item);
-      });
-    }
+  const listEl = overlay.querySelector('.audit-overlay-list');
+  if (listEl) {
+    issues.forEach(issue => {
+      const item = buildIssueItem(issue);
+      listEl.appendChild(item);
+    });
   }
 
   overlay.classList.add('visible');
@@ -114,6 +170,7 @@ export function showAuditOverlay(editor: Editor, issues: AuditIssue[]) {
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
       overlay?.classList.remove('visible');
+      auditPreviewPopover.hide();
     });
   }
 
@@ -122,6 +179,7 @@ export function showAuditOverlay(editor: Editor, issues: AuditIssue[]) {
   if (backdrop) {
     backdrop.addEventListener('click', () => {
       overlay?.classList.remove('visible');
+      auditPreviewPopover.hide();
     });
   }
 
@@ -259,11 +317,200 @@ function buildSuggestionPills(suggestions: string[]): HTMLElement {
     const basename = sug.split('/').pop() ?? sug;
     pill.textContent = basename;
     pill.title = sug; // full path on hover
+
+    pill.addEventListener('mouseover', () => {
+      auditPreviewPopover.show(pill, sug);
+    });
+    pill.addEventListener('mouseout', () => {
+      auditPreviewPopover.scheduleHide();
+    });
+
     container.appendChild(pill);
   }
 
   return container;
 }
+
+const IMAGE_EXTENSIONS = /\.(bmp|gif|jpe?g|png|webp|avif|svg)([\?#].*)?$/i;
+const PREVIEW_HIDE_DELAY_MS = 120;
+
+function isImageSuggestion(path: string): boolean {
+  return IMAGE_EXTENSIONS.test(path);
+}
+
+function getFileIconName(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() ?? '';
+  const mapping: Record<string, string> = {
+    md: 'markdown',
+    markdown: 'markdown',
+    json: 'json',
+    yml: 'yaml',
+    yaml: 'yaml',
+    csv: 'csv',
+    txt: 'file',
+    pdf: 'file-pdf',
+    html: 'html',
+    htm: 'html',
+    js: 'file-code',
+    ts: 'file-code',
+    css: 'file-code',
+    scss: 'file-code',
+    xml: 'file-code',
+  };
+  return mapping[ext] ?? 'file';
+}
+
+function getBasename(path: string): string {
+  return path.split(/[\/]/).pop() ?? path;
+}
+
+const auditPreviewPopover = (() => {
+  let container: HTMLElement | null = null;
+  let activePreviewId = 0;
+  let hideTimer: number | null = null;
+
+  function ensureContainer() {
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'audit-preview-popover';
+      document.body.appendChild(container);
+    } else if (!container.isConnected) {
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+
+  function positionPopover(popover: HTMLElement, targetRect: DOMRect) {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const margin = 10;
+    const maxWidth = 320;
+    const left = Math.min(
+      Math.max(targetRect.left, margin),
+      viewportWidth - maxWidth - margin
+    );
+    let top = targetRect.bottom + margin;
+
+    popover.style.left = `${left}px`;
+    popover.style.maxWidth = `${maxWidth}px`;
+    popover.style.width = 'auto';
+
+    requestAnimationFrame(() => {
+      const rect = popover.getBoundingClientRect();
+      if (rect.bottom > viewportHeight && targetRect.top - rect.height - margin > 0) {
+        top = targetRect.top - rect.height - margin;
+      }
+      popover.style.top = `${top}px`;
+    });
+  }
+
+  function render(content: string, targetRect: DOMRect) {
+    const popover = ensureContainer();
+    if (hideTimer) {
+      window.clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+
+    popover.innerHTML = content;
+    positionPopover(popover, targetRect);
+    requestAnimationFrame(() => {
+      popover.classList.add('visible');
+    });
+  }
+
+  function hide() {
+    if (!container) return;
+    if (hideTimer) {
+      window.clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+    container.classList.remove('visible');
+  }
+
+  function scheduleHide() {
+    if (hideTimer) {
+      window.clearTimeout(hideTimer);
+    }
+    hideTimer = window.setTimeout(() => {
+      hide();
+    }, PREVIEW_HIDE_DELAY_MS);
+  }
+
+  async function showPreview(pill: HTMLElement, suggestion: string) {
+    const previewId = ++activePreviewId;
+    const targetRect = pill.getBoundingClientRect();
+    const basename = getBasename(suggestion);
+
+    const loadingContent = `
+      <div class="audit-preview-card">
+        <div class="audit-preview-header">Preview</div>
+        <div class="audit-preview-body">
+          <div class="audit-preview-loading">Loading preview…</div>
+        </div>
+      </div>
+    `;
+    render(loadingContent, targetRect);
+
+    if (isImageSuggestion(suggestion)) {
+      if (typeof window.resolveImagePath === 'function') {
+        try {
+          const resolvedUri = await window.resolveImagePath(suggestion);
+          if (previewId !== activePreviewId) return;
+
+          const imageContent = `
+            <div class="audit-preview-card">
+              <div class="audit-preview-header">Image preview</div>
+              <div class="audit-preview-body">
+                <div class="audit-preview-image-wrapper">
+                  <img src="${resolvedUri}" alt="${basename}" />
+                </div>
+                <div class="audit-preview-caption">${basename}</div>
+              </div>
+            </div>
+          `;
+          render(imageContent, targetRect);
+          return;
+        } catch {
+          if (previewId !== activePreviewId) return;
+        }
+      }
+
+      const unavailableContent = `
+        <div class="audit-preview-card">
+          <div class="audit-preview-header">Preview unavailable</div>
+          <div class="audit-preview-body">
+            <div class="audit-preview-empty">Image preview is not available for this path.</div>
+          </div>
+        </div>
+      `;
+      render(unavailableContent, targetRect);
+      return;
+    }
+
+    const fileIcon = getFileIconName(suggestion);
+    const fileContent = `
+      <div class="audit-preview-card">
+        <div class="audit-preview-header">File preview</div>
+        <div class="audit-preview-body">
+          <div class="audit-preview-file">
+            <span class="codicon codicon-${fileIcon} preview-file-icon"></span>
+            <div class="preview-file-meta">
+              <div class="preview-file-name">${basename}</div>
+              <div class="preview-file-path">${suggestion}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    render(fileContent, targetRect);
+  }
+
+  return {
+    show: showPreview,
+    hide,
+    scheduleHide,
+  };
+})();
 
 /**
  * Build the "📁 Browse…" button that opens the VS Code file picker.
@@ -480,8 +727,9 @@ function applyFix(
     otherItem.setAttribute('data-pos', String(newPos));
   });
 
-  // Remove item from list
+  // Remove item from list and hide any active preview immediately
   item.remove();
+  auditPreviewPopover.hide();
 
   // Show "all fixed" message if last issue resolved
   if (overlay.querySelectorAll('.audit-overlay-item').length === 0) {

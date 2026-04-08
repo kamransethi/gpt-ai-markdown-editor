@@ -1398,13 +1398,20 @@ window.addEventListener('auditDocument', async () => {
   console.log('[MD4H] Running document audit...');
   try {
     const { runAudit, auditPluginKey } = await import('./features/auditDocument');
-    const { showAuditOverlay } = await import('./features/auditOverlay');
+    const { showAuditOverlay, showToast, dismissToast } = await import('./features/auditOverlay');
 
     // Clear old decorations
     editor.view.dispatch(editor.state.tr.setMeta(auditPluginKey, []));
 
+    // Show loading toast
+    const loadingToastId = showToast('Auditing document...', 'loading');
+      
     const issues = await runAudit(editor);
     console.log('[MD4H] Audit complete, issues found:', issues.length);
+    
+    // Dismiss loading toast
+    dismissToast(loadingToastId);
+    
     showAuditOverlay(editor, issues);
 
     // Apply decorations

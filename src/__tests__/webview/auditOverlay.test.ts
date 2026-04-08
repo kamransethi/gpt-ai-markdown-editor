@@ -7,7 +7,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import Link from '@tiptap/extension-link';
 import { CustomImage } from '../../webview/extensions/customImage';
-import { showAuditOverlay } from '../../webview/features/auditOverlay';
+import { showAuditOverlay, showToast, dismissToast } from '../../webview/features/auditOverlay';
 import { AuditIssue } from '../../webview/features/auditDocument';
 
 let mockVscodeApi: { postMessage: jest.Mock };
@@ -45,16 +45,115 @@ describe('Audit Overlay UI', () => {
     if (overlay) {
       overlay.remove();
     }
+    const toastContainer = document.getElementById('toast-container');
+    if (toastContainer) {
+      toastContainer.remove();
+    }
     delete (window as any).vscode;
+    delete (window as any).resolveImagePath;
     jest.clearAllMocks();
   });
 
-  it('renders correctly with no issues', () => {
+  it('shows a toast notification when no issues found', () => {
     showAuditOverlay(editor, []);
+    
+    // Verify panel is NOT shown
     const overlay = document.getElementById('audit-overlay');
-    expect(overlay).not.toBeNull();
-    expect(overlay?.classList.contains('visible')).toBe(true);
-    expect(overlay?.textContent).toContain('No issues found!');
+    expect(overlay).toBeNull();
+    
+    // Verify toast is shown
+    const toastContainer = document.getElementById('toast-container');
+    expect(toastContainer).not.toBeNull();
+    
+    const toast = document.querySelector('.toast');
+    expect(toast).not.toBeNull();
+    expect(toast?.classList.contains('toast-success')).toBe(true);
+    expect(toast?.textContent).toContain('healthy');
+    expect(toast?.textContent).toContain('no issues found');
+  });
+
+  it('shows a hover preview for image suggestion pills', async () => {
+    (window as any).resolveImagePath = jest.fn().mockResolvedValue('resolved-image.png');
+
+    const issues: AuditIssue[] = [
+      {
+        type: 'image',
+        message: 'Image file not found',
+        target: 'missing.png',
+        suggestions: ['assets/missing.png'],
+        pos: 1,
+        nodeSize: 5,
+      },
+    ];
+
+    showAuditOverlay(editor, issues);
+
+    const pill = document.querySelector('.audit-suggestion-pill') as HTMLElement;
+    expect(pill).not.toBeNull();
+
+    pill.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const preview = document.querySelector('.audit-preview-popover');
+    expect(preview).not.toBeNull();
+    expect(preview?.textContent).toContain('Image preview');
+    expect(preview?.querySelector('img')?.getAttribute('src')).toBe('resolved-image.png');
+  });
+
+  it('shows a hover preview for non-image suggestion pills', async () => {
+    const issues: AuditIssue[] = [
+      {
+        type: 'link',
+        message: 'Linked file not found',
+        target: 'missing.md',
+        suggestions: ['docs/missing.md'],
+        pos: 1,
+        nodeSize: 5,
+      },
+    ];
+
+    showAuditOverlay(editor, issues);
+
+    const pill = document.querySelector('.audit-suggestion-pill') as HTMLElement;
+    expect(pill).not.toBeNull();
+
+    pill.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const preview = document.querySelector('.audit-preview-popover');
+    expect(preview).not.toBeNull();
+    expect(preview?.textContent).toContain('File preview');
+    expect(preview?.textContent).toContain('docs/missing.md');
+  });
+
+  it('hides the preview when a suggestion fix is applied', async () => {
+    const issues: AuditIssue[] = [
+      {
+        type: 'link',
+        message: 'Linked file not found',
+        target: 'missing.md',
+        suggestions: ['docs/missing.md'],
+        pos: 1,
+        nodeSize: 5,
+      },
+    ];
+
+    showAuditOverlay(editor, issues);
+
+    const pill = document.querySelector('.audit-suggestion-pill') as HTMLElement;
+    expect(pill).not.toBeNull();
+
+    pill.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const preview = document.querySelector('.audit-preview-popover') as HTMLElement;
+    expect(preview).not.toBeNull();
+    expect(preview?.classList.contains('visible')).toBe(true);
+
+    pill.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(preview?.classList.contains('visible')).toBe(false);
   });
 
   it('applies auto-fix ONLY when clicking the fix button', () => {
@@ -370,5 +469,94 @@ describe('Audit Overlay UI', () => {
     // heading issues are anchor-only – no file picker needed
     const browseBtn = document.querySelector('.audit-browse-btn');
     expect(browseBtn).toBeNull();
+  });
+});
+
+describe('Toast Notifications', () => {
+  afterEach(() => {
+    const toastContainer = document.getElementById('toast-container');
+    if (toastContainer) {
+      toastContainer.remove();
+    }
+  });
+
+  it('shows a success toast with correct styling', () => {
+    const toastId = showToast('Test success message', 'success');
+    
+    const toast = document.getElementById(toastId);
+    expect(toast).not.toBeNull();
+    expect(toast?.classList.contains('toast-success')).toBe(true);
+    expect(toast?.textContent).toContain('Test success message');
+  });
+
+  it('shows a loading toast with hourglass icon', (done) => {
+    const toastId = showToast('Auditing document...', 'loading');
+    
+    const toast = document.getElementById(toastId);
+    expect(toast).not.toBeNull();
+    expect(toast?.classList.contains('toast-loading')).toBe(true);
+    expect(toast?.textContent).toContain('Auditing document...');
+    
+    // Wait for requestAnimationFrame animation
+    setTimeout(() => {
+      expect(toast?.classList.contains('visible')).toBe(true);
+      done();
+    }, 50);
+  });
+
+  it('dismissToast removes the loading toast', (done) => {
+    const toastId = showToast('Loading...', 'loading');
+    
+    const toast = document.getElementById(toastId);
+    expect(toast).not.toBeNull();
+    
+    // Wait for animation to apply visible class
+    setTimeout(() => {
+      dismissToast(toastId);
+      
+      // After dismissal and animation, should be gone
+      setTimeout(() => {
+        const removedToast = document.getElementById(toastId);
+        expect(removedToast).toBeNull();
+        done();
+      }, 250);
+    }, 50);
+  });
+
+  it('shows an info toast', () => {
+    const toastId = showToast('Info message', 'info');
+    
+    const toast = document.getElementById(toastId);
+    expect(toast).not.toBeNull();
+    expect(toast?.classList.contains('toast-info')).toBe(true);
+    expect(toast?.textContent).toContain('Info message');
+  });
+
+  it('success toast auto-dismisses', (done) => {
+    const toastId = showToast('Success message', 'success');
+    
+    const toast = document.getElementById(toastId);
+    expect(toast).not.toBeNull();
+    
+    // Should be gone after auto-dismiss timeout
+    setTimeout(() => {
+      const dismissedToast = document.getElementById(toastId);
+      expect(dismissedToast).toBeNull();
+      done();
+    }, 3500);
+  });
+
+  it('loading toast does NOT auto-dismiss', (done) => {
+    const toastId = showToast('Loading...', 'loading');
+    
+    const toast = document.getElementById(toastId);
+    expect(toast).not.toBeNull();
+    
+    // Even after a long time, should still exist
+    setTimeout(() => {
+      const stillHere = document.getElementById(toastId);
+      expect(stillHere).not.toBeNull();
+      done();
+    }, 3500);
   });
 });
