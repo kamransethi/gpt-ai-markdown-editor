@@ -257,3 +257,7 @@ nextSearchResult: () => ({ editor, tr, dispatch }) => {
   return true;
 },
 ```
+
+Unstructured Notes:
+- User should be able to select elements and copy the markdown for it, enabling paste into WebEx or another Markdown Editor.
+
