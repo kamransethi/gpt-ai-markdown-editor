@@ -153,7 +153,7 @@
   .markdown-editor ul[data-type="taskList"] li {
     display: flex;
     align-items: baseline;
-    min-height: 1.7em;
+    min-height:fit-content;
   }
   
   .markdown-editor ul[data-type="taskList"] li>label {

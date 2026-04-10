@@ -146,7 +146,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * Rationale: Filenames under 3 characters (e.g., "a.png", "1.md") are too generic.
    * Searching for them yields too many false positives and creates noisy, unhelpful UI suggestions.
    */
-  private readonly MIN_BASENAME_LENGTH_FOR_SUGGESTION = 3; 
+  private readonly MIN_BASENAME_LENGTH_FOR_SUGGESTION = 5; 
   /**
    * Minimum length required to trigger broad fuzzy searching (name.).
    * Rationale: Glob fuzzy searches are highly CPU-intensive across large workspaces.
@@ -154,7 +154,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * that would be caused by generating thousands of matches for short strings like "ab".
    */
 
-  private readonly MIN_BASENAME_LENGTH_FOR_FUZZY = 4;
+  private readonly MIN_BASENAME_LENGTH_FOR_FUZZY = 6;
 
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
     const provider = new MarkdownEditorProvider(context);
@@ -696,39 +696,43 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
             try {
               extensionFiles = await vscode.workspace.findFiles(extensionPattern, searchExclude, 3);
             } catch (e) {
-              // Ignore errors
+              console.warn('[MD4H] Error finding extension files for audit suggestions:', e);
             }
           }
 
-          // Combine and deduplicate results
-          const allFiles = [...exactBasenameFiles, ...fuzzyFiles, ...extensionFiles];
-          const uniqueFiles = Array.from(new Set(allFiles.map(f => f.fsPath)));
-
-          // Convert to relative paths and filter by extension preference
-          for (const filePath of uniqueFiles.slice(0, 8)) {
-            // Limit to 8 suggestions
-            let rel = path.relative(basePath, filePath);
-            rel = rel.replace(/\\/g, '/'); // normalize to web paths
-            if (!rel.startsWith('.')) {
-              rel = './' + rel;
-            }
-
-            // Prioritize files with matching extensions
-            if (extension && path.extname(filePath).toLowerCase() === extension) {
-              suggestions.unshift(rel); // Add to front for priority
-            } else {
-              suggestions.push(rel);
-            }
-          }
-
-          // Remove duplicates while preserving priority order
-          const seen = new Set<string>();
-          const deduped = suggestions.filter(sug => {
-            if (seen.has(sug)) return false;
-            seen.add(sug);
-            return true;
+          // 1. Combine all raw results
+          const allFiles = [...exactBasenameFiles, ...fuzzyFiles, ...extensionFiles];   
+          // 2. Convert all absolute paths to relative, web-safe paths
+          const rawSuggestions = allFiles.map(f => {
+            let rel = path.relative(basePath, f.fsPath).replace(/\\/g, '/');
+            return rel.startsWith('.') ? rel : `./${rel}`;
           });
-          suggestions.splice(0, suggestions.length, ...deduped);
+
+          // 3. Deduplicate
+          const uniqueSuggestions = Array.from(new Set(rawSuggestions));
+
+          // 4. Sort based on clear priority rules
+          uniqueSuggestions.sort((a, b) => {
+            // Priority 1: Does the extension match the original?
+            const aHasExactExt = extension && path.extname(a).toLowerCase() === extension;
+            const bHasExactExt = extension && path.extname(b).toLowerCase() === extension;
+            if (aHasExactExt && !bHasExactExt) return -1;
+            if (!aHasExactExt && bHasExactExt) return 1;
+
+            // Priority 2: Does the basename match exactly?
+            const aBase = path.basename(a, path.extname(a));
+            const bBase = path.basename(b, path.extname(b));
+            const aExactBase = aBase === basename;
+            const bExactBase = bBase === basename;
+            if (aExactBase && !bExactBase) return -1;
+            if (!aExactBase && bExactBase) return 1;
+
+            // Priority 3: Shorter paths are usually closer to the current directory
+            return a.length - b.length;
+          });
+
+          // 5. Apply the top 5 sorted results to the suggestions array
+          suggestions.push(...uniqueSuggestions.slice(0, 5));
         }
       } catch (e) {
         console.warn('[MD4H] Error finding audit file suggestions:', e);
@@ -807,10 +811,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
 
       // Fall back to the absolute path when file is outside the document root
+      // Fall back to the absolute path when file is outside the document root
       if (!relativePath) {
-        relativePath = absoluteSelected.replace(/\\/g, '/');
+        relativePath = absoluteSelected.replace(/\\/g, '/'); 
+        // Warn the user about document portability issues
+        vscode.window.showWarningMessage(
+          'You selected a file outside the current workspace. An absolute path was used, which may break if you share this document.'
+        );
       }
-
       webview.postMessage({ type: 'auditPickFileResult', requestId, selectedPath: relativePath });
     } catch (e) {
       console.error('[MD4H] handleAuditPickFile error:', e);

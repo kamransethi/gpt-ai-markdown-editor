@@ -348,7 +348,6 @@ function checkUrlStatus(url: string): Promise<UrlCheckResult> {
   return new Promise(resolve => {
     const requestId = `audit-url-check-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-    // Increased to 5 seconds. Network requests can naturally take a few seconds.
     const timeout = setTimeout(() => {
       if (auditUrlCheckCallbacks.has(requestId)) {
         auditUrlCheckCallbacks.delete(requestId);
