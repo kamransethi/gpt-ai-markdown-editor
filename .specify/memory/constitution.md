@@ -163,27 +163,129 @@ These are critical known issues — read before working on sync/editor state:
 - Empty paragraph handling: filter at serialization time, NOT during typing (which causes cursor jumps)
 - Position calculation: use `$from.after($from.depth)` for safe positions, avoid `$pos.end(0)` which can overflow
 
----
+## XIII. Data Safety & Roundtrip Testing (CRITICAL)
 
-*Last updated: 2026-04-04*
+**Zero silent data loss.** Every release must pass comprehensive roundtrip testing before public availability.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### Roundtrip Testing Requirements
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Load a document → edit in Flux Flow → save → reload in VS Code source editor → verify content unchanged
+- Run on documents 100+ lines, complex tables, images, Mermaid diagrams, all formatting types
+- Test stress scenarios: rapid typing, undo/redo loops, large pastes, external file changes
+- STRESS_TEST_DOC.md is the canonical stress test corpus — update it when new features land
+- `npm test` must include roundtrip tests — no manual testing handoff to users
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### Tracked Bandaids & Fixes
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+All bugs and workarounds MUST be traceable:
+
+1. **Root-cause analysis**: Before implementing a fix, understand WHY the bug exists
+2. **Explicit tracking**: Create a `.md` file in `/memories/repo/` documenting the issue, root cause, and fix strategy
+3. **Test coverage**: Write a failing test that catches the bug before applying the fix
+4. **Rotation**: Review all tracked bandaids monthly — upgrade them to clean architecture or document why they must remain
+
+### Examples of Tracked Bandaids
+
+- `tbody-fix-root-cause.md` — TipTap rendering issue with empty tbody elements
+- `tiptap-ordered-list-fix.md` — Markdown serialization for ordered lists with custom markers
+- `menu-heading-style-collision.md` — CSS specificity conflict between menu styles and heading typography
+
+### Known Issues Register
+
+All known bugs are tracked in `KNOWN_ISSUES.md` at the project root. Each bug has:
+- A failing test in `src/__tests__/webview/knownIssues.test.ts`
+- Root cause analysis and proposed fix
+- Priority and confidence to fix
+
+**Maintenance rules:**
+- When a new bug is found, add it to `KNOWN_ISSUES.md` with a failing test
+- When a bug is fixed, move it to a "Resolved" section with the fix commit hash
+- Review the known issues list before each release
+
+## Architectural Constraints
+
+### Platform Integration
+
+**CustomTextEditorProvider Rationale:**
+- Text-based editing model keeps Git diffs clean and human-readable
+- Undo/redo flow through VS Code, not reimplemented
+- Save lifecycle handled by platform, never custom implementations
+- Webview is a RENDERER, not a source of truth
+
+### Editor Framework: TipTap + ProseMirror
+
+**Why TipTap over raw ProseMirror:**
+- Easier extension API — modular, composable, well-documented
+- Official Markdown plugin handles most syntax out of the box
+- Rich ecosystem of extensions reduces custom code
+
+**Document Synchronization Model:**
+- Canonical source: VS Code's TextDocument
+- Webview renders TipTap view from markdown
+- User edits computed → Markdown serialized → full document replacement (not diffs)
+- 500ms debounce on outbound updates
+- 2s grace period before accepting external changes (don't interrupt user typing)
+
+### UI/UX Constraints
+
+**Typography-First Design:**
+- Body text: Serif font (Charter/Georgia) — readable prose, not monospace code
+- Line height: 1.6–1.8 for body text
+- Margins: White space is part of the product
+- All visual changes validated by reading 3000+ word document for 10+ minutes in light and dark themes
+
+## Development Workflow & Quality Gates
+
+### Before Each Commit
+
+- [ ] `npm test` passes (all tests, not just new ones)
+- [ ] No roundtrip regressions (spot check on complex documents)
+- [ ] CSS changes verified in light, dark, and high-contrast themes
+- [ ] If modifying `src/webview/extensions/`, verify new extension follows Pattern (Section VIII)
+- [ ] If touching `src/editor/` sync logic, verify against Document Sync Pitfalls (Section X)
+- [ ] If changing toolbar, verify order parity (Section VII)
+
+### Git Conventions
+
+- **Never commit/push without user review** — only create branches
+- **Use `git mv`** for renaming/moving tracked files (preserves history)
+- **Dependency changes**: Update `THIRD_PARTY_LICENSES.md` in the same commit
+- **Commit message format**: `type(scope): description` (e.g., `feat(editor): add strikethrough formatting`)
+
+### Performance Verification
+
+After implementing performance-sensitive features:
+
+1. Run `npm build:debug`
+2. Load a 5000+ line document in the editor
+3. Measure responsiveness: typing latency, menu opens, undo/redo speed
+4. Check Performance budget (Section III) — if exceeded, profile and optimize before merging
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+**This constitution is the single source of truth** for project constraints, quality standards, and architectural decisions. All code, tests, and design decisions must align with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Amendment Procedure
+
+1. **Identifying a need**: Create an issue or discussion documenting the constraint or principle that conflicts with current practice
+2. **Proposal & review**: Draft the amendment; get consensus from project maintainers
+3. **Version bump**: Update `CONSTITUTION_VERSION` per semantic versioning (see below)
+4. **Propagation**: Update dependent templates and guidance files (see consistency checklist in mode instructions)
+5. **Commit message**: `docs(constitution): amend vX.Y.Z — [reason]`
+
+### Version Policy
+
+- **MAJOR** (e.g., 1.0.0 → 2.0.0): Backward-incompatible principle removal or redefinition; fundamental architecture shift
+- **MINOR** (e.g., 1.0.0 → 1.1.0): New principle or section added; material expansion of existing guidance
+- **PATCH** (e.g., 1.0.0 → 1.0.1): Clarifications, wording fixes, typo corrections, non-semantic refinements
+
+### Compliance & Review
+
+- Every PR/MR must verify compliance with principles relevant to the change
+- Assigned reviewers should flag violations of Sections I–XIII before approval
+- If a violation is intentional, document the rationale in the commit message or PR description
+- Monthly: review tracked bandaids (Section XIII) and upgrade or archive as appropriate
+
+---
+
+**Version**: 1.0.0 | **Ratified**: 2026-04-09 | **Last Amended**: 2026-04-09
