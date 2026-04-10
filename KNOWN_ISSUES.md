@@ -27,22 +27,24 @@
 ## ~~BUG-B1: Editor still editable while Insert Link dialog is open~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | Medium                                      |
-| Test status       | ✓ PASSING — fixed                           |
-| Resolution        | `showLinkDialog()` now calls `editor.setEditable(false)`, `hideLinkDialog()` restores with `editor.setEditable(true)` |
+| Field       | Value                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Priority    | Medium                                                                                                                |
+| Test status | ✓ PASSING — fixed                                                                                                     |
+| Resolution  | `showLinkDialog()` now calls `editor.setEditable(false)`, `hideLinkDialog()` restores with `editor.setEditable(true)` |
+
 
 ---
 
 ## ~~BUG-B2: File link insertion replaces selected text (data loss)~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | High                                        |
-| Test status       | ✓ PASSING — fixed                           |
-| Resolution        | File click handler now guards with `if (textInput && !textInput.value.trim())` — only sets filename when no text is already selected |
+| Field       | Value                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Priority    | High                                                                                                                                 |
+| Test status | ✓ PASSING — fixed                                                                                                                    |
+| Resolution  | File click handler now guards with `if (textInput && !textInput.value.trim())` — only sets filename when no text is already selected |
+
 
 ---
 
@@ -67,22 +69,24 @@
 ## ~~BUG-B4: Next character typed after link gets included in link~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | High                                        |
-| Test status       | ✓ PASSING — fixed (2 tests)                 |
-| Resolution        | Extended Link with `inclusive() { return false; }` — the default `inclusive()` returned `this.options.autolink` (true), causing marks to extend at boundaries |
+| Field       | Value                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority    | High                                                                                                                                                          |
+| Test status | ✓ PASSING — fixed (2 tests)                                                                                                                                   |
+| Resolution  | Extended Link with `inclusive() { return false; }` — the default `inclusive()` returned `this.options.autolink` (true), causing marks to extend at boundaries |
+
 
 ---
 
 ## ~~BUG-B5: Links to .md files open in VS Code text editor~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | Medium                                      |
-| Test status       | ✓ PASSING — fixed                           |
-| Resolution        | `handleOpenFileLink` now checks `fileExtension === '.md'` and uses `vscode.commands.executeCommand('vscode.openWith', fileUri, 'gptAiMarkdownEditor.editor')` |
+| Field       | Value                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority    | Medium                                                                                                                                                        |
+| Test status | ✓ PASSING — fixed                                                                                                                                             |
+| Resolution  | `handleOpenFileLink` now checks `fileExtension === '.md'` and uses `vscode.commands.executeCommand('vscode.openWith', fileUri, 'gptAiMarkdownEditor.editor')` |
+
 
 ---
 
@@ -123,11 +127,12 @@
 ## ~~BUG-D: Empty doc placeholder missing on non-first lines~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | Low                                         |
-| Test status       | ✓ PASSING — fixed                           |
-| Resolution        | Fixed CSS selector: changed `.ProseMirror p.is-editor-empty:first-child::before` to `.ProseMirror.is-editor-empty > p.is-empty:first-child::before` — the "Start writing..." prompt now only shows for the first paragraph when the entire editor is empty, while the `.is-empty::before` rule with `data-placeholder` handles all other empty lines |
+| Field       | Value                                                                                                                                                                                                                                                                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority    | Low                                                                                                                                                                                                                                                                                                                                                  |
+| Test status | ✓ PASSING — fixed                                                                                                                                                                                                                                                                                                                                    |
+| Resolution  | Fixed CSS selector: changed `.ProseMirror p.is-editor-empty:first-child::before` to `.ProseMirror.is-editor-empty > p.is-empty:first-child::before` — the "Start writing..." prompt now only shows for the first paragraph when the entire editor is empty, while the `.is-empty::before` rule with `data-placeholder` handles all other empty lines |
+
 
 ---
 
@@ -156,11 +161,12 @@
 ## ~~BUG-F: Obsidian checkbox paste loses bold formatting~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | Low                                         |
-| Test status       | ✓ PASSING — fixed (2 tests)                 |
-| Resolution        | Changed `taskListItem` turndown rule to use `turndown.turndown(contentDiv.innerHTML)` instead of `contentDiv.textContent` — preserves bold, italic, and other inline formatting |
+| Field       | Value                                                                                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority    | Low                                                                                                                                                                             |
+| Test status | ✓ PASSING — fixed (2 tests)                                                                                                                                                     |
+| Resolution  | Changed `taskListItem` turndown rule to use `turndown.turndown(contentDiv.innerHTML)` instead of `contentDiv.textContent` — preserves bold, italic, and other inline formatting |
+
 
 ---
 
@@ -185,8 +191,8 @@
 ## ~~BUG-H: Search next/prev buttons don't navigate~~ ✅ FIXED
 
 
-| Field             | Value                                       |
-| ----------------- | ------------------------------------------- |
-| Priority          | Medium                                      |
-| Test status       | ✓ PASSING — fixed                           |
-| Resolution        | Changed `nextSearchResult` and `previousSearchResult` commands to accept `tr` and `dispatch` params, call `if (dispatch) dispatch(tr)`, and return `true` — removed `editor.commands.focus()` call that stole focus |
+| Field       | Value                                                                                                                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority    | Medium                                                                                                                                                                                                              |
+| Test status | ✓ PASSING — fixed                                                                                                                                                                                                   |
+| Resolution  | Changed `nextSearchResult` and `previousSearchResult` commands to accept `tr` and `dispatch` params, call `if (dispatch) dispatch(tr)`, and return `true` — removed `editor.commands.focus()` call that stole focus |

@@ -230,13 +230,6 @@
           "maximum": 2560,
           "description": "Maximum content width in pixels for the editor (800–2560px). At narrower viewport widths, content will be narrower than this maximum."
         },
-        "gptAiMarkdownEditor.minEditorWidth": {
-          "type": "number",
-          "default": 600,
-          "minimum": 400,
-          "maximum": 1200,
-          "description": "Minimum viewport width (pixels) before horizontal scrollbars are shown. Below this width, code blocks and tables may scroll horizontally. At or above this width, content wraps to fit and no horizontal scrollbar appears in the main editor (400–1200px, default 600px)."
-        },
         "gptAiMarkdownEditor.aiModel": {
           "type": "string",
           "enum": [

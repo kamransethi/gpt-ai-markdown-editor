@@ -1321,15 +1321,6 @@ function applyWebviewSettings(message: any) {
     document.documentElement.style.setProperty('--md-editor-width', `${message.editorWidth}px`);
   }
 
-  if (typeof message.minEditorWidth === 'number') {
-    // Set the CSS custom property for minimum editor width before horizontal scrollbars appear
-    // The value is in pixels 400–1200px range (enforced at VS Code settings level, default 600px)
-    document.documentElement.style.setProperty(
-      '--md-min-editor-width',
-      `${message.minEditorWidth}px`
-    );
-  }
-
   if (typeof message.showSelectionToolbar === 'boolean') {
     showSelectionToolbar = message.showSelectionToolbar;
     // Immediately hide the floating toolbar when the setting is turned off,
