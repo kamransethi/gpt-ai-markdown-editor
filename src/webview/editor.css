@@ -484,12 +484,17 @@ body[data-theme="dark"] {
   /* Smooth reading */
   outline: none;
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-size: var(--md-base-size);
   margin: 20px auto;
-  max-width: var(--md-editor-width, 1920px);
+  /* Never exceed viewport width: accounts for 30px padding on each side */
+  max-width: min(var(--md-editor-width, 1920px), calc(100vw - 60px));
   padding: 0 30px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ============================================
