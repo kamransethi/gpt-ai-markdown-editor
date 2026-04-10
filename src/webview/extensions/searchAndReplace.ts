@@ -208,23 +208,23 @@ export const SearchAndReplace = Extension.create<
         },
       nextSearchResult:
         () =>
-        ({ editor }) => {
-          editor.commands.focus();
+        ({ editor, tr, dispatch }) => {
           const { results, resultIndex } = editor.storage.searchAndReplace;
           editor.storage.searchAndReplace.resultIndex = results.length
             ? (resultIndex + 1) % results.length
             : 0;
-          return false;
+          if (dispatch) dispatch(tr);
+          return true;
         },
       previousSearchResult:
         () =>
-        ({ editor }) => {
-          editor.commands.focus();
+        ({ editor, tr, dispatch }) => {
           const { results, resultIndex } = editor.storage.searchAndReplace;
           editor.storage.searchAndReplace.resultIndex = results.length
             ? (resultIndex - 1 + results.length) % results.length
             : 0;
-          return false;
+          if (dispatch) dispatch(tr);
+          return true;
         },
       replaceCurrentResult:
         () =>

@@ -340,7 +340,7 @@ function updateAutocompleteDropdown(
         // Show only filename in URL input
         urlInput.value = fileResult.filename;
         const textInput = document.querySelector('#link-text-input') as HTMLInputElement | null;
-        if (textInput) {
+        if (textInput && !textInput.value.trim()) {
           textInput.value = formatFileLinkLabel(fileResult.filename);
         }
 
@@ -1001,6 +1001,9 @@ export function showLinkDialog(editor: Editor): void {
   // Close autocomplete initially
   closeAutocomplete();
 
+  // Disable editor interaction while dialog is open
+  editor.setEditable(false);
+
   // Show overlay
   linkDialogElement.classList.add('visible');
   linkDialogElement.style.display = 'block';
@@ -1049,6 +1052,11 @@ export function hideLinkDialog(): void {
   linkDialogElement.classList.remove('visible');
   linkDialogElement.style.display = 'none';
   isVisible = false;
+
+  // Re-enable editor interaction
+  if (editorRef) {
+    editorRef.setEditable(true);
+  }
 
   if (restoreSelection && editorRef && originalSelection) {
     try {

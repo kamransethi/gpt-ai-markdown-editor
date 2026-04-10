@@ -85,6 +85,7 @@ const createMockEditor = (overrides: Record<string, unknown> = {}) => {
     getAttributes: jest.fn(() => ({})),
     commands: { setTextSelection: jest.fn() },
     chain: jest.fn(),
+    setEditable: jest.fn(),
     view,
     ...overrides,
   } as unknown as Editor;

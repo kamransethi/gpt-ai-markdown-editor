@@ -1789,7 +1789,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   background-color: var(--md-selection);
 }
 
-.markdown-editor .ProseMirror p.is-editor-empty:first-child::before {
+.markdown-editor .ProseMirror.is-editor-empty > p.is-empty:first-child::before {
   content: 'Start writing...';
   color: var(--md-muted);
   pointer-events: none;

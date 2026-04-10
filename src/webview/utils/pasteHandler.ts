@@ -71,11 +71,16 @@ turndown.addRule('taskListItem', {
     const contentDiv = node.querySelector(':scope > div');
     let text: string;
     if (contentDiv) {
-      // TipTap structure: get text from the content <div>, ignoring the <label>
-      text = contentDiv.textContent?.trim() || '';
+      // TipTap structure: convert inner HTML to preserve formatting (bold, italic, etc.)
+      text = turndown.turndown(contentDiv.innerHTML).trim();
     } else {
-      // Standard HTML structure: get all text, strip checkbox notation
-      text = (node.textContent || '').replace(/^\s*\[[ x]\]\s*/i, '').trim();
+      // Standard HTML structure: convert inner HTML, strip checkbox notation
+      const clone = node.cloneNode(true) as HTMLElement;
+      const checkbox = clone.querySelector('input[type="checkbox"]');
+      if (checkbox) checkbox.remove();
+      const label = clone.querySelector('label');
+      if (label) label.remove();
+      text = turndown.turndown(clone.innerHTML).trim();
     }
     return `- [${isChecked ? 'x' : ' '}] ${text}\n`;
   },

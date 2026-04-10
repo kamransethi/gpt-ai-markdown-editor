@@ -89,6 +89,10 @@ function createEditorWithContent(_markdown?: string): Editor {
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { class: 'markdown-link' },
+      }).extend({
+        inclusive() {
+          return false;
+        },
       }),
       CustomImage.configure({ allowBase64: true }),
       Highlight.configure({ HTMLAttributes: { class: 'highlight' } }),

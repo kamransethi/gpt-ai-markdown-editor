@@ -924,6 +924,13 @@ function initializeEditor(initialContent: string) {
           class: 'markdown-link',
         },
         shouldAutoLink,
+      }).extend({
+        // Override inclusive: the default returns `this.options.autolink` (true),
+        // which makes the mark extend when typing at the boundary (BUG-B4).
+        // Setting to false ensures typed characters after a link don't get absorbed.
+        inclusive() {
+          return false;
+        },
       }),
       CustomImage.configure({
         allowBase64: true, // Allow base64 for preview

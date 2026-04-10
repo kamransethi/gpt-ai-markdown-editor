@@ -510,12 +510,22 @@ export async function handleOpenFileLink(
         vscode.window.showErrorMessage(`Failed to open image file: ${errorMessage}`);
       }
     } else {
-      // For text files, use openTextDocument
+      // For text files, use openTextDocument (or custom editor for .md files)
       console.log('[DK-AI] Attempting to open text file with openTextDocument');
       try {
-        const doc = await vscode.workspace.openTextDocument(fileUri);
-        await vscode.window.showTextDocument(doc);
-        console.log('[DK-AI] Successfully opened file link:', fileUri.fsPath);
+        if (fileExtension === '.md') {
+          // Open .md files in the WYSIWYG markdown editor instead of the default text editor
+          await vscode.commands.executeCommand(
+            'vscode.openWith',
+            fileUri,
+            'gptAiMarkdownEditor.editor'
+          );
+          console.log('[DK-AI] Successfully opened .md file in WYSIWYG editor:', fileUri.fsPath);
+        } else {
+          const doc = await vscode.workspace.openTextDocument(fileUri);
+          await vscode.window.showTextDocument(doc);
+          console.log('[DK-AI] Successfully opened file link:', fileUri.fsPath);
+        }
       } catch (error) {
         // If it's not a text file, try vscode.open command as fallback
         const errorMessage = toErrorMessage(error);
