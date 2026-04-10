@@ -175,6 +175,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       preserveHtmlComments: this.getConfig<boolean>('preserveHtmlComments', false),
       editorZoomLevel: this.getConfig<number>('editorZoomLevel', 1),
       editorWidth: this.getConfig<number>('editorWidth', 1920),
+      minEditorWidth: this.getConfig<number>('minEditorWidth', 600),
       showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
     };
   }
