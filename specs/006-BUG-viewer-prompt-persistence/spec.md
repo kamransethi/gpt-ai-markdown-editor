@@ -7,7 +7,19 @@
 
 ## Problem Statement
 
-The Default Markdown Viewer Prompt feature was added in v2.0.26 to allow users to set a default markdown viewer option. However, when users select "Yes" to make their choice the default, the preference is not saved. The prompt appears on every file open, ignoring the user's previous selection.
+The Default Markdown Viewer Prompt feature was added in v2.0.26 to allow users to set a default markdown viewer option. However, when users select "Yes" to make their choice the default, **two failures occur**: (1) The preference is not saved to VS Code settings, so the prompt appears on every file open, and (2) Even if the editor is selected, it does not become the default viewer for markdown files — the setting is not applied.
+
+---
+
+## Clarifications
+
+### Session 2026-04-11
+
+- Q: Editor is not becoming default even when user chooses to make it default. 
+  → A: **Confirmed**: Two separate failures — (1) preference not saved, (2) even if saved, editor not applied as default viewer.
+
+- Q: What should "default markdown viewer" mean when user selects "Yes"?
+  → A: **Option B (Internal Preference)**: Store preference internally in extension settings (`gptAiMarkdownEditor.defaultMarkdownViewer`). When opening a markdown file, automatically use DK-AI editor if available. Does NOT modify VS Code's global default – keeps user's VS Code settings unchanged.
 
 ---
 
@@ -26,9 +38,10 @@ The Default Markdown Viewer Prompt feature was added in v2.0.26 to allow users t
 
 ## Acceptance Criteria
 
-- [ ] User's default markdown viewer choice is persisted to VS Code settings
+- [ ] User's default markdown viewer choice is persisted to extension storage
 - [ ] Prompt does NOT appear on subsequent markdown file opens when default is set
-- [ ] Prompt ONLY appears on first markdown file open (or if user hasn't set default)
+- [ ] When default is set to DK-AI, markdown files automatically open with DK-AI editor
+- [ ] When default is set to DK-AI, the DK-AI editor becomes the active editor (not just custom editor, but actual default)
 - [ ] Default preference is stored in `gptAiMarkdownEditor.defaultMarkdownViewer` setting
 - [ ] Changing default works correctly (user can override previously saved choice)
 - [ ] All 828 tests pass
@@ -39,23 +52,39 @@ The Default Markdown Viewer Prompt feature was added in v2.0.26 to allow users t
 ## Technical Context
 
 **Related feature**: Default Markdown Viewer Prompt (implemented in v2.0.26)  
-**Suspected root cause**: Preference is not being saved to VS Code settings via `vscode.workspace.getConfiguration().update()` or equivalent persistence mechanism
+**Root causes** (two separate issues):
+  1. Preference is not being saved to extension settings (missing persistence call)
+  2. Even if saved, the default is not being applied when opening markdown files (missing application logic)
 
 **Files likely involved**:
-- `src/features/defaultViewerPrompt.ts` (if exists) or similar handler
-- `src/extension.ts` (command registration and execution)
-- `activeWebview.ts` (webview communication)
-- `MarkdownEditorProvider.ts` (provider logic)
+- `src/features/defaultViewerPrompt.ts` (if exists) or similar handler — where user choice is handled but not persisted
+- `src/extension.ts` (command registration, setting up the default) — missing logic to apply the default
+- `MarkdownEditorProvider.ts` (provider logic) — needs to check default when opening markdown files
+- `activeWebview.ts` (webview communication) — message passing for default setting
 
 ---
 
 ## Notes for LLM
 
-- **State management**: Check if the prompt choice is being saved to VS Code workspace settings
-- **Persistence layer**: Verify `vscode.workspace.getConfiguration().update()` is called with correct scope (global vs workspace)
-- **Message payload**: Check webview-to-extension message payload includes the user's choice
-- **Timing**: Ensure persistence happens BEFORE prompt is dismissed (not async race condition)
-- **Constraint**: Must not break existing default viewer behavior
+**Fix 1 - Persistence**: 
+- When user selects "Yes" in the prompt, save to extension settings via `vscode.workspace.getConfiguration().update('gptAiMarkdownEditor.defaultMarkdownViewer', userChoice, true)`
+- Ensure persistence completes BEFORE prompt is dismissed (not async without await)
+
+**Fix 2 - Application**:
+- When opening a markdown file via MarkdownEditorProvider, check if `gptAiMarkdownEditor.defaultMarkdownViewer` setting exists
+- If set to DK-AI, ensure this editor handles the file (force activation or routing logic)
+- Verify that subsequent markdown files automatically use the saved default WITHOUT showing the prompt
+
+**Testing**:
+- Unit test: Mock settings API, verify `update()` is called with correct parameters
+- Integration test: Set default, close/open file, verify DK-AI editor is used and prompt doesn't appear
+- Edge case: Change default from one option to another
+- Verify all 828 tests still pass
+
+**Constraints**:
+- Must not break existing markdown viewer behavior
+- Must not modify VS Code's global default (only extension-internal setting)
+- Performance: Setting/retrieving preference must be <5ms
 
 ---
 
