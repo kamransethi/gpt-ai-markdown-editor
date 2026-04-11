@@ -89,6 +89,12 @@ export const MessageType = {
   AI_EXPLAIN: 'aiExplain',
   AI_EXPLAIN_RESULT: 'aiExplainResult',
 
+  // ── Front Matter ──
+  FRONTMATTER_VALIDATE: 'frontmatterValidate',
+  FRONTMATTER_VALIDATION_RESULT: 'frontmatterValidationResult',
+  FRONTMATTER_ERROR: 'frontmatterError',
+  FRONTMATTER_SAVE_OVERRIDE: 'frontmatterSaveOverride',
+
   // ── Mermaid ──
   EDIT_MERMAID_SOURCE: 'editMermaidSource',
 } as const;

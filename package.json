@@ -325,6 +325,7 @@
     "@tiptap/extension-table-header": "^3.22.3",
     "@tiptap/extension-table-row": "^3.22.3",
     "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.5.0",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
@@ -347,6 +348,7 @@
     "@tiptap/extension-character-count": "^3.22.3",
     "@tiptap/extension-code-block-lowlight": "^3.22.3",
     "@tiptap/extension-color": "^3.22.3",
+    "@tiptap/extension-details": "^3.22.3",
     "@tiptap/extension-drag-handle": "^3.22.3",
     "@tiptap/extension-highlight": "^3.22.3",
     "@tiptap/extension-image": "^3.22.3",
@@ -366,6 +368,7 @@
     "cheerio": "^1.2.0",
     "docx": "^9.6.1",
     "emoji-picker-element": "^1.29.1",
+    "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
     "image-size": "^2.0.2",
     "katex": "^0.16.43",
@@ -377,7 +380,6 @@
     "shiki": "^3.23.0",
     "tiptap-extension-code-block-shiki": "^1.1.0",
     "tiptap-extension-global-drag-handle": "^0.1.18",
-    "turndown": "^7.2.2",
-    "gray-matter": "^4.0.3"
+    "turndown": "^7.2.2"
   }
 }

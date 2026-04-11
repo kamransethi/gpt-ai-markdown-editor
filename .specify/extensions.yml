@@ -106,6 +106,13 @@ hooks:
     prompt: Commit plan changes?
     description: Auto-commit after implementation planning
     condition: null
+  - extension: speckit
+    command: speckit.implement
+    enabled: true
+    optional: false
+    prompt: null
+    description: Auto-proceed to implementation after plan
+    condition: null
   after_tasks:
   - extension: git
     command: speckit.git.commit
