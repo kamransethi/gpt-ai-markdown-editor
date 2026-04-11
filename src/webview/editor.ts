@@ -69,9 +69,9 @@ import { SlashCommand } from './extensions/slashCommand';
 import { AiExplain, handleAiExplainResult } from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
 import {
-  FrontmatterDetails,
-  FrontmatterSummary,
-  FrontmatterContent,
+  FrontmatterBlock,
+  isFrontmatterBlock,
+  extractFrontmatterText,
 } from './extensions/frontmatterPanel';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
@@ -452,6 +452,48 @@ function updateFrontmatterPanel(_frontmatter: string | null): void {
 }
 
 /**
+ * Inject a `frontmatterBlock` TipTap node at position 0 containing the given
+ * YAML text inside a codeBlock child.  Call this after `setContent()` whenever
+ * the document has YAML front matter.
+ *
+ * The block renders as a `<details class="frontmatter-details">` element.
+ * Its `renderMarkdown` returns '' so it is invisible to the serializer;
+ * `restoreFrontmatter()` prepends the YAML block on every save.
+ */
+function injectFrontmatterBlock(yamlText: string, open = false): void {
+  if (!editor) return;
+  try {
+    editor.commands.insertContentAt(0, {
+      type: 'frontmatterBlock',
+      attrs: { open },
+      content: [
+        {
+          type: 'codeBlock',
+          attrs: { language: 'yaml' },
+          content: yamlText ? [{ type: 'text', text: yamlText }] : [],
+        },
+      ],
+    });
+  } catch (e) {
+    devLog('[DK-AI] Could not inject frontmatterBlock:', e);
+  }
+}
+
+/**
+ * Read the current YAML text from the `frontmatterBlock` node (if present) and
+ * update the module-level `currentFrontmatter` variable.  Called from `onUpdate`
+ * so that edits the user makes inside the block are persisted to the file on save.
+ */
+function syncFrontmatterFromEditorDoc(editorInstance: typeof editor): void {
+  if (!editorInstance) return;
+  const firstNode = editorInstance.state.doc.firstChild;
+  if (!isFrontmatterBlock(firstNode)) return;
+
+  const yamlText = extractFrontmatterText(firstNode!);
+  currentFrontmatter = yamlText || null;
+}
+
+/**
  * Simple hash function (djb2 algorithm) for content deduplication
  */
 function hashString(str: string): string {
@@ -638,6 +680,41 @@ async function openFrontmatterEditor(): Promise<void> {
 
 // Expose globally for toolbar button
 (window as any).openFrontmatterEditor = openFrontmatterEditor;
+
+/**
+ * Show or create the inline frontmatter block in the editor.
+ * Called by the toolbar "Frontmatter" button in BubbleMenuView.ts.
+ */
+function toggleFrontmatterBlock(): void {
+  if (!editor) return;
+  const firstNode = editor.state.doc.firstChild;
+  const hasFrontmatterBlock = isFrontmatterBlock(firstNode);
+
+  if (!hasFrontmatterBlock) {
+    // No frontmatter block yet — initialize with empty content and open it
+    if (currentFrontmatter === null) {
+      currentFrontmatter = '';
+    }
+    injectFrontmatterBlock(currentFrontmatter, true);
+    // Position cursor inside the code block (pos 2 = start of codeBlock content)
+    try {
+      editor.commands.setTextSelection(2);
+    } catch {
+      editor.commands.focus();
+    }
+  } else {
+    // Block exists — expand it and focus inside
+    try {
+      editor.commands.updateAttributes('frontmatterBlock', { open: true });
+      editor.commands.setTextSelection(2);
+    } catch {
+      editor.commands.focus();
+    }
+  }
+}
+
+// Expose globally for toolbar button
+(window as any).toggleFrontmatterBlock = toggleFrontmatterBlock;
 
 /**
  * Debounced update sending edits to VS Code
@@ -989,9 +1066,7 @@ function initializeEditor(initialContent: string) {
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
       // Front matter support with collapsible details panel
-      FrontmatterDetails,
-      FrontmatterSummary,
-      FrontmatterContent,
+      FrontmatterBlock,
     ];
 
     const extensions = rawExtensions.map(normalizeExtensionPluginList);
@@ -1046,6 +1121,9 @@ function initializeEditor(initialContent: string) {
 
           scheduleOutlineUpdate();
           updateEditorMetaBar(_editor);
+
+          // Sync front matter from the inline details block (if the user edited it)
+          syncFrontmatterFromEditorDoc(_editor);
 
           const markdown = getEditorMarkdownForSync(_editor);
           devLog(`[DK-AI] onUpdate: markdown serialized (len=${markdown.length})`);
@@ -1127,6 +1205,10 @@ function initializeEditor(initialContent: string) {
       editor.commands.setContent(preprocessMarkdownContent(content), {
         contentType: 'markdown',
       });
+      // Inject frontmatter as a collapsible details block at the top of the document
+      if (currentFrontmatter) {
+        injectFrontmatterBlock(currentFrontmatter, false);
+      }
       isUpdating = false;
     }
 
@@ -1569,6 +1651,11 @@ function updateEditorContent(markdown: string) {
     editor.commands.setContent(preprocessMarkdownContent(incomingBody), {
       contentType: 'markdown',
     });
+
+    // Inject frontmatter as a collapsible details block at the top of the document
+    if (currentFrontmatter) {
+      injectFrontmatterBlock(currentFrontmatter, false);
+    }
 
     // Restore cursor position
     try {

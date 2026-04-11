@@ -907,30 +907,9 @@ export function createFormattingToolbar(
             label: 'Frontmatter',
             icon: { name: 'file-code', fallback: '≡' },
             action: () => {
-              // Focus or create front matter panel
-              if (editor) {
-                // Generate front matter block if not present
-                const hasDetails = editor.state.doc.content.content.some(
-                  (node: any) =>
-                    node.type.name === 'details' &&
-                    node.attrs?.class?.includes?.('frontmatter-details')
-                );
-
-                if (!hasDetails) {
-                  // Create a new front matter block at the start
-                  editor
-                    .chain()
-                    .focus()
-                    .setNode('details', {
-                      class: 'frontmatter-details',
-                      'data-type': 'frontmatter',
-                    })
-                    .run();
-                } else {
-                  // Focus existing front matter panel
-                  editor.commands.focus();
-                }
-              }
+              // Delegate to editor.ts — it knows about currentFrontmatter and
+              // the frontmatterBlock node type.
+              (window as any).toggleFrontmatterBlock?.();
             },
           },
           { label: '', action: () => {}, isSeparator: true },
