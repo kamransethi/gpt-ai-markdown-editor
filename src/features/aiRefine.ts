@@ -9,6 +9,7 @@
 
 import * as vscode from 'vscode';
 import { MessageType } from '../shared/messageTypes';
+import { getPromptForMode } from '../shared/aiModes';
 
 // ── Prompts ─────────────────────────────────────────────────────────
 
@@ -25,16 +26,7 @@ function buildUserPrompt(mode: string, text: string): string {
     return `Instruction: ${instruction}\n\nText:\n${text}`;
   }
 
-  const modePrompts: Record<string, string> = {
-    rephrase: 'Rephrase the following text while preserving its meaning:',
-    shorten: 'Make the following text more concise without losing key information:',
-    formal: 'Rewrite the following text in a more formal, professional tone:',
-    casual: 'Rewrite the following text in a more casual, conversational tone:',
-    bulletize: 'Convert the following text into a bulleted list (use markdown - bullets):',
-    summarize: 'Summarize the following text in 1-3 sentences:',
-  };
-
-  const prompt = modePrompts[mode] || `Refine the following text (${mode}):`;
+  const prompt = getPromptForMode(mode);
   return `${prompt}\n\n${text}`;
 }
 

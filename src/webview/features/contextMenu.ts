@@ -13,6 +13,7 @@ import { showLinkDialog } from './linkDialog';
 import { requestAiRefine, showCustomRefineInput } from './aiRefine';
 import { MenuBuilder, type MenuController } from '../utils/menuBuilder';
 import { modSymbol as mod } from '../utils/platform';
+import { getRefineMenuItems, isSeparator } from '../../shared/aiModes';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -63,26 +64,11 @@ export function createContextMenu(editor: Editor): MenuController {
   // ── AI REFINE ──
   mb.addSeparator();
 
-  const refineItems: Array<{
-    label: string;
-    mode: string;
-    separator?: boolean;
-  }> = [
-    { label: 'Custom…', mode: 'custom' },
-    { label: '', mode: '', separator: true },
-    { label: 'Rephrase', mode: 'rephrase' },
-    { label: 'Shorten', mode: 'shorten' },
-    { label: 'More Formal', mode: 'formal' },
-    { label: 'More Casual', mode: 'casual' },
-    { label: 'Bulletize', mode: 'bulletize' },
-    { label: 'Summarize', mode: 'summarize' },
-  ];
-
   mb.addSubmenuTrigger(
     'Refine the selected text',
     submenu => {
-      refineItems.forEach(item => {
-        if (item.separator) {
+      getRefineMenuItems().forEach(item => {
+        if (isSeparator(item)) {
           const sep = document.createElement('div');
           sep.className = 'context-menu-separator';
           submenu.appendChild(sep);
