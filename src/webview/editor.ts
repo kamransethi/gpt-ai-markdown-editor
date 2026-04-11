@@ -804,11 +804,11 @@ function initializeEditor(initialContent: string) {
       body.appendChild(layout);
       layout.appendChild(tocMount);
       layout.appendChild(editorSurface);
-      
+
       editorMetaBar = document.createElement('div');
       editorMetaBar.className = 'editor-meta-bar';
       editorSurface.appendChild(editorMetaBar);
-      
+
       editorSurface.appendChild(editorElement);
     } else if (!editorMetaBar) {
       editorMetaBar = layout.querySelector('.editor-meta-bar') as HTMLElement | null;
