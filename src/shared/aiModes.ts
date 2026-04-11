@@ -42,6 +42,11 @@ export const CUSTOM_REFINE_ENTRY: AiRefineMode = {
  */
 export const AI_REFINE_MODES: readonly AiRefineMode[] = [
   {
+    label: 'Table-ize',
+    mode: 'tableize',
+    prompt: 'Convert the following text into a table format:',
+  },
+  {
     label: 'Rephrase',
     mode: 'rephrase',
     prompt: 'Rephrase the following text while preserving its meaning:',

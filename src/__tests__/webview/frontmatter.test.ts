@@ -181,8 +181,8 @@ describe('frontmatter extraction & restoration', () => {
       getState: jest.fn(),
       setState: jest.fn(),
     }));
-    (global as any).acquireVsCodeApi = mockAcquireVsCodeApi;
-    (window as any).acquireVsCodeApi = mockAcquireVsCodeApi;
+    (globalThis as any).acquireVsCodeApi = mockAcquireVsCodeApi;
+    (globalThis as any).acquireVsCodeApi = mockAcquireVsCodeApi;
 
     const mod = await import('../../webview/editor');
     testing = mod.__testing as TestingModule;

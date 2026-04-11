@@ -310,6 +310,30 @@ body[data-theme="dark"] {
   letter-spacing: 0.01em;
 }
 
+.frontmatter-view-btn {
+  background: none;
+  border: none;
+  color: var(--md-muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 4px 0;
+  margin: 0;
+  transition: color 0.15s ease;
+  font-family: var(--md-font-sans);
+  display: inline;
+}
+
+.frontmatter-view-btn:hover {
+  color: var(--md-foreground);
+}
+
+.frontmatter-view-btn:active {
+  opacity: 0.8;
+}
+
 .toc-pane {
   display: flex;
   flex-direction: column;

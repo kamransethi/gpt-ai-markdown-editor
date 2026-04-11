@@ -68,11 +68,7 @@ import { SearchAndReplace } from './extensions/searchAndReplace';
 import { SlashCommand } from './extensions/slashCommand';
 import { AiExplain, handleAiExplainResult } from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
-import {
-  FrontmatterBlock,
-  isFrontmatterBlock,
-  extractFrontmatterText,
-} from './extensions/frontmatterPanel';
+
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
@@ -438,11 +434,48 @@ function parseFrontmatterPairs(frontmatter: string): Array<[string, string]> {
 }
 
 /**
+ * Update the VIEW FRONTMATTER button in the editor meta bar.
+ * Shows as a tiny link in the upper right when frontmatter is present.
+ */
+function updateFrontmatterViewButton(frontmatter: string | null): void {
+  const metaBar = editorMetaBar as HTMLElement | null;
+  if (!metaBar) return;
+
+  // Remove any existing frontmatter button
+  const existing = metaBar.querySelector('.frontmatter-view-btn');
+  if (existing) {
+    existing.remove();
+  }
+
+  // Only show button if frontmatter exists
+  if (!frontmatter || !frontmatter.trim()) {
+    return;
+  }
+
+  // Create the button
+  const button = document.createElement('button');
+  button.className = 'frontmatter-view-btn';
+  button.textContent = 'VIEW FRONTMATTER';
+  button.title = 'Click to edit document front matter';
+  button.type = 'button';
+
+  // Wire click handler
+  button.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await openFrontmatterEditor();
+  });
+
+  // Add to meta bar
+  metaBar.appendChild(button);
+}
+
+/**
  * Update the frontmatter panel above the editor with key-value badges.
  * Panel is always hidden — metadata is edited via the View menu instead.
  * @deprecated Frontmatter panel is no longer displayed. Use View > Display > Edit Document Metadata instead.
  */
-function updateFrontmatterPanel(_frontmatter: string | null): void {
+function updateFrontmatterPanel(frontmatter: string | null): void {
   const panel = document.getElementById('frontmatter-panel');
   if (!panel) return;
   const inner = panel.querySelector('.frontmatter-panel-inner') as HTMLElement | null;
@@ -451,6 +484,9 @@ function updateFrontmatterPanel(_frontmatter: string | null): void {
   // Always keep the panel hidden — frontmatter is now accessed via View menu
   panel.style.display = 'none';
   inner.innerHTML = '';
+
+  // Update the VIEW FRONTMATTER button
+  updateFrontmatterViewButton(frontmatter);
 }
 
 /**
@@ -462,29 +498,12 @@ function updateFrontmatterPanel(_frontmatter: string | null): void {
  * Its `renderMarkdown` returns '' so it is invisible to the serializer;
  * `restoreFrontmatter()` prepends the YAML block on every save.
  */
-function injectFrontmatterBlock(yamlText: string): void {
-  if (!editor) return;
-  try {
-    editor.commands.insertContentAt(0, {
-      type: 'frontmatterBlock',
-      content: yamlText ? [{ type: 'text', text: yamlText }] : [],
-    });
-  } catch (e) {
-    devLog('[DK-AI] Could not inject frontmatterBlock:', e);
-  }
-}
 
 /**
  * Read the current YAML text from the `frontmatterBlock` node (if present) and
  * update the module-level `currentFrontmatter` variable.  Called from `onUpdate`
  * so that edits the user makes inside the block are persisted to the file on save.
  */
-function syncFrontmatterFromEditorDoc(editorInstance: typeof editor): void {
-  if (!editorInstance) return;
-  const firstNode = editorInstance.state.doc.firstChild;
-  if (!isFrontmatterBlock(firstNode)) return;
-  currentFrontmatter = extractFrontmatterText(firstNode!) || null;
-}
 
 /**
  * Simple hash function (djb2 algorithm) for content deduplication
@@ -679,22 +698,7 @@ async function openFrontmatterEditor(): Promise<void> {
  * Called by the toolbar "Frontmatter" button in BubbleMenuView.ts.
  */
 function toggleFrontmatterBlock(): void {
-  if (!editor) return;
-  const firstNode = editor.state.doc.firstChild;
-  const hasFrontmatterBlock = isFrontmatterBlock(firstNode);
-
-  if (!hasFrontmatterBlock) {
-    // No block yet — insert one (starts collapsed, user opens it)
-    if (currentFrontmatter === null) currentFrontmatter = '';
-    injectFrontmatterBlock(currentFrontmatter);
-    // Open the newly injected block
-    const blockEl = document.querySelector('.frontmatter-block') as any;
-    blockEl?._fmOpen?.(true);
-  } else {
-    // Block exists — toggle it
-    const blockEl = document.querySelector('.frontmatter-block') as any;
-    blockEl?._fmToggle?.();
-  }
+  openFrontmatterEditor();
 }
 
 // Expose globally for toolbar button
@@ -1050,7 +1054,6 @@ function initializeEditor(initialContent: string) {
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
       // Front matter support with collapsible details panel
-      FrontmatterBlock,
     ];
 
     const extensions = rawExtensions.map(normalizeExtensionPluginList);
@@ -1107,7 +1110,6 @@ function initializeEditor(initialContent: string) {
           updateEditorMetaBar(_editor);
 
           // Sync front matter from the inline details block (if the user edited it)
-          syncFrontmatterFromEditorDoc(_editor);
 
           const markdown = getEditorMarkdownForSync(_editor);
           devLog(`[DK-AI] onUpdate: markdown serialized (len=${markdown.length})`);
@@ -1190,9 +1192,7 @@ function initializeEditor(initialContent: string) {
         contentType: 'markdown',
       });
       // Inject front matter as a collapsible atom block at the top
-      if (currentFrontmatter) {
-        injectFrontmatterBlock(currentFrontmatter);
-      }
+
       isUpdating = false;
     }
 
@@ -1637,9 +1637,6 @@ function updateEditorContent(markdown: string) {
     });
 
     // Inject front matter as a collapsible atom block at the top
-    if (currentFrontmatter) {
-      injectFrontmatterBlock(currentFrontmatter);
-    }
 
     // Restore cursor position
     try {

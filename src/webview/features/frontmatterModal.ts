@@ -1,17 +1,8 @@
 /**
  * Frontmatter editor modal.
- *
- * Provides a user-friendly interface for editing YAML frontmatter in the document.
- * Handles extraction, editing, validation, and restoration of frontmatter.
+ * Simple, robust YAML editor using native textarea (no heavy TipTap/extensions).
  */
 
-/**
- * Show a modal dialog to edit frontmatter.
- *
- * @param currentFrontmatter - Current frontmatter text (without delimiters)
- * @param onSave - Callback when user clicks Save
- * @returns Promise that resolves when modal is closed
- */
 export async function showFrontmatterModal(
   currentFrontmatter: string | null,
   onSave: (frontmatter: string) => void
@@ -24,27 +15,48 @@ export async function showFrontmatterModal(
     // Create modal container
     const modal = document.createElement('div');
     modal.className = 'frontmatter-modal';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.padding = '0';
+    modal.style.backgroundColor = 'var(--md-background)';
+    modal.style.border = '1px solid var(--md-border)';
+    modal.style.borderRadius = '8px';
 
-    // Create header
+    // Header
     const header = document.createElement('div');
     header.className = 'frontmatter-modal-header';
-    header.innerHTML = '<h2 class="frontmatter-modal-title">Edit Document Metadata</h2>';
+    header.innerHTML = '<h2 class="frontmatter-modal-title">Document Front Matter (YAML)</h2>';
 
-    // Create textarea wrapper
+    // Textarea wrapper (grows to fill space)
     const textareaWrapper = document.createElement('div');
-    textareaWrapper.className = 'frontmatter-modal-textarea-wrapper';
+    textareaWrapper.style.flex = '1';
+    textareaWrapper.style.display = 'flex';
+    textareaWrapper.style.flexDirection = 'column';
+    textareaWrapper.style.minHeight = '0'; // Needed for flex column to work
+    textareaWrapper.style.overflow = 'hidden';
 
-    // Create textarea for YAML editing
+    // Native textarea (SIMPLE!)
     const textarea = document.createElement('textarea');
     textarea.className = 'frontmatter-modal-textarea';
-    textarea.placeholder =
-      'title: My Document\nauthor: John Doe\ndate: 2026-04-02\n\n# Add your YAML frontmatter here';
     textarea.value = currentFrontmatter || '';
     textarea.spellcheck = false;
+    // Style it to fill the space
+    textarea.style.flex = '1';
+    textarea.style.minHeight = '0';
+    textarea.style.width = '100%';
+    textarea.style.padding = '15px';
+    textarea.style.fontFamily = 'var(--md-mono-font, monospace)';
+    textarea.style.fontSize = '13px';
+    textarea.style.lineHeight = '1.5';
+    textarea.style.border = 'none';
+    textarea.style.outline = 'none';
+    textarea.style.backgroundColor = 'var(--md-background)';
+    textarea.style.color = 'var(--md-foreground)';
+    textarea.style.resize = 'none';
 
     textareaWrapper.appendChild(textarea);
 
-    // Create footer with buttons
+    // Footer with buttons
     const footer = document.createElement('div');
     footer.className = 'frontmatter-modal-footer';
 
@@ -70,7 +82,7 @@ export async function showFrontmatterModal(
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Focus textarea
+    // Focus and select text
     setTimeout(() => {
       textarea.focus();
       textarea.select();
@@ -92,7 +104,12 @@ export async function showFrontmatterModal(
       cleanup();
     };
 
-    const handleKeydown = (event: KeyboardEvent) => {
+    // Button handlers
+    cancelButton.addEventListener('click', handleCancel);
+    saveButton.addEventListener('click', handleSave);
+
+    // Keyboard shortcuts
+    textarea.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
@@ -102,24 +119,18 @@ export async function showFrontmatterModal(
         event.stopPropagation();
         handleSave();
       }
-    };
+    });
 
-    // Prevent overlay click from closing (only button clicks close)
+    // Click on overlay (outside modal) to cancel
     overlay.addEventListener('click', e => {
       if (e.target === overlay) {
         handleCancel();
       }
     });
 
-    cancelButton.addEventListener('click', handleCancel);
-    saveButton.addEventListener('click', handleSave);
-    textarea.addEventListener('keydown', handleKeydown);
-
-    // Prevent outside interaction
-    overlay.addEventListener('mousedown', e => {
-      if (e.target === overlay) {
-        e.preventDefault();
-      }
+    // Prevent modal click from propagating to overlay
+    modal.addEventListener('click', e => {
+      e.stopPropagation();
     });
   });
 }
