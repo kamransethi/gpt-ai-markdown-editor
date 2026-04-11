@@ -904,14 +904,32 @@ export function createFormattingToolbar(
             action: () => window.dispatchEvent(new CustomEvent('toggleTocPane')),
           },
           {
-            label: 'Document Metadata',
+            label: 'Frontmatter',
             icon: { name: 'file-code', fallback: '≡' },
             action: () => {
-              const vscodeAny = window as any;
-              if (vscodeAny?.openFrontmatterEditor) {
-                vscodeAny.openFrontmatterEditor().catch((err: unknown) => {
-                  console.error('[DK-AI] Frontmatter editor error:', err);
-                });
+              // Focus or create front matter panel
+              if (editor) {
+                // Generate front matter block if not present
+                const hasDetails = editor.state.doc.content.content.some(
+                  (node: any) =>
+                    node.type.name === 'details' &&
+                    node.attrs?.class?.includes?.('frontmatter-details')
+                );
+
+                if (!hasDetails) {
+                  // Create a new front matter block at the start
+                  editor
+                    .chain()
+                    .focus()
+                    .setNode('details', {
+                      class: 'frontmatter-details',
+                      'data-type': 'frontmatter',
+                    })
+                    .run();
+                } else {
+                  // Focus existing front matter panel
+                  editor.commands.focus();
+                }
               }
             },
           },

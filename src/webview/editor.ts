@@ -68,6 +68,11 @@ import { SearchAndReplace } from './extensions/searchAndReplace';
 import { SlashCommand } from './extensions/slashCommand';
 import { AiExplain, handleAiExplainResult } from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
+import {
+  FrontmatterDetails,
+  FrontmatterSummary,
+  FrontmatterContent,
+} from './extensions/frontmatterPanel';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
@@ -78,6 +83,7 @@ import { collectExportContent, getDocumentTitle } from './utils/exportContent';
 import { MessageType } from '../shared/messageTypes';
 import { toErrorMessage } from '../shared/errorUtils';
 import { debounce, rafThrottle } from './utils/debounce';
+import * as YAML from 'js-yaml';
 
 /**
  * Tags that TipTap handles natively — never strip these.
@@ -982,6 +988,10 @@ function initializeEditor(initialContent: string) {
       SlashCommand,
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
+      // Front matter support with collapsible details panel
+      FrontmatterDetails,
+      FrontmatterSummary,
+      FrontmatterContent,
     ];
 
     const extensions = rawExtensions.map(normalizeExtensionPluginList);
@@ -1440,6 +1450,54 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case MessageType.IMAGE_URI_RESOLVED:
         // Handled by the custom image message plugin; ignore here to avoid log noise.
+        break;
+      case MessageType.FRONTMATTER_VALIDATE:
+        // Validate YAML front matter on save
+        if (!editor) break;
+        try {
+          const yaml = message.yaml || '';
+          const parsed = YAML.load(yaml);
+          window.vscode?.postMessage({
+            type: MessageType.FRONTMATTER_VALIDATION_RESULT,
+            success: true,
+            yaml,
+            parsed,
+            timestamp: Date.now(),
+          });
+        } catch (error) {
+          const err = error as Error;
+          window.vscode?.postMessage({
+            type: MessageType.FRONTMATTER_VALIDATION_RESULT,
+            success: false,
+            yaml: message.yaml || '',
+            error: err.message,
+            errorLine: (err as any).mark?.line || 0,
+            timestamp: Date.now(),
+          });
+        }
+        break;
+      case MessageType.FRONTMATTER_SAVE_OVERRIDE:
+        // Handle user's decision on malformed YAML save
+        if (message.override === 'save-anyway') {
+          // Proceed with save despite validation error
+          if (editor) {
+            const markdown = getEditorMarkdownForSync(editor);
+            window.vscode?.postMessage({
+              type: MessageType.UPDATE,
+              content: markdown,
+              override: true,
+            });
+          }
+        } else if (message.override === 'return-to-fix') {
+          // User wants to return to editor (no action needed)
+          window.vscode?.postMessage({
+            type: MessageType.READY,
+          });
+        }
+        break;
+      case MessageType.FRONTMATTER_ERROR:
+        // Display front matter validation error dialog
+        devLog('[DK-AI] Front matter error:', message.error);
         break;
       default:
         console.warn('[DK-AI] Unknown message type:', message.type);
