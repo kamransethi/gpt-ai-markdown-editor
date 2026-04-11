@@ -10,6 +10,16 @@
 | `/speckit.plan` | Generate plan.md from approved spec | After spec is finalized |
 | `/speckit.clarify "question"` | Get clarification on ambiguous spec points | If spec is unclear |
 
+## Workflow Files
+
+**See [.specify/guides/WORKFLOW_AUTOMATION.md](.specify/guides/WORKFLOW_AUTOMATION.md) for master reference of all workflow files.**
+
+- `.specify/guides/WORKFLOW_AUTOMATION.md` — Central workflow reference (update this first, then sync others)
+- `.specify/guides/llm-prompts.md` — Copy-paste prompts for each phase
+- `.specify/templates/quick-bug.md` — Bug spec template
+- `.specify/templates/spec-template.md` — Feature spec template
+- `.specify/templates/plan-template.md` — Implementation plan template
+
 ## File Locations
 
 | Task | File |

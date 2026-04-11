@@ -6,29 +6,48 @@
 
 ---
 
+## OPEN 🔴
+
+### BUG-FR1-PARTIAL: AI Refine Corrupts Code Blocks and Other Constructs
+
+
+| Field      | Value                                                                                                                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Category   | Bug                                                                                                                                                                                                  |
+| Priority   | High                                                                                                                                                                                                 |
+| Status     | 🔴 OPEN — Needs investigation                                                                                                                                                                        |
+| Problem    | FR-1 partial fix works for blockquotes/alerts, but AI Refine still corrupts content inside code blocks, strikethrough regions, and other complex nesting scenarios. Wrapper detection is incomplete. |
+| Workaround | Don't use AI Refine on text inside code blocks; use standard find/replace instead.                                                                                                                   |
+| Next Step  | Create specs/NNN-ai-refine-code-blocks/ with test case reproducing corruption.                                                                                                                       |
+
+
 ## CANNOT_FIX (Platform Limitations)
 
 ### BUG-I: File Not Exposed to GitHub Copilot Chat
 
-| Field       | Value                                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| Category    | Bug                                                                                                                   |
-| Priority    | Medium                                                                                                                |
-| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
-| Analysis    | VS Code Custom Editor API does not integrate with Copilot's @-mention discovery system. `stream.reference()` only works for built-in editors. No platform API exists to expose custom editors to Copilot UI. |
-| Workaround  | Users can use `#file:` manual references or `@fluxflow` chat participant.                                           |
+
+| Field      | Value                                                                                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Category   | Bug                                                                                                                                                                                                          |
+| Priority   | Medium                                                                                                                                                                                                       |
+| Spec       | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)                                                                                                   |
+| Analysis   | VS Code Custom Editor API does not integrate with Copilot's @-mention discovery system. `stream.reference()` only works for built-in editors. No platform API exists to expose custom editors to Copilot UI. |
+| Workaround | Users can use `#file:` manual references or `@fluxflow` chat participant.                                                                                                                                    |
+
 
 ---
 
 ### FR-4: Selected Text Context in Copilot
 
-| Field       | Value                                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| Category    | Feature Request                                                                                                      |
-| Priority    | Low                                                                                                                   |
-| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
-| Analysis    | Blocked by BUG-I. Selection tracking is implemented, but Copilot cannot receive selection metadata because custom editors are not exposed to Copilot's context system. |
-| Workaround  | Manually copy/paste selected text into Copilot chat.                                                                 |
+
+| Field      | Value                                                                                                                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Category   | Feature Request                                                                                                                                                        |
+| Priority   | Low                                                                                                                                                                    |
+| Spec       | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)                                                             |
+| Analysis   | Blocked by BUG-I. Selection tracking is implemented, but Copilot cannot receive selection metadata because custom editors are not exposed to Copilot's context system. |
+| Workaround | Manually copy/paste selected text into Copilot chat.                                                                                                                   |
+
 
 ---
 
@@ -36,25 +55,29 @@
 
 ### FR-2: Remember Last Custom Refinement Command
 
-| Field       | Value                                                                                                                |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| Category    | Feature Request                                                                                                     |
-| Priority    | Low                                                                                                                  |
-| Status      | ✅ TESTED AND WORKS                                                                                                  |
-| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
-| Implementation | Module-level `lastCustomCommand` stores last instruction; textarea pre-filled on next dialog open.                   |
+
+| Field          | Value                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| Category       | Feature Request                                                                                            |
+| Priority       | Low                                                                                                        |
+| Status         | ✅ TESTED AND WORKS                                                                                         |
+| Spec           | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md) |
+| Implementation | Module-level `lastCustomCommand` stores last instruction; textarea pre-filled on next dialog open.         |
+
 
 ---
 
 ### FR-3: Better UX for Custom Refinement Dialog Shortcuts
 
-| Field       | Value                                                                                                             |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- |
-| Category    | Feature Request                                                                                                   |
-| Priority    | Low                                                                                                                |
-| Status      | ✅ TESTED AND WORKS                                                                                               |
-| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)       |
-| Implementation | Keyboard handler on textarea: Enter submits, Shift+Enter = line break, Esc = close.                               |
+
+| Field          | Value                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| Category       | Feature Request                                                                                            |
+| Priority       | Low                                                                                                        |
+| Status         | ✅ TESTED AND WORKS                                                                                         |
+| Spec           | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md) |
+| Implementation | Keyboard handler on textarea: Enter submits, Shift+Enter = line break, Esc = close.                        |
+
 
 ---
 
@@ -62,29 +85,16 @@
 
 ### FR-1: AI Refine Preserves Block Quote Formatting
 
-| Field       | Value                                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| Category    | Feature Request                                                                                                      |
-| Priority    | Medium                                                                                                                |
-| Status      | ⚠️ PARTIAL — Works for blockquotes/alerts, broken for code blocks                                                    |
-| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
-| What Works  | Blockquotes (`>`), GitHub alerts (`> [!NOTE]`), callouts — wrapper detection applies correctly.                     |
-| What Breaks | Code blocks and mixed nesting scenarios (see BUG-FR1-PARTIAL below).                                                |
 
----
+| Field       | Value                                                                                                      |
+| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| Category    | Feature Request                                                                                            |
+| Priority    | Medium                                                                                                     |
+| Status      | ⚠️ PARTIAL — Works for blockquotes/alerts, broken for code blocks                                          |
+| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md) |
+| What Works  | Blockquotes (`>`), GitHub alerts (`> [!NOTE]`), callouts — wrapper detection applies correctly.            |
+| What Breaks | Code blocks and mixed nesting scenarios (see BUG-FR1-PARTIAL below).                                       |
 
-## OPEN 🔴
-
-### BUG-FR1-PARTIAL: AI Refine Corrupts Code Blocks and Other Constructs
-
-| Field       | Value                                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| Category    | Bug                                                                                                                   |
-| Priority    | High                                                                                                                  |
-| Status      | 🔴 OPEN — Needs investigation                                                                                        |
-| Problem     | FR-1 partial fix works for blockquotes/alerts, but AI Refine still corrupts content inside code blocks, strikethrough regions, and other complex nesting scenarios. Wrapper detection is incomplete. |
-| Workaround  | Don't use AI Refine on text inside code blocks; use standard find/replace instead.                                   |
-| Next Step   | Create specs/NNN-ai-refine-code-blocks/ with test case reproducing corruption.                                      |
 
 ---
 
@@ -153,7 +163,7 @@
 
 
 | Field             | Value                                                  |
-| ----| ------------------------------------------------------ |
+| ----------------- | ------------------------------------------------------ |
 | Priority          | Medium                                                 |
 | Test status       | ✓ passes (pasteIntoCells works correctly in isolation) |
 | Confidence to fix | Medium                                                 |

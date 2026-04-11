@@ -1,6 +1,6 @@
 # Implementation Plan: [FEATURE]
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link to spec.md]  
+**Folder**: `specs/NNN-TYPE-title/plan.md` | **Date**: [DATE] | **Spec**: [link to spec.md]  
 **Status**: Draft → Approved ✅
 
 ## Summary

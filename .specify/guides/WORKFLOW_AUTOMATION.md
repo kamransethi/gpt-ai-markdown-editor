@@ -47,6 +47,25 @@
 
 ## Templates
 
-- `quick-bug.md` — bug fixes
-- `medium-feature.md` — 2-3 day features
-- `spec-template.md` — major features/architecture
+- `quick-bug.md` — bug fixes (< 1 day)
+- `spec-template.md` — major features (multi-day)
+
+---
+
+## Spec Kit Workflow Files
+
+**This is the single source of truth for workflow file references.** When updating any workflow file, check this list to ensure consistency across all files listed.
+
+| File | Purpose | Updated | Status |
+|------|---------|---------|--------|
+| **AGENTS.md** | AI commands, file locations, principles | Always sync with WORKFLOW_AUTOMATION.md | ✅ Active |
+| **WORKFLOW_AUTOMATION.md** | 4-phase cycle (this file) | Central reference point | ✅ Active |
+| **llm-prompts.md** | Copy-paste prompts for each phase | Align with phase descriptions | ✅ Active |
+| **quick-bug.md** | Bug spec template | Align with workflow naming | ✅ Active |
+| **spec-template.md** | Feature spec template | Use `specs/NNN-TYPE-title/` structure | ✅ Active |
+| **plan-template.md** | Implementation plan template | Use `specs/NNN-TYPE-title/` structure | ✅ Active |
+
+**When you change this file**, verify consistency in:
+1. AGENTS.md (commands, file locations, principles)
+2. llm-prompts.md (prompt examples match phases)
+3. Template files (naming conventions, folder references)
