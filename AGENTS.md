@@ -30,4 +30,4 @@
 - **plan.md** = architecture + files + approach (NO user stories)
 - **Code** = TDD (RED test → GREEN code → all 828 pass)
 - **Tests** = add regression test when fixing bugs
-- **Git** = you do `git checkout -b`, `git commit`, `git push` — no automation
+- **Git** = commit to main directly: `spec(NNN)`, `plan(NNN)`, `feat(NNN)`, `fix(NNN)` — no branching

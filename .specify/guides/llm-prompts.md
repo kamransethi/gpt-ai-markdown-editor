@@ -4,16 +4,16 @@ These are copy-paste prompts for handing off work to LLM at each stage of the wo
 
 ---
 
-## Stage 1: Generate Implementation Plan from Spec
+## Stage 1: Generate Plan from Spec
 
-**Context**: You've written spec.md and committed it. Now ask LLM to generate the implementation_plan.md.
+**Context**: You've written spec.md and committed it to main. Now ask LLM to generate plan.md.
 
 ```markdown
 You are an experienced implementation planner for a VS Code extension built with TypeScript, TipTap/ProseMirror, and testing via Jest.
 
 Read this spec: specs/006-BUG-ai-refine-code-blocks/spec.md
 
-Then, analyze and generate an implementation_plan.md file with:
+Then, analyze and generate a plan.md file with:
 
 1. **Summary** (2-3 sentences): What's the core change needed?
 2. **Files to Change**: Exact file paths (e.g., src/webview/features/aiRefine.ts)
@@ -22,8 +22,8 @@ Then, analyze and generate an implementation_plan.md file with:
 5. **Architecture/Approach**: Why this approach? Any alternatives considered?
 6. **Estimated Complexity**: Low / Medium / High
 
-Format the output as markdown ready to commit to:
-specs/006-BUG-ai-refine-code-blocks/implementation_plan.md
+Format the output as markdown ready to commit to main:
+specs/006-BUG-ai-refine-code-blocks/plan.md
 
 Only output the markdown file content. Do not explain or introduce it.
 ```
@@ -32,14 +32,14 @@ Only output the markdown file content. Do not explain or introduce it.
 
 ## Stage 2: Implementation — Prompt LLM to Code
 
-**Context**: implementation_plan.md is approved and committed. Now ask LLM to code.
+**Context**: plan.md is approved and committed to main. Now ask LLM to code.
 
 ```markdown
 You are a test-driven developer for VS Code extension (TypeScript + TipTap/ProseMirror + Jest).
 
 Your inputs:
 - Spec: specs/006-BUG-ai-refine-code-blocks/spec.md
-- Plan: specs/006-BUG-ai-refine-code-blocks/implementation_plan.md
+- Plan: specs/006-BUG-ai-refine-code-blocks/plan.md
 
 Follow this TDD workflow:
 
@@ -50,7 +50,7 @@ Follow this TDD workflow:
    - Use jest/vitest patterns from existing test files in this project
 
 2. **Write the code** (GREEN)
-   - Modify files listed in implementation_plan.md
+   - Modify files listed in plan.md
    - Keep code minimal and clean
    - Make the test pass
 
@@ -159,17 +159,17 @@ Can you:
 4. Show me the passing results
 ```
 
-### If implementation_plan.md needs revision
+### If plan.md needs revision
 
 ```markdown
-I reviewed the implementation_plan.md and have concerns:
+I reviewed the plan.md and have concerns:
 
 [Your specific issues, e.g.]
 - Files don't seem right; I think we also need to change src/extension.ts
 - The test cases don't cover scenario X
 - The architecture approach conflicts with Y constraint
 
-Please revise the plan and re-output the full implementation_plan.md.
+Please revise the plan and re-output the full plan.md.
 ```
 
 ### If you don't like the spec after review
@@ -196,10 +196,10 @@ Answer these, and I'll update the spec.
 | Stage | Action | LLM Prompt | Output |
 |-------|--------|-----------|--------|
 | 1 | You create spec.md | None (manual) | spec.md (committed) |
-| 2 | LLM analyzes & plans | "Generate Implementation Plan from Spec" | implementation_plan.md |
+| 2 | LLM analyzes & plans | "Generate Plan from Spec" | plan.md |
 | 3 | You review plan | Approve or "Revise Plan" | Updated plan (committed) |
 | 4 | LLM codes | "Implementation — Prompt LLM to Code" | Code + test + IMPLEMENTATION.md |
 | 5 | You review code | Approve or "Feedback" | Final code or revisions |
 | 6 | You run tests locally | `npm test` | All 828 passing ✅ |
-| 7 | Merge | `git commit` + `git push` | Merged to main |
+| 7 | Commit to main | `git commit` + `git push` | Live on main |
 
