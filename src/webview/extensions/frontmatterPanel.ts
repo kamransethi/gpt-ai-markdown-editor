@@ -95,17 +95,17 @@ export const FrontmatterBlock = CodeBlock.extend({
         }
       };
 
-      header.addEventListener('mousedown', (e) => {
+      header.addEventListener('mousedown', e => {
         e.preventDefault();
         e.stopPropagation();
       });
       header.addEventListener('click', toggle);
 
-      toggleBtn.addEventListener('mousedown', (e) => {
+      toggleBtn.addEventListener('mousedown', e => {
         e.preventDefault();
         e.stopPropagation();
       });
-      toggleBtn.addEventListener('click', (e) => {
+      toggleBtn.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
         toggle();
