@@ -15,11 +15,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/core';
 import type { Node as PmNode } from '@tiptap/pm/model';
-import hljs from 'highlight.js/lib/core';
-import yaml from 'highlight.js/lib/languages/yaml';
-
-// Register YAML language for syntax highlighting
-hljs.registerLanguage('yaml', yaml);
 
 export const FrontmatterBlock = Node.create({
   name: 'frontmatterBlock',
@@ -69,89 +64,42 @@ export const FrontmatterBlock = Node.create({
       header.appendChild(triangle);
       header.appendChild(label);
 
-      // ── Content area: single <pre><code> that's contentEditable ──
+      // ── Content area: plain textarea (reliable cut/copy/paste) ──
       const content = document.createElement('div');
       content.className = 'frontmatter-content-wrap';
 
-      const pre = document.createElement('pre');
-      pre.className = 'code-block-highlighted';
-
-      const code = document.createElement('code');
-      code.className = 'language-yaml hljs';
-      code.contentEditable = 'true';
-      code.spellcheck = false;
-      code.setAttribute('role', 'textbox');
-      code.setAttribute('aria-label', 'Front matter YAML content');
+      const textarea = document.createElement('textarea');
+      textarea.className = 'frontmatter-textarea';
+      textarea.spellcheck = false;
+      textarea.setAttribute('aria-label', 'Front matter YAML content');
 
       const yamlText = (node.attrs.yaml as string) || '';
-      const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
-      code.innerHTML = highlighted.value;
+      textarea.value = yamlText;
 
-      pre.appendChild(code);
-      content.appendChild(pre);
+      content.appendChild(textarea);
       dom.appendChild(header);
       dom.appendChild(content);
 
       const wasEmpty = !yamlText.trim();
 
-      // ── Update highlighting while preserving cursor position ──
-      const updateHighlight = (text: string) => {
-        const selection = window.getSelection();
-        let offset = 0;
-        if (selection && selection.rangeCount > 0) {
-          const range = selection.getRangeAt(0);
-          const preRange = document.createRange();
-          preRange.selectNodeContents(code);
-          preRange.setEnd(range.endContainer, range.endOffset);
-          offset = preRange.toString().length;
-        }
-
-        const highlighted = hljs.highlight(text, { language: 'yaml' });
-        code.innerHTML = highlighted.value;
-
-        // Restore cursor
-        try {
-          const textNodes: globalThis.Node[] = [];
-          const walk = document.createTreeWalker(code, NodeFilter.SHOW_TEXT, null);
-          let textNode: globalThis.Node | null;
-          while ((textNode = walk.nextNode())) {
-            textNodes.push(textNode);
-          }
-
-          let currentOffset = 0;
-          for (const textNode of textNodes) {
-            const textLen = (textNode as Text).textContent?.length ?? 0;
-            if (currentOffset + textLen >= offset) {
-              const posInNode = offset - currentOffset;
-              const range = document.createRange();
-              range.setStart(textNode as Text, Math.min(posInNode, textLen));
-              range.collapse(true);
-              selection?.removeAllRanges();
-              selection?.addRange(range);
-              break;
-            }
-            currentOffset += textLen;
-          }
-        } catch {
-          // Cursor restoration optional
-        }
+      // Auto-resize to fit content
+      const autoResize = () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
       };
 
       // ── Input handler ──
       const handleInput = () => {
         const pos = getPos();
         if (typeof pos !== 'number') return;
-
-        const plainText = code.innerText || '';
-        updateHighlight(plainText);
-
-        const transaction = editor.state.tr.setNodeMarkup(pos, undefined, { yaml: plainText });
+        autoResize();
+        const transaction = editor.state.tr.setNodeMarkup(pos, undefined, { yaml: textarea.value });
         editor.view.dispatch(transaction);
       };
 
-      code.addEventListener('input', handleInput);
-      code.addEventListener('mousedown', e => e.stopPropagation());
-      code.addEventListener('keydown', e => e.stopPropagation());
+      textarea.addEventListener('input', handleInput);
+      textarea.addEventListener('mousedown', e => e.stopPropagation());
+      textarea.addEventListener('keydown', e => e.stopPropagation());
       header.addEventListener('mousedown', e => e.stopPropagation());
 
       // ── Toggle ──
@@ -159,15 +107,13 @@ export const FrontmatterBlock = Node.create({
         content.style.display = isOpen ? '' : 'none';
         triangle.style.transform = isOpen ? 'rotate(90deg)' : '';
 
+        if (isOpen) {
+          autoResize();
+        }
         if (isOpen && wasEmpty) {
           setTimeout(() => {
-            code.focus();
-            const range = document.createRange();
-            range.selectNodeContents(code);
-            range.collapse(true);
-            const selection = window.getSelection();
-            selection?.removeAllRanges();
-            selection?.addRange(range);
+            textarea.focus();
+            textarea.setSelectionRange(0, 0);
           }, 0);
         }
       };
@@ -202,9 +148,11 @@ export const FrontmatterBlock = Node.create({
         dom,
         update: (updatedNode: any) => {
           if (updatedNode.type.name !== 'frontmatterBlock') return false;
-          const yamlText = (updatedNode.attrs.yaml as string) || '';
-          const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
-          code.innerHTML = highlighted.value;
+          // Don't clobber active user edits
+          if (document.activeElement !== textarea) {
+            textarea.value = (updatedNode.attrs.yaml as string) || '';
+            autoResize();
+          }
           return true;
         },
       };

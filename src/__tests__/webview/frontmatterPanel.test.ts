@@ -104,10 +104,10 @@ describe('FrontmatterBlock extension', () => {
     expect(label?.textContent).toBe('FRONT MATTER');
   });
 
-  it('NodeView renders yaml in pre/code element', () => {
+  it('NodeView renders yaml in textarea', () => {
     insertFrontmatterBlock(editor, 'marp: true\n');
-    const code = document.querySelector('.frontmatter-block code');
-    expect(code?.textContent).toBe('marp: true\n');
+    const textarea = document.querySelector('.frontmatter-textarea') as HTMLTextAreaElement;
+    expect(textarea?.value).toBe('marp: true\n');
   });
 
   it('content starts hidden (collapsed)', () => {
@@ -178,7 +178,7 @@ describe('FrontmatterBlock extension', () => {
       }
     });
     editor.view.dispatch(editor.state.tr.setNodeMarkup(nodePos, undefined, { yaml: 'new: value' }));
-    const code = document.querySelector('.frontmatter-block code');
-    expect(code?.textContent).toBe('new: value');
+    const textarea = document.querySelector('.frontmatter-textarea') as HTMLTextAreaElement;
+    expect(textarea?.value).toBe('new: value');
   });
 });
