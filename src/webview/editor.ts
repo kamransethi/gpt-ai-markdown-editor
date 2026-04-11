@@ -467,7 +467,7 @@ function injectFrontmatterBlock(yamlText: string): void {
   try {
     editor.commands.insertContentAt(0, {
       type: 'frontmatterBlock',
-      attrs: { yaml: yamlText },
+      content: yamlText ? [{ type: 'text', text: yamlText }] : [],
     });
   } catch (e) {
     devLog('[DK-AI] Could not inject frontmatterBlock:', e);

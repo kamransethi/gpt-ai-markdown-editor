@@ -2,10 +2,12 @@
  * Front Matter Panel Extension
  *
  * A custom TipTap node (`frontmatterBlock`) that renders YAML front matter as a
- * collapsible `<details>` panel at the top of the document.
+ * collapsible panel at the top of the document.
  *
  * Design:
- *  - The node wraps a codeBlock containing the raw YAML text.
+ *  - YAML is stored as actual text content inside the node (like a code block),
+ *    NOT in an attribute. ProseMirror manages the text via `contentDOM` so
+ *    cut/copy/paste/undo all work natively — identical to how code blocks work.
  *  - `renderMarkdown` returns '' so the node is invisible to the markdown
  *    serializer; front matter is restored by `restoreFrontmatter()` instead.
  *  - No `parseMarkdown` is defined — the node is never created from markdown
@@ -19,15 +21,11 @@ import type { Node as PmNode } from '@tiptap/pm/model';
 export const FrontmatterBlock = Node.create({
   name: 'frontmatterBlock',
   group: 'block',
-  atom: true, // No children — YAML lives in the `yaml` attribute
+  content: 'text*', // YAML stored as real text — enables native cut/copy/paste
+  marks: '',
+  code: true, // Disables smart quotes, auto-pairs, etc.
   selectable: false,
   draggable: false,
-
-  addAttributes() {
-    return {
-      yaml: { default: '' },
-    };
-  },
 
   parseHTML() {
     return [{ tag: 'div[data-type="frontmatter"]' }];
@@ -37,11 +35,12 @@ export const FrontmatterBlock = Node.create({
     return [
       'div',
       mergeAttributes({ 'data-type': 'frontmatter', class: 'frontmatter-block' }, HTMLAttributes),
+      ['pre', ['code', { class: 'language-yaml' }, 0]],
     ];
   },
 
   addNodeView() {
-    return ({ node, editor, getPos }: { node: any; editor: any; getPos: any }) => {
+    return ({ node }: { node: any }) => {
       let isOpen = false;
 
       const dom = document.createElement('div');
@@ -64,57 +63,32 @@ export const FrontmatterBlock = Node.create({
       header.appendChild(triangle);
       header.appendChild(label);
 
-      // ── Content area: plain textarea (reliable cut/copy/paste) ──
+      // ── Content area: ProseMirror-managed <pre><code> via contentDOM ──
       const content = document.createElement('div');
       content.className = 'frontmatter-content-wrap';
 
-      const textarea = document.createElement('textarea');
-      textarea.className = 'frontmatter-textarea';
-      textarea.spellcheck = false;
-      textarea.setAttribute('aria-label', 'Front matter YAML content');
+      const pre = document.createElement('pre');
+      pre.className = 'code-block-highlighted frontmatter-pre';
 
-      const yamlText = (node.attrs.yaml as string) || '';
-      textarea.value = yamlText;
+      const code = document.createElement('code');
+      code.className = 'language-yaml';
+      code.setAttribute('spellcheck', 'false');
+      code.setAttribute('aria-label', 'Front matter YAML content');
 
-      content.appendChild(textarea);
+      pre.appendChild(code);
+      content.appendChild(pre);
       dom.appendChild(header);
       dom.appendChild(content);
 
-      const wasEmpty = !yamlText.trim();
-
-      // Auto-resize to fit content
-      const autoResize = () => {
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      };
-
-      // ── Input handler ──
-      const handleInput = () => {
-        const pos = getPos();
-        if (typeof pos !== 'number') return;
-        autoResize();
-        const transaction = editor.state.tr.setNodeMarkup(pos, undefined, { yaml: textarea.value });
-        editor.view.dispatch(transaction);
-      };
-
-      textarea.addEventListener('input', handleInput);
-      textarea.addEventListener('mousedown', e => e.stopPropagation());
-      textarea.addEventListener('keydown', e => e.stopPropagation());
-      header.addEventListener('mousedown', e => e.stopPropagation());
+      const wasEmpty = !node.textContent?.trim();
 
       // ── Toggle ──
       const applyState = () => {
         content.style.display = isOpen ? '' : 'none';
         triangle.style.transform = isOpen ? 'rotate(90deg)' : '';
 
-        if (isOpen) {
-          autoResize();
-        }
         if (isOpen && wasEmpty) {
-          setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(0, 0);
-          }, 0);
+          setTimeout(() => code.focus(), 0);
         }
       };
       applyState();
@@ -134,6 +108,8 @@ export const FrontmatterBlock = Node.create({
         }
       });
 
+      header.addEventListener('mousedown', e => e.stopPropagation());
+
       (dom as any)._fmToggle = () => {
         isOpen = !isOpen;
         applyState();
@@ -146,13 +122,13 @@ export const FrontmatterBlock = Node.create({
 
       return {
         dom,
+        contentDOM: code, // ProseMirror owns this element — cut/copy/paste work natively
+        stopEvent: (event: Event) => {
+          const target = event.target as HTMLElement | null;
+          return Boolean(target?.closest('.frontmatter-block-header'));
+        },
         update: (updatedNode: any) => {
           if (updatedNode.type.name !== 'frontmatterBlock') return false;
-          // Don't clobber active user edits
-          if (document.activeElement !== textarea) {
-            textarea.value = (updatedNode.attrs.yaml as string) || '';
-            autoResize();
-          }
           return true;
         },
       };
@@ -170,5 +146,5 @@ export function isFrontmatterBlock(node: PmNode | null | undefined): boolean {
 }
 
 export function extractFrontmatterText(frontmatterNode: PmNode): string {
-  return (frontmatterNode.attrs.yaml as string) || '';
+  return frontmatterNode.textContent || '';
 }

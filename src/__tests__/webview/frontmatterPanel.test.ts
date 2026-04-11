@@ -31,7 +31,7 @@ function createEditor(): Editor {
 function insertFrontmatterBlock(editor: Editor, yaml: string) {
   editor.commands.insertContentAt(0, {
     type: 'frontmatterBlock',
-    attrs: { yaml },
+    content: yaml ? [{ type: 'text', text: yaml }] : [],
   });
 }
 
@@ -54,10 +54,10 @@ describe('FrontmatterBlock extension', () => {
     expect(firstNode?.type.name).toBe('frontmatterBlock');
   });
 
-  it('stores yaml text in node attrs', () => {
+  it('stores yaml text as node text content', () => {
     insertFrontmatterBlock(editor, 'marp: true\ntheme: gaia\n');
     const node = editor.state.doc.firstChild!;
-    expect(node.attrs.yaml).toBe('marp: true\ntheme: gaia\n');
+    expect(node.textContent).toBe('marp: true\ntheme: gaia\n');
   });
 
   // ── Helper exports ──────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ describe('FrontmatterBlock extension', () => {
     expect(isFrontmatterBlock(undefined)).toBe(false);
   });
 
-  it('extractFrontmatterText reads yaml from node attrs', () => {
+  it('extractFrontmatterText reads yaml from node textContent', () => {
     insertFrontmatterBlock(editor, 'key: value\n');
     const node = editor.state.doc.firstChild!;
     expect(extractFrontmatterText(node)).toBe('key: value\n');
@@ -104,10 +104,10 @@ describe('FrontmatterBlock extension', () => {
     expect(label?.textContent).toBe('FRONT MATTER');
   });
 
-  it('NodeView renders yaml in textarea', () => {
+  it('NodeView renders yaml in code element', () => {
     insertFrontmatterBlock(editor, 'marp: true\n');
-    const textarea = document.querySelector('.frontmatter-textarea') as HTMLTextAreaElement;
-    expect(textarea?.value).toBe('marp: true\n');
+    const code = document.querySelector('.frontmatter-block code');
+    expect(code?.textContent).toBe('marp: true\n');
   });
 
   it('content starts hidden (collapsed)', () => {
@@ -177,8 +177,12 @@ describe('FrontmatterBlock extension', () => {
         nodePos = pos;
       }
     });
-    editor.view.dispatch(editor.state.tr.setNodeMarkup(nodePos, undefined, { yaml: 'new: value' }));
-    const textarea = document.querySelector('.frontmatter-textarea') as HTMLTextAreaElement;
-    expect(textarea?.value).toBe('new: value');
+    editor.view.dispatch(editor.state.tr.replaceWith(
+      nodePos + 1,
+      nodePos + 1 + editor.state.doc.nodeAt(nodePos)!.content.size,
+      editor.state.schema.text('new: value')
+    ));
+    const code = document.querySelector('.frontmatter-block code');
+    expect(code?.textContent).toBe('new: value');
   });
 });
