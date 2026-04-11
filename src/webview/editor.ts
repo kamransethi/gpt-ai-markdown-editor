@@ -437,9 +437,16 @@ function parseFrontmatterPairs(frontmatter: string): Array<[string, string]> {
  * Update the VIEW FRONTMATTER button in the editor meta bar.
  * Shows as a tiny link in the upper right when frontmatter is present.
  */
+/**
+ * Update the VIEW FRONTMATTER button in the editor meta bar.
+ * Shows as a tiny link in the upper right when frontmatter is present.
+ */
 function updateFrontmatterViewButton(frontmatter: string | null): void {
   const metaBar = editorMetaBar as HTMLElement | null;
-  if (!metaBar) return;
+  if (!metaBar) {
+    console.log('[DK-AI] updateFrontmatterViewButton: editorMetaBar not found');
+    return;
+  }
 
   // Remove any existing frontmatter button
   const existing = metaBar.querySelector('.frontmatter-view-btn');
@@ -449,8 +456,11 @@ function updateFrontmatterViewButton(frontmatter: string | null): void {
 
   // Only show button if frontmatter exists
   if (!frontmatter || !frontmatter.trim()) {
+    console.log('[DK-AI] updateFrontmatterViewButton: no frontmatter to show');
     return;
   }
+
+  console.log('[DK-AI] updateFrontmatterViewButton: creating button for frontmatter');
 
   // Create the button
   const button = document.createElement('button');
@@ -460,7 +470,7 @@ function updateFrontmatterViewButton(frontmatter: string | null): void {
   button.type = 'button';
 
   // Wire click handler
-  button.addEventListener('click', async (e) => {
+  button.addEventListener('click', async e => {
     e.preventDefault();
     e.stopPropagation();
     await openFrontmatterEditor();
@@ -468,6 +478,11 @@ function updateFrontmatterViewButton(frontmatter: string | null): void {
 
   // Add to meta bar
   metaBar.appendChild(button);
+  console.log('[DK-AI] updateFrontmatterViewButton: button added to meta bar', {
+    metaBar,
+    button,
+    buttonText: button.textContent,
+  });
 }
 
 /**
@@ -789,11 +804,12 @@ function initializeEditor(initialContent: string) {
       body.appendChild(layout);
       layout.appendChild(tocMount);
       layout.appendChild(editorSurface);
-      editorSurface.appendChild(editorElement);
-
+      
       editorMetaBar = document.createElement('div');
       editorMetaBar.className = 'editor-meta-bar';
       editorSurface.appendChild(editorMetaBar);
+      
+      editorSurface.appendChild(editorElement);
     } else if (!editorMetaBar) {
       editorMetaBar = layout.querySelector('.editor-meta-bar') as HTMLElement | null;
       if (!editorMetaBar) {
