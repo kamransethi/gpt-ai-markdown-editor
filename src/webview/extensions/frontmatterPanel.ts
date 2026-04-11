@@ -46,13 +46,13 @@ export const FrontmatterBlock = Node.create({
   },
 
   addNodeView() {
-    return ({ node }: { node: any }) => {
+    return ({ node, editor, getPos }: { node: any; editor: any; getPos: any }) => {
       let isOpen = false;
 
       const dom = document.createElement('div');
       dom.className = 'frontmatter-block';
 
-      // ── Header (outside contentEditable — click never swallowed by ProseMirror) ──
+      // ── Header ──
       const header = document.createElement('div');
       header.className = 'frontmatter-block-header';
       header.setAttribute('role', 'button');
@@ -69,7 +69,7 @@ export const FrontmatterBlock = Node.create({
       header.appendChild(triangle);
       header.appendChild(label);
 
-      // ── Content area ──
+      // ── Content area: single <pre><code> that's contentEditable ──
       const content = document.createElement('div');
       content.className = 'frontmatter-content-wrap';
 
@@ -77,32 +77,109 @@ export const FrontmatterBlock = Node.create({
       pre.className = 'code-block-highlighted';
 
       const code = document.createElement('code');
+      code.className = 'language-yaml hljs';
+      code.contentEditable = 'true';
+      code.spellcheck = false;
+      code.setAttribute('role', 'textbox');
+      code.setAttribute('aria-label', 'Front matter YAML content');
+
       const yamlText = (node.attrs.yaml as string) || '';
       const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
       code.innerHTML = highlighted.value;
-      code.className = 'language-yaml hljs';
 
       pre.appendChild(code);
       content.appendChild(pre);
-
       dom.appendChild(header);
       dom.appendChild(content);
 
-      // ── Toggle helpers ──
+      const wasEmpty = !yamlText.trim();
+
+      // ── Update highlighting while preserving cursor position ──
+      const updateHighlight = (text: string) => {
+        const selection = window.getSelection();
+        let offset = 0;
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const preRange = document.createRange();
+          preRange.selectNodeContents(code);
+          preRange.setEnd(range.endContainer, range.endOffset);
+          offset = preRange.toString().length;
+        }
+
+        const highlighted = hljs.highlight(text, { language: 'yaml' });
+        code.innerHTML = highlighted.value;
+
+        // Restore cursor
+        try {
+          const textNodes: globalThis.Node[] = [];
+          const walk = document.createTreeWalker(code, NodeFilter.SHOW_TEXT, null);
+          let textNode: globalThis.Node | null;
+          while ((textNode = walk.nextNode())) {
+            textNodes.push(textNode);
+          }
+
+          let currentOffset = 0;
+          for (const textNode of textNodes) {
+            const textLen = (textNode as Text).textContent?.length ?? 0;
+            if (currentOffset + textLen >= offset) {
+              const posInNode = offset - currentOffset;
+              const range = document.createRange();
+              range.setStart(textNode as Text, Math.min(posInNode, textLen));
+              range.collapse(true);
+              selection?.removeAllRanges();
+              selection?.addRange(range);
+              break;
+            }
+            currentOffset += textLen;
+          }
+        } catch {
+          // Cursor restoration optional
+        }
+      };
+
+      // ── Input handler ──
+      const handleInput = () => {
+        const pos = getPos();
+        if (typeof pos !== 'number') return;
+
+        const plainText = code.innerText || '';
+        updateHighlight(plainText);
+
+        const transaction = editor.state.tr.setNodeMarkup(pos, undefined, { yaml: plainText });
+        editor.view.dispatch(transaction);
+      };
+
+      code.addEventListener('input', handleInput);
+      code.addEventListener('mousedown', e => e.stopPropagation());
+      code.addEventListener('keydown', e => e.stopPropagation());
+      header.addEventListener('mousedown', e => e.stopPropagation());
+
+      // ── Toggle ──
       const applyState = () => {
         content.style.display = isOpen ? '' : 'none';
         triangle.style.transform = isOpen ? 'rotate(90deg)' : '';
-      };
-      applyState(); // Starts closed
 
-      // Stop ProseMirror seeing mousedown (important — prevents selection steal)
-      header.addEventListener('mousedown', e => e.stopPropagation());
+        if (isOpen && wasEmpty) {
+          setTimeout(() => {
+            code.focus();
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            range.collapse(true);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          }, 0);
+        }
+      };
+      applyState();
+
       header.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
         isOpen = !isOpen;
         applyState();
       });
+
       header.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -111,7 +188,6 @@ export const FrontmatterBlock = Node.create({
         }
       });
 
-      // Expose for external callers (toolbar button)
       (dom as any)._fmToggle = () => {
         isOpen = !isOpen;
         applyState();
@@ -124,7 +200,6 @@ export const FrontmatterBlock = Node.create({
 
       return {
         dom,
-        // NO contentDOM — atom node, ProseMirror never touches the internals
         update: (updatedNode: any) => {
           if (updatedNode.type.name !== 'frontmatterBlock') return false;
           const yamlText = (updatedNode.attrs.yaml as string) || '';
