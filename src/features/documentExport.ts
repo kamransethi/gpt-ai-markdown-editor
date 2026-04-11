@@ -42,7 +42,11 @@ export { buildExportHTML, getExportStyles } from './exportStyles';
 
 // ── Local imports from extracted modules ──
 import { ensureChromePath } from './chromeDetection';
-import { resolveMarkdownImagePaths, resolveHtmlImagePaths, convertHtmlImagesToMarkdown } from './exportPathUtils';
+import {
+  resolveMarkdownImagePaths,
+  resolveHtmlImagePaths,
+  convertHtmlImagesToMarkdown,
+} from './exportPathUtils';
 import { buildExportHTML } from './exportStyles';
 
 // ── Types ───────────────────────────────────────────────────────────

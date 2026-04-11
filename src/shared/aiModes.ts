@@ -78,11 +78,7 @@ export const AI_REFINE_MODES: readonly AiRefineMode[] = [
  * Custom entry → separator → built-in modes.
  */
 export function getRefineMenuItems(): AiRefineMenuItem[] {
-  return [
-    CUSTOM_REFINE_ENTRY,
-    { separator: true } as AiRefineSeparator,
-    ...AI_REFINE_MODES,
-  ];
+  return [CUSTOM_REFINE_ENTRY, { separator: true } as AiRefineSeparator, ...AI_REFINE_MODES];
 }
 
 /**

@@ -7,7 +7,11 @@
 /**
  * Build complete HTML document for PDF export with styling.
  */
-export function buildExportHTML(contentHtml: string, theme: string, _format: 'pdf' | 'html'): string {
+export function buildExportHTML(
+  contentHtml: string,
+  theme: string,
+  _format: 'pdf' | 'html'
+): string {
   const styles = getExportStyles(theme);
 
   return `

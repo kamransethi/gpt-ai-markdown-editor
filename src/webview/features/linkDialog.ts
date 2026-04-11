@@ -373,7 +373,9 @@ export function createLinkDialog(): HTMLElement {
   });
 
   // Local file browse button
-  const browseLocalBtn = content.querySelector('#link-browse-local-btn') as HTMLButtonElement | null;
+  const browseLocalBtn = content.querySelector(
+    '#link-browse-local-btn'
+  ) as HTMLButtonElement | null;
   if (browseLocalBtn) {
     browseLocalBtn.addEventListener('click', () => {
       const vscode = (window as Window & { vscode: { postMessage: (msg: any) => void } }).vscode;
