@@ -163,7 +163,292 @@ These are critical known issues — read before working on sync/editor state:
 - Empty paragraph handling: filter at serialization time, NOT during typing (which causes cursor jumps)
 - Position calculation: use `$from.after($from.depth)` for safe positions, avoid `$pos.end(0)` which can overflow
 
-## XIII. Data Safety & Roundtrip Testing (CRITICAL)
+## XIII. Specs, Implementation Plans, and Test-Driven Development
+
+**Workflow**: `spec.md` → LLM ANALYSIS (behind scenes) → `implementation_plan.md` → Review 1 (design) → LLM code → Tests → Review 2 (code)
+
+This section defines how to create specs, plan implementations, and handoff to LLM for development.
+
+### The Workflow
+
+1. **Create spec.md** (manual, user-written)
+   - Level-appropriate template (quick bug, medium feature, or major feature)
+   - Use `/speckit.specify` to clarify with LLM
+   - Finalize and commit spec.md
+
+2. **LLM ANALYSIS** (internal LLM reasoning, not a file)
+   - Read spec.md
+   - Understand problem/requirements
+   - Research technical approach
+   - Determine tech stack and architecture
+   - *Result: Passed to LLM context, not committed*
+
+3. **Generate implementation_plan.md** (LLM + user review)
+   - LLM creates plan based on ANALYSIS
+   - Files to change + functions to modify
+   - Test cases to write
+   - High-level code structure
+   - *User reviews and approves (Review 1)*
+
+4. **LLM Writes Code** (TDD: test first)
+   - Implement tests that fail (RED)
+   - Implement code to pass tests (GREEN)
+   - Refactor while keeping tests green
+   - Run `npm test` (new + relevant category tests)
+   - Run `npm test` (all 828 tests — regression suite)
+
+5. **User Code Review** (Review 2)
+   - Review final code and tests
+   - Verify acceptance criteria met
+   - Approve or request changes
+
+6. **Merge to Main**
+   - Commit: spec.md + implementation_plan.md + code + tests
+   - IMPLEMENTATION.md auto-generated or manual summary
+   - Ready for changelog/release notes
+
+### Three-Level System
+
+**Decision Tree**: Choose based on scope and effort
+
+```
+Is this a bug or <1 day of work?
+  → YES: Level 1 (Quick Bug)
+  
+Is it 2-3 days and clear scope?
+  → YES: Level 2 (Medium Feature)
+  
+Is it >1 week or unclear scope?
+  → YES: Level 3 (Major Feature)
+```
+
+#### Level 1: Quick Bug (NNN-BUG-issue-name)
+
+**Use case**: Bug fixes, small features, quick iterations  
+**Folder**: `specs/NNN-BUG-title/`
+
+**Files**:
+- **spec.md** (1 page)
+  - Problem statement (2-3 sentences)
+  - Reproduction steps (numbered)
+  - Acceptance criteria (3-5 bullet points)
+  - Related issues (if any)
+- **implementation_plan.md** (half page)
+  - Files to change (list)
+  - Key functions/components
+  - Test cases to write (list)
+  - Estimated complexity
+- **test.ts** (LLM writes after plan approved)
+  - Failing test reproducing bug
+- **IMPLEMENTATION.md** (after merge)
+  - What changed (2-3 sentences max)
+  - Why it matters to users
+  - Technical notes if needed
+
+**Review Process**:
+1. User approves spec.md + implementation_plan.md
+2. LLM codes + tests
+3. User reviews code
+4. Merge
+
+**Effort**: ~30 min review + LLM coding
+
+---
+
+#### Level 2: Medium Feature (NNN-FEATURE-issue-name)
+
+**Use case**: Features with clear design, modest scope  
+**Folder**: `specs/NNN-FEATURE-title/`
+
+**Files**:
+- **spec.md** (2-3 pages)
+  - User scenarios/acceptance scenarios (Given/When/Then format)
+  - Requirements (FR-NNN style)
+  - Success criteria
+  - Edge cases
+- **implementation_plan.md** (1-2 pages)
+  - Architecture overview
+  - Files and structure
+  - Test plan (unit, integration)
+  - Phased approach if multi-step
+  - Tech decisions (why this approach)
+- **test.ts** (LLM writes)
+  - Comprehensive test cases
+- **IMPLEMENTATION.md** (after merge)
+  - Overview of changes
+  - User-facing benefits
+  - Technical decisions made
+
+**Review Process**:
+1. User approves spec.md
+2. LLM generates implementation_plan.md (uses /speckit.plan if helpful)
+3. User approves plan
+4. LLM codes + tests
+5. User reviews code
+6. Merge
+
+**Effort**: ~1-2 hours review + LLM coding
+
+---
+
+#### Level 3: Major Feature (NNN-MAJOR-issue-name)
+
+**Use case**: Large features, architectural changes, multi-week effort  
+**Folder**: `specs/NNN-MAJOR-title/`
+
+**Files**:
+- **spec.md** (4-6 pages, full speckit template)
+  - User stories P1, P2, P3 (independently testable)
+  - Requirements (FR-NNN traceability)
+  - Success criteria
+  - Assumptions and constraints
+  - Edge cases and error handling
+- **research.md** (from /speckit.plan Phase 0)
+  - Technology research
+  - Decisions made (with rationale)
+  - Alternatives considered
+- **implementation_plan.md** (2-4 pages, from /speckit.plan Phase 1)
+  - Architecture and data model
+  - Phase breakdown (if multi-week)
+  - Test strategy
+  - Dependencies and risks
+  - Tech stack justification
+- **tasks.md** (from /speckit.tasks Phase 2)
+  - Actionable tasks with dependencies
+  - Estimated effort per task
+- **test.ts** (LLM writes)
+  - Comprehensive test matrix
+  - Integration tests
+- **IMPLEMENTATION.md** (after merge)
+  - Feature overview
+  - Architecture changes
+  - Testing approach used
+
+**Review Process**:
+1. User approves spec.md and research.md
+2. LLM generates implementation_plan.md (use /speckit.plan)
+3. User approves plan
+4. Generate tasks.md (use /speckit.tasks)
+5. LLM codes per tasks (can handle incrementally)
+6. User reviews code at each phase
+7. Merge
+
+**Effort**: ~4-8 hours upfront + phased LLM coding
+
+---
+
+### Templates and Integration with /speckit
+
+**Templates** (in `.specify/templates/`):
+- `quick-bug.md` — Level 1 minimal spec template
+- `medium-feature.md` — Level 2 spec template with scenarios
+- `major-feature.md` — Level 3 full speckit template (same as existing spec-template.md)
+
+**Workflow Integration**:
+- When using `/speckit.specify`: Auto-detect or ask user (Quick/Medium/Major?)
+- Auto-select template based on level
+- Rest of /speckit.* commands work unchanged
+- Existing major features continue to use existing spec-template.md
+
+**Folder Naming Convention**:
+- `NNN-BUG-issue-name` (e.g., 006-BUG-ai-refine-code-blocks)
+- `NNN-FEATURE-issue-name` (e.g., 007-FEATURE-dark-mode)
+- `NNN-MAJOR-issue-name` (e.g., 008-MAJOR-plugin-system)
+
+### Artifacts in Git
+
+**Always commit**:
+- spec.md (problem/requirement definition)
+- implementation_plan.md (design approval point)
+- Code and tests
+- IMPLEMENTATION.md (auto-summarized from changes, or manually written)
+
+**Never commit** (ephemeral):
+- ANALYSIS (LLM reasoning from spec → plan, stays in context)
+- Intermediate drafts
+- Research artifacts (stay in LLM context, summarized in spec/plan)
+
+### Release Notes Generation
+
+**IMPLEMENTATION.md format** (for auto-scraping):
+
+```markdown
+# IMPLEMENTATION.md
+
+## What Changed
+- File: what changed, why (1 sentence)
+- File: what changed, why (1 sentence)
+
+## Why It Matters (User-Facing)
+[1-2 sentences for end user viewing release notes]
+
+## How It Works (Technical)
+[Internal notes for developers]
+```
+
+**Generation**:
+After each release, scrape all `specs/*/IMPLEMENTATION.md` files merged in this release.
+Format into changelog entry per spec.
+
+### Git Log Discipline
+
+**Commit messages** should reference the spec:
+```
+fix(editor): fix H1-H3 scroll jiggle
+
+Fixes specs/004-BUG-scroll-regression-fix
+
+Root cause: scrollIntoView() in TOC pane caused layout thrashing.
+Solution: Removed scrollIntoView() call.
+All 828 tests pass.
+```
+
+**Pattern**: `type(scope): description` + `Fixes specs/NNN-issue-name` in commit body.
+
+### Regression Testing
+
+**After each LLM-coded feature**:
+1. Run specific test file: `npm test -- test-file.test.ts`
+2. Run category tests: `npm test -- --testPathPattern=features` (or similar)
+3. Run full regression suite: `npm test` (all 828 tests must pass)
+
+**Failures block merge** — no exceptions.
+
+### Handling Failed or Partial Fixes
+
+**If fix is FAILED** (attempted but cannot implement):
+1. Update `spec.md`: Mark `Status: FAILED`
+2. Add section: "Why This Cannot Be Fixed" (root cause analysis)
+3. Reference platform limitations or architectural conflicts
+4. Commit spec + ANALYSIS summary (if valuable for future reference)
+5. Move to KNOWN_ISSUES.md: `CANNOT_FIX` section with link to spec
+
+**If fix is PARTIAL** (works for some cases, not others):
+1. Update `spec.md`: Mark `Status: PARTIAL`
+2. Add section: "What Works" / "What Doesn't Work"
+3. Create NEW issue (next NNN) for the remaining cases
+4. Commit current spec + code for partial fix
+5. Move to KNOWN_ISSUES.md: `PARTIAL` section with link to spec
+
+### Reference from KNOWN_ISSUES.md
+
+```markdown
+## RESOLVED ✅
+- **BUG-X**: Title — [spec](specs/006-BUG-title/spec.md) | Commit: abc123
+
+## CANNOT_FIX 🔴
+- **BUG-Y**: Title — Platform limitation (see spec) — [spec](specs/007-BUG-title/spec.md)
+
+## PARTIAL ⚠️
+- **FR-A**: Title (works for X, see spec for details) — [spec](specs/008-FEATURE-title/spec.md)
+
+## OPEN 🟡
+- **BUG-Z**: Title (needs investigation) — [spec](specs/009-BUG-title/spec.md)
+```
+
+---
+
+## XIV. Data Safety & Roundtrip Testing (CRITICAL)
 
 **Zero silent data loss.** Every release must pass comprehensive roundtrip testing before public availability.
 

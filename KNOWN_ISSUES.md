@@ -1,62 +1,101 @@
 # Known Issues
 
 > **Maintained by:** All contributors
-> **Tests:** `src/__tests__/webview/knownIssues.test.ts`
-> **Convention:** Each issue has a test. ✕ = test confirms bug, ✓ = test passes (UI-only bug)
+> **Convention:** See METHOD in `.specify/memory/constitution.md` § XIII
+> **Folder Structure:** Each issue has `specs/NNN-issue-name/` with spec.md, test.ts, IMPLEMENTATION.md
 
 ---
 
-## NEW BUGS:
+## CANNOT_FIX (Platform Limitations)
 
-### ~~BUG-I: File not exposed to GitHub Copilot chat~~ ✅ FIXED
-
+### BUG-I: File Not Exposed to GitHub Copilot Chat
 
 | Field       | Value                                                                                                                 |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Category    | Bug                                                                                                                   |
 | Priority    | Medium                                                                                                                |
-| Test status | ✓ PASSING — fixed                                                                                                     |
-| Resolution  | Active document URI now tracked via `activeWebview.ts`; chat participant uses `stream.reference(docUri)` to expose file; added `getActiveDocumentUri` command for external discovery. Note: VS Code's implicit "active file" context for custom editors remains a platform limitation — users can use `@fluxflow` chat participant or `#file:` references. |
-
+| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
+| Analysis    | VS Code Custom Editor API does not integrate with Copilot's @-mention discovery system. `stream.reference()` only works for built-in editors. No platform API exists to expose custom editors to Copilot UI. |
+| Workaround  | Users can use `#file:` manual references or `@fluxflow` chat participant.                                           |
 
 ---
 
-## FEATURE REQUESTS:
-
-### ~~FR-1: AI Refine should preserve block quote formatting~~ ✅ IMPLEMENTED
-
+### FR-4: Selected Text Context in Copilot
 
 | Field       | Value                                                                                                                 |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| Resolution  | System prompt updated to instruct AI not to add block-level markers; `handleAiRefineResult` now detects blockquote/callout/alert ancestor nodes and uses selection-based replacement (`deleteSelection` + `insertContent`) that preserves the parent node context. |
+| Category    | Feature Request                                                                                                      |
+| Priority    | Low                                                                                                                   |
+| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
+| Analysis    | Blocked by BUG-I. Selection tracking is implemented, but Copilot cannot receive selection metadata because custom editors are not exposed to Copilot's context system. |
+| Workaround  | Manually copy/paste selected text into Copilot chat.                                                                 |
 
 ---
 
-### ~~FR-2: Remember last custom refinement command~~ ✅ IMPLEMENTED
+## RESOLVED ✅
 
+### FR-2: Remember Last Custom Refinement Command
 
 | Field       | Value                                                                                                                |
 | ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| Resolution  | Module-level `lastCustomCommand` variable stores the last custom instruction; textarea is pre-filled on next dialog open. Clears on extension reload. |
+| Category    | Feature Request                                                                                                     |
+| Priority    | Low                                                                                                                  |
+| Status      | ✅ TESTED AND WORKS                                                                                                  |
+| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
+| Implementation | Module-level `lastCustomCommand` stores last instruction; textarea pre-filled on next dialog open.                   |
 
 ---
 
-### ~~FR-3: Better UX for custom refinement dialog shortcuts~~ ✅ IMPLEMENTED
-
+### FR-3: Better UX for Custom Refinement Dialog Shortcuts
 
 | Field       | Value                                                                                                             |
 | ----------- | ----------------------------------------------------------------------------------------------------------------- |
-| Resolution  | Keyboard handler moved to `input.addEventListener('keydown')` on the textarea: Enter submits, Shift+Enter allows line breaks, Escape closes. |
+| Category    | Feature Request                                                                                                   |
+| Priority    | Low                                                                                                                |
+| Status      | ✅ TESTED AND WORKS                                                                                               |
+| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)       |
+| Implementation | Keyboard handler on textarea: Enter submits, Shift+Enter = line break, Esc = close.                               |
 
 ---
 
-### FR-4: Selected text context in Copilot (optional)
+## PARTIAL ⚠️
 
+### FR-1: AI Refine Preserves Block Quote Formatting
 
-| Field       | Value                                                                                                                |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| Status      | Partial — selected text IS included in the `@fluxflow` chat participant context. ProseMirror positions are tracked. VS Code Copilot API does not currently support showing line ranges for custom editor selections. |
+| Field       | Value                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Category    | Feature Request                                                                                                      |
+| Priority    | Medium                                                                                                                |
+| Status      | ⚠️ PARTIAL — Works for blockquotes/alerts, broken for code blocks                                                    |
+| Spec        | [specs/005-copilot-integration-and-ai-refine/spec.md](specs/005-copilot-integration-and-ai-refine/spec.md)         |
+| What Works  | Blockquotes (`>`), GitHub alerts (`> [!NOTE]`), callouts — wrapper detection applies correctly.                     |
+| What Breaks | Code blocks and mixed nesting scenarios (see BUG-FR1-PARTIAL below).                                                |
 
-# REVIEWED BUGS:
+---
+
+## OPEN 🔴
+
+### BUG-FR1-PARTIAL: AI Refine Corrupts Code Blocks and Other Constructs
+
+| Field       | Value                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Category    | Bug                                                                                                                   |
+| Priority    | High                                                                                                                  |
+| Status      | 🔴 OPEN — Needs investigation                                                                                        |
+| Problem     | FR-1 partial fix works for blockquotes/alerts, but AI Refine still corrupts content inside code blocks, strikethrough regions, and other complex nesting scenarios. Wrapper detection is incomplete. |
+| Workaround  | Don't use AI Refine on text inside code blocks; use standard find/replace instead.                                   |
+| Next Step   | Create specs/NNN-ai-refine-code-blocks/ with test case reproducing corruption.                                      |
+
+---
+
+## Navigation
+
+- **Spec Kit Format**: Use [constitution.md](.specify/memory/constitution.md) § XIII for workflow
+- **Create New Issue**: `specs/NNN-issue-name/` with three files: spec.md (problem), test.ts (RED test), IMPLEMENTATION.md (brief summary)
+
+---
+
+# LEGACY BUGS (Pre-April 2026)
 
 ## BUG-A: Ordered list nested bullets not editable
 
@@ -76,30 +115,6 @@
 
 ---
 
-## ~~BUG-B1: Editor still editable while Insert Link dialog is open~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| Priority    | Medium                                                                                                                |
-| Test status | ✓ PASSING — fixed                                                                                                     |
-| Resolution  | `showLinkDialog()` now calls `editor.setEditable(false)`, `hideLinkDialog()` restores with `editor.setEditable(true)` |
-
-
----
-
-## ~~BUG-B2: File link insertion replaces selected text (data loss)~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Priority    | High                                                                                                                                 |
-| Test status | ✓ PASSING — fixed                                                                                                                    |
-| Resolution  | File click handler now guards with `if (textInput && !textInput.value.trim())` — only sets filename when no text is already selected |
-
-
----
-
 ## BUG-B3: Link text characters lost on right side (intermittent)
 
 
@@ -115,30 +130,6 @@
 **Root cause:** Likely a mark boundary issue during markdown serialization. When TipTap serializes the link mark, the boundary detection (`getMarkRange`) may shorten the range by a character or two if there's whitespace or special characters at the boundary. Could also be related to `findNearestTextRange` in `applyLinkAtRange`.
 
 **Fix:** Debug by adding logging to `applyLinkAtRange` when range doesn't match exactly. Check if `findNearestTextRange` returns a shorter range than expected.
-
----
-
-## ~~BUG-B4: Next character typed after link gets included in link~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                                                         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Priority    | High                                                                                                                                                          |
-| Test status | ✓ PASSING — fixed (2 tests)                                                                                                                                   |
-| Resolution  | Extended Link with `inclusive() { return false; }` — the default `inclusive()` returned `this.options.autolink` (true), causing marks to extend at boundaries |
-
-
----
-
-## ~~BUG-B5: Links to .md files open in VS Code text editor~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                                                         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Priority    | Medium                                                                                                                                                        |
-| Test status | ✓ PASSING — fixed                                                                                                                                             |
-| Resolution  | `handleOpenFileLink` now checks `fileExtension === '.md'` and uses `vscode.commands.executeCommand('vscode.openWith', fileUri, 'gptAiMarkdownEditor.editor')` |
-
 
 ---
 
@@ -162,7 +153,7 @@
 
 
 | Field             | Value                                                  |
-| ----------------- | ------------------------------------------------------ |
+| ----| ------------------------------------------------------ |
 | Priority          | Medium                                                 |
 | Test status       | ✓ passes (pasteIntoCells works correctly in isolation) |
 | Confidence to fix | Medium                                                 |
@@ -173,18 +164,6 @@
 **Root cause:** `pasteIntoCells()` itself works correctly row-by-row (confirmed by test). The bug is likely in how the clipboard data is constructed during the copy operation. When a `CellSelection` spanning a column is serialized to TSV, the selection may not properly capture each row's individual cell content — possibly serializing only the header text for all rows.
 
 **Fix:** Debug `getSelectedTableMatrix()` — verify it returns the correct per-row values when a column selection is active. The `CellSelection` may iterate cells differently than expected. Also check `serializeTableMatrix` for proper row iteration.
-
----
-
-## ~~BUG-D: Empty doc placeholder missing on non-first lines~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                                                                                                                                                                                                                                                |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Priority    | Low                                                                                                                                                                                                                                                                                                                                                  |
-| Test status | ✓ PASSING — fixed                                                                                                                                                                                                                                                                                                                                    |
-| Resolution  | Fixed CSS selector: changed `.ProseMirror p.is-editor-empty:first-child::before` to `.ProseMirror.is-editor-empty > p.is-empty:first-child::before` — the "Start writing..." prompt now only shows for the first paragraph when the entire editor is empty, while the `.is-empty::before` rule with `data-placeholder` handles all other empty lines |
-
 
 ---
 
@@ -210,18 +189,6 @@
 
 ---
 
-## ~~BUG-F: Obsidian checkbox paste loses bold formatting~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                                                                           |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Priority    | Low                                                                                                                                                                             |
-| Test status | ✓ PASSING — fixed (2 tests)                                                                                                                                                     |
-| Resolution  | Changed `taskListItem` turndown rule to use `turndown.turndown(contentDiv.innerHTML)` instead of `contentDiv.textContent` — preserves bold, italic, and other inline formatting |
-
-
----
-
 ## BUG-G: Overall copy-paste robustness (medium priority)
 
 
@@ -237,14 +204,3 @@
 **Root cause:** The paste pipeline has multiple layers: `clipboardHandling.ts` → `pasteHandler.ts` → TipTap's built-in paste handling. These layers sometimes conflict or miss edge cases.
 
 **Fix:** Refactoring needed. Consolidate paste handling into a single pipeline. Move extension-specific paste handling into `addProseMirrorPlugins` within each extension (per AGENTS.md refactoring roadmap).
-
----
-
-## ~~BUG-H: Search next/prev buttons don't navigate~~ ✅ FIXED
-
-
-| Field       | Value                                                                                                                                                                                                               |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Priority    | Medium                                                                                                                                                                                                              |
-| Test status | ✓ PASSING — fixed                                                                                                                                                                                                   |
-| Resolution  | Changed `nextSearchResult` and `previousSearchResult` commands to accept `tr` and `dispatch` params, call `if (dispatch) dispatch(tr)`, and return `true` — removed `editor.commands.focus()` call that stole focus |

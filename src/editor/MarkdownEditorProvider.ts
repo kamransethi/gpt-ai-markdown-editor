@@ -8,7 +8,13 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { outlineViewProvider } from '../features/outlineView';
-import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText, setActiveDocumentUri, setSelectionRange } from '../activeWebview';
+import {
+  setActiveWebviewPanel,
+  getActiveWebviewPanel,
+  setSelectedText,
+  setActiveDocumentUri,
+  setSelectionRange,
+} from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
 import { handleAiExplainRequest } from '../features/aiExplain';
 import { getNonce } from './utils';

@@ -24,6 +24,27 @@ This project uses [GitHub Spec Kit](https://github.com/github/spec-kit) for Spec
 | Add toolbar button    | `src/webview/BubbleMenuView.ts`              |
 | Add TipTap extension  | `src/webview/extensions/`                    |
 | Update document sync  | `src/editor/MarkdownEditorProvider.ts`       |
+| Handle KNOWN_ISSUE    | See METHOD in `.specify/memory/constitution.md` § XIII |
+| Create new spec/bug   | Follow `.specify/guides/workflow.md` — TL;DR below |
+
+---
+
+## Creating Specs & Handoff to LLM (TL;DR)
+
+**Workflow**: spec.md (you) → ANALYSIS (LLM internal) → implementation_plan.md (LLM generates, you review) → Code (LLM) → Tests → Merge
+
+### Choose Level
+- **Bug or <1 day** → `NNN-BUG-title/` (use `.specify/templates/quick-bug.md`)
+- **2-3 days feature** → `NNN-FEATURE-title/` (use `.specify/templates/medium-feature.md`)
+- **>1 week major** → `NNN-MAJOR-title/` (use `.specify/templates/spec-template.md`)
+
+### Three-Step Process
+1. **Write spec.md** + commit (`git commit -m "spec(NNN-BUG-title): ..."`)
+2. **LLM generates implementation_plan.md** (you review + approve)
+3. **LLM writes code** (TDD: test first, code second, all 828 tests pass)
+
+### Full Details
+See `.specify/guides/workflow.md` for step-by-step + all levels + troubleshooting
 
 ## Key Technical Decisions
 
