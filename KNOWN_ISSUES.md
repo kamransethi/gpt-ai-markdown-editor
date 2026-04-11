@@ -6,6 +6,58 @@
 
 ---
 
+## NEW BUGS:
+
+### ~~BUG-I: File not exposed to GitHub Copilot chat~~ ✅ FIXED
+
+
+| Field       | Value                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Priority    | Medium                                                                                                                |
+| Test status | ✓ PASSING — fixed                                                                                                     |
+| Resolution  | Active document URI now tracked via `activeWebview.ts`; chat participant uses `stream.reference(docUri)` to expose file; added `getActiveDocumentUri` command for external discovery. Note: VS Code's implicit "active file" context for custom editors remains a platform limitation — users can use `@fluxflow` chat participant or `#file:` references. |
+
+
+---
+
+## FEATURE REQUESTS:
+
+### ~~FR-1: AI Refine should preserve block quote formatting~~ ✅ IMPLEMENTED
+
+
+| Field       | Value                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Resolution  | System prompt updated to instruct AI not to add block-level markers; `handleAiRefineResult` now detects blockquote/callout/alert ancestor nodes and uses selection-based replacement (`deleteSelection` + `insertContent`) that preserves the parent node context. |
+
+---
+
+### ~~FR-2: Remember last custom refinement command~~ ✅ IMPLEMENTED
+
+
+| Field       | Value                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| Resolution  | Module-level `lastCustomCommand` variable stores the last custom instruction; textarea is pre-filled on next dialog open. Clears on extension reload. |
+
+---
+
+### ~~FR-3: Better UX for custom refinement dialog shortcuts~~ ✅ IMPLEMENTED
+
+
+| Field       | Value                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| Resolution  | Keyboard handler moved to `input.addEventListener('keydown')` on the textarea: Enter submits, Shift+Enter allows line breaks, Escape closes. |
+
+---
+
+### FR-4: Selected text context in Copilot (optional)
+
+
+| Field       | Value                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| Status      | Partial — selected text IS included in the `@fluxflow` chat participant context. ProseMirror positions are tracked. VS Code Copilot API does not currently support showing line ranges for custom editor selections. |
+
+# REVIEWED BUGS:
+
 ## BUG-A: Ordered list nested bullets not editable
 
 

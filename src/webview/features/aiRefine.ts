@@ -15,6 +15,9 @@ import { MessageType } from '../../shared/messageTypes';
 
 let loadingOverlay: HTMLElement | null = null;
 
+/** Last custom refinement command, persisted across dialog invocations. */
+let lastCustomCommand = '';
+
 // ── API ─────────────────────────────────────────────────────────────
 
 /**
@@ -69,13 +72,39 @@ export function handleAiRefineResult(
     const safeFrom = Math.min(from, docLength);
     const safeTo = Math.min(to, docLength);
 
-    editor
-      .chain()
-      .focus()
-      .insertContentAt({ from: safeFrom, to: safeTo }, data.refinedText, {
-        contentType: 'markdown',
-      })
-      .run();
+    // Check if the selection is inside a wrapper node (blockquote, alert/callout)
+    // so we can preserve the parent formatting context
+    const $from = editor.state.doc.resolve(safeFrom);
+    let insideWrapper = false;
+    for (let depth = $from.depth; depth > 0; depth--) {
+      const nodeName = $from.node(depth).type.name;
+      if (nodeName === 'blockquote' || nodeName === 'callout' || nodeName === 'alert') {
+        insideWrapper = true;
+        break;
+      }
+    }
+
+    if (insideWrapper) {
+      // Use selection-based replacement: set selection, delete, then insertContent
+      // insertContent at cursor position respects the parent node context
+      editor
+        .chain()
+        .focus()
+        .setTextSelection({ from: safeFrom, to: safeTo })
+        .deleteSelection()
+        .insertContent(data.refinedText, {
+          parseOptions: { preserveWhitespace: false },
+        })
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .insertContentAt({ from: safeFrom, to: safeTo }, data.refinedText, {
+          contentType: 'markdown',
+        })
+        .run();
+    }
   } catch (error) {
     console.error('[DK-AI] Failed to apply AI refinement:', error);
   }
@@ -111,6 +140,10 @@ export function showCustomRefineInput(
   input.className = 'ai-refine-dialog-input';
   input.placeholder = 'e.g., Make it sound more professional…';
   input.rows = 3;
+  // Pre-fill with last custom command if available
+  if (lastCustomCommand) {
+    input.value = lastCustomCommand;
+  }
   dialog.appendChild(input);
 
   const buttonRow = document.createElement('div');
@@ -132,6 +165,7 @@ export function showCustomRefineInput(
   submitBtn.onclick = () => {
     const customInstruction = input.value.trim();
     if (!customInstruction) return;
+    lastCustomCommand = customInstruction;
     overlay.remove();
     requestAiRefine(`custom:${customInstruction}`, selectedText, from, to);
   };
@@ -143,19 +177,17 @@ export function showCustomRefineInput(
   overlay.appendChild(dialog);
   document.body.appendChild(overlay);
 
-  // Handle Escape
-  const onKeyDown = (e: KeyboardEvent) => {
+  // Handle keyboard shortcuts on the textarea
+  input.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       overlay.remove();
       editor.commands.focus();
-      document.removeEventListener('keydown', onKeyDown);
-    }
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      // Enter submits; Shift+Enter allows line breaks
+      e.preventDefault();
       submitBtn.click();
-      document.removeEventListener('keydown', onKeyDown);
     }
-  };
-  document.addEventListener('keydown', onKeyDown);
+  });
 
   // Focus input after render
   requestAnimationFrame(() => input.focus());

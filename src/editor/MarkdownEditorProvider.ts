@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { outlineViewProvider } from '../features/outlineView';
-import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText } from '../activeWebview';
+import { setActiveWebviewPanel, getActiveWebviewPanel, setSelectedText, setActiveDocumentUri, setSelectionRange } from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
 import { handleAiExplainRequest } from '../features/aiExplain';
 import { getNonce } from './utils';
@@ -285,6 +285,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Track active panel
     setActiveWebviewPanel(webviewPanel);
+    setActiveDocumentUri(document.uri);
 
     // Send initial content to webview
     this.sync.updateWebview(document, webviewPanel.webview);
@@ -313,6 +314,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.onDidChangeViewState(() => {
       if (webviewPanel.active) {
         setActiveWebviewPanel(webviewPanel);
+        setActiveDocumentUri(document.uri);
       } else if (getActiveWebviewPanel() === webviewPanel) {
         setActiveWebviewPanel(undefined);
       }
@@ -441,6 +443,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         // Track selected text so Copilot and other extensions can access it
         const selText = (message.selectedText as string) ?? '';
         setSelectedText(selText);
+        // Track selection range for Copilot context
+        const selFrom = message.from as number | undefined;
+        const selTo = message.to as number | undefined;
+        if (typeof selFrom === 'number' && typeof selTo === 'number') {
+          setSelectionRange(selFrom !== selTo ? { from: selFrom, to: selTo } : undefined);
+        }
         break;
       }
       case MessageType.OPEN_SOURCE_VIEW:

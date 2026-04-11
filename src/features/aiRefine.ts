@@ -15,7 +15,9 @@ import { MessageType } from '../shared/messageTypes';
 const SYSTEM_PROMPT =
   'You are a writing assistant embedded in a markdown editor. ' +
   'The user will provide text and an instruction. ' +
-  'Return ONLY the refined text—no explanations, no markdown code fences, no preamble.';
+  'Return ONLY the refined text—no explanations, no markdown code fences, no preamble. ' +
+  'IMPORTANT: Do NOT add block-level markdown formatting such as `>` for blockquotes, ' +
+  'callouts, or alerts. The text will be placed back into its original formatting context automatically.';
 
 function buildUserPrompt(mode: string, text: string): string {
   if (mode.startsWith('custom:')) {

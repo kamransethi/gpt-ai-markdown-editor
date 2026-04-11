@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import { MarkdownEditorProvider } from './editor/MarkdownEditorProvider';
 import { WordCountFeature } from './features/wordCount';
-import { getActiveWebviewPanel, getSelectedText } from './activeWebview';
+import { getActiveWebviewPanel, getSelectedText, getActiveDocumentUri } from './activeWebview';
 import { outlineViewProvider } from './features/outlineView';
 import { MessageType } from './shared/messageTypes';
 
@@ -204,6 +204,13 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // Expose the active document URI so Copilot and other extensions can discover the file
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gptAiMarkdownEditor.getActiveDocumentUri', () => {
+      return getActiveDocumentUri()?.toString();
+    })
+  );
+
   // Register Copilot Chat Participant — makes the current document available to Copilot
   try {
     if (typeof vscode.chat?.createChatParticipant === 'function') {
@@ -212,11 +219,28 @@ export function activate(context: vscode.ExtensionContext) {
         async (request, _context, stream, _token) => {
           // Provide the current document content as context
           let docContent = '';
-          // Try to get the text from the active text document associated with our editor
-          for (const doc of vscode.workspace.textDocuments) {
-            if (doc.languageId === 'markdown' && !doc.isClosed) {
-              docContent = doc.getText();
-              break;
+          let docUri: vscode.Uri | undefined;
+
+          // First, try the explicitly tracked active document URI
+          const activeUri = getActiveDocumentUri();
+          if (activeUri) {
+            for (const doc of vscode.workspace.textDocuments) {
+              if (doc.uri.toString() === activeUri.toString() && !doc.isClosed) {
+                docContent = doc.getText();
+                docUri = doc.uri;
+                break;
+              }
+            }
+          }
+
+          // Fallback: find any open markdown document
+          if (!docContent) {
+            for (const doc of vscode.workspace.textDocuments) {
+              if (doc.languageId === 'markdown' && !doc.isClosed) {
+                docContent = doc.getText();
+                docUri = doc.uri;
+                break;
+              }
             }
           }
 
@@ -225,6 +249,11 @@ export function activate(context: vscode.ExtensionContext) {
               'No markdown document is currently open in the Visual AI Markdown Editor.'
             );
             return;
+          }
+
+          // Reference the active file so Copilot knows the context
+          if (docUri) {
+            stream.reference(docUri);
           }
 
           // Include currently selected text if any

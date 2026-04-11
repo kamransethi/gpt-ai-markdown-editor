@@ -63,10 +63,14 @@ function renderTocItems(
     listEl.appendChild(item);
   });
 
-  const activeItem = listEl.querySelector('.toc-pane-item.is-active') as HTMLElement | null;
-  if (activeItem !== null && typeof activeItem.scrollIntoView === 'function') {
-    activeItem.scrollIntoView({ block: 'nearest' });
-  }
+  // NOTE: We used to call scrollIntoView() on the active item here, but it was causing
+  // scroll jiggle in the main editor when headings were H1-H3 (in TOC depth).
+  // The scrollIntoView() call was triggering layout recalculations that somehow
+  // affected the main editor's scroll position. Removing this for now.
+  // const activeItem = listEl.querySelector('.toc-pane-item.is-active') as HTMLElement | null;
+  // if (activeItem !== null && typeof activeItem.scrollIntoView === 'function') {
+  //   activeItem.scrollIntoView({ block: 'nearest' });
+  // }
 }
 
 export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneController {

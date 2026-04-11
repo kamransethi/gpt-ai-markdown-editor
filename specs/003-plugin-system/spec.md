@@ -1,4 +1,5 @@
 # Plugin System Specification
+
 **Flux Flow Markdown Editor - Plugin Architecture**
 
 **Version:** 1.0  
@@ -11,7 +12,9 @@
 ## 1. Overview
 
 ### 1.1 Goal
+
 Enable third-party plugins to extend the markdown editor with custom functionality, specifically:
+
 - Toolbar actions (buttons with icons)
 - Context menu items (right-click)
 - Text transformations (replace/insert)
@@ -19,12 +22,14 @@ Enable third-party plugins to extend the markdown editor with custom functionali
 - User dialogs for configuration
 
 ### 1.2 Example Use Cases
+
 1. **Confluence Plugin**: Show dialog → user enters URL → fetch page → insert HTML/Markdown at cursor
 2. **JIRA Plugin**: Show project selector → create ticket → insert ticket link at cursor
 3. **Template Plugin**: Pre-defined snippets → insert at cursor with placeholder substitution
 4. **AI Transform Plugin**: Select text → send to AI → replace with result
 
 ### 1.3 Non-Goals
+
 - Plugin versioning/dependency management
 - Plugin marketplace/registry
 - Plugin auto-updates
@@ -36,13 +41,13 @@ Enable third-party plugins to extend the markdown editor with custom functionali
 ## 2. Architecture
 
 ### 2.1 System Diagram
-```
+
+```plaintext
 ┌─────────────────────────────────────────────────────────────┐
-│                    VS Code Extension                         │
-│                                                               │
+│                    VS Code Extension                        │
+│                                                             │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │ Extension Process (Node.js)                            │ │
-│  │                                                         │ │
 │  │  ┌──────────────────────────────────────────────────┐  │ │
 │  │  │ PluginManager                                    │  │ │
 │  │  │ • Discovery (scan ./plugins)                     │  │ │
@@ -50,7 +55,7 @@ Enable third-party plugins to extend the markdown editor with custom functionali
 │  │  │ • Toolbar registration                           │  │ │
 │  │  │ • Context menu hook                              │  │ │
 │  │  └──────────────────────────────────────────────────┘  │ │
-│  │                      ↕ (IPC)                             │ │
+│  │  ↓ (IPC)                                             │ │
 │  │  ┌──────────────────────────────────────────────────┐  │ │
 │  │  │ Plugin Runtime API (Extension Side)              │  │ │
 │  │  │ • fetch(url, opts) → async                       │  │ │
@@ -58,23 +63,19 @@ Enable third-party plugins to extend the markdown editor with custom functionali
 │  │  │ • readFile(path)                                 │  │ │
 │  │  │ • Settings API                                   │  │ │
 │  │  └──────────────────────────────────────────────────┘  │ │
-│  │                                                         │ │
 │  └────────────────────────────────────────────────────────┘ │
-│                                                               │
+│                                                             │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │ Webview (Browser Context - JavaScript)                 │ │
-│  │                                                         │ │
 │  │  ┌──────────────────────────────────────────────────┐  │ │
 │  │  │ Plugin Runtime API (Webview Side)                │  │ │
 │  │  │ • getSelectedText() → string                     │  │ │
 │  │  │ • replaceSelection(text)                         │  │ │
 │  │  │ • insertAtCursor(text)                           │  │ │
 │  │  │ • getCursorPosition() → {line, pos}              │  │ │
-│  │  │ • showDialog({ title, fields })                 │  │ │
+│  │  │ • showDialog({ title, fields })                  │  │ │
 │  │  └──────────────────────────────────────────────────┘  │ │
-│  │                                                         │ │
 │  └────────────────────────────────────────────────────────┘ │
-│                                                               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -108,13 +109,15 @@ Webview updates editor, user sees content inserted
 
 ### 2.3 Component Responsibilities
 
-| Component | Responsibility |
-|-----------|---|
-| **PluginManager** | Discovery, loading, toolbar/context registration, lifecycle |
-| **PluginRuntime** | API surface (extension-side RPC handlers) |
-| **Plugin** | Business logic (API calls, text transformation) |
-| **WebviewPluginAPI** | Document manipulation in editor (selection, insertion) |
-| **MessageRouter** | Routes plugin RPC calls between extension ↔ webview |
+
+| Component            | Responsibility                                              |
+| -------------------- | ----------------------------------------------------------- |
+| **PluginManager**    | Discovery, loading, toolbar/context registration, lifecycle |
+| **PluginRuntime**    | API surface (extension-side RPC handlers)                   |
+| **Plugin**           | Business logic (API calls, text transformation)             |
+| **WebviewPluginAPI** | Document manipulation in editor (selection, insertion)      |
+| **MessageRouter**    | Routes plugin RPC calls between extension ↔ webview         |
+
 
 ---
 
@@ -415,11 +418,13 @@ async function parseConfluenceHtml(html: string): Promise<string> {
 **Problem**: How does `plugin.ts` access `PluginAPI`?
 
 **Solutions Evaluated**:
+
 1. **Global namespace** (`window.pluginAPI`) - ❌ Couples plugin to runtime
 2. **Dependency injection at execute time** - ✅ Clean, testable
 3. **Module-level injection** - ⚠️ Requires build-time setup
 
 **Solution (Option 2)**:
+
 ```typescript
 // src/plugins/base.ts - Helper for all plugins
 
@@ -440,6 +445,7 @@ export function getPluginAPI(): PluginAPI {
 ```
 
 Then in PluginManager:
+
 ```typescript
 export async function executePlugin(pluginId: string) {
   const plugin = loadedPlugins.get(pluginId);
@@ -450,7 +456,7 @@ export async function executePlugin(pluginId: string) {
 
 ---
 
-## 5. Plugin Discovery & Lifecycle
+## 5. Plugin Discovery &amp; Lifecycle
 
 ### 5.1 Discovery
 
@@ -532,7 +538,7 @@ export class PluginManager {
 }
 ```
 
-### 5.2 Toolbar & Context Menu Registration
+### 5.2 Toolbar &amp; Context Menu Registration
 
 **When**: After discovering plugins  
 **Where**: `MarkdownEditorProvider.ts` (registers with VS Code)
@@ -577,6 +583,7 @@ for (const manifest of plugins) {
 ```
 
 **API**:
+
 ```typescript
 export class PluginConfigManager {
   static read(pluginId: string): Record<string, unknown> {
@@ -683,16 +690,18 @@ export interface PluginFetchRequest {
 ## 7. Implementation Phases
 
 ### Phase 1: Core (Week 1-2)
+
 - ✅ Define PluginAPI interface
 - ✅ Implement PluginManager discovery
 - ✅ Implement PluginRuntime (extension-side API)
 - ✅ Add message handlers for basic operations
 - ✅ Example: confluence plugin (fetch + insert)
 
-**Deliverables**: Users can write & load plugins  
+**Deliverables**: Users can write &amp; load plugins  
 **Test**: Load 2 example plugins, execute them
 
 ### Phase 2: UX Polish (Week 2-3)
+
 - Toolbar button auto-registration
 - Context menu integration
 - Progress indicators for long-running plugins
@@ -703,6 +712,7 @@ export interface PluginFetchRequest {
 **Test**: End-to-end user flow
 
 ### Phase 3: Advanced (Week 3-4)
+
 - Plugin disable/enable toggle
 - Hot reload (watch plugins directory)
 - Plugin permissions model
@@ -810,16 +820,19 @@ export const execute = async (opts) => {
 ## 9. Error Handling
 
 ### 9.1 Plugin Load Errors
+
 - Plugin fails to require → logged, skipped
 - Missing manifest/execute → logged, skipped
 - execute() throws → caught, user shown error message
 
 ### 9.2 API Errors
+
 - Network errors → propagated to plugin with error message
 - Dialog cancelled → returns undefined (plugin handles)
 - Sandbox violations → rejected with permission error
 
 ### 9.3 User Feedback
+
 ```typescript
 await api.showMessage('error', 'Failed to load Confluence page: 403 Forbidden');
 ```
@@ -829,11 +842,13 @@ await api.showMessage('error', 'Failed to load Confluence page: 403 Forbidden');
 ## 10. Security Considerations (Phase 3)
 
 ### 10.1 Trust Model (MVP)
+
 - Plugins are code files in the repo → assumed trusted
 - No permission prompts
 - Full API access by default
 
 ### 10.2 Sandbox Model (Future)
+
 - Each plugin runs in Worker thread with limited API
 - Permission manifest (`plugin.json`):
   ```json
@@ -844,6 +859,7 @@ await api.showMessage('error', 'Failed to load Confluence page: 403 Forbidden');
 - Plugin API calls rejected if permission missing
 
 ### 10.3 Network Security
+
 - CORS requests proxied through extension (safe)
 - HTTPS enforced for external APIs
 - Credentials stored in config, not in source
@@ -853,6 +869,7 @@ await api.showMessage('error', 'Failed to load Confluence page: 403 Forbidden');
 ## 11. Testing Strategy
 
 ### 11.1 Unit Tests
+
 ```typescript
 // src/__tests__/plugins/pluginManager.test.ts
 test('discovers plugins from directory', async () => {
@@ -869,6 +886,7 @@ test('executes plugin with API', async () => {
 ```
 
 ### 11.2 Integration Tests
+
 ```typescript
 test('e2e: confluence plugin fetches and inserts', async () => {
   // Mock fetch
@@ -883,7 +901,9 @@ test('e2e: confluence plugin fetches and inserts', async () => {
 ```
 
 ### 11.3 Plugin Template Test
+
 Every plugin should include `plugin.test.ts`:
+
 ```typescript
 describe('confluence plugin', () => {
   it('should have valid manifest', () => {
@@ -901,14 +921,16 @@ describe('confluence plugin', () => {
 
 ---
 
-## 12. API Compatibility & Versioning
+## 12. API Compatibility &amp; Versioning
 
 ### 12.1 Semantic Versioning
+
 - Plugin API version in `src/shared/pluginAPI.ts`: `export const PLUGIN_API_VERSION = '1.0.0'`
 - Plugin declares: `export const requiredApiVersion = '1.0.0'`
 - On activate: check version compatibility
 
 ### 12.2 Breaking Changes
+
 - API v1.x → v2.x requires plugin recompile
 - Deprecation: mark old methods with `@deprecated`
 - Shim layer: provide backward compatibility
@@ -918,12 +940,14 @@ describe('confluence plugin', () => {
 ## 13. Documentation
 
 ### 13.1 For Plugin Developers
+
 - `src/plugins/README.md` - Getting started guide
 - Plugin template - minimal example
 - API reference - full PluginAPI documentation
 - Example plugins - Confluence, JIRA with comments
 
 ### 13.2 For Extension Maintainers
+
 - This spec
 - Architecture diagrams
 - Message flow docs
@@ -931,9 +955,10 @@ describe('confluence plugin', () => {
 
 ---
 
-## 14. Known Limitations & Future Work
+## 14. Known Limitations &amp; Future Work
 
 ### 14.1 MVP Limitations
+
 - ❌ No plugin conflict resolution (duplicate IDs)
 - ❌ No plugin lifecycle hooks (onSave, onClose, etc.)
 - ❌ No plugin-to-plugin communication
@@ -941,6 +966,7 @@ describe('confluence plugin', () => {
 - ❌ Single-threaded execution (plugins block each other)
 
 ### 14.2 Future Enhancements
+
 - Plugin marketplace (registry)
 - Auto-update mechanism
 - Plugin dependencies
@@ -953,23 +979,26 @@ describe('confluence plugin', () => {
 ## 15. Success Criteria
 
 ✅ **Must Have**:
-- [ ] Plugins discoverable in `src/plugins/` directory
-- [ ] Toolbar buttons appear automatically
-- [ ] Context menu items appear automatically
-- [ ] Confluence plugin works end-to-end
-- [ ] JIRA plugin works end-to-end
-- [ ] Plugin errors logged, not crash extension
+
+- Plugins discoverable in `src/plugins/` directory
+- Toolbar buttons appear automatically
+- Context menu items appear automatically
+- Confluence plugin works end-to-end
+- JIRA plugin works end-to-end
+- Plugin errors logged, not crash extension
 
 ✅ **Should Have**:
-- [ ] Settings UI for plugin configuration
-- [ ] Progress indicators for long operations
-- [ ] Plugin enable/disable toggle
-- [ ] Comprehensive plugin template
+
+- Settings UI for plugin configuration
+- Progress indicators for long operations
+- Plugin enable/disable toggle
+- Comprehensive plugin template
 
 ✅ **Nice to Have**:
-- [ ] Hot reload (watch plugins directory)
-- [ ] Plugin version check on load
-- [ ] Permission model (future)
+
+- Hot reload (watch plugins directory)
+- Plugin version check on load
+- Permission model (future)
 
 ---
 
@@ -983,4 +1012,4 @@ describe('confluence plugin', () => {
 
 ---
 
-**Document Status**: Ready for technical review & validation by advanced LLM
+**Document Status**: Ready for technical review &amp; validation by advanced LLM
