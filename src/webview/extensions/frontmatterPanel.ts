@@ -46,7 +46,7 @@ export const FrontmatterBlock = Node.create({
   },
 
   addNodeView() {
-    return ({ node }: { node: any }) => {
+    return ({ node, editor, getPos }: { node: any; editor: any; getPos: any }) => {
       let isOpen = false;
 
       const dom = document.createElement('div');
@@ -69,40 +69,85 @@ export const FrontmatterBlock = Node.create({
       header.appendChild(triangle);
       header.appendChild(label);
 
-      // ── Content area ──
+      // ── Content area wrapper ──
       const content = document.createElement('div');
       content.className = 'frontmatter-content-wrap';
 
+      // ── Editable textarea ──
+      const textarea = document.createElement('textarea');
+      textarea.className = 'frontmatter-textarea';
+      const yamlText = (node.attrs.yaml as string) || '';
+      textarea.value = yamlText;
+      textarea.spellcheck = false;
+
+      // ── Syntax-highlighted display (below textarea) ──
       const pre = document.createElement('pre');
-      pre.className = 'code-block-highlighted';
+      pre.className = 'code-block-highlighted frontmatter-display';
 
       const code = document.createElement('code');
-      const yamlText = (node.attrs.yaml as string) || '';
       const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
       code.innerHTML = highlighted.value;
       code.className = 'language-yaml hljs';
 
       pre.appendChild(code);
-      content.appendChild(pre);
 
+      content.appendChild(textarea);
+      content.appendChild(pre);
       dom.appendChild(header);
       dom.appendChild(content);
+
+      // ── Track if frontmatter is empty (newly created) ──
+      const wasEmpty = !yamlText.trim();
+
+      // ── Helper to update syntax highlighting ──
+      const updateHighlight = (text: string) => {
+        const highlighted = hljs.highlight(text, { language: 'yaml' });
+        code.innerHTML = highlighted.value;
+      };
+
+      // ── Textarea change handler: update node attrs on input ──
+      const handleTextareaChange = () => {
+        const pos = getPos();
+        if (typeof pos !== 'number') return;
+
+        const newText = textarea.value;
+        updateHighlight(newText);
+
+        // Update node attributes
+        const transaction = editor.state.tr.setNodeMarkup(pos, undefined, {
+          yaml: newText,
+        });
+        editor.view.dispatch(transaction);
+      };
+
+      textarea.addEventListener('input', handleTextareaChange);
+
+      // ── Stop ProseMirror seeing mousedown on textarea/header ──
+      textarea.addEventListener('mousedown', e => e.stopPropagation());
+      header.addEventListener('mousedown', e => e.stopPropagation());
 
       // ── Toggle helpers ──
       const applyState = () => {
         content.style.display = isOpen ? '' : 'none';
         triangle.style.transform = isOpen ? 'rotate(90deg)' : '';
+
+        // Auto-focus textarea if frontmatter is empty and just opened
+        if (isOpen && wasEmpty) {
+          setTimeout(() => {
+            textarea.focus();
+            textarea.select();
+          }, 0);
+        }
       };
       applyState(); // Starts closed
 
-      // Stop ProseMirror seeing mousedown (important — prevents selection steal)
-      header.addEventListener('mousedown', e => e.stopPropagation());
       header.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
         isOpen = !isOpen;
         applyState();
       });
+
       header.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -128,8 +173,8 @@ export const FrontmatterBlock = Node.create({
         update: (updatedNode: any) => {
           if (updatedNode.type.name !== 'frontmatterBlock') return false;
           const yamlText = (updatedNode.attrs.yaml as string) || '';
-          const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
-          code.innerHTML = highlighted.value;
+          textarea.value = yamlText;
+          updateHighlight(yamlText);
           return true;
         },
       };

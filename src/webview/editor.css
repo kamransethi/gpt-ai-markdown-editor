@@ -4637,6 +4637,36 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
   font-size: 0.9em;
 }
 
+/* Editable frontmatter textarea */
+.tiptap .frontmatter-textarea {
+  width: 100%;
+  min-height: 120px;
+  max-height: 300px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--ui-radius-md);
+  background-color: var(--md-code-bg);
+  color: var(--md-code-fg);
+  font-family: var(--md-mono-font);
+  font-size: 0.9em;
+  line-height: 1.5;
+  resize: vertical;
+  overflow: auto;
+}
+
+.tiptap .frontmatter-textarea:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 2px var(--md-primary-alpha);
+}
+
+/* Syntax-highlighted display below textarea */
+.tiptap .frontmatter-display {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 /* Error dialog styling */
 .frontmatter-error-dialog {
   position: fixed;
