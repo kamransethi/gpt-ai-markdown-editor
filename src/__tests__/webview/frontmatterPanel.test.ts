@@ -1,80 +1,184 @@
+/** @jest-environment jsdom */
 /**
- * Tests for TipTap front matter Details extension.
- *
- * Tests the frontmatterPanel.ts extension wrapper:
- * - Extension registration and initialization
- * - Details node creation with correct attributes
- * - Data attributes for front matter identification
- * - Panel state (closed by default)
- * - Markdown serialization
- *
- * Following TDD: These tests are written BEFORE implementation.
+ * Real TipTap editor tests for FrontmatterBlock:
+ *  - Node can be inserted into a document
+ *  - NodeView renders .frontmatter-block DOM with header + content
+ *  - Content starts hidden (collapsed)
+ *  - Clicking header toggles visibility
+ *  - _fmToggle / _fmOpen / _fmIsOpen helpers work
+ *  - update() re-renders yaml text from new attrs
+ *  - extractFrontmatterText reads yaml from node attrs
+ *  - isFrontmatterBlock type guard
  */
 
-describe('Front Matter Details Extension', () => {
-  describe('Extension Registration', () => {
-    test('should define extension wrapper for Details', () => {
-      // The extension wrapper should export a configuration for TipTap
-      // Details extension can be imported from @tiptap/extension-details
-      expect(true).toBe(true); // Placeholder for actual implementation test
-    });
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import {
+  FrontmatterBlock,
+  isFrontmatterBlock,
+  extractFrontmatterText,
+} from '../../webview/extensions/frontmatterPanel';
 
-    test('should support default `open: false` state', () => {
-      // Front matter panel should start closed by default
-      expect(true).toBe(true); // Placeholder
-    });
+function createEditor(): Editor {
+  const el = document.createElement('div');
+  document.body.appendChild(el);
+  return new Editor({
+    element: el,
+    extensions: [StarterKit.configure({ codeBlock: false }), FrontmatterBlock],
+  });
+}
 
-    test('should add data-frontmatter attribute to Details node', () => {
-      // Custom attribute allows CSS targeting and JS detection
-      expect(true).toBe(true); // Placeholder
-    });
+function insertFrontmatterBlock(editor: Editor, yaml: string) {
+  editor.commands.insertContentAt(0, {
+    type: 'frontmatterBlock',
+    attrs: { yaml },
+  });
+}
+
+describe('FrontmatterBlock extension', () => {
+  let editor: Editor;
+
+  beforeEach(() => {
+    editor = createEditor();
   });
 
-  describe('Details Node Creation', () => {
-    test('should create Details node structure', () => {
-      // Details should contain:
-      // - <summary> with "FRONT MATTER" label
-      // - Content div with front matter YAML
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should render label "FRONT MATTER"', () => {
-      // Summary should display "FRONT MATTER" text
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should support complex nested YAML content', () => {
-      // Content should preserve YAML structure including multi-line values
-      expect(true).toBe(true); // Placeholder
-    });
+  afterEach(() => {
+    editor.destroy();
   });
 
-  describe('Integration with TipTap Editor', () => {
-    test('should integrate with existing TipTap extensions', () => {
-      // Should not conflict with Markdown, Document, Text, etc.
-      expect(true).toBe(true); // Placeholder
-    });
+  // ── Node schema ─────────────────────────────────────────────────────────────
 
-    test('should support round-trip serialization', () => {
-      // Parse → Render → Serialize → Parse should be lossless
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should work with documents that have and lack front matter', () => {
-      // Optional: panel only renders when front matter detected
-      expect(true).toBe(true); // Placeholder
-    });
+  it('can insert a frontmatterBlock node', () => {
+    insertFrontmatterBlock(editor, 'title: Test\n');
+    const firstNode = editor.state.doc.firstChild;
+    expect(firstNode?.type.name).toBe('frontmatterBlock');
   });
 
-  describe('CSS Integration', () => {
-    test('should allow styling via CSS selectors', () => {
-      // CSS can target: details[data-frontmatter], summary, etc.
-      expect(true).toBe(true); // Placeholder
-    });
+  it('stores yaml text in node attrs', () => {
+    insertFrontmatterBlock(editor, 'marp: true\ntheme: gaia\n');
+    const node = editor.state.doc.firstChild!;
+    expect(node.attrs.yaml).toBe('marp: true\ntheme: gaia\n');
+  });
 
-    test('should support theme-aware styling', () => {
-      // Colors from CSS variables should work (day/dark/high-contrast)
-      expect(true).toBe(true); // Placeholder
+  // ── Helper exports ──────────────────────────────────────────────────────────
+
+  it('isFrontmatterBlock returns true for frontmatterBlock node', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    expect(isFrontmatterBlock(editor.state.doc.firstChild)).toBe(true);
+  });
+
+  it('isFrontmatterBlock returns false for other nodes', () => {
+    expect(isFrontmatterBlock(null)).toBe(false);
+    expect(isFrontmatterBlock(undefined)).toBe(false);
+  });
+
+  it('extractFrontmatterText reads yaml from node attrs', () => {
+    insertFrontmatterBlock(editor, 'key: value\n');
+    const node = editor.state.doc.firstChild!;
+    expect(extractFrontmatterText(node)).toBe('key: value\n');
+  });
+
+  it('extractFrontmatterText returns empty string for empty yaml', () => {
+    insertFrontmatterBlock(editor, '');
+    const node = editor.state.doc.firstChild!;
+    expect(extractFrontmatterText(node)).toBe('');
+  });
+
+  // ── NodeView DOM ─────────────────────────────────────────────────────────────
+
+  it('NodeView renders .frontmatter-block element', () => {
+    insertFrontmatterBlock(editor, 'title: Hi');
+    const block = document.querySelector('.frontmatter-block');
+    expect(block).not.toBeNull();
+  });
+
+  it('NodeView renders .frontmatter-block-header', () => {
+    insertFrontmatterBlock(editor, 'title: Hi');
+    const header = document.querySelector('.frontmatter-block-header');
+    expect(header).not.toBeNull();
+  });
+
+  it('NodeView renders FRONT MATTER label text', () => {
+    insertFrontmatterBlock(editor, 'title: Hi');
+    const label = document.querySelector('.frontmatter-label');
+    expect(label?.textContent).toBe('FRONT MATTER');
+  });
+
+  it('NodeView renders yaml in pre/code element', () => {
+    insertFrontmatterBlock(editor, 'marp: true\n');
+    const code = document.querySelector('.frontmatter-block code');
+    expect(code?.textContent).toBe('marp: true\n');
+  });
+
+  it('content starts hidden (collapsed)', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const content = document.querySelector('.frontmatter-content-wrap') as HTMLElement;
+    expect(content?.style.display).toBe('none');
+  });
+
+  it('triangle starts pointing right (collapsed)', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const triangle = document.querySelector('.frontmatter-triangle') as HTMLElement;
+    expect(triangle?.style.transform).toBe('');
+  });
+
+  // ── Toggle behaviour ─────────────────────────────────────────────────────────
+
+  it('clicking header reveals content', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const header = document.querySelector('.frontmatter-block-header') as HTMLElement;
+    const content = document.querySelector('.frontmatter-content-wrap') as HTMLElement;
+    header.click();
+    expect(content.style.display).toBe('');
+  });
+
+  it('clicking header twice hides content again', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const header = document.querySelector('.frontmatter-block-header') as HTMLElement;
+    const content = document.querySelector('.frontmatter-content-wrap') as HTMLElement;
+    header.click();
+    header.click();
+    expect(content.style.display).toBe('none');
+  });
+
+  it('_fmToggle helper toggles visibility', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const block = document.querySelector('.frontmatter-block') as any;
+    const content = document.querySelector('.frontmatter-content-wrap') as HTMLElement;
+    block._fmToggle();
+    expect(content.style.display).toBe('');
+    block._fmToggle();
+    expect(content.style.display).toBe('none');
+  });
+
+  it('_fmOpen(true) reveals content', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const block = document.querySelector('.frontmatter-block') as any;
+    const content = document.querySelector('.frontmatter-content-wrap') as HTMLElement;
+    block._fmOpen(true);
+    expect(content.style.display).toBe('');
+  });
+
+  it('_fmIsOpen() reflects current state', () => {
+    insertFrontmatterBlock(editor, 'x: 1');
+    const block = document.querySelector('.frontmatter-block') as any;
+    expect(block._fmIsOpen()).toBe(false);
+    block._fmOpen(true);
+    expect(block._fmIsOpen()).toBe(true);
+  });
+
+  // ── update() ─────────────────────────────────────────────────────────────────
+
+  it('update() re-renders yaml when attrs change', () => {
+    insertFrontmatterBlock(editor, 'old: value');
+    let nodePos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'frontmatterBlock' && nodePos === -1) {
+        nodePos = pos;
+      }
     });
+    editor.view.dispatch(editor.state.tr.setNodeMarkup(nodePos, undefined, { yaml: 'new: value' }));
+    const code = document.querySelector('.frontmatter-block code');
+    expect(code?.textContent).toBe('new: value');
   });
 });

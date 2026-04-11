@@ -4582,138 +4582,59 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
 }
 
 /* ============================================
-   Front Matter Details Panel Styling
-   Collapsible YAML metadata display
+   Front Matter Block
+   Collapsible YAML panel — mirrors code block header design language
    ============================================ */
 
-.tiptap .frontmatter-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 1.5rem 0;
-  border: 1px solid var(--md-border);
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  background: var(--md-code-bg);
-  list-style: none;
+.tiptap .frontmatter-block {
+  margin: var(--content-spacing-block, 1.25em) 0 0.5em 0;
 }
 
-.tiptap .frontmatter-details[open] {
-  background: var(--md-subtle-bg);
-}
-
-.tiptap .frontmatter-details summary {
+/* Header row — panel-less, exactly like .code-block-ui-header */
+.tiptap .frontmatter-block-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
+  padding: 0 2px 4px;
+  background: none;
+  border: none;
   cursor: pointer;
   user-select: none;
-  padding: 0.25rem;
-  margin: -0.25rem;
-  font-weight: 600;
-  font-size: 0.9rem;
+}
+
+.tiptap .frontmatter-block-header:hover .frontmatter-triangle,
+.tiptap .frontmatter-block-header:hover .frontmatter-label {
   color: var(--md-foreground);
-  outline: none;
 }
 
-.tiptap .frontmatter-details summary:hover {
-  background: var(--md-hover-bg);
-  border-radius: 4px;
-}
-
-.tiptap .frontmatter-details summary:focus-visible {
-  outline: 2px solid var(--md-focus);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.tiptap .frontmatter-details summary::marker {
+/* Disclosure triangle */
+.tiptap .frontmatter-triangle {
+  font-size: 7px;
   color: var(--md-muted);
-  font-family: monospace;
+  line-height: 1;
+  transition: transform 0.12s ease;
+  display: inline-block;
 }
 
+/* "FRONT MATTER" label — matches .code-block-ui-language exactly */
 .tiptap .frontmatter-label {
   font-family: var(--md-font-sans);
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.8rem;
-  color: var(--md-foreground);
+  color: var(--md-muted);
 }
 
-.tiptap .frontmatter-content {
+/* Content wrapper hidden when collapsed */
+.tiptap .frontmatter-content-wrap {
   display: block;
-  padding: 0.75rem;
-  background: var(--md-background);
-  border-radius: 4px;
-  border: 1px solid var(--md-border);
-  font-family: monospace;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--md-code-fg);
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
+  margin-bottom: 0.5em;
 }
 
-.tiptap .frontmatter-content > pre {
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  font-family: monospace;
-  font-size: 0.85rem;
-}
-
-.tiptap .frontmatter-content > pre > code {
-  background: transparent;
-  border: none;
-  padding: 0;
-  font-family: monospace;
-  color: inherit;
-}
-
-.tiptap .frontmatter-content textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 0.75rem;
-  font-family: monospace;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--md-code-fg);
-  background: var(--md-background);
-  border: 1px solid var(--md-border);
-  border-radius: 4px;
-  resize: vertical;
-  tab-size: 2;
-}
-
-.tiptap .frontmatter-content textarea:focus {
-  outline: none;
-  border-color: var(--md-focus);
-  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-}
-
-/* Dark theme adjustments */
-body.dark-mode .frontmatter-details {
-  background: var(--md-code-bg);
-  border-color: var(--md-border);
-}
-
-body.dark-mode .frontmatter-details[open] {
-  background: var(--md-subtle-bg);
-}
-
-body.dark-mode .frontmatter-content {
-  background: var(--md-background);
-  border-color: var(--md-border);
-  color: var(--md-code-fg);
-}
-
-body.dark-mode .frontmatter-content textarea {
-  background: var(--md-background);
-  border-color: var(--md-border);
-  color: var(--md-code-fg);
+/* Reduce font size in frontmatter YAML code */
+.tiptap .frontmatter-block code {
+  font-size: 0.9em;
 }
 
 /* Error dialog styling */

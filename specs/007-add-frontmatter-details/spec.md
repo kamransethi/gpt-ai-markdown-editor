@@ -17,6 +17,11 @@
 - Q4: CSS color strategy → A: **Option A** - Use existing editor CSS variables for day/night theming; keep simple if more robust
 - Q5: Panel implementation → A: **Option B** - Use TipTap Details extension per official code sample (https://tiptap.dev/docs/editor/extensions/nodes/details)
 
+**Post-Implementation Updates (2026-04-11)**:
+- Syntax highlighting: Added highlight.js YAML language support for colored output (no longer plain text)
+- Serialization: Modified `restoreFrontmatter()` to trim leading newlines, producing clean spacing: exactly 1 blank line between `---` and first content
+- Spacing: Reduced CSS margins to 0.5em between frontmatter block and document content
+
 ---
 
 ## User Scenarios &amp; Testing *(mandatory)*
@@ -89,9 +94,9 @@ Writers want a clean, distraction-free editing experience while knowing the docu
 - **FR-002**: Front matter panel (details element) MUST be closed by default; user clicks the `<summary>` header to expand
 - **FR-003**: System MUST preserve all front matter content during load, display, and save operations (no data loss or modification)
 - **FR-004**: System MUST display the text "FRONT MATTER" in the `<summary>` header using consistent design language with other editor section headers
-- **FR-005**: Front matter content MUST be editable as plain text in the panel with monospace font to preserve spacing and YAML structure
+- **FR-005**: Front matter content MUST be displayed with syntax highlighting (YAML language) using highlight.js with monospace font to preserve spacing and YAML structure
 - **FR-006**: System MUST support complex YAML front matter including nested structures, multi-line values, and special characters (per MARP and other systems)
-- **FR-007**: Panel styling MUST follow code block visual design language using existing editor CSS variables (rounded borders, bordered container, appropriate background color per theme)
+- **FR-007**: Panel styling MUST follow code block visual design language using existing editor CSS variables; YAML text font set to 90%; compact 0.5em margin below frontmatter block; serialization produces exactly 1 blank line between `---` and first content line
 - **FR-008**: System MUST validate YAML on save: if malformed, present error dialog with "Return to Fix" or "Save Anyway" options
 - **FR-009**: Toolbar MUST include a "Frontmatter" button (rename from existing "Document Metadata") to add front matter block if not present or focus existing panel
 - **FR-010**: Front matter content serialization is handled transparently by existing document sync mechanism; panel is display/edit overlay only

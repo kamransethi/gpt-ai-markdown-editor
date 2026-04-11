@@ -412,7 +412,9 @@ function restoreFrontmatter(markdown: string, frontmatter: string | null): strin
   if (!frontmatter) {
     return markdown;
   }
-  return `---\n${frontmatter}\n---\n${markdown}`;
+  // Trim leading newlines from markdown to ensure only 1 blank line after closing ---
+  const trimmedMarkdown = markdown.replace(/^\n+/, '');
+  return `---\n${frontmatter}\n---\n${trimmedMarkdown}`;
 }
 
 /**
@@ -460,19 +462,12 @@ function updateFrontmatterPanel(_frontmatter: string | null): void {
  * Its `renderMarkdown` returns '' so it is invisible to the serializer;
  * `restoreFrontmatter()` prepends the YAML block on every save.
  */
-function injectFrontmatterBlock(yamlText: string, open = false): void {
+function injectFrontmatterBlock(yamlText: string): void {
   if (!editor) return;
   try {
     editor.commands.insertContentAt(0, {
       type: 'frontmatterBlock',
-      attrs: { open },
-      content: [
-        {
-          type: 'codeBlock',
-          attrs: { language: 'yaml' },
-          content: yamlText ? [{ type: 'text', text: yamlText }] : [],
-        },
-      ],
+      attrs: { yaml: yamlText },
     });
   } catch (e) {
     devLog('[DK-AI] Could not inject frontmatterBlock:', e);
@@ -488,9 +483,7 @@ function syncFrontmatterFromEditorDoc(editorInstance: typeof editor): void {
   if (!editorInstance) return;
   const firstNode = editorInstance.state.doc.firstChild;
   if (!isFrontmatterBlock(firstNode)) return;
-
-  const yamlText = extractFrontmatterText(firstNode!);
-  currentFrontmatter = yamlText || null;
+  currentFrontmatter = extractFrontmatterText(firstNode!) || null;
 }
 
 /**
@@ -691,25 +684,16 @@ function toggleFrontmatterBlock(): void {
   const hasFrontmatterBlock = isFrontmatterBlock(firstNode);
 
   if (!hasFrontmatterBlock) {
-    // No frontmatter block yet — initialize with empty content and open it
-    if (currentFrontmatter === null) {
-      currentFrontmatter = '';
-    }
-    injectFrontmatterBlock(currentFrontmatter, true);
-    // Position cursor inside the code block (pos 2 = start of codeBlock content)
-    try {
-      editor.commands.setTextSelection(2);
-    } catch {
-      editor.commands.focus();
-    }
+    // No block yet — insert one (starts collapsed, user opens it)
+    if (currentFrontmatter === null) currentFrontmatter = '';
+    injectFrontmatterBlock(currentFrontmatter);
+    // Open the newly injected block
+    const blockEl = document.querySelector('.frontmatter-block') as any;
+    blockEl?._fmOpen?.(true);
   } else {
-    // Block exists — expand it and focus inside
-    try {
-      editor.commands.updateAttributes('frontmatterBlock', { open: true });
-      editor.commands.setTextSelection(2);
-    } catch {
-      editor.commands.focus();
-    }
+    // Block exists — toggle it
+    const blockEl = document.querySelector('.frontmatter-block') as any;
+    blockEl?._fmToggle?.();
   }
 }
 
@@ -1205,9 +1189,9 @@ function initializeEditor(initialContent: string) {
       editor.commands.setContent(preprocessMarkdownContent(content), {
         contentType: 'markdown',
       });
-      // Inject frontmatter as a collapsible details block at the top of the document
+      // Inject front matter as a collapsible atom block at the top
       if (currentFrontmatter) {
-        injectFrontmatterBlock(currentFrontmatter, false);
+        injectFrontmatterBlock(currentFrontmatter);
       }
       isUpdating = false;
     }
@@ -1652,9 +1636,9 @@ function updateEditorContent(markdown: string) {
       contentType: 'markdown',
     });
 
-    // Inject frontmatter as a collapsible details block at the top of the document
+    // Inject front matter as a collapsible atom block at the top
     if (currentFrontmatter) {
-      injectFrontmatterBlock(currentFrontmatter, false);
+      injectFrontmatterBlock(currentFrontmatter);
     }
 
     // Restore cursor position

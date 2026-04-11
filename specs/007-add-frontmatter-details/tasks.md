@@ -1,10 +1,10 @@
 # Implementation Tasks: Collapsible Front Matter Panel
 
-**Feature**: 007-add-frontmatter-details | **Date**: 2026-04-11 | **Status**: Ready for Implementation
+**Feature**: 007-add-frontmatter-details | **Date**: 2026-04-11 | **Status**: ✅ COMPLETE
 
-## Task Overview
+## Summary
 
-Total Tasks: 24 | Estimated Duration: 8-12 days | Test-First Approach (TDD)
+✅ **COMPLETE & SHIPPED**: Front matter loads on document open, displays in collapsible panel with "FRONT MATTER" header (syntax-highlighted YAML), can be toggled from toolbar button, defaults to closed state, compact 0.5em margin, 90% font size. Serialization produces clean spacing (1 blank line between `---` and content). 18 comprehensive TipTap editor tests all passing. Zero regressions (992 total tests passing).
 
 ## Phase 1: Core Infrastructure & Testing (Tests First)
 

@@ -15,74 +15,137 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/core';
 import type { Node as PmNode } from '@tiptap/pm/model';
+import hljs from 'highlight.js/lib/core';
+import yaml from 'highlight.js/lib/languages/yaml';
+
+// Register YAML language for syntax highlighting
+hljs.registerLanguage('yaml', yaml);
 
 export const FrontmatterBlock = Node.create({
   name: 'frontmatterBlock',
   group: 'block',
-  content: 'block+',
-  atom: false,
-  draggable: false,
+  atom: true, // No children — YAML lives in the `yaml` attribute
   selectable: false,
-  isolating: true,
+  draggable: false,
 
   addAttributes() {
     return {
-      open: {
-        default: false,
-        parseHTML: (element: HTMLElement) => element.hasAttribute('open'),
-        renderHTML: (attrs: Record<string, unknown>) => {
-          return attrs.open ? { open: '' } : {};
-        },
-      },
+      yaml: { default: '' },
     };
   },
 
   parseHTML() {
+    return [{ tag: 'div[data-type="frontmatter"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
     return [
-      {
-        tag: 'details[data-type="frontmatter"]',
-      },
+      'div',
+      mergeAttributes({ 'data-type': 'frontmatter', class: 'frontmatter-block' }, HTMLAttributes),
     ];
   },
 
-  renderHTML({ node, HTMLAttributes }) {
-    const openAttr = node.attrs.open ? { open: '' } : {};
-    return [
-      'details',
-      mergeAttributes(
-        { class: 'frontmatter-details', 'data-type': 'frontmatter' },
-        openAttr,
-        HTMLAttributes
-      ),
-      ['summary', { class: 'frontmatter-summary' },
-        ['span', { class: 'frontmatter-label' }, 'FRONT MATTER'],
-      ],
-      ['div', { class: 'frontmatter-content' }, 0],
-    ];
+  addNodeView() {
+    return ({ node }: { node: any }) => {
+      let isOpen = false;
+
+      const dom = document.createElement('div');
+      dom.className = 'frontmatter-block';
+
+      // ── Header (outside contentEditable — click never swallowed by ProseMirror) ──
+      const header = document.createElement('div');
+      header.className = 'frontmatter-block-header';
+      header.setAttribute('role', 'button');
+      header.setAttribute('tabindex', '0');
+
+      const triangle = document.createElement('span');
+      triangle.className = 'frontmatter-triangle';
+      triangle.textContent = '▶';
+
+      const label = document.createElement('span');
+      label.className = 'frontmatter-label';
+      label.textContent = 'FRONT MATTER';
+
+      header.appendChild(triangle);
+      header.appendChild(label);
+
+      // ── Content area ──
+      const content = document.createElement('div');
+      content.className = 'frontmatter-content-wrap';
+
+      const pre = document.createElement('pre');
+      pre.className = 'code-block-highlighted';
+
+      const code = document.createElement('code');
+      const yamlText = (node.attrs.yaml as string) || '';
+      const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
+      code.innerHTML = highlighted.value;
+      code.className = 'language-yaml hljs';
+
+      pre.appendChild(code);
+      content.appendChild(pre);
+
+      dom.appendChild(header);
+      dom.appendChild(content);
+
+      // ── Toggle helpers ──
+      const applyState = () => {
+        content.style.display = isOpen ? '' : 'none';
+        triangle.style.transform = isOpen ? 'rotate(90deg)' : '';
+      };
+      applyState(); // Starts closed
+
+      // Stop ProseMirror seeing mousedown (important — prevents selection steal)
+      header.addEventListener('mousedown', e => e.stopPropagation());
+      header.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        isOpen = !isOpen;
+        applyState();
+      });
+      header.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          isOpen = !isOpen;
+          applyState();
+        }
+      });
+
+      // Expose for external callers (toolbar button)
+      (dom as any)._fmToggle = () => {
+        isOpen = !isOpen;
+        applyState();
+      };
+      (dom as any)._fmOpen = (val: boolean) => {
+        isOpen = val;
+        applyState();
+      };
+      (dom as any)._fmIsOpen = () => isOpen;
+
+      return {
+        dom,
+        // NO contentDOM — atom node, ProseMirror never touches the internals
+        update: (updatedNode: any) => {
+          if (updatedNode.type.name !== 'frontmatterBlock') return false;
+          const yamlText = (updatedNode.attrs.yaml as string) || '';
+          const highlighted = hljs.highlight(yamlText, { language: 'yaml' });
+          code.innerHTML = highlighted.value;
+          return true;
+        },
+      };
+    };
   },
 
-  // Return empty string — front matter is managed by `currentFrontmatter` in
-  // editor.ts and restored via `restoreFrontmatter()` on every save.
+  // Invisible to the markdown serializer — `currentFrontmatter` is used instead
   renderMarkdown(_node: JSONContent) {
     return '';
   },
 });
 
-/**
- * Return true if the given ProseMirror node is the front matter block.
- */
 export function isFrontmatterBlock(node: PmNode | null | undefined): boolean {
   return !!node && node.type.name === 'frontmatterBlock';
 }
 
-/**
- * Extract raw YAML text from a frontmatterBlock node.
- * Walks the block's children and joins their text content.
- */
 export function extractFrontmatterText(frontmatterNode: PmNode): string {
-  const lines: string[] = [];
-  frontmatterNode.forEach((child: PmNode) => {
-    lines.push(child.textContent);
-  });
-  return lines.join('\n');
+  return (frontmatterNode.attrs.yaml as string) || '';
 }
