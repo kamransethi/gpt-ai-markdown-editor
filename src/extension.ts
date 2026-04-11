@@ -14,9 +14,7 @@ import { MessageType } from './shared/messageTypes';
 /**
  * Constants for default markdown viewer prompt feature
  */
-const DEFAULT_VIEWER_ID = 'kamransethi.gpt-ai-markdown-editor';
-const DEFAULT_VIEWER_CONFIG_KEY = 'markdown.preview.defaultPreviewPane';
-const HAS_SHOWN_PROMPT_KEY = 'defaultViewerPromptShown';
+const DEFAULT_VIEWER_CONFIG_KEY = 'gptAiMarkdownEditor.defaultMarkdownViewer';
 
 /**
  * Show prompt to set Flux Flow Markdown Editor as default markdown viewer.
@@ -25,15 +23,16 @@ const HAS_SHOWN_PROMPT_KEY = 'defaultViewerPromptShown';
  * Implements: FR-001 through FR-008
  * See: specs/001-default-markdown-viewer/spec.md
  *
- * @param context Extension context with globalState for persistence
+ * @param _context Extension context (unused - settings stored in global scope)
  */
-export async function showDefaultViewerPrompt(context: vscode.ExtensionContext): Promise<void> {
+export async function showDefaultViewerPrompt(_context: vscode.ExtensionContext): Promise<void> {
   try {
     // FR-001: Check if user has already made a decision
-    const decision = context.globalState.get<string>(HAS_SHOWN_PROMPT_KEY);
+    const config = vscode.workspace.getConfiguration();
+    const savedChoice = config.get<string | null>(DEFAULT_VIEWER_CONFIG_KEY);
 
-    // If user previously said "yes" or "no", don't prompt again
-    if (decision === 'yes' || decision === 'no') {
+    // If user previously made a choice (saved to settings), don't prompt again
+    if (savedChoice !== null && (savedChoice === 'dk-ai' || savedChoice === 'vscode')) {
       return;
     }
 
@@ -49,19 +48,13 @@ export async function showDefaultViewerPrompt(context: vscode.ExtensionContext):
     // FR-003, FR-005: Handle user response
     if (selectedAction === 'Yes') {
       // FR-004: Update configuration when user clicks Yes
-      const config = vscode.workspace.getConfiguration();
-      await config.update(
-        DEFAULT_VIEWER_CONFIG_KEY,
-        DEFAULT_VIEWER_ID,
-        vscode.ConfigurationTarget.Workspace
-      );
-
-      // FR-007: Persist the user's explicit choice in globalState
-      await context.globalState.update(HAS_SHOWN_PROMPT_KEY, 'yes');
+      // AC-1: Persist to gptAiMarkdownEditor.defaultMarkdownViewer setting
+      // AC-1: Use Global scope so choice persists across all workspaces
+      await config.update(DEFAULT_VIEWER_CONFIG_KEY, 'dk-ai', vscode.ConfigurationTarget.Global);
     } else if (selectedAction === 'No') {
       // FR-005: Do not modify configuration
-      // FR-007: Persist the explicit No decision
-      await context.globalState.update(HAS_SHOWN_PROMPT_KEY, 'no');
+      // AC-1: Persist the explicit No decision so prompt doesn't reappear
+      await config.update(DEFAULT_VIEWER_CONFIG_KEY, 'vscode', vscode.ConfigurationTarget.Global);
     }
     // If user dismisses (selectedAction === undefined), don't persist
     // This allows re-prompting on next activation (intentional per spec)

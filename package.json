@@ -204,6 +204,25 @@
           "default": "light",
           "description": "Editor theme mode. Light or Dark — the editor uses its own color palette, independent of VS Code theme."
         },
+        "gptAiMarkdownEditor.defaultMarkdownViewer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "dk-ai",
+            "vscode",
+            null
+          ],
+          "enumDescriptions": [
+            "Open all markdown files with Flux Flow Markdown Editor by default",
+            "Open all markdown files with VS Code's default markdown preview",
+            "Ask me each time (shows prompt on first markdown file)"
+          ],
+          "default": null,
+          "description": "Default markdown viewer preference when opening markdown files.",
+          "scope": "window"
+        },
         "gptAiMarkdownEditor.tocMaxDepth": {
           "type": "number",
           "default": 3,

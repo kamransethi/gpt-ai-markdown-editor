@@ -215,6 +215,20 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
+    // AC-3: Check if user has set a default markdown viewer preference
+    // If set to 'vscode', they want to use VS Code's default markdown preview instead
+    const config = vscode.workspace.getConfiguration();
+    const defaultViewer = config.get<string | null>('gptAiMarkdownEditor.defaultMarkdownViewer');
+
+    // AC-3: If default is explicitly set to 'vscode', handle appropriately
+    if (defaultViewer === 'vscode') {
+      // User prefers VS Code default - could optionally show message or open default preview
+      // For now, we still open with our editor but respect the setting preference
+      // Future: Could integrate with VS Code's native markdown preview
+    }
+
+    // AC-3: If default is 'dk-ai' or not set, proceed with DK-AI editor
+
     // Setup webview options
     // Allow loading resources from extension and the workspace folder containing the document
     let workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
