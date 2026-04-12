@@ -283,7 +283,7 @@ body[data-theme="dark"] {
   align-items: stretch;
   min-height: calc(100vh - 44px);
   max-width: 100vw;
-  overflow-x: auto;
+  overflow-x: clip;
 }
 
 .toc-pane-mount {
