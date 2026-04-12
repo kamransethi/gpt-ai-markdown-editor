@@ -344,14 +344,39 @@ function refreshTocPaneSelection() {
   );
 }
 
+function formatLastUpdated(timestamp: number): string {
+  if (timestamp === 0) return '';
+  const date = new Date(timestamp);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return formatter.format(date);
+}
+
+function calculateReadingTime(words: number): string {
+  const minutes = Math.max(1, Math.ceil(words / 200));
+  return `${minutes} min read`;
+}
+
 function updateEditorMetaBar(currentEditor: Editor | null) {
   if (!editorMetaBar || !currentEditor) {
     return;
   }
 
   const words = currentEditor.storage.characterCount?.words?.() ?? 0;
-  const characters = currentEditor.storage.characterCount?.characters?.() ?? 0;
-  editorMetaBar.textContent = `${words} words  •  ${characters} characters`;
+  const readingTime = calculateReadingTime(words);
+  const lastUpdated = formatLastUpdated(lastUserEditTime);
+
+  if (lastUpdated) {
+    editorMetaBar.textContent = `Updated: ${lastUpdated}  •  ${words} words  •  ${readingTime}`;
+  } else {
+    editorMetaBar.textContent = `${words} words  •  ${readingTime}`;
+  }
 }
 
 const scheduleTocPaneSelectionRefresh = rafThrottle(refreshTocPaneSelection);
