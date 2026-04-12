@@ -216,6 +216,43 @@ export class ThemeColor {
   constructor(public id: string) {}
 }
 
+// Mock Language Model API
+export const LanguageModelChatMessage = {
+  User: jest.fn((content: string | any[]) => ({ role: 'user', content })),
+};
+
+export class LanguageModelTextPart {
+  constructor(public value: string) {}
+}
+
+export class LanguageModelDataPart {
+  constructor(
+    public mimeType: string,
+    public data: Buffer
+  ) {}
+}
+
+export class LanguageModelError extends Error {
+  code: string;
+  constructor(message: string, code: string) {
+    super(message);
+    this.code = code;
+    this.name = 'LanguageModelError';
+  }
+}
+
+export class CancellationTokenSource {
+  token = { isCancellationRequested: false, onCancellationRequested: jest.fn() };
+  cancel = jest.fn(() => {
+    this.token.isCancellationRequested = true;
+  });
+  dispose = jest.fn();
+}
+
+export const lm = {
+  selectChatModels: jest.fn(async () => []),
+};
+
 export default {
   window,
   workspace,
@@ -229,6 +266,12 @@ export default {
   TreeItemCollapsibleState,
   ThemeIcon,
   ThemeColor,
+  LanguageModelChatMessage,
+  LanguageModelTextPart,
+  LanguageModelDataPart,
+  LanguageModelError,
+  CancellationTokenSource,
+  lm,
 };
 
 // Minimal Range class

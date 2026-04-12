@@ -17,6 +17,7 @@ import {
 } from '../activeWebview';
 import { handleAiRefineRequest } from '../features/aiRefine';
 import { handleAiExplainRequest } from '../features/aiExplain';
+import { handleImageAskRequest } from '../features/imageAsk';
 import { getNonce } from './utils';
 import { MessageType } from '../shared/messageTypes';
 import { toErrorMessage } from '../shared/errorUtils';
@@ -517,6 +518,19 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         void handleAiExplainRequest(webview, {
           documentText: message.documentText as string,
         });
+        break;
+
+      case MessageType.IMAGE_ASK:
+        void handleImageAskRequest(
+          webview,
+          {
+            action: message.action as any,
+            imageSrc: message.imageSrc as string,
+            imageAlt: message.imageAlt as string | undefined,
+            customPrompt: message.customPrompt as string | undefined,
+          },
+          document
+        );
         break;
     }
   }

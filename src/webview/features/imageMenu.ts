@@ -17,6 +17,7 @@
 import type { Editor } from '@tiptap/core';
 import { MessageType } from '../../shared/messageTypes';
 import { showImageRenameDialog } from './imageRenameDialog';
+import { showImageAskLoading } from '../extensions/aiExplain';
 
 // Track currently open menu to close on outside click
 let currentOpenMenu: HTMLElement | null = null;
@@ -83,6 +84,32 @@ export function createImageMenu(isLocal: boolean = true): HTMLElement {
       </div>
     `;
   }
+
+  // Ask (AI vision) section — available for all images
+  menuHTML += `
+    <div class="menu-separator"></div>
+    <div class="menu-section-label">Ask</div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="askExplain">
+      <span class="codicon codicon-comment-discussion menu-icon"></span>
+      <span class="menu-label">Explain</span>
+    </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="askAltText">
+      <span class="codicon codicon-accessibility menu-icon"></span>
+      <span class="menu-label">Generate Alt Text</span>
+    </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="askExtractText">
+      <span class="codicon codicon-file-text menu-icon"></span>
+      <span class="menu-label">Extract Text</span>
+    </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="askDescribe">
+      <span class="codicon codicon-book menu-icon"></span>
+      <span class="menu-label">Describe</span>
+    </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="askCustom">
+      <span class="codicon codicon-question menu-icon"></span>
+      <span class="menu-label">Ask a Question\u2026</span>
+    </div>
+  `;
 
   menu.innerHTML = menuHTML;
 
@@ -203,6 +230,9 @@ export function showImageMenu(
             imagePath: imagePath,
           });
         }
+      } else if (action?.startsWith('ask')) {
+        hideImageMenu(menu);
+        handleAskAction(action, img, vscodeApi);
       }
     }
   };
@@ -303,4 +333,123 @@ export function hideImageMenu(menu: HTMLElement): void {
  */
 export function isExternalImage(src: string): boolean {
   return src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:');
+}
+
+/** Map menu data-action to IMAGE_ASK action names. */
+const ASK_ACTION_MAP: Record<string, string> = {
+  askExplain: 'explain',
+  askAltText: 'altText',
+  askExtractText: 'extractText',
+  askDescribe: 'describe',
+  askCustom: 'custom',
+};
+
+/** Last custom image question, persisted across dialog invocations. */
+let lastCustomQuestion = '';
+
+/**
+ * Handle an Ask menu action — sends an IMAGE_ASK message to the extension host.
+ * For "askCustom", shows a styled dialog for the user to type a question.
+ */
+function handleAskAction(action: string, img: HTMLImageElement, vscodeApi: unknown): void {
+  const askAction = ASK_ACTION_MAP[action];
+  if (!askAction) return;
+
+  const imageSrc = img.getAttribute('data-markdown-src') || img.getAttribute('src') || '';
+  const imageAlt = img.getAttribute('alt') || '';
+
+  if (askAction === 'custom') {
+    showImageAskDialog(imageSrc, imageAlt, vscodeApi);
+    return;
+  }
+
+  showImageAskLoading(askAction);
+  if (vscodeApi && typeof (vscodeApi as any).postMessage === 'function') {
+    (vscodeApi as any).postMessage({
+      type: MessageType.IMAGE_ASK,
+      action: askAction,
+      imageSrc,
+      imageAlt,
+    });
+  }
+}
+
+/**
+ * Show a styled dialog for asking a custom question about an image.
+ * Reuses the ai-refine-dialog CSS classes for consistent styling.
+ */
+function showImageAskDialog(imageSrc: string, imageAlt: string, vscodeApi: unknown): void {
+  const overlay = document.createElement('div');
+  overlay.className = 'ai-refine-overlay';
+
+  const dialog = document.createElement('div');
+  dialog.className = 'ai-refine-dialog';
+
+  const title = document.createElement('div');
+  title.className = 'ai-refine-dialog-title';
+  title.textContent = 'Ask about image';
+  dialog.appendChild(title);
+
+  const description = document.createElement('div');
+  description.className = 'ai-refine-dialog-description';
+  description.textContent = 'Ask a question about this image:';
+  dialog.appendChild(description);
+
+  const input = document.createElement('textarea');
+  input.className = 'ai-refine-dialog-input';
+  input.placeholder = 'e.g., What colors are used in this diagram?';
+  input.rows = 3;
+  if (lastCustomQuestion) {
+    input.value = lastCustomQuestion;
+  }
+  dialog.appendChild(input);
+
+  const buttonRow = document.createElement('div');
+  buttonRow.className = 'ai-refine-dialog-buttons';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'ai-refine-dialog-btn ai-refine-dialog-btn-cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => overlay.remove();
+
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'button';
+  submitBtn.className = 'ai-refine-dialog-btn ai-refine-dialog-btn-submit';
+  submitBtn.textContent = 'Ask';
+  submitBtn.onclick = () => {
+    const question = input.value.trim();
+    if (!question) return;
+    lastCustomQuestion = question;
+    overlay.remove();
+
+    showImageAskLoading('custom');
+    if (vscodeApi && typeof (vscodeApi as any).postMessage === 'function') {
+      (vscodeApi as any).postMessage({
+        type: MessageType.IMAGE_ASK,
+        action: 'custom',
+        imageSrc,
+        imageAlt,
+        customPrompt: question,
+      });
+    }
+  };
+
+  buttonRow.appendChild(cancelBtn);
+  buttonRow.appendChild(submitBtn);
+  dialog.appendChild(buttonRow);
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+
+  input.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      overlay.remove();
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitBtn.click();
+    }
+  });
+
+  requestAnimationFrame(() => input.focus());
 }

@@ -90,6 +90,16 @@ export class ToolbarAuxControlsFactory {
     document.querySelector('.about-modal-overlay')?.remove();
 
     const version = document.body.getAttribute('data-extension-version') || 'unknown';
+    const buildDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    // Dependency versions from package.json (update these when dependencies change)
+    const tiptapVersion = '3.22.3';
+    const mermaidVersion = '11.14.0';
+    const shikiVersion = '3.23.0';
 
     const overlay = document.createElement('div');
     overlay.className = 'about-modal-overlay';
@@ -107,9 +117,14 @@ export class ToolbarAuxControlsFactory {
         </button>
       </div>
       <div class="about-modal-body">
+        <div class="about-modal-section-title">About</div>
         <div class="about-modal-version">
           <span class="about-modal-label">Version</span>
           <span class="about-modal-value">${version}</span>
+        </div>
+        <div class="about-modal-version">
+          <span class="about-modal-label">Build Date</span>
+          <span class="about-modal-value">${buildDate}</span>
         </div>
         <div class="about-modal-version">
           <span class="about-modal-label">Publisher</span>
@@ -118,6 +133,20 @@ export class ToolbarAuxControlsFactory {
         <div class="about-modal-version">
           <span class="about-modal-label">License</span>
           <span class="about-modal-value">MIT</span>
+        </div>
+        <div class="about-modal-divider"></div>
+        <div class="about-modal-section-title">Dependencies</div>
+        <div class="about-modal-version">
+          <span class="about-modal-label">TipTap</span>
+          <span class="about-modal-value">${tiptapVersion}</span>
+        </div>
+        <div class="about-modal-version">
+          <span class="about-modal-label">Mermaid</span>
+          <span class="about-modal-value">${mermaidVersion}</span>
+        </div>
+        <div class="about-modal-version">
+          <span class="about-modal-label">Shiki</span>
+          <span class="about-modal-value">${shikiVersion}</span>
         </div>
         <div class="about-modal-divider"></div>
         <div class="about-modal-links">

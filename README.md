@@ -33,9 +33,9 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 
 ## See It In Action
 
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/basic_overview_of_features.gif)
+![image](./README/pasted_20260412-004120.png)
 
-*A complete Markdown workflow inside VS Code: visual editing, formatting, tables, images, and structured content in one seamless editor.*
+*A complete Markdown workflow inside VS Code: AI, visual editing, formatting, tables, images, and structured content in one seamless editor.*
 
 ---
 
@@ -85,14 +85,10 @@ You work on the table itself, not the Markdown syntax behind it.
 
 ### Links, Diagrams, Alerts, and Navigation
 
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/hyperlink_feature.gif)
-
 - Link dialog for URLs, files, and in-document headings
 - Mermaid diagrams with inline rendering and templates
 - GitHub-style alert blocks for notes, warnings, and tips
 - Outline sidebar for heading-based navigation
-
-![1.00](https://raw.githubusercontent.com/kamransethi/markdown-for-humans/4bf7defb6a3e7ee56b34e6dd9dc0a55e471740ec/marketplace-assets/gifs/outline_feature_with_sidebar_display.gif)
 
 ---
 
@@ -171,7 +167,7 @@ Use the `</>` toolbar button any time you want to jump to source.
 We welcome feature ideas, bug reports, documentation fixes, and pull requests. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow.
 
 > [!NOTE]
-> Note: This project is a community-maintained fork of the excellent Markdown For Humans. It has been extended heavily with advanced editing, media, diagramming, formatting, and workflow features while remaining open and free.
+> Note: This project is a community-maintained fork of the excellent Markdown For Humans extension from concretios. It has been extended heavily with advanced editing, media, diagramming, formatting, and workflow features while remaining open and free.
 
 ---
 

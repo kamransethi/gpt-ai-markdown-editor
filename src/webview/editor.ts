@@ -66,7 +66,7 @@ import { createKeydownHandler } from './features/keyboardShortcuts';
 import { createLinkClickHandler } from './features/linkHandling';
 import { SearchAndReplace } from './extensions/searchAndReplace';
 import { SlashCommand } from './extensions/slashCommand';
-import { AiExplain, handleAiExplainResult } from './extensions/aiExplain';
+import { AiExplain, handleAiExplainResult, handleImageAskResult } from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
 
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
@@ -1515,6 +1515,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case MessageType.AI_EXPLAIN_RESULT:
         handleAiExplainResult(message as any);
+        break;
+      case MessageType.IMAGE_ASK_RESULT:
+        handleImageAskResult(message as any);
         break;
       case MessageType.INSERT_EMOJI:
         if (editor && typeof message.emoji === 'string') {

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2025-2026 DK-AI
  *
- * Extension-host AI Explain using the VS Code Language Model API.
+ * Extension-host AI Explain.
  * Takes document text and produces a simplified, structured explanation
  * similar to browser reading/summary modes (Edge, Chrome).
  *
@@ -10,6 +10,8 @@
 
 import * as vscode from 'vscode';
 import { MessageType } from '../shared/messageTypes';
+import { createLlmProvider, getModelDisplayName } from './llm/providerFactory';
+import type { LlmMessage } from './llm/types';
 
 const SYSTEM_PROMPT =
   'You are a document analysis assistant embedded in a markdown editor. ' +
@@ -42,43 +44,17 @@ export async function handleAiExplainRequest(
       : documentText;
 
   try {
-    const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
-    const modelFamily = config.get<string>('aiModel', 'gpt-4.1');
+    const provider = createLlmProvider();
+    const modelName = getModelDisplayName();
+    const abortController = new AbortController();
 
-    const models = await vscode.lm.selectChatModels({
-      vendor: 'copilot',
-      family: modelFamily,
-    });
-
-    let model = models[0];
-
-    if (!model) {
-      const fallbackModels = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-      model = fallbackModels[0];
-    }
-
-    if (!model) {
-      webview.postMessage({
-        type: MessageType.AI_EXPLAIN_RESULT,
-        success: false,
-        error: 'No AI model available. Ensure GitHub Copilot is active.',
-      });
-      return;
-    }
-
-    const messages = [
-      vscode.LanguageModelChatMessage.User(SYSTEM_PROMPT),
-      vscode.LanguageModelChatMessage.User(`Document content:\n\n${text}`),
+    const messages: LlmMessage[] = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: `Document content:\n\n${text}` },
     ];
 
-    const response = await model.sendRequest(
-      messages,
-      {},
-      new vscode.CancellationTokenSource().token
-    );
-
     let result = '';
-    for await (const chunk of response.text) {
+    for await (const chunk of provider.generate(messages, abortController.signal)) {
       result += chunk;
     }
 
@@ -86,6 +62,7 @@ export async function handleAiExplainRequest(
       type: MessageType.AI_EXPLAIN_RESULT,
       success: true,
       explanation: result.trim(),
+      modelName,
     });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);

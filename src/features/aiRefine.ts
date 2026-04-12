@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2025-2026 DK-AI
  *
- * Extension-host AI text refinement using the VS Code Language Model API (vscode.lm).
- * Receives requests from the webview, calls the LM, and sends back refined text.
+ * Extension-host AI text refinement.
+ * Receives requests from the webview, calls the LLM provider, and sends back refined text.
  *
  * @module aiRefine (extension host)
  */
@@ -10,6 +10,8 @@
 import * as vscode from 'vscode';
 import { MessageType } from '../shared/messageTypes';
 import { getPromptForMode } from '../shared/aiModes';
+import { createLlmProvider } from './llm/providerFactory';
+import type { LlmMessage } from './llm/types';
 
 // ── Prompts ─────────────────────────────────────────────────────────
 
@@ -50,53 +52,18 @@ export async function handleAiRefineRequest(
   const { mode, selectedText, from, to } = data;
 
   try {
-    // Read the configured model family
-    const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
-    const modelFamily = config.get<string>('aiModel', 'gpt-4.1');
+    const provider = createLlmProvider();
+    const abortController = new AbortController();
 
-    // Select an available language model
-    const models = await vscode.lm.selectChatModels({
-      vendor: 'copilot',
-      family: modelFamily,
-    });
-
-    let model = models[0];
-
-    // Fallback: try any copilot model if gpt-4.1 not available
-    if (!model) {
-      const fallbackModels = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-      model = fallbackModels[0];
-    }
-
-    if (!model) {
-      webview.postMessage({
-        type: MessageType.AI_REFINE_RESULT,
-        success: false,
-        error:
-          'No language model available. Please ensure GitHub Copilot is installed and signed in.',
-        from,
-        to,
-      });
-      return;
-    }
-
-    // Build messages
-    const messages = [
-      vscode.LanguageModelChatMessage.User(
-        `${SYSTEM_PROMPT}\n\n${buildUserPrompt(mode, selectedText)}`
-      ),
+    const messages: LlmMessage[] = [
+      {
+        role: 'user',
+        content: `${SYSTEM_PROMPT}\n\n${buildUserPrompt(mode, selectedText)}`,
+      },
     ];
 
-    // Send the request
-    const response = await model.sendRequest(
-      messages,
-      {},
-      new vscode.CancellationTokenSource().token
-    );
-
-    // Collect the streamed response
     let refinedText = '';
-    for await (const chunk of response.text) {
+    for await (const chunk of provider.generate(messages, abortController.signal)) {
       refinedText += chunk;
     }
 
@@ -116,15 +83,7 @@ export async function handleAiRefineRequest(
   } catch (error: unknown) {
     let errorMessage = 'AI refinement failed.';
 
-    if (error instanceof vscode.LanguageModelError) {
-      if (error.code === 'NoPermissions') {
-        errorMessage = 'Copilot access denied. Please check your GitHub Copilot subscription.';
-      } else if (error.code === 'NotFound') {
-        errorMessage = 'No suitable language model found.';
-      } else {
-        errorMessage = `Language model error: ${error.message}`;
-      }
-    } else if (error instanceof Error) {
+    if (error instanceof Error) {
       errorMessage = error.message;
     }
 

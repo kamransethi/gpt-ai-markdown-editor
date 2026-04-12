@@ -88,6 +88,8 @@ export const MessageType = {
   AI_REFINE_RESULT: 'aiRefineResult',
   AI_EXPLAIN: 'aiExplain',
   AI_EXPLAIN_RESULT: 'aiExplainResult',
+  IMAGE_ASK: 'imageAsk',
+  IMAGE_ASK_RESULT: 'imageAskResult',
 
   // ── Front Matter ──
   FRONTMATTER_VALIDATE: 'frontmatterValidate',
