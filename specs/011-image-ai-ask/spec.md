@@ -157,5 +157,7 @@ A user's currently configured LLM does not support image/vision inputs (e.g., a 
 - Ollama vision models (e.g., `llava`, `bakllava`, `llama3.2-vision`) accept base64-encoded images in the standard `/api/chat` message format via an `images` field.
 - The results panel reuses the same UI pattern as the existing AI Summary/Explain panel rather than introducing a new UI paradigm.
 - Image resizing for large files will use a canvas-based approach in the webview since the webview has access to DOM APIs.
-- The "Ask a Question…" input will use VS Code's built-in `showInputBox` API for the text prompt, keeping the UX consistent with the rest of the editor.
+- The "Ask a Question…" dialog uses a styled overlay input (following the Custom Refinement pattern from aiRefine), not `window.prompt()` or VS Code's `showInputBox`.
 - SVG images are out of scope for v1 — if an image is SVG, the ASK menu items will be disabled with a tooltip explaining SVG is not yet supported.
+- **Image model is separately configured from text model**: When the provider is Ollama, Image Ask uses `gptAiMarkdownEditor.ollamaImageModel` (default `llama3.2-vision:latest`) rather than `gptAiMarkdownEditor.ollamaModel`. This allows users running a standard text Ollama model to separately configure a vision-capable model for image tasks. When the provider is GitHub Copilot, the same model is used for both text and image tasks.
+- **Model shown immediately on panel open**: The AI panel footer shows `<provider> / <model>` as soon as the panel opens (before the request completes), sourced from the webview's cached settings. This is consistent behavior for both AI Summary and Image Ask.

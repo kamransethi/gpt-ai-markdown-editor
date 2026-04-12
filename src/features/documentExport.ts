@@ -378,7 +378,8 @@ async function exportToWord(
   progress.report({ message: 'Writing temporary markdown file...', increment: 15 });
 
   try {
-    processedMarkdown = processedMarkdown.replace(/\n{2,}(\s*([-*+]|\d+\.)\s+)/g, '\n$1');
+    // Preserve 2-newline runs to maintain list item boundaries; only collapse 3+ newlines
+    processedMarkdown = processedMarkdown.replace(/\n{3,}(\s*([-*+]|\d+\.)\s+)/g, '\n\n$1');
   } catch {
     // Non-fatal
   }

@@ -1428,6 +1428,14 @@ function applyWebviewSettings(message: any) {
     setEditorZoom(message.editorZoomLevel, false);
   }
 
+  if (typeof message.modelDisplayName === 'string') {
+    (window as any).__dkAiModelDisplayName = message.modelDisplayName;
+  }
+
+  if (typeof message.imageModelDisplayName === 'string') {
+    (window as any).__dkAiImageModelDisplayName = message.imageModelDisplayName;
+  }
+
   if (message.themeOverride) {
     if (typeof (window as any).gptAiApplyTheme === 'function') {
       (window as any).gptAiApplyTheme(message.themeOverride);

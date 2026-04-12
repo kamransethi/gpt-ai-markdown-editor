@@ -119,23 +119,27 @@ When the selected LLM provider is unavailable (Ollama not running, Copilot not s
 ### Functional Requirements
 
 - **FR-001**: System MUST provide a VS Code setting (`gptAiMarkdownEditor.llmProvider`) to select between "GitHub Copilot" (default) and "Ollama" as the LLM provider
-- **FR-002**: When "GitHub Copilot" is selected, all AI features (Refine, Explain) MUST continue working exactly as they do today with no behavioral changes
+- **FR-002**: When "GitHub Copilot" is selected, all AI features (Refine, Explain, Image Ask) MUST continue working exactly as they do today with no behavioral changes
 - **FR-003**: When "Ollama" is selected, all AI features MUST route requests to the user's local Ollama instance instead of GitHub Copilot
-- **FR-004**: System MUST provide a VS Code setting (`gptAiMarkdownEditor.ollamaModel`) to specify the Ollama model name, defaulting to `llama3.2:latest`
-- **FR-005**: System MUST provide a VS Code setting (`gptAiMarkdownEditor.ollamaEndpoint`) to specify the Ollama server URL, defaulting to `http://localhost:11434`
+- **FR-004**: System MUST provide a VS Code setting (`gptAiMarkdownEditor.ollamaModel`) to specify the Ollama model used for **text refinement and document explanation**, defaulting to `llama3.2:latest`
+- **FR-004b**: System MUST provide a separate VS Code setting (`gptAiMarkdownEditor.ollamaImageModel`) to specify the Ollama model used for **image analysis (vision tasks)**, defaulting to `llama3.2-vision:latest`. This allows users to configure a vision-capable model independently from their text model.
+- **FR-005**: System MUST provide a VS Code setting (`gptAiMarkdownEditor.ollamaEndpoint`) to specify the Ollama server URL, defaulting to `http://localhost:11434`. Both text and image model requests share this endpoint.
 - **FR-006**: System MUST stream responses from Ollama to provide the same progressive-display experience as GitHub Copilot responses
 - **FR-007**: System MUST display clear, actionable error messages when the selected LLM provider is unreachable or the model is unavailable
-- **FR-008**: The Ollama model setting MUST accept any string value (free-form text input) to allow custom model names
+- **FR-008**: All Ollama model settings MUST accept any string value (free-form text input) to allow custom model names
 - **FR-009**: Changing provider or model settings MUST take effect on the next AI request without requiring a VS Code restart
-- **FR-010**: AI Refine (all 7 modes + custom) and AI Explain MUST work identically with both providers. The Chat Participant is excluded and remains Copilot-only.
+- **FR-010**: AI Refine (all modes + custom) and AI Explain MUST use `ollamaModel` when provider is Ollama. Image Ask MUST use `ollamaImageModel` when provider is Ollama. The Chat Participant is excluded and remains Copilot-only.
 - **FR-011**: The existing Copilot model selection setting (`gptAiMarkdownEditor.aiModel`) MUST remain functional and unaffected when "GitHub Copilot" is the selected provider
 - **FR-012**: Users MUST be able to cancel an in-flight Ollama request before it completes, returning to the pre-request state without applying partial results
+- **FR-013**: The AI panel (AI Summary / Image Ask results) MUST display the model name (provider + model) in the footer **immediately when the panel opens**, before the response is received, so users can anticipate response time. The display format MUST be `<provider> / <model>` (e.g., `Ollama / llama3.2:latest` or `GitHub Copilot / gpt-4.1`).
+- **FR-014**: When showing the model in the AI panel footer for image tasks, the system MUST show the image model (`ollamaImageModel` or the Copilot model), not the text model.
 
 ### Key Entities
 
 - **LLM Provider**: The backend service used for AI inference. Currently "GitHub Copilot", adding "Ollama" as an alternative
-- **Model**: The specific language model used by the provider. For Copilot: model family from existing setting. For Ollama: model tag (e.g., `llama3.2:latest`)
-- **Ollama Endpoint**: The server address where Ollama is running (default `http://localhost:11434`)
+- **Text Model**: The specific language model used for text refinement and document explanation. For Copilot: model family from existing setting. For Ollama: `ollamaModel` setting (e.g., `llama3.2:latest`)
+- **Image Model**: The specific language model used for image/vision analysis. For Copilot: same as text model (all selected Copilot models support vision). For Ollama: `ollamaImageModel` setting (e.g., `llama3.2-vision:latest`) — kept separate because vision models are distinct from general-purpose text models in Ollama
+- **Ollama Endpoint**: The server address where Ollama is running (default `http://localhost:11434`). Shared by both text and image model requests.
 
 ---
 
@@ -150,6 +154,8 @@ When the selected LLM provider is unavailable (Ollama not running, Copilot not s
 - **SC-005**: Response streaming works with both providers, showing progressive text output during generation
 - **SC-006**: Switching providers takes effect immediately (no VS Code restart required)
 - **SC-007**: All existing tests continue to pass with zero regressions when the default provider (GitHub Copilot) is selected
+- **SC-008**: The AI panel footer shows the current model (provider + model name) as soon as the panel opens — visible before and during generation, not only after completion
+- **SC-009**: Image Ask requests use `ollamaImageModel` while text requests use `ollamaModel` — the two can be configured to different models independently
 
 ---
 
@@ -157,7 +163,9 @@ When the selected LLM provider is unavailable (Ollama not running, Copilot not s
 
 - Users have Ollama installed and running locally if they select it as their provider. The extension does not install or manage Ollama.
 - Ollama supports streaming responses compatible with the extension's progressive-display needs
-- The default Ollama model `llama3.2:latest` is capable enough for text refinement and summarization tasks (it is a general-purpose LLM)
+- The default Ollama text model `llama3.2:latest` is capable enough for text refinement and summarization tasks (it is a general-purpose LLM)
+- The default Ollama image model `llama3.2-vision:latest` supports the Ollama vision input format (base64 images in the `images` field)
 - The existing system prompt and user prompt structure works with both Copilot and Ollama models (no provider-specific prompt engineering needed in v1)
 - GitHub Copilot remains the default provider to maintain backward compatibility for existing users
 - The extension does not need to verify which models are installed on Ollama; it sends requests and reports errors if the model is unavailable
+- Both text and image Ollama models share the same endpoint; users do not need separate Ollama instances for text vs. vision tasks

@@ -35,7 +35,7 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 - **LLM provider selection** — choose between GitHub Copilot or local Ollama for full AI feature independence and privacy
 - **AI text refinement** — Rephrase, Shorten, Summarize, Bulletize, Tableize, and more with configurable language models
 - **Document explanation** — automated document analysis and summarization
-- **AI model selection** — choose from GPT-4.1, Claude Sonnet, o3-mini, and other models (Copilot) or any local Ollama model
+- **AI model selection** — choose from GPT-4.1, Claude Sonnet, o3-mini, and other models (Copilot) or any local Ollama model; Ollama supports separate text (`ollamaModel`, default `llama3.2:latest`) and image/vision (`ollamaImageModel`, default `llama3.2-vision:latest`) model settings
 
 ### Workflow & Navigation
 - **Document navigation** — outline sidebar, heading navigation, word count, and reading time

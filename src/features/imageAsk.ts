@@ -10,7 +10,11 @@
 
 import * as vscode from 'vscode';
 import { MessageType } from '../shared/messageTypes';
-import { createLlmProvider, getModelDisplayName, isVisionCapable } from './llm/providerFactory';
+import {
+  createImageLlmProvider,
+  getImageModelDisplayName,
+  isVisionCapable,
+} from './llm/providerFactory';
 import type { LlmMessage } from './llm/types';
 
 export type ImageAskAction = 'explain' | 'altText' | 'extractText' | 'describe' | 'custom';
@@ -100,11 +104,11 @@ export async function handleImageAskRequest(
   if (!isVisionCapable()) {
     const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
     const provider = config.get<string>('llmProvider', 'GitHub Copilot');
-    const model = config.get<string>('ollamaModel', 'llama3.2:latest');
+    const model = config.get<string>('ollamaImageModel', 'llama3.2-vision:latest');
 
     const openSettings = 'Open Settings';
     const result = await vscode.window.showWarningMessage(
-      `Image analysis requires a vision-capable model. Your current model "${model}" (${provider}) does not support image inputs.\n\n` +
+      `Image analysis requires a vision-capable model. Your current image model "${model}" (${provider}) does not support image inputs.\n\n` +
         'Try switching to a vision model like llava, bakllava, or llama3.2-vision.',
       openSettings
     );
@@ -112,7 +116,7 @@ export async function handleImageAskRequest(
     if (result === openSettings) {
       await vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        'gptAiMarkdownEditor.ollamaModel'
+        'gptAiMarkdownEditor.ollamaImageModel'
       );
     }
 
@@ -155,8 +159,8 @@ export async function handleImageAskRequest(
       userPrompt += `\n\nThe image currently has this alt text: "${data.imageAlt}". Improve upon it if needed.`;
     }
 
-    const provider = createLlmProvider();
-    const modelName = getModelDisplayName();
+    const provider = createImageLlmProvider();
+    const modelName = getImageModelDisplayName();
     const abortController = new AbortController();
 
     const messages: LlmMessage[] = [

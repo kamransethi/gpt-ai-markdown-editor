@@ -152,7 +152,7 @@ describe('isVisionCapable', () => {
   it('returns true for Ollama with a known vision model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'llava:13b';
+      if (key === 'ollamaImageModel') return 'llava:13b';
       return defaultValue;
     });
 
@@ -163,7 +163,7 @@ describe('isVisionCapable', () => {
   it('returns true for llama3.2-vision model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'llama3.2-vision:latest';
+      if (key === 'ollamaImageModel') return 'llama3.2-vision:latest';
       return defaultValue;
     });
 
@@ -174,7 +174,7 @@ describe('isVisionCapable', () => {
   it('returns false for Ollama with a text-only model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'llama3.2:latest';
+      if (key === 'ollamaImageModel') return 'llama3.2:latest';
       return defaultValue;
     });
 
@@ -185,7 +185,7 @@ describe('isVisionCapable', () => {
   it('returns false for mistral on Ollama', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'mistral:latest';
+      if (key === 'ollamaImageModel') return 'mistral:latest';
       return defaultValue;
     });
 
@@ -196,7 +196,7 @@ describe('isVisionCapable', () => {
   it('returns true for bakllava model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'bakllava:latest';
+      if (key === 'ollamaImageModel') return 'bakllava:latest';
       return defaultValue;
     });
 

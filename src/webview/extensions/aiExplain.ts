@@ -32,7 +32,21 @@ function getVscodeApi(): any {
   return (window as any).vscode;
 }
 
+/**
+ * Read the current model display name from the webview's config bridge.
+ * Falls back to empty string if not available.
+ */
+function getCurrentModelName(): string {
+  return (window as any).__dkAiModelDisplayName ?? '';
+}
+
+function getCurrentImageModelName(): string {
+  return (window as any).__dkAiImageModelDisplayName ?? '';
+}
+
 function showExplainPanel() {
+  const modelName = getCurrentModelName();
+
   if (panelEl) {
     panelEl.style.display = 'flex';
     // Reset body to loading state for new request
@@ -41,6 +55,9 @@ function showExplainPanel() {
       body.innerHTML =
         '<div class="ai-explain-loading"><div class="ai-explain-spinner"></div><span>Analyzing document\u2026</span></div>';
     }
+    // Show model immediately, will be overwritten by result if different
+    const footer = panelEl.querySelector('.ai-explain-footer');
+    if (footer && modelName) footer.textContent = modelName;
     return;
   }
 
@@ -58,7 +75,7 @@ function showExplainPanel() {
         <span>Analyzing document…</span>
       </div>
     </div>
-    <div class="ai-explain-footer"></div>
+    <div class="ai-explain-footer">${modelName}</div>
   `;
 
   document.body.appendChild(panelEl);
@@ -136,9 +153,9 @@ export function showImageAskLoading(action: string): void {
       '<div class="ai-explain-loading"><div class="ai-explain-spinner"></div><span>Analyzing image\u2026</span></div>';
   }
 
-  // Clear footer + actions bar
+  // Show image model name immediately in footer
   const footer = panelEl?.querySelector('.ai-explain-footer');
-  if (footer) footer.textContent = '';
+  if (footer) footer.textContent = getCurrentImageModelName();
   removeActionsBar();
 }
 
