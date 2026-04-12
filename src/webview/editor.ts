@@ -1236,6 +1236,9 @@ function initializeEditor(initialContent: string) {
         updateFrontmatterPanel(frontmatter);
       }
 
+      // Seed the "Updated" timestamp with now so the meta bar shows a date on load
+      lastUserEditTime = Date.now();
+
       // Prevent onUpdate from firing during initialization
       isUpdating = true;
       editor.commands.setContent(preprocessMarkdownContent(content), {
@@ -1244,6 +1247,9 @@ function initializeEditor(initialContent: string) {
       // Inject front matter as a collapsible atom block at the top
 
       isUpdating = false;
+
+      // Refresh meta bar now that we have both the timestamp and correct word count
+      updateEditorMetaBar(editorInstance);
     }
 
     // Create and insert formatting toolbar at top

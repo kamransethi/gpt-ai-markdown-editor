@@ -313,7 +313,6 @@ body[data-theme="dark"] {
 .editor-meta-stats {
   flex: 1;
   text-align: right;
-  margin-right: auto;
 }
 
 .frontmatter-view-btn {
