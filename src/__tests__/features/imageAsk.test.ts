@@ -101,7 +101,8 @@ describe('OllamaProvider.generateWithVision', () => {
     const stream = buildOllamaStream([{ message: { content: 'ok' }, done: true }]);
     jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }));
 
-    for await (const _chunk of provider.generateWithVision!(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for await (const chunk of provider.generateWithVision!(
       [
         { role: 'user', content: 'First question' },
         { role: 'system', content: 'System note' },
@@ -128,7 +129,8 @@ describe('isVisionCapable', () => {
 
   beforeEach(() => {
     mockGet = jest.fn();
-    const vscode = require('vscode');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const vscode = require('vscode') as any;
     vscode.workspace.getConfiguration = jest.fn(() => ({
       get: mockGet,
     }));
@@ -145,6 +147,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -156,6 +159,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -167,6 +171,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -178,6 +183,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(false);
   });
@@ -189,6 +195,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(false);
   });
@@ -200,6 +207,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -212,6 +220,7 @@ describe('isVisionCapable', () => {
 
 describe('MessageType image ask constants', () => {
   it('exports IMAGE_ASK and IMAGE_ASK_RESULT', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MessageType } = require('../../shared/messageTypes');
     expect(MessageType.IMAGE_ASK).toBe('imageAsk');
     expect(MessageType.IMAGE_ASK_RESULT).toBe('imageAskResult');
