@@ -67,7 +67,8 @@ export class OllamaProvider implements LlmProvider {
         return;
       }
       throw new Error(
-        `Ollama is not reachable at ${this.endpoint}. Please start Ollama or change your LLM provider setting.`
+        `Ollama is not reachable at ${this.endpoint}. Please start Ollama or change your LLM provider setting.`,
+        { cause: error }
       );
     }
 

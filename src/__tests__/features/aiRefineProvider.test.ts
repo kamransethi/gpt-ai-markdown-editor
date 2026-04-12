@@ -7,9 +7,12 @@
 
 import { handleAiRefineRequest } from '../../features/aiRefine';
 import { handleAiExplainRequest } from '../../features/aiExplain';
+import * as providerFactory from '../../features/llm/providerFactory';
 
 // Mock the provider factory
 jest.mock('../../features/llm/providerFactory');
+
+const mockProviderFactory = jest.mocked(providerFactory);
 
 const mockWebview = {
   postMessage: jest.fn(),
@@ -21,7 +24,7 @@ describe('aiRefine with provider abstraction', () => {
   });
 
   it('sends refined text back to webview on success', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+    const { createLlmProvider } = mockProviderFactory;
 
     async function* mockGenerate() {
       yield 'Refined ';
@@ -51,7 +54,7 @@ describe('aiRefine with provider abstraction', () => {
   });
 
   it('strips markdown code fences from response', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+    const { createLlmProvider } = mockProviderFactory;
 
     async function* mockGenerate() {
       yield '```markdown\nClean text\n```';
@@ -77,6 +80,7 @@ describe('aiRefine with provider abstraction', () => {
   });
 
   it('sends error back to webview on provider failure', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createLlmProvider } = require('../../features/llm/providerFactory');
 
     async function* mockGenerate() {
@@ -105,7 +109,7 @@ describe('aiRefine with provider abstraction', () => {
   });
 
   it('handles custom mode prompts', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+    const { createLlmProvider } = mockProviderFactory;
 
     let capturedMessages: any[] = [];
     async function* mockGenerate(messages: any[]) {
@@ -138,7 +142,7 @@ describe('aiExplain with provider abstraction', () => {
   });
 
   it('sends explanation back to webview on success', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+    const { createLlmProvider } = mockProviderFactory;
 
     async function* mockGenerate() {
       yield '# Summary\n';
@@ -162,8 +166,8 @@ describe('aiExplain with provider abstraction', () => {
     );
   });
 
-  it('sends error back to webview on provider failure', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+  it('sends error back to webview on provider failure for explain', async () => {
+    const { createLlmProvider } = mockProviderFactory;
 
     async function* mockGenerate() {
       throw new Error('Ollama model "bad:model" is not available');
@@ -188,7 +192,7 @@ describe('aiExplain with provider abstraction', () => {
   });
 
   it('truncates documents over 15000 characters', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+    const { createLlmProvider } = mockProviderFactory;
 
     let capturedMessages: any[] = [];
     async function* mockGenerate(messages: any[]) {
@@ -212,7 +216,7 @@ describe('aiExplain with provider abstraction', () => {
   });
 
   it('passes system and user messages to provider', async () => {
-    const { createLlmProvider } = require('../../features/llm/providerFactory');
+    const { createLlmProvider } = mockProviderFactory;
 
     let capturedMessages: any[] = [];
     async function* mockGenerate(messages: any[]) {

@@ -265,7 +265,12 @@
         "gptAiMarkdownEditor.ollamaModel": {
           "type": "string",
           "default": "llama3.2:latest",
-          "markdownDescription": "**Ollama Model**: The model name to use when the LLM provider is set to Ollama. Accepts any model tag installed on your Ollama instance (e.g., `llama3.2:latest`, `mistral:latest`, `codellama:7b`)."
+          "markdownDescription": "**Ollama Text Model**: The model name used for AI text refinement and document explanation when the LLM provider is set to Ollama. Accepts any model tag installed on your Ollama instance (e.g., `llama3.2:latest`, `mistral:latest`, `codellama:7b`)."
+        },
+        "gptAiMarkdownEditor.ollamaImageModel": {
+          "type": "string",
+          "default": "llama3.2-vision:latest",
+          "markdownDescription": "**Ollama Image Model**: The model used for image analysis (Explain, Alt Text, Extract Text, etc.) when the LLM provider is set to Ollama. Must be a vision-capable model. Common options: `llama3.2-vision:latest`, `llava:latest`, `bakllava:latest`, `moondream:latest`."
         },
         "gptAiMarkdownEditor.ollamaEndpoint": {
           "type": "string",

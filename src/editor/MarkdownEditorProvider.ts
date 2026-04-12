@@ -18,6 +18,7 @@ import {
 import { handleAiRefineRequest } from '../features/aiRefine';
 import { handleAiExplainRequest } from '../features/aiExplain';
 import { handleImageAskRequest } from '../features/imageAsk';
+import { getModelDisplayName, getImageModelDisplayName } from '../features/llm/providerFactory';
 import { getNonce } from './utils';
 import { MessageType } from '../shared/messageTypes';
 import { toErrorMessage } from '../shared/errorUtils';
@@ -183,6 +184,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       editorZoomLevel: this.getConfig<number>('editorZoomLevel', 1),
       editorWidth: this.getConfig<number>('editorWidth', 1920),
       showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
+      modelDisplayName: getModelDisplayName(),
+      imageModelDisplayName: getImageModelDisplayName(),
     };
   }
 
@@ -321,7 +324,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('gptAiMarkdownEditor.tocMaxDepth') ||
         e.affectsConfiguration('gptAiMarkdownEditor.preserveHtmlComments') ||
         e.affectsConfiguration('gptAiMarkdownEditor.editorZoomLevel') ||
-        e.affectsConfiguration('gptAiMarkdownEditor.showSelectionToolbar')
+        e.affectsConfiguration('gptAiMarkdownEditor.showSelectionToolbar') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.llmProvider') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.aiModel') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.ollamaModel') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.ollamaImageModel')
       ) {
         const settings = this.getWebviewSettings();
 

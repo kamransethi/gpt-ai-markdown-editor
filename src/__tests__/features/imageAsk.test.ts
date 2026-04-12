@@ -101,7 +101,8 @@ describe('OllamaProvider.generateWithVision', () => {
     const stream = buildOllamaStream([{ message: { content: 'ok' }, done: true }]);
     jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }));
 
-    for await (const _chunk of provider.generateWithVision!(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for await (const chunk of provider.generateWithVision!(
       [
         { role: 'user', content: 'First question' },
         { role: 'system', content: 'System note' },
@@ -128,7 +129,8 @@ describe('isVisionCapable', () => {
 
   beforeEach(() => {
     mockGet = jest.fn();
-    const vscode = require('vscode');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const vscode = require('vscode') as any;
     vscode.workspace.getConfiguration = jest.fn(() => ({
       get: mockGet,
     }));
@@ -145,6 +147,7 @@ describe('isVisionCapable', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -152,10 +155,11 @@ describe('isVisionCapable', () => {
   it('returns true for Ollama with a known vision model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'llava:13b';
+      if (key === 'ollamaImageModel') return 'llava:13b';
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -163,10 +167,11 @@ describe('isVisionCapable', () => {
   it('returns true for llama3.2-vision model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'llama3.2-vision:latest';
+      if (key === 'ollamaImageModel') return 'llama3.2-vision:latest';
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -174,10 +179,11 @@ describe('isVisionCapable', () => {
   it('returns false for Ollama with a text-only model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'llama3.2:latest';
+      if (key === 'ollamaImageModel') return 'llama3.2:latest';
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(false);
   });
@@ -185,10 +191,11 @@ describe('isVisionCapable', () => {
   it('returns false for mistral on Ollama', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'mistral:latest';
+      if (key === 'ollamaImageModel') return 'mistral:latest';
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(false);
   });
@@ -196,10 +203,11 @@ describe('isVisionCapable', () => {
   it('returns true for bakllava model', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaModel') return 'bakllava:latest';
+      if (key === 'ollamaImageModel') return 'bakllava:latest';
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { isVisionCapable } = require('../../features/llm/providerFactory');
     expect(isVisionCapable()).toBe(true);
   });
@@ -212,6 +220,7 @@ describe('isVisionCapable', () => {
 
 describe('MessageType image ask constants', () => {
   it('exports IMAGE_ASK and IMAGE_ASK_RESULT', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MessageType } = require('../../shared/messageTypes');
     expect(MessageType.IMAGE_ASK).toBe('imageAsk');
     expect(MessageType.IMAGE_ASK_RESULT).toBe('imageAskResult');

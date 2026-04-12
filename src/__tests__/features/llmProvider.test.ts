@@ -201,6 +201,7 @@ describe('providerFactory', () => {
 
   beforeEach(() => {
     mockGet = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const vscode = require('vscode');
     vscode.workspace.getConfiguration = jest.fn(() => ({
       get: mockGet,
@@ -219,7 +220,9 @@ describe('providerFactory', () => {
     });
 
     // Re-require to pick up fresh mock
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createLlmProvider } = require('../../features/llm/providerFactory');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { CopilotProvider } = require('../../features/llm/copilotProvider');
 
     const provider = createLlmProvider();
@@ -234,7 +237,9 @@ describe('providerFactory', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createLlmProvider } = require('../../features/llm/providerFactory');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { OllamaProvider } = require('../../features/llm/ollamaProvider');
 
     const provider = createLlmProvider();
@@ -244,7 +249,9 @@ describe('providerFactory', () => {
   it('defaults to CopilotProvider when setting is missing', () => {
     mockGet.mockImplementation((_key: string, defaultValue?: unknown) => defaultValue);
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createLlmProvider } = require('../../features/llm/providerFactory');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { CopilotProvider } = require('../../features/llm/copilotProvider');
 
     const provider = createLlmProvider();
@@ -257,12 +264,14 @@ describe('providerFactory', () => {
       return defaultValue;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createLlmProvider } = require('../../features/llm/providerFactory');
     const provider = createLlmProvider();
 
     // Verify defaults by checking internal state (OllamaProvider stores them)
     expect(provider).toBeDefined();
     // We can't directly check private fields, but we can verify it's an OllamaProvider
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { OllamaProvider } = require('../../features/llm/ollamaProvider');
     expect(provider).toBeInstanceOf(OllamaProvider);
   });

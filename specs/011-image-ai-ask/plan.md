@@ -20,10 +20,13 @@ Add an **Ask** section to the image context menu ("..." button) with five vision
   - `src/features/llm/types.ts` (MODIFY) — add `VisionLlmMessage` type with image support
   - `src/features/llm/copilotProvider.ts` (MODIFY) — handle image content parts
   - `src/features/llm/ollamaProvider.ts` (MODIFY) — send images via Ollama `images` field
-  - `src/features/llm/providerFactory.ts` (MODIFY) — add `isVisionCapable()` check
-  - `src/features/imageAsk.ts` (CREATE) — extension-host handler with image loading, prompts, streaming
+  - `src/features/llm/providerFactory.ts` (MODIFY) — add `createImageLlmProvider()` using `ollamaImageModel`, add `getImageModelDisplayName()`, update `isVisionCapable()` to check `ollamaImageModel` (not `ollamaModel`)
+  - `src/features/imageAsk.ts` (CREATE) — extension-host handler with image loading, prompts, streaming; uses `createImageLlmProvider()` and `getImageModelDisplayName()`
   - `src/shared/messageTypes.ts` (MODIFY) — add IMAGE_ASK + IMAGE_ASK_RESULT types
-- Tests: 14 unit tests covering vision message construction, Ollama image payload, Copilot image parts, vision capability detection, image file loading, prompt templates
+  - `src/editor/MarkdownEditorProvider.ts` (MODIFY) — include `modelDisplayName` and `imageModelDisplayName` in `getWebviewSettings()`; trigger SETTINGS_UPDATE on LLM config changes (`llmProvider`, `aiModel`, `ollamaModel`, `ollamaImageModel`)
+  - `src/webview/editor.ts` (MODIFY) — apply `modelDisplayName` and `imageModelDisplayName` to `window.__dkAiModelDisplayName` and `window.__dkAiImageModelDisplayName` in `applyWebviewSettings()`
+  - `src/webview/extensions/aiExplain.ts` (MODIFY) — read `window.__dkAiImageModelDisplayName` in `showImageAskLoading()` to populate footer immediately on open; read `window.__dkAiModelDisplayName` in `showExplainPanel()` for AI Summary
+- Tests: 14 unit tests covering vision message construction, Ollama image payload, Copilot image parts, vision capability detection, image file loading, prompt templates, separate image/text model routing
 
 **Phase 2 — Menu & Messaging**: Add Ask section to image menu, wire webview→extension host round-trip, register handler in message router.
 - Files:
