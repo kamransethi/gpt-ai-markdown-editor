@@ -24,19 +24,21 @@ type TocPaneController = {
   toggle: () => void;
   isVisible: () => boolean;
   destroy: () => void;
+  getFilterQuery: () => string;
 };
 
 function renderTocItems(
   listEl: HTMLElement,
   anchors: TocPaneAnchor[],
-  onNavigate: (anchor: TocPaneAnchor) => void
+  onNavigate: (anchor: TocPaneAnchor) => void,
+  emptyMessage = 'No headings yet'
 ): void {
   listEl.innerHTML = '';
 
   if (anchors.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'toc-pane-empty';
-    empty.textContent = 'No headings yet';
+    empty.textContent = emptyMessage;
     listEl.appendChild(empty);
     return;
   }
@@ -89,9 +91,20 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
   const header = document.createElement('div');
   header.className = 'toc-pane-header';
 
-  const headerTitle = document.createElement('span');
-  headerTitle.className = 'toc-pane-header-title';
-  headerTitle.textContent = 'Contents';
+  // Filter input replaces the static "Contents" title
+  const filterInput = document.createElement('input');
+  filterInput.type = 'text';
+  filterInput.className = 'toc-pane-filter';
+  filterInput.placeholder = 'Filter\u2026';
+  filterInput.setAttribute('aria-label', 'Filter headings');
+
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'toc-pane-filter-clear';
+  clearBtn.title = 'Clear filter';
+  clearBtn.setAttribute('aria-label', 'Clear filter');
+  clearBtn.innerHTML = '&times;';
+  clearBtn.style.display = 'none';
 
   const collapseBtn = document.createElement('button');
   collapseBtn.type = 'button';
@@ -103,7 +116,8 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
     window.dispatchEvent(new CustomEvent('toggleTocPane'));
   });
 
-  header.appendChild(headerTitle);
+  header.appendChild(filterInput);
+  header.appendChild(clearBtn);
   header.appendChild(collapseBtn);
 
   const list = document.createElement('div');
@@ -113,6 +127,54 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
   pane.appendChild(header);
   pane.appendChild(list);
   mount.appendChild(pane);
+
+  // Filter state
+  let filterQuery = '';
+  let lastAnchors: TocPaneAnchor[] = [];
+
+  function applyFilter() {
+    const q = filterQuery.trim().toLowerCase();
+    const filtered =
+      q.length === 0
+        ? lastAnchors
+        : lastAnchors.filter(a => (a.textContent || '').toLowerCase().includes(q));
+    const emptyMsg = q.length > 0 ? 'No matching headings' : 'No headings yet';
+    renderTocItems(list, filtered, onNavigate, emptyMsg);
+  }
+
+  filterInput.addEventListener('input', () => {
+    filterQuery = filterInput.value;
+    clearBtn.style.display = filterQuery.length > 0 ? '' : 'none';
+    applyFilter();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    filterQuery = '';
+    filterInput.value = '';
+    clearBtn.style.display = 'none';
+    applyFilter();
+    filterInput.focus();
+  });
+
+  // Keyboard navigation from the filter input
+  filterInput.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      filterQuery = '';
+      filterInput.value = '';
+      clearBtn.style.display = 'none';
+      applyFilter();
+      filterInput.blur();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const first = list.querySelector('.toc-pane-item') as HTMLElement | null;
+      if (first) first.focus();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const first = list.querySelector('.toc-pane-item') as HTMLElement | null;
+      if (first) first.click();
+    }
+  });
 
   // Resize logic
   let isResizing = false;
@@ -150,19 +212,31 @@ export function createTocPane({ mount, onNavigate }: TocPaneOptions): TocPaneCon
 
   return {
     update: (anchors: TocPaneAnchor[]) => {
-      renderTocItems(list, anchors, onNavigate);
+      lastAnchors = anchors;
+      applyFilter();
     },
     setVisible: (nextVisible: boolean) => {
       visible = nextVisible;
       pane.classList.toggle('is-visible', visible);
       mount.classList.toggle('toc-pane-visible', visible);
+      if (!visible) {
+        filterQuery = '';
+        filterInput.value = '';
+        clearBtn.style.display = 'none';
+      }
     },
     toggle: () => {
       visible = !visible;
       pane.classList.toggle('is-visible', visible);
       mount.classList.toggle('toc-pane-visible', visible);
+      if (!visible) {
+        filterQuery = '';
+        filterInput.value = '';
+        clearBtn.style.display = 'none';
+      }
     },
     isVisible: () => visible,
+    getFilterQuery: () => filterQuery,
     destroy: () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);

@@ -365,15 +365,60 @@ body[data-theme="dark"] {
   z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  font-size: var(--ui-font-sm);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--md-muted);
+  gap: 4px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--md-border);
   background-color: var(--md-subtle-bg);
+}
+
+.toc-pane-filter {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--md-border);
+  border-radius: 4px;
+  background: var(--md-background);
+  color: var(--md-foreground);
+  font-family: var(--md-font-sans);
+  font-size: var(--ui-font-sm);
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.toc-pane-filter::placeholder {
+  color: var(--md-muted);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.toc-pane-filter:focus {
+  border-color: var(--md-focus);
+}
+
+.toc-pane-filter-clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--md-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.toc-pane-filter-clear:hover {
+  color: var(--md-foreground);
+  background-color: var(--md-hover-bg);
 }
 
 .toc-pane-collapse-btn {
