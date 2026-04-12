@@ -368,14 +368,23 @@ function updateEditorMetaBar(currentEditor: Editor | null) {
     return;
   }
 
+  // Find or create the stats text span (separate from buttons)
+  let statsSpan = editorMetaBar.querySelector('.editor-meta-stats') as HTMLSpanElement | null;
+  if (!statsSpan) {
+    statsSpan = document.createElement('span');
+    statsSpan.className = 'editor-meta-stats';
+    // Insert at the beginning, before any buttons
+    editorMetaBar.insertBefore(statsSpan, editorMetaBar.firstChild);
+  }
+
   const words = currentEditor.storage.characterCount?.words?.() ?? 0;
   const readingTime = calculateReadingTime(words);
   const lastUpdated = formatLastUpdated(lastUserEditTime);
 
   if (lastUpdated) {
-    editorMetaBar.textContent = `Updated: ${lastUpdated}  •  ${words} words  •  ${readingTime}`;
+    statsSpan.textContent = `Updated: ${lastUpdated}  •  ${words} words  •  ${readingTime}`;
   } else {
-    editorMetaBar.textContent = `${words} words  •  ${readingTime}`;
+    statsSpan.textContent = `${words} words  •  ${readingTime}`;
   }
 }
 
