@@ -12,22 +12,37 @@ Most Markdown tools still make you think like a formatter instead of a writer. T
 
 You can write in a true WYSIWYG experience, edit tables visually, manage images inline, work with Mermaid diagrams, format richly, and still keep your files as plain Markdown on disk.
 
+**For enterprises and teams**: The UX is closely aligned with Confluence, making it instantly familiar to Product Owners, Delivery Managers, Technical Writers, and other enterprise writing roles. If you know how to work in Confluence, you'll feel at home here—but with the benefits of decentralized Markdown files in your repository instead of vendor lock-in.
+
 > **100% free. No trials. No limits. No paywalls.**
 
 ---
 
 ## Feature Highlights
 
-- **True WYSIWYG editing** — write directly in a formatted document without split preview panes
+### Core Editing Features
+- **True WYSIWYG editing** — write directly in a formatted document without split preview panes (like Confluence, but for Markdown files)
 - **Visual table editing** — resize columns, add rows and columns, and edit cells without touching pipe syntax
 - **Inline image workflow** — drag in images, resize them, rename them, and inspect metadata from the editor
 - **Mermaid diagram workflow** — render diagrams inline, use templates, and jump to source for editing
 - **Rich formatting tools** — bold, italic, highlight, text color, headings, inline code, lists, and more
 - **Advanced link creation** — create URL, file, and heading links from a guided dialog
 - **GitHub-flavored Markdown support** — alerts, code fences, tables, links, and clean Markdown output
+- **Frontmatter management** — visual YAML editor with syntax highlighting and collapsible panel for document metadata
+
+### AI & Intelligence Features
+- **Image vision analysis** — explain images, generate alt text, extract text from screenshots, and ask custom questions via LLM vision
+- **LLM provider selection** — choose between GitHub Copilot or local Ollama for full AI feature independence and privacy
+- **AI text refinement** — Rephrase, Shorten, Summarize, Bulletize, Tableize, and more with configurable language models
+- **Document explanation** — automated document analysis and summarization
+- **AI model selection** — choose from GPT-4.1, Claude Sonnet, o3-mini, and other models (Copilot) or any local Ollama model
+
+### Workflow & Navigation
 - **Document navigation** — outline sidebar, heading navigation, word count, and reading time
+- **Set as default viewer** — persistent workspace-level markdown viewer preference with one-click setup
 - **Export options** — PDF and DOCX export for sharing outside VS Code
 - **Theme-aware UI** — inherits VS Code colors and works across light and dark themes
+- **Extensible plugin system** — foundation for community-contributed plugins and customizations
 
 ---
 
@@ -51,6 +66,10 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 | **Formatting**    | Toolbar plus contextual actions     | Shortcut-heavy or syntax-heavy |
 | **Navigation**    | Built-in outline and document aids  | Often minimal                  |
 | **Export**        | PDF and DOCX support                | Usually none or limited        |
+| **Enterprise UX** | Confluence-familiar workflows       | Technical/developer focus      |
+| **Data portability** | Plan Markdown files in version control | Often vendor lock-in        |
+
+**Enterprise teams appreciate**: Product Owners, Delivery Managers, and Technical Writers familiar with Confluence find the interface instantly recognizable. No learning curve—the formatting toolbar, table editor, and document structure feel natural. But unlike Confluence, your content stays as portable Markdown files in your repository.
 
 
 ---
@@ -146,6 +165,17 @@ Use the `</>` toolbar button any time you want to jump to source.
 - [Report Issues](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
 - [GitHub Discussions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
 - [Security Policy](./SECURITY.md)
+
+### For Enterprise & Teams
+
+Designed for enterprises migrating from Confluence or looking to move documentation into code repositories:
+
+- **Confluence-Familiar UX**: The editor interface mirrors Confluence workflows, making it instantly usable for Product Owners, Delivery Managers, Technical Writers, and other non-developer roles
+- **No Lock-In**: Keep your documentation as plain Markdown files in version control instead of proprietary databases
+- **Export Ready**: PDF and DOCX export support for sharing and archival
+- **Team Friendly**: Works seamlessly with Git workflows for collaborative editing and review cycles
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for team collaboration guidelines.
 
 ### For Developers
 
