@@ -74,10 +74,38 @@ describe('TOC left pane', () => {
       tocPane.setVisible(true);
 
       const anchors: TocPaneAnchor[] = [
-        { id: 'intro', textContent: 'Introduction', level: 1, itemIndex: '0', pos: 1, isActive: true },
-        { id: 'deploy', textContent: 'Deployment Guide', level: 2, itemIndex: '1', pos: 50, isActive: false },
-        { id: 'api', textContent: 'API Reference', level: 2, itemIndex: '2', pos: 100, isActive: false },
-        { id: 'deploy-prod', textContent: 'Production Deployment', level: 3, itemIndex: '3', pos: 150, isActive: false },
+        {
+          id: 'intro',
+          textContent: 'Introduction',
+          level: 1,
+          itemIndex: '0',
+          pos: 1,
+          isActive: true,
+        },
+        {
+          id: 'deploy',
+          textContent: 'Deployment Guide',
+          level: 2,
+          itemIndex: '1',
+          pos: 50,
+          isActive: false,
+        },
+        {
+          id: 'api',
+          textContent: 'API Reference',
+          level: 2,
+          itemIndex: '2',
+          pos: 100,
+          isActive: false,
+        },
+        {
+          id: 'deploy-prod',
+          textContent: 'Production Deployment',
+          level: 3,
+          itemIndex: '3',
+          pos: 150,
+          isActive: false,
+        },
       ];
       tocPane.update(anchors);
 
