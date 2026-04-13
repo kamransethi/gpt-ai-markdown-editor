@@ -398,6 +398,7 @@ function setDocDirty(dirty: boolean) {
 }
 let updateTimeout: number | null = null;
 let lastUserEditTime = 0; // Track when user last edited
+let fileModifiedTime = 0; // File modification time from disk (set by extension)
 let pendingInitialContent: string | null = null; // Content from host before editor is ready
 let hasSentReadySignal = false;
 let isDomReady = document.readyState !== 'loading';
@@ -1236,8 +1237,8 @@ function initializeEditor(initialContent: string) {
         updateFrontmatterPanel(frontmatter);
       }
 
-      // Seed the "Updated" timestamp with now so the meta bar shows a date on load
-      lastUserEditTime = Date.now();
+      // Seed the "Updated" timestamp with the file's modification time (or now if not available)
+      lastUserEditTime = fileModifiedTime || Date.now();
 
       // Prevent onUpdate from firing during initialization
       isUpdating = true;
@@ -1494,6 +1495,11 @@ window.addEventListener('message', (event: MessageEvent) => {
     switch (message.type) {
       case MessageType.UPDATE: {
         applyWebviewSettings(message);
+
+        // Store the file's modification time from the extension
+        if (message.fileModifiedTime) {
+          fileModifiedTime = message.fileModifiedTime;
+        }
 
         // Initialize editor with first payload to seed undo history correctly
         if (!editor) {

@@ -8,6 +8,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { MessageType } from '../../shared/messageTypes';
 
 export interface WebviewSettings {
@@ -58,9 +59,21 @@ export class DocumentSync {
     // Get skip warning setting
     const settings = this.getWebviewSettings();
 
+    // Get file modification time if this is a real file on disk
+    let fileModifiedTime = 0;
+    if (document.uri.scheme === 'file') {
+      try {
+        const stat = fs.statSync(document.uri.fsPath);
+        fileModifiedTime = stat.mtimeMs;
+      } catch {
+        // If we can't stat the file, just use 0
+      }
+    }
+
     webview.postMessage({
       type: MessageType.UPDATE,
       content: currentContent,
+      fileModifiedTime,
       ...settings,
     });
   }
