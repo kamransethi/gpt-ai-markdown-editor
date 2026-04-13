@@ -32,14 +32,16 @@ module.exports = [
     },
     {
         files: ['scripts/**/*.js'],
-        env: {
-            node: true,
-            es2022: true
-        },
-        globals: {
-            process: 'readonly',
-            console: 'readonly',
-            require: 'readonly'
+        languageOptions: {
+            globals: {
+                process: 'readonly',
+                console: 'readonly',
+                require: 'readonly',
+                __dirname: 'readonly',
+                module: 'readonly',
+            },
+            ecmaVersion: 2022,
+            sourceType: 'commonjs',
         },
         rules: {
             'no-console': 'off', // Build scripts can use console.log

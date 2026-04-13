@@ -192,7 +192,7 @@
     "watch:debug": "concurrently \"npm run watch:extension:debug\" \"npm run watch:webview:debug\"",
     "watch:extension:debug": "node scripts/build-extension.js --watch",
     "watch:webview:debug": "node scripts/build-webview.js --watch",
-    "lint": "eslint src --ext ts --max-warnings 600",
+    "lint": "eslint src --ext ts --max-warnings 300",
     "lint:fix": "eslint src --ext ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",

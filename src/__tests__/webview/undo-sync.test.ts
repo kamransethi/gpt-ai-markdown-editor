@@ -10,6 +10,14 @@ jest.mock('@tiptap/core', () => ({
   Editor: jest.fn(),
   Extension: { create: (config: unknown) => config },
 }));
+jest.mock('@tiptap/pm/state', () => ({
+  Plugin: class {},
+  PluginKey: class {},
+}));
+jest.mock('@tiptap/pm/view', () => ({
+  Decoration: { inline: jest.fn() },
+  DecorationSet: { create: jest.fn(), empty: {} },
+}));
 jest.mock('@tiptap/starter-kit', () => ({ __esModule: true, default: { configure: () => ({}) } }));
 jest.mock('@tiptap/markdown', () => ({ Markdown: { configure: () => ({}) } }));
 jest.mock('lowlight', () => ({ __esModule: true, lowlight: { registerLanguage: jest.fn() } }));
@@ -37,7 +45,7 @@ jest.mock('./../../webview/extensions/mermaid', () => ({ Mermaid: {} }));
 jest.mock('./../../webview/extensions/tabIndentation', () => ({ TabIndentation: {} }));
 jest.mock('./../../webview/extensions/imageEnterSpacing', () => ({ ImageEnterSpacing: {} }));
 jest.mock('./../../webview/extensions/markdownParagraph', () => ({ MarkdownParagraph: {} }));
-jest.mock('./../../webview/extensions/githubAlerts', () => ({ GitHubAlert: {} }));
+jest.mock('./../../webview/extensions/githubAlerts', () => ({ GitHubAlerts: {} }));
 jest.mock('./../../webview/BubbleMenuView', () => ({
   createFormattingToolbar: () => ({}),
   createTableMenu: () => ({}),
@@ -56,6 +64,7 @@ jest.mock('./../../webview/utils/exportContent', () => ({
 }));
 jest.mock('./../../webview/utils/pasteHandler', () => ({
   processPasteContent: jest.fn(() => ({ isImage: false, wasConverted: false, content: '' })),
+  parseFencedCode: jest.fn(() => null),
 }));
 jest.mock('./../../webview/utils/copyMarkdown', () => ({ copySelectionAsMarkdown: jest.fn() }));
 jest.mock('./../../webview/utils/outline', () => ({ buildOutlineFromEditor: jest.fn(() => []) }));

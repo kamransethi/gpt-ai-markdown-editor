@@ -137,11 +137,11 @@ export function showAuditOverlay(editor: Editor, issues: AuditIssue[]) {
     issues.forEach((issue, index) => {
       const item = buildIssueItem(issue);
       listEl.appendChild(item);
-      
+
       // Add a horizontal line if it's not the very last issue in the array
       if (index < issues.length - 1) {
         const separator = document.createElement('hr');
-        separator.className = 'audit-issue-separator';    
+        separator.className = 'audit-issue-separator';
         listEl.appendChild(separator);
       }
     });
@@ -195,11 +195,12 @@ function buildIssueItem(issue: AuditIssue): HTMLElement {
   // Icon column
   const typeEl = document.createElement('div');
   typeEl.className = `audit-issue-type ${issue.type}`;
-  typeEl.innerHTML = issue.type === 'link'
-    ? '<span class="codicon codicon-link" aria-hidden="true"></span>'
-    : issue.type === 'image'
-    ? '<span class="codicon codicon-file-media" aria-hidden="true"></span>'
-    : '<span class="codicon codicon-book" aria-hidden="true"></span>';
+  typeEl.innerHTML =
+    issue.type === 'link'
+      ? '<span class="codicon codicon-link" aria-hidden="true"></span>'
+      : issue.type === 'image'
+        ? '<span class="codicon codicon-file-media" aria-hidden="true"></span>'
+        : '<span class="codicon codicon-book" aria-hidden="true"></span>';
 
   // Text column
   const textEl = document.createElement('div');
@@ -360,7 +361,7 @@ function getFileIconName(path: string): string {
 }
 
 function getBasename(path: string): string {
-  return path.split(/[\/]/).pop() ?? path;
+  return path.split(/[/]/).pop() ?? path;
 }
 
 const auditPreviewPopover = (() => {
@@ -384,10 +385,7 @@ const auditPreviewPopover = (() => {
     const viewportHeight = window.innerHeight;
     const margin = 10;
     const maxWidth = 320;
-    const left = Math.min(
-      Math.max(targetRect.left, margin),
-      viewportWidth - maxWidth - margin
-    );
+    const left = Math.min(Math.max(targetRect.left, margin), viewportWidth - maxWidth - margin);
     let top = targetRect.bottom + margin;
 
     popover.style.left = `${left}px`;
@@ -403,16 +401,19 @@ const auditPreviewPopover = (() => {
     });
   }
 
-  function render(content: string, targetRect: DOMRect) {
+  function render(content: HTMLElement, targetRect: DOMRect, previewId?: number) {
     const popover = ensureContainer();
     if (hideTimer) {
       window.clearTimeout(hideTimer);
       hideTimer = null;
     }
 
-    popover.innerHTML = content;
+    popover.replaceChildren(content);
     positionPopover(popover, targetRect);
     requestAnimationFrame(() => {
+      if (typeof previewId === 'number' && previewId !== activePreviewId) {
+        return;
+      }
       popover.classList.add('visible');
     });
   }
@@ -423,7 +424,26 @@ const auditPreviewPopover = (() => {
       window.clearTimeout(hideTimer);
       hideTimer = null;
     }
+    // Invalidate in-flight async previews so stale completions cannot re-open the popover.
+    activePreviewId += 1;
     container.classList.remove('visible');
+  }
+
+  function createPreviewCard(header: string, bodyNode: HTMLElement): HTMLElement {
+    const card = document.createElement('div');
+    card.className = 'audit-preview-card';
+
+    const headerEl = document.createElement('div');
+    headerEl.className = 'audit-preview-header';
+    headerEl.textContent = header;
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'audit-preview-body';
+    bodyEl.appendChild(bodyNode);
+
+    card.appendChild(headerEl);
+    card.appendChild(bodyEl);
+    return card;
   }
 
   function scheduleHide() {
@@ -440,15 +460,10 @@ const auditPreviewPopover = (() => {
     const targetRect = pill.getBoundingClientRect();
     const basename = getBasename(suggestion);
 
-    const loadingContent = `
-      <div class="audit-preview-card">
-        <div class="audit-preview-header">Preview</div>
-        <div class="audit-preview-body">
-          <div class="audit-preview-loading">Loading preview…</div>
-        </div>
-      </div>
-    `;
-    render(loadingContent, targetRect);
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'audit-preview-loading';
+    loadingEl.textContent = 'Loading preview…';
+    render(createPreviewCard('Preview', loadingEl), targetRect, previewId);
 
     if (isImageSuggestion(suggestion)) {
       if (typeof window.resolveImagePath === 'function') {
@@ -456,52 +471,52 @@ const auditPreviewPopover = (() => {
           const resolvedUri = await window.resolveImagePath(suggestion);
           if (previewId !== activePreviewId) return;
 
-          const imageContent = `
-            <div class="audit-preview-card">
-              <div class="audit-preview-header">Image preview</div>
-              <div class="audit-preview-body">
-                <div class="audit-preview-image-wrapper">
-                  <img src="${resolvedUri}" alt="${basename}" />
-                </div>
-                <div class="audit-preview-caption">${basename}</div>
-              </div>
-            </div>
-          `;
-          render(imageContent, targetRect);
+          const wrapper = document.createElement('div');
+          wrapper.className = 'audit-preview-image-wrapper';
+          const image = document.createElement('img');
+          image.src = resolvedUri;
+          image.alt = basename;
+          wrapper.appendChild(image);
+
+          const caption = document.createElement('div');
+          caption.className = 'audit-preview-caption';
+          caption.textContent = basename;
+
+          const body = document.createElement('div');
+          body.appendChild(wrapper);
+          body.appendChild(caption);
+          render(createPreviewCard('Image preview', body), targetRect, previewId);
           return;
         } catch {
           if (previewId !== activePreviewId) return;
         }
       }
 
-      const unavailableContent = `
-        <div class="audit-preview-card">
-          <div class="audit-preview-header">Preview unavailable</div>
-          <div class="audit-preview-body">
-            <div class="audit-preview-empty">Image preview is not available for this path.</div>
-          </div>
-        </div>
-      `;
-      render(unavailableContent, targetRect);
+      const unavailable = document.createElement('div');
+      unavailable.className = 'audit-preview-empty';
+      unavailable.textContent = 'Image preview is not available for this path.';
+      render(createPreviewCard('Preview unavailable', unavailable), targetRect, previewId);
       return;
     }
 
     const fileIcon = getFileIconName(suggestion);
-    const fileContent = `
-      <div class="audit-preview-card">
-        <div class="audit-preview-header">File preview</div>
-        <div class="audit-preview-body">
-          <div class="audit-preview-file">
-            <span class="codicon codicon-${fileIcon} preview-file-icon"></span>
-            <div class="preview-file-meta">
-              <div class="preview-file-name">${basename}</div>
-              <div class="preview-file-path">${suggestion}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    render(fileContent, targetRect);
+    const file = document.createElement('div');
+    file.className = 'audit-preview-file';
+    const icon = document.createElement('span');
+    icon.className = `codicon codicon-${fileIcon} preview-file-icon`;
+    const meta = document.createElement('div');
+    meta.className = 'preview-file-meta';
+    const name = document.createElement('div');
+    name.className = 'preview-file-name';
+    name.textContent = basename;
+    const pathEl = document.createElement('div');
+    pathEl.className = 'preview-file-path';
+    pathEl.textContent = suggestion;
+    meta.appendChild(name);
+    meta.appendChild(pathEl);
+    file.appendChild(icon);
+    file.appendChild(meta);
+    render(createPreviewCard('File preview', file), targetRect, previewId);
   }
 
   return {
@@ -581,9 +596,10 @@ function wireItemHandlers(
       e.stopPropagation();
       const fileType = (browseBtn.getAttribute('data-file-type') ?? 'any') as AuditFileType;
       browseBtn.disabled = true;
-      
+
       // Update wait state
-      browseBtn.innerHTML = '<span class="codicon codicon-clock" aria-hidden="true"></span> Waiting…';
+      browseBtn.innerHTML =
+        '<span class="codicon codicon-clock" aria-hidden="true"></span> Waiting…';
 
       try {
         const selected = await requestFilePickerForIssue(fileType);
@@ -594,12 +610,14 @@ function wireItemHandlers(
         } else {
           // User cancelled – restore button with folder icon
           browseBtn.disabled = false;
-          browseBtn.innerHTML = '<span class="codicon codicon-folder" aria-hidden="true"></span> Browse…';
+          browseBtn.innerHTML =
+            '<span class="codicon codicon-folder" aria-hidden="true"></span> Browse…';
         }
       } catch {
         // Error – restore button with folder icon
         browseBtn.disabled = false;
-        browseBtn.innerHTML = '<span class="codicon codicon-folder" aria-hidden="true"></span> Browse…';
+        browseBtn.innerHTML =
+          '<span class="codicon codicon-folder" aria-hidden="true"></span> Browse…';
       }
     });
   }
@@ -654,7 +672,7 @@ function navigateToIssue(item: HTMLElement, editor: Editor): void {
     try {
       const resolved = editor.view.domAtPos(pos).node as Node;
       const element =
-        resolved instanceof Element ? resolved : resolved.parentElement ?? editor.view.dom;
+        resolved instanceof Element ? resolved : (resolved.parentElement ?? editor.view.dom);
       element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
     } catch {
       try {
@@ -686,7 +704,6 @@ function applyFix(
   const remainingIssues = allIssues.filter(
     (i: AuditIssue) => !(i.pos === pos && i.nodeSize === nodeSize)
   );
-
 
   // Refactor the fix application to use a single transaction so we can map positions accurately
 

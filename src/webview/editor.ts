@@ -114,6 +114,12 @@ type VsCodeApi = {
 
 declare const acquireVsCodeApi: () => VsCodeApi;
 
+// Message type for communication between extension and webview
+interface WebviewMessage {
+  type: string;
+  [key: string]: any;
+}
+
 // Extended window interface for MD4H globals
 declare global {
   interface Window {
@@ -154,6 +160,12 @@ let outlineUpdateTimeout: number | null = null;
 let lastSentContentHash: string | null = null;
 let lastSentTimestamp = 0;
 
+// Performance and Sync constants (m3)
+const DEBOUNCE_SYNC_MS = 500;
+const SYNC_ECHO_TIMEOUT_MS = 2000;
+const RECENT_EDIT_THRESHOLD_MS = 2000;
+const OUTLINE_UPDATE_DEBOUNCE_MS = 250;
+
 /**
  * Simple hash function (djb2 algorithm) for content deduplication
  */
@@ -189,13 +201,11 @@ const pushOutlineUpdate = () => {
 };
 
 const scheduleOutlineUpdate = () => {
-  if (outlineUpdateTimeout) {
-    clearTimeout(outlineUpdateTimeout);
-  }
+  if (outlineUpdateTimeout) window.clearTimeout(outlineUpdateTimeout);
   outlineUpdateTimeout = window.setTimeout(() => {
     pushOutlineUpdate();
     outlineUpdateTimeout = null;
-  }, 250);
+  }, OUTLINE_UPDATE_DEBOUNCE_MS);
 };
 
 // Global function for resolving image paths (used by CustomImage extension)
@@ -318,10 +328,7 @@ function immediateUpdate() {
  * Prevents sync while images are being saved to avoid race conditions
  */
 function debouncedUpdate(markdown: string) {
-  if (updateTimeout) {
-    clearTimeout(updateTimeout);
-  }
-
+  if (updateTimeout) window.clearTimeout(updateTimeout);
   updateTimeout = window.setTimeout(() => {
     try {
       // Check if any images are currently being saved
@@ -343,7 +350,7 @@ function debouncedUpdate(markdown: string) {
     } catch (error) {
       console.error('[MD4H] Error sending update:', error);
     }
-  }, 500);
+  }, DEBOUNCE_SYNC_MS);
 }
 
 // TODO: Re-implement code block language badges feature
@@ -461,15 +468,15 @@ function initializeEditor(initialContent: string) {
           },
           shouldAutoLink,
         }),
-        CustomImage.configure({
+        (CustomImage as any).configure({
           allowBase64: true, // Allow base64 for preview
           HTMLAttributes: {
             class: 'markdown-image',
           },
-          // Inject the global setting here. 
+          // Inject the global setting here.
           // The extension will call this function whenever it needs to check the state.
           getShowImageHoverOverlay: () => (window as any).showImageHoverOverlay,
-        }),
+        } as any),
         DocumentAuditExtension,
       ],
       // Don't pass content here - we'll set it after init with contentType: 'markdown'
@@ -847,7 +854,7 @@ function initializeEditor(initialContent: string) {
  */
 window.addEventListener('message', (event: MessageEvent) => {
   try {
-    const message = event.data;
+    const message = event.data as WebviewMessage;
 
     switch (message.type) {
       case 'update':
@@ -1032,7 +1039,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         const requestId = message.requestId as string;
         const callback = imageReferencesCallbacks.get(requestId);
         if (callback) {
-          callback(message as ImageReferencesPayload);
+          callback(message as unknown as ImageReferencesPayload);
           imageReferencesCallbacks.delete(requestId);
         }
         break;
@@ -1041,7 +1048,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         const requestId = message.requestId as string;
         const callback = imageRenameCheckCallbacks.get(requestId);
         if (callback) {
-          callback(message as ImageRenameCheckPayload);
+          callback(message as unknown as ImageRenameCheckPayload);
           imageRenameCheckCallbacks.delete(requestId);
         }
         break;
@@ -1296,15 +1303,15 @@ function updateEditorContent(markdown: string) {
     if (incomingHash === lastSentContentHash) {
       // Also check timestamp to allow legitimate identical content after a delay
       const timeSinceLastSend = Date.now() - lastSentTimestamp;
-      if (timeSinceLastSend < 2000) {
+      if (timeSinceLastSend < SYNC_ECHO_TIMEOUT_MS) {
         console.log('[MD4H] Ignoring update (matches content we just sent)');
         return;
       }
     }
 
-    // Don't update if user edited recently (within 2 seconds)
+    // Don't update if user edited recently to prevent cursor jumping (m3)
     const timeSinceLastEdit = Date.now() - lastUserEditTime;
-    if (timeSinceLastEdit < 2000) {
+    if (timeSinceLastEdit < RECENT_EDIT_THRESHOLD_MS) {
       console.log(`[MD4H] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
       return;
     }

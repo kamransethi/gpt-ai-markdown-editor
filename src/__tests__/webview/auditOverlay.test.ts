@@ -56,15 +56,15 @@ describe('Audit Overlay UI', () => {
 
   it('shows a toast notification when no issues found', () => {
     showAuditOverlay(editor, []);
-    
+
     // Verify panel is NOT shown
     const overlay = document.getElementById('audit-overlay');
     expect(overlay).toBeNull();
-    
+
     // Verify toast is shown
     const toastContainer = document.getElementById('toast-container');
     expect(toastContainer).not.toBeNull();
-    
+
     const toast = document.querySelector('.toast');
     expect(toast).not.toBeNull();
     expect(toast?.classList.contains('toast-success')).toBe(true);
@@ -154,6 +154,48 @@ describe('Audit Overlay UI', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(preview?.classList.contains('visible')).toBe(false);
+  });
+
+  it('keeps preview hidden when async image preview resolves after fix', async () => {
+    let resolveImagePathPromise: ((value: string) => void) | undefined;
+    (window as any).resolveImagePath = jest.fn(
+      () =>
+        new Promise<string>(resolve => {
+          resolveImagePathPromise = resolve;
+        })
+    );
+
+    const issues: AuditIssue[] = [
+      {
+        type: 'image',
+        message: 'Image file not found',
+        target: 'missing.png',
+        suggestions: ['assets/missing.png'],
+        pos: 1,
+        nodeSize: 1,
+      },
+    ];
+
+    editor.commands.setContent('<p><img src="missing.png" /></p>', { emitUpdate: false });
+    showAuditOverlay(editor, issues);
+
+    const pill = document.querySelector('.audit-suggestion-pill') as HTMLButtonElement;
+    pill.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const preview = document.querySelector('.audit-preview-popover') as HTMLElement;
+    expect(preview).not.toBeNull();
+
+    pill.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(preview.classList.contains('visible')).toBe(false);
+
+    // Resolve the delayed preview request after fix; popover must stay hidden.
+    if (typeof resolveImagePathPromise === 'function') {
+      resolveImagePathPromise('resolved-image.png');
+    }
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(preview.classList.contains('visible')).toBe(false);
   });
 
   it('applies auto-fix ONLY when clicking the fix button', () => {
@@ -482,21 +524,21 @@ describe('Toast Notifications', () => {
 
   it('shows a success toast with correct styling', () => {
     const toastId = showToast('Test success message', 'success');
-    
+
     const toast = document.getElementById(toastId);
     expect(toast).not.toBeNull();
     expect(toast?.classList.contains('toast-success')).toBe(true);
     expect(toast?.textContent).toContain('Test success message');
   });
 
-  it('shows a loading toast with hourglass icon', (done) => {
+  it('shows a loading toast with hourglass icon', done => {
     const toastId = showToast('Auditing document...', 'loading');
-    
+
     const toast = document.getElementById(toastId);
     expect(toast).not.toBeNull();
     expect(toast?.classList.contains('toast-loading')).toBe(true);
     expect(toast?.textContent).toContain('Auditing document...');
-    
+
     // Wait for requestAnimationFrame animation
     setTimeout(() => {
       expect(toast?.classList.contains('visible')).toBe(true);
@@ -504,16 +546,16 @@ describe('Toast Notifications', () => {
     }, 50);
   });
 
-  it('dismissToast removes the loading toast', (done) => {
+  it('dismissToast removes the loading toast', done => {
     const toastId = showToast('Loading...', 'loading');
-    
+
     const toast = document.getElementById(toastId);
     expect(toast).not.toBeNull();
-    
+
     // Wait for animation to apply visible class
     setTimeout(() => {
       dismissToast(toastId);
-      
+
       // After dismissal and animation, should be gone
       setTimeout(() => {
         const removedToast = document.getElementById(toastId);
@@ -525,19 +567,19 @@ describe('Toast Notifications', () => {
 
   it('shows an info toast', () => {
     const toastId = showToast('Info message', 'info');
-    
+
     const toast = document.getElementById(toastId);
     expect(toast).not.toBeNull();
     expect(toast?.classList.contains('toast-info')).toBe(true);
     expect(toast?.textContent).toContain('Info message');
   });
 
-  it('success toast auto-dismisses', (done) => {
+  it('success toast auto-dismisses', done => {
     const toastId = showToast('Success message', 'success');
-    
+
     const toast = document.getElementById(toastId);
     expect(toast).not.toBeNull();
-    
+
     // Should be gone after auto-dismiss timeout
     setTimeout(() => {
       const dismissedToast = document.getElementById(toastId);
@@ -546,12 +588,12 @@ describe('Toast Notifications', () => {
     }, 3500);
   });
 
-  it('loading toast does NOT auto-dismiss', (done) => {
+  it('loading toast does NOT auto-dismiss', done => {
     const toastId = showToast('Loading...', 'loading');
-    
+
     const toast = document.getElementById(toastId);
     expect(toast).not.toBeNull();
-    
+
     // Even after a long time, should still exist
     setTimeout(() => {
       const stillHere = document.getElementById(toastId);

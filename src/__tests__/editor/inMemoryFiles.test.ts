@@ -289,7 +289,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       expect(basePath).toBe('/workspace');
     });
 
-    it('should return home directory for untitled file without workspace', () => {
+    it('should return temp directory for untitled file without workspace', () => {
       const document = createMockTextDocument('content');
       document.uri = {
         scheme: 'untitled',
@@ -302,7 +302,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       const basePath = getProviderInternals().getImageBasePath(
         document as unknown as vscode.TextDocument
       );
-      expect(basePath).toBe(os.homedir());
+      expect(basePath).toBe(os.tmpdir());
     });
   });
 
@@ -335,7 +335,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       );
     });
 
-    it('should include home directory for untitled file without workspace', async () => {
+    it('should include temp directory for untitled file without workspace', async () => {
       const document = createMockTextDocument('content');
       document.uri = {
         scheme: 'untitled',
@@ -357,9 +357,9 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
         {} as unknown as vscode.CancellationToken
       );
 
-      const homeDir = os.homedir();
+      const tempDir = os.tmpdir();
       expect(webviewPanel.webview.options.localResourceRoots).toContainEqual(
-        expect.objectContaining({ fsPath: homeDir })
+        expect.objectContaining({ fsPath: tempDir })
       );
     });
 
@@ -450,7 +450,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       );
     });
 
-    it('should resolve relative image path using home directory for untitled file without workspace', () => {
+    it('should resolve relative image path using temp directory for untitled file without workspace', () => {
       const document = createMockTextDocument('content');
       document.uri = {
         scheme: 'untitled',
@@ -719,7 +719,7 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
       );
     });
 
-    it('should save image to home directory for untitled file without workspace', async () => {
+    it('should save image to temp directory for untitled file without workspace', async () => {
       const document = createMockTextDocument('content');
       document.uri = {
         scheme: 'untitled',
@@ -746,9 +746,9 @@ describe('MarkdownEditorProvider - In-Memory File Support', () => {
         mockWebview
       );
 
-      const homeDir = os.homedir();
+      const tempDir = os.tmpdir();
       expect(vscode.workspace.fs.createDirectory).toHaveBeenCalledWith(
-        expect.objectContaining({ fsPath: expect.stringContaining(homeDir) })
+        expect.objectContaining({ fsPath: expect.stringContaining(tempDir) })
       );
     });
 

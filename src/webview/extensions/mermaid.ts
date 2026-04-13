@@ -44,9 +44,6 @@ function initializeMermaid() {
 // Initialize on load
 initializeMermaid();
 
-// Re-initialize when theme might change (e.g., on focus)
-window.addEventListener('focus', initializeMermaid);
-
 export const Mermaid = Node.create({
   name: 'mermaid',
 
@@ -170,9 +167,6 @@ export const Mermaid = Node.create({
           // Clear previous content to prevent duplicates
           renderElement.innerHTML = '';
 
-          // Re-initialize to pick up any theme changes
-          initializeMermaid();
-
           // Use timestamp to ensure truly unique IDs and prevent caching
           const id = `mermaid-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
           const { svg } = await mermaid.render(id, content);
@@ -182,7 +176,11 @@ export const Mermaid = Node.create({
         } catch (error) {
           console.error('Mermaid rendering error:', error);
           const errorMsg = error instanceof Error ? error.message : 'Invalid diagram syntax';
-          renderElement.innerHTML = `<div class="mermaid-error">Diagram Error: ${errorMsg}</div>`;
+          renderElement.textContent = '';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mermaid-error';
+          errorDiv.textContent = `Diagram Error: ${errorMsg}`;
+          renderElement.appendChild(errorDiv);
           renderElement.classList.remove('rendered');
           codeElement.classList.remove('hidden');
         }
