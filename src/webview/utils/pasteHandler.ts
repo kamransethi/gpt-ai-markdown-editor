@@ -182,6 +182,14 @@ export function hasHtmlContent(clipboardData: DataTransfer | null): boolean {
 export function isRichHtml(html: string, plainText: string): boolean {
   if (!html || !plainText) return false;
 
+  // If plain text itself is raw HTML source, user likely copied code.
+  // Preserve literal text instead of converting/rendering rich content.
+  const rawHtmlSourcePattern =
+    /<!doctype|<html\b|<head\b|<body\b|<table\b|<tr\b|<td\b|<th\b|<style\b|<\/[a-z][^>]*>/i;
+  if (rawHtmlSourcePattern.test(plainText)) {
+    return false;
+  }
+
   // Check if HTML has any meaningful formatting tags (quick check first)
   const formattingPattern =
     /<(strong|b|em|i|u|s|del|strike|a|h[1-6]|ul|ol|li|table|pre|code|blockquote|img)\b/i;

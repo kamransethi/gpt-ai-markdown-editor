@@ -23,7 +23,10 @@ jest.mock('@tiptap/markdown', () => ({ Markdown: { configure: () => ({}) } }));
 jest.mock('lowlight', () => ({ __esModule: true, lowlight: { registerLanguage: jest.fn() } }));
 jest.mock('@tiptap/extension-table', () => ({
   __esModule: true,
-  TableKit: { configure: () => ({}) },
+  Table: { extend: () => ({ configure: () => ({}) }) },
+  TableRow: {},
+  TableHeader: {},
+  TableCell: {},
 }));
 jest.mock('@tiptap/extension-list', () => ({
   __esModule: true,
@@ -75,6 +78,8 @@ type TestingModule = {
   setMockEditor: (editor: unknown) => void;
   trackSentContentForTests: (content: string) => void;
   updateEditorContentForTests: (content: string) => void;
+  isCodeContextForPasteForTests: (event: ClipboardEvent) => boolean;
+  insertRawCodeTextForTests: (text: string) => void;
 };
 
 describe('webview undo/redo guards', () => {
@@ -175,5 +180,39 @@ describe('webview undo/redo guards', () => {
       contentType: 'markdown',
     });
     expect(mockEditor.commands.setTextSelection).toHaveBeenCalledWith({ from: 2, to: 4 });
+  });
+
+  it('detects code context paste when selection is a codeBlock node', () => {
+    const mockEditor = {
+      isActive: jest.fn(() => false),
+      state: {
+        selection: {
+          node: { type: { name: 'codeBlock' } },
+        },
+      },
+    };
+
+    testing.setMockEditor(mockEditor);
+
+    const fakeEvent = { target: null } as unknown as ClipboardEvent;
+    expect(testing.isCodeContextForPasteForTests(fakeEvent)).toBe(true);
+  });
+
+  it('inserts pasted code as plain text node (no HTML parsing)', () => {
+    const insertContent = jest.fn();
+    const mockEditor = {
+      commands: {
+        insertContent,
+      },
+    };
+
+    testing.setMockEditor(mockEditor);
+
+    testing.insertRawCodeTextForTests('<table class="sq-table"><tr><td>Alice</td></tr></table>');
+
+    expect(insertContent).toHaveBeenCalledWith({
+      type: 'text',
+      text: '<table class="sq-table"><tr><td>Alice</td></tr></table>',
+    });
   });
 });

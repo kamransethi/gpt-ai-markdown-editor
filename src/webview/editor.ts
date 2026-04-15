@@ -11,7 +11,7 @@ import './codicon.css';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
-import { TableKit } from '@tiptap/extension-table';
+import { TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
 import { ListKit } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
@@ -25,6 +25,7 @@ import { GitHubAlerts } from './extensions/githubAlerts';
 import { ImageEnterSpacing } from './extensions/imageEnterSpacing';
 import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
+import { HtmlPreservingTable } from './extensions/htmlPreservingTable';
 import { DocumentAuditExtension } from './features/auditDocument';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
@@ -444,14 +445,15 @@ function initializeEditor(initialContent: string) {
             breaks: true, // Preserve single newlines as <br>
           },
         }),
-        TableKit.configure({
-          table: {
-            resizable: true,
-            HTMLAttributes: {
-              class: 'markdown-table',
-            },
+        HtmlPreservingTable.configure({
+          resizable: true,
+          HTMLAttributes: {
+            class: 'markdown-table',
           },
         }),
+        TableRow,
+        TableHeader,
+        TableCell,
         ListKit.configure({
           orderedList: false,
           taskItem: {
@@ -1364,6 +1366,57 @@ function updateEditorContent(markdown: string) {
   }
 }
 
+/**
+ * Detect whether paste is happening inside a code-oriented context.
+ * `editor.isActive('codeBlock')` can be false in some node-selection/focus states
+ * even though the visible target is a code block (e.g., HTML block UI).
+ */
+function isCodeContextForPaste(editorInstance: Editor, event: ClipboardEvent): boolean {
+  if (editorInstance.isActive('codeBlock')) {
+    return true;
+  }
+
+  const selection = editorInstance.state.selection as {
+    node?: { type?: { name?: string } };
+    $from?: { parent?: { type?: { name?: string } } };
+    $anchor?: { parent?: { type?: { name?: string } } };
+  };
+
+  if (selection?.node?.type?.name === 'codeBlock') {
+    return true;
+  }
+
+  if (selection?.$from?.parent?.type?.name === 'codeBlock') {
+    return true;
+  }
+
+  if (selection?.$anchor?.parent?.type?.name === 'codeBlock') {
+    return true;
+  }
+
+  const target = event.target as HTMLElement | null;
+  if (target?.closest('pre.code-block-highlighted')) {
+    return true;
+  }
+
+  const domSelection = window.getSelection?.();
+  const anchorNode = domSelection?.anchorNode;
+  const anchorElement =
+    anchorNode instanceof HTMLElement ? anchorNode : (anchorNode?.parentElement ?? null);
+  if (anchorElement?.closest('pre.code-block-highlighted')) {
+    return true;
+  }
+
+  return false;
+}
+
+function insertRawCodeText(editorInstance: Editor, text: string): void {
+  editorInstance.commands.insertContent({
+    type: 'text',
+    text,
+  });
+}
+
 // Initialize when DOM is ready and content is available
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
@@ -1482,7 +1535,7 @@ document.addEventListener(
     if (!clipboardData) return;
 
     // If cursor is inside a code block, handle specially
-    if (editor.isActive('codeBlock')) {
+    if (isCodeContextForPaste(editor, event)) {
       event.preventDefault();
       event.stopPropagation();
 
@@ -1492,8 +1545,8 @@ document.addEventListener(
       const fenced = parseFencedCode(plainText);
       const codeToInsert = fenced ? fenced.content : plainText;
 
-      // Insert as plain text (TipTap will handle it correctly in code block)
-      editor.commands.insertContent(codeToInsert);
+      // Insert as a text node to prevent TipTap from parsing HTML/markdown inside code blocks.
+      insertRawCodeText(editor, codeToInsert);
       return;
     }
 
@@ -1542,5 +1595,13 @@ export const __testing = {
   resetSyncState() {
     lastSentContentHash = null;
     lastSentTimestamp = 0;
+  },
+  isCodeContextForPasteForTests(event: ClipboardEvent) {
+    if (!editor) return false;
+    return isCodeContextForPaste(editor, event);
+  },
+  insertRawCodeTextForTests(text: string) {
+    if (!editor) return;
+    insertRawCodeText(editor, text);
   },
 };

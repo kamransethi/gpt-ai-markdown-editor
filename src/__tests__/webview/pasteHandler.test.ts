@@ -255,6 +255,28 @@ describe('pasteHandler', () => {
       expect(result.isHtml).toBe(false);
       expect(result.content).toBe('Plain text content');
     });
+
+    it('should preserve raw HTML source as plain text (no conversion)', () => {
+      const htmlSource = [
+        '<!DOCTYPE html>',
+        '<html>',
+        '<head><style>.sq-table { border-collapse: collapse; }</style></head>',
+        '<body>',
+        '<table class="sq-table"><tr><th>Name</th><th>Age</th></tr></table>',
+        '</body>',
+        '</html>',
+      ].join('\n');
+
+      const mockDataTransfer = createMockDataTransfer({
+        'text/html': htmlSource,
+        'text/plain': htmlSource,
+      });
+
+      const result = processPasteContent(mockDataTransfer);
+      expect(result.wasConverted).toBe(false);
+      expect(result.isHtml).toBe(false);
+      expect(result.content).toBe(htmlSource);
+    });
   });
 
   describe('looksLikeMarkdown', () => {
@@ -408,6 +430,11 @@ Subject Option 3: Write Markdown like a human 🧠`;
 
     it('should return true for code blocks', () => {
       expect(isRichHtml('<pre><code>const x = 1;</code></pre>', 'const x = 1;')).toBe(true);
+    });
+
+    it('should return false when plain text is raw HTML source', () => {
+      const htmlSource = '<table class="sq-table"><tr><td>Alice</td></tr></table>';
+      expect(isRichHtml(htmlSource, htmlSource)).toBe(false);
     });
   });
 
