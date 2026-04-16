@@ -19,11 +19,7 @@ import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode, Schema as ProseMirrorSchema } from '@tiptap/pm/model';
 import { Fragment, Slice } from '@tiptap/pm/model';
 import { dropPoint } from '@tiptap/pm/transform';
-import {
-  confirmImageDrop,
-  getRememberedFolder,
-  setRememberedFolder,
-} from './imageConfirmation';
+import { confirmImageDrop, getRememberedFolder, setRememberedFolder } from './imageConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
 import { devLog } from '../utils/devLog';
 import { MessageType } from '../../shared/messageTypes';

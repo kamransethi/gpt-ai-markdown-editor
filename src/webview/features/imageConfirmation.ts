@@ -49,9 +49,7 @@ export function setSessionMediaPath(value: string | null): void {
  * Show confirmation dialog for image drop
  * Returns null if user cancels, otherwise returns options
  */
-export async function confirmImageDrop(
-  fileCount: number
-): Promise<ImageDropOptions | null> {
+export async function confirmImageDrop(fileCount: number): Promise<ImageDropOptions | null> {
   // Get current settings (use session overrides if available)
   const currentMediaPathBase =
     sessionMediaPathBase ||
@@ -109,7 +107,7 @@ export async function confirmImageDrop(
         </h3>
 
         <!-- Configuration Options -->
-        <div style="margin-bottom: 16px; padding: 12px; background: var(--md-comment-bg, rgba(128, 128, 128, 0.1)); border-radius: 4px; border-left: 3px solid var(--md-accent);">
+        <div style="margin-bottom: 16px; padding: 12px; background: var(--md-comment-bg, rgba(128, 128, 128, 0.1)); border-radius: 4px; border-left: 3px solid var(--md-accent); box-sizing: border-box;">
           <div style="margin-bottom: 12px;">
             <label style="display: block; margin-bottom: 6px; color: var(--md-foreground); font-size: 13px; font-weight: 500; font-family: ${COMMON_FONT};">
               Media Path Base (where to store):
@@ -125,6 +123,7 @@ export async function confirmImageDrop(
                 border-radius: 3px;
                 font-family: ${COMMON_FONT};
                 font-size: 13px;
+                box-sizing: border-box;
               "
             >
               <option value="sameNameFolder">Same-name folder (next to document) - Recommended</option>
@@ -153,6 +152,7 @@ export async function confirmImageDrop(
                 border-radius: 3px;
                 font-family: ${COMMON_FONT};
                 font-size: 13px;
+                box-sizing: border-box;
               "
               placeholder="e.g., media, assets/images"
             />
