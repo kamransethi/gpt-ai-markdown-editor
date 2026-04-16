@@ -313,7 +313,7 @@ class DragHandleController {
 
   // Add these alongside your other event handler methods (e.g., below onMouseLeave)
   
-  private onHandleMouseEnter(e: MouseEvent): void {
+  private onHandleMouseEnter(_e: MouseEvent): void {
     // Cancel any pending deferred hide (mouse crossed the gap successfully).
     if (this._hideTimeoutId !== null) {
       clearTimeout(this._hideTimeoutId);
@@ -627,11 +627,21 @@ export const DraggableBlocks = Extension.create({
           const prevPos  = startPos - prevNode.nodeSize;
 
           if (dispatch) {
-            const tr      = state.tr;
+            const tr = state.tr;
+            
+            // 1. Calculate relative cursor offsets before doing anything
+            const fromOffset = state.selection.from - startPos;
+            const toOffset = state.selection.to - startPos;
+
+            // 2. Perform the swap
             const content = state.doc.slice(startPos, startPos + startNode.nodeSize);
             tr.delete(startPos, startPos + startNode.nodeSize);
             tr.insert(prevPos, content.content);
-            tr.setSelection(state.selection.map(tr.doc, tr.mapping));
+
+            // 3. Manually recreate the selection at the new coordinates
+            const SelectionClass = state.selection.constructor as any;
+            tr.setSelection(SelectionClass.create(tr.doc, prevPos + fromOffset, prevPos + toOffset));
+            
             dispatch(tr.scrollIntoView());
           }
           return true;
@@ -660,11 +670,23 @@ export const DraggableBlocks = Extension.create({
           const nextNode = $sp.parent.child(index + 1);
 
           if (dispatch) {
-            const tr      = state.tr;
+            const tr = state.tr;
+            
+            // 1. Calculate relative cursor offsets before doing anything
+            const fromOffset = state.selection.from - startPos;
+            const toOffset = state.selection.to - startPos;
+
+            // 2. Perform the swap
             const content = state.doc.slice(startPos, startPos + startNode.nodeSize);
             tr.delete(startPos, startPos + startNode.nodeSize);
-            tr.insert(startPos + nextNode.nodeSize, content.content);
-            tr.setSelection(state.selection.map(tr.doc, tr.mapping));
+            
+            const insertPos = startPos + nextNode.nodeSize;
+            tr.insert(insertPos, content.content);
+
+            // 3. Manually recreate the selection at the new coordinates
+            const SelectionClass = state.selection.constructor as any;
+            tr.setSelection(SelectionClass.create(tr.doc, insertPos + fromOffset, insertPos + toOffset));
+            
             dispatch(tr.scrollIntoView());
           }
           return true;
