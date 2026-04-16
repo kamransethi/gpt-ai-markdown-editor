@@ -12,6 +12,7 @@ import { MessageType } from '../shared/messageTypes';
 import { getPromptForMode } from '../shared/aiModes';
 import { createLlmProvider } from './llm/providerFactory';
 import type { LlmMessage } from './llm/types';
+import { getProviderAvailabilityCached } from './llm/providerAvailability';
 
 // ── Prompts ─────────────────────────────────────────────────────────
 
@@ -52,6 +53,36 @@ export async function handleAiRefineRequest(
   const { mode, selectedText, from, to } = data;
 
   try {
+    // Check provider availability
+    const availability = await getProviderAvailabilityCached();
+    const selectedProvider = vscode.workspace
+      .getConfiguration('gptAiMarkdownEditor')
+      .get<string>('llmProvider', 'GitHub Copilot');
+
+    if (selectedProvider === 'GitHub Copilot' && !availability.copilotAvailable) {
+      webview.postMessage({
+        type: MessageType.AI_REFINE_RESULT,
+        success: false,
+        error:
+          'GitHub Copilot is not available. Please configure Ollama or sign up for GitHub Copilot.',
+        from,
+        to,
+      });
+      return;
+    }
+
+    if (selectedProvider === 'Ollama' && !availability.ollamaAvailable) {
+      webview.postMessage({
+        type: MessageType.AI_REFINE_RESULT,
+        success: false,
+        error:
+          'Ollama is not reachable. Please ensure Ollama is running at the configured endpoint.',
+        from,
+        to,
+      });
+      return;
+    }
+
     const provider = createLlmProvider();
     const abortController = new AbortController();
 

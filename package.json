@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/kamransethi/gpt-ai-markdown-editor#readme",
   "engines": {
-    "vscode": "^1.115.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other",

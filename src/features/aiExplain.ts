@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 import { MessageType } from '../shared/messageTypes';
 import { createLlmProvider, getModelDisplayName } from './llm/providerFactory';
 import type { LlmMessage } from './llm/types';
+import { getProviderAvailabilityCached } from './llm/providerAvailability';
 
 const SYSTEM_PROMPT =
   'You are a document analysis assistant embedded in a markdown editor. ' +
@@ -36,14 +37,40 @@ export async function handleAiExplainRequest(
 ): Promise<void> {
   const { documentText } = data;
 
-  // Truncate very long documents to avoid token limits
-  const maxChars = 15000;
-  const text =
-    documentText.length > maxChars
-      ? documentText.slice(0, maxChars) + '\n\n[Document truncated for analysis]'
-      : documentText;
-
   try {
+    // Check provider availability
+    const availability = await getProviderAvailabilityCached();
+    const selectedProvider = vscode.workspace
+      .getConfiguration('gptAiMarkdownEditor')
+      .get<string>('llmProvider', 'GitHub Copilot');
+
+    if (selectedProvider === 'GitHub Copilot' && !availability.copilotAvailable) {
+      webview.postMessage({
+        type: MessageType.AI_EXPLAIN_RESULT,
+        success: false,
+        error:
+          'GitHub Copilot is not available. Please configure Ollama or sign up for GitHub Copilot.',
+      });
+      return;
+    }
+
+    if (selectedProvider === 'Ollama' && !availability.ollamaAvailable) {
+      webview.postMessage({
+        type: MessageType.AI_EXPLAIN_RESULT,
+        success: false,
+        error:
+          'Ollama is not reachable. Please ensure Ollama is running at the configured endpoint.',
+      });
+      return;
+    }
+
+    // Truncate very long documents to avoid token limits
+    const maxChars = 15000;
+    const text =
+      documentText.length > maxChars
+        ? documentText.slice(0, maxChars) + '\n\n[Document truncated for analysis]'
+        : documentText;
+
     const provider = createLlmProvider();
     const modelName = getModelDisplayName();
     const abortController = new AbortController();

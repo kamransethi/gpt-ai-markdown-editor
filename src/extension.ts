@@ -10,6 +10,8 @@ import { WordCountFeature } from './features/wordCount';
 import { getActiveWebviewPanel, getSelectedText, getActiveDocumentUri } from './activeWebview';
 import { outlineViewProvider } from './features/outlineView';
 import { MessageType } from './shared/messageTypes';
+import { getProviderAvailabilityCached } from './features/llm/providerAvailability';
+import { handleProviderError } from './features/llm/providerErrorMessages';
 
 /**
  * Constants for default markdown viewer prompt feature
@@ -197,6 +199,19 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // Register command to switch to Ollama provider
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gptAiMarkdownEditor.switchToOllamaProvider', async () => {
+      await vscode.workspace
+        .getConfiguration('gptAiMarkdownEditor')
+        .update('llmProvider', 'Ollama', vscode.ConfigurationTarget.Global);
+
+      vscode.window.showInformationMessage(
+        '✅ Switched to Ollama provider. Try your AI feature again!'
+      );
+    })
+  );
+
   // Expose the active document URI so Copilot and other extensions can discover the file
   context.subscriptions.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.getActiveDocumentUri', () => {
@@ -210,6 +225,45 @@ export function activate(context: vscode.ExtensionContext) {
       const participant = vscode.chat.createChatParticipant(
         'gptAiMarkdownEditor.chat',
         async (request, _context, stream, _token) => {
+          // Check provider availability before attempting to use Chat
+          const availability = await getProviderAvailabilityCached();
+          const selectedProvider = vscode.workspace
+            .getConfiguration('gptAiMarkdownEditor')
+            .get<string>('llmProvider', 'GitHub Copilot');
+
+          // Validate that the selected provider is available
+          if (selectedProvider === 'GitHub Copilot' && !availability.copilotAvailable) {
+            // Try to handle the error and switch to Ollama if available
+            const couldRetry = await handleProviderError({
+              availability,
+              attemptedProvider: 'copilot',
+              feature: 'Chat Participant',
+            });
+
+            if (!couldRetry) {
+              stream.markdown(
+                '**Chat Participant is not available**\n\nPlease configure an LLM provider (GitHub Copilot or Ollama) to use this feature.'
+              );
+              return;
+            }
+
+            // If we switched to Ollama, re-check availability
+            const newAvailability = await getProviderAvailabilityCached();
+            if (!newAvailability.ollamaAvailable) {
+              stream.markdown(
+                '**Ollama is not available**\n\nPlease start your Ollama server and try again.'
+              );
+              return;
+            }
+          }
+
+          if (selectedProvider === 'Ollama' && !availability.ollamaAvailable) {
+            stream.markdown(
+              '**Ollama is not reachable**\n\nPlease ensure Ollama is running at the configured endpoint and try again.'
+            );
+            return;
+          }
+
           // Provide the current document content as context
           let docContent = '';
           let docUri: vscode.Uri | undefined;
@@ -253,32 +307,47 @@ export function activate(context: vscode.ExtensionContext) {
           const selText = getSelectedText();
 
           // Use the language model to answer about the document
-          const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-          const model = models[0];
-          if (!model) {
+          // Try Copilot first if selected
+          if (selectedProvider === 'GitHub Copilot') {
+            try {
+              const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
+              const model = models[0];
+              if (!model) {
+                stream.markdown(
+                  'No language model available. Please ensure GitHub Copilot is installed.'
+                );
+                return;
+              }
+
+              let systemPrompt =
+                'You are a writing assistant. The user is editing the following markdown document:\n\n---\n' +
+                docContent +
+                '\n---\n';
+              if (selText) {
+                systemPrompt +=
+                  '\nThe user currently has the following text selected in the editor:\n\n```\n' +
+                  selText +
+                  '\n```\n';
+              }
+              systemPrompt += `\nUser question: ${request.prompt}`;
+
+              const messages = [vscode.LanguageModelChatMessage.User(systemPrompt)];
+
+              const response = await model.sendRequest(messages, {}, _token);
+              for await (const chunk of response.text) {
+                stream.markdown(chunk);
+              }
+            } catch (error) {
+              console.error('[DK-AI] Chat Participant error:', error);
+              stream.markdown(
+                '**Error using GitHub Copilot**\n\nPlease ensure you have Copilot enabled and try again.'
+              );
+            }
+          } else {
+            // Ollama provider
             stream.markdown(
-              'No language model available. Please ensure GitHub Copilot is installed.'
+              '**Ollama provider selected**\n\nChat Participant via Ollama is not yet implemented. Please switch to GitHub Copilot or use the AI Explain feature instead.'
             );
-            return;
-          }
-
-          let systemPrompt =
-            'You are a writing assistant. The user is editing the following markdown document:\n\n---\n' +
-            docContent +
-            '\n---\n';
-          if (selText) {
-            systemPrompt +=
-              '\nThe user currently has the following text selected in the editor:\n\n```\n' +
-              selText +
-              '\n```\n';
-          }
-          systemPrompt += `\nUser question: ${request.prompt}`;
-
-          const messages = [vscode.LanguageModelChatMessage.User(systemPrompt)];
-
-          const response = await model.sendRequest(messages, {}, _token);
-          for await (const chunk of response.text) {
-            stream.markdown(chunk);
           }
         }
       );
