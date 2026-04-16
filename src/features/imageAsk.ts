@@ -139,7 +139,7 @@ export async function handleImageAskRequest(
       const openSettings = 'Open Settings';
       const result = await vscode.window.showWarningMessage(
         `Image analysis requires a vision-capable model. Your current image model "${model}" (${provider}) does not support image inputs.\n\n` +
-          'Try switching to a vision model like llava, bakllava, or llama3.2-vision.',
+          'Try switching to a vision model like llava, bakllava, llama3.2-vision, gemma4, qwen-vl, or yi-vision.',
         openSettings
       );
 

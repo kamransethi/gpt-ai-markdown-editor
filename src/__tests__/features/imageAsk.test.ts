@@ -102,7 +102,7 @@ describe('OllamaProvider.generateWithVision', () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }));
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for await (const chunk of provider.generateWithVision!(
+    for await (const _chunk of provider.generateWithVision!(
       [
         { role: 'user', content: 'First question' },
         { role: 'system', content: 'System note' },
@@ -204,6 +204,18 @@ describe('isVisionCapable', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
       if (key === 'ollamaImageModel') return 'bakllava:latest';
+      return defaultValue;
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { isVisionCapable } = require('../../features/llm/providerFactory');
+    expect(isVisionCapable()).toBe(true);
+  });
+
+  it('returns true for gemma4 vision model', () => {
+    mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
+      if (key === 'llmProvider') return 'Ollama';
+      if (key === 'ollamaImageModel') return 'gemma4:e4b';
       return defaultValue;
     });
 

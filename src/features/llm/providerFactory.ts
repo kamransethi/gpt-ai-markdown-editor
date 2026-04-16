@@ -70,7 +70,17 @@ export function getImageModelDisplayName(): string {
 }
 
 /** Ollama models known to support vision inputs. */
-const OLLAMA_VISION_MODELS = ['llava', 'bakllava', 'llama3.2-vision', 'moondream', 'minicpm-v'];
+const OLLAMA_VISION_MODELS = [
+  'llava',
+  'bakllava',
+  'llama3.2-vision',
+  'moondream',
+  'minicpm-v',
+  'gemma4',
+  'qwen-vl',
+  'yi-vision',
+  'deepseek-vl',
+];
 
 /**
  * Check if the currently configured image provider/model supports vision (image) inputs.
