@@ -10,11 +10,7 @@
 
 import * as vscode from 'vscode';
 import { MessageType } from '../shared/messageTypes';
-import {
-  createImageLlmProvider,
-  getImageModelDisplayName,
-  isVisionCapable,
-} from './llm/providerFactory';
+import { createImageLlmProvider, getImageModelDisplayName } from './llm/providerFactory';
 import type { LlmMessage } from './llm/types';
 import { getProviderAvailabilityCached } from './llm/providerAvailability';
 
@@ -130,34 +126,8 @@ export async function handleImageAskRequest(
       return;
     }
 
-    // Check vision capability before loading image
-    if (!isVisionCapable()) {
-      const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
-      const provider = config.get<string>('llmProvider', 'GitHub Copilot');
-      const model = config.get<string>('ollamaImageModel', 'llama3.2-vision:latest');
-
-      const openSettings = 'Open Settings';
-      const result = await vscode.window.showWarningMessage(
-        `Image analysis requires a vision-capable model. Your current image model "${model}" (${provider}) does not support image inputs.\n\n` +
-          'Try switching to a vision model like llava, bakllava, llama3.2-vision, gemma4, qwen-vl, or yi-vision.',
-        openSettings
-      );
-
-      if (result === openSettings) {
-        await vscode.commands.executeCommand(
-          'workbench.action.openSettings',
-          'gptAiMarkdownEditor.ollamaImageModel'
-        );
-      }
-
-      webview.postMessage({
-        type: MessageType.IMAGE_ASK_RESULT,
-        success: false,
-        action: data.action,
-        error: 'Vision model required. Please select a vision-capable model in settings.',
-      });
-      return;
-    }
+    // Note: isVisionCapable() now trusts user's model choice.
+    // If user configures a non-vision model, they'll get an error from Ollama itself.
 
     // Load image data
     let imageBase64: string;

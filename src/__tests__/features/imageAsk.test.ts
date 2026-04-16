@@ -152,7 +152,7 @@ describe('isVisionCapable', () => {
     expect(isVisionCapable()).toBe(true);
   });
 
-  it('returns true for Ollama with a known vision model', () => {
+  it('returns true for Ollama provider (trusts user model choice)', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
       if (key === 'ollamaImageModel') return 'llava:13b';
@@ -164,46 +164,10 @@ describe('isVisionCapable', () => {
     expect(isVisionCapable()).toBe(true);
   });
 
-  it('returns true for llama3.2-vision model', () => {
-    mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
-      if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaImageModel') return 'llama3.2-vision:latest';
-      return defaultValue;
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { isVisionCapable } = require('../../features/llm/providerFactory');
-    expect(isVisionCapable()).toBe(true);
-  });
-
-  it('returns false for Ollama with a text-only model', () => {
+  it('returns true for any Ollama model (user responsibility)', () => {
     mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'llmProvider') return 'Ollama';
       if (key === 'ollamaImageModel') return 'llama3.2:latest';
-      return defaultValue;
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { isVisionCapable } = require('../../features/llm/providerFactory');
-    expect(isVisionCapable()).toBe(false);
-  });
-
-  it('returns false for mistral on Ollama', () => {
-    mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
-      if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaImageModel') return 'mistral:latest';
-      return defaultValue;
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { isVisionCapable } = require('../../features/llm/providerFactory');
-    expect(isVisionCapable()).toBe(false);
-  });
-
-  it('returns true for bakllava model', () => {
-    mockGet.mockImplementation((key: string, defaultValue?: unknown) => {
-      if (key === 'llmProvider') return 'Ollama';
-      if (key === 'ollamaImageModel') return 'bakllava:latest';
       return defaultValue;
     });
 

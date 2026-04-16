@@ -69,33 +69,17 @@ export function getImageModelDisplayName(): string {
   return `GitHub Copilot / ${config.get<string>('aiModel', 'gpt-4.1')}`;
 }
 
-/** Ollama models known to support vision inputs. */
-const OLLAMA_VISION_MODELS = [
-  'llava',
-  'bakllava',
-  'llama3.2-vision',
-  'moondream',
-  'minicpm-v',
-  'gemma4',
-  'qwen-vl',
-  'yi-vision',
-  'deepseek-vl',
-];
-
 /**
  * Check if the currently configured image provider/model supports vision (image) inputs.
- * For Copilot: most modern models support vision — return true.
- * For Ollama: check if the image model name starts with a known vision model prefix.
+ * Returns true for both Copilot and Ollama, trusting the user's model choice.
+ * Users are responsible for selecting actual vision-capable models for their Ollama instance.
  */
 export function isVisionCapable(): boolean {
   const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
   const provider = config.get<string>('llmProvider', 'GitHub Copilot');
 
-  if (provider === 'Ollama') {
-    const model = config.get<string>('ollamaImageModel', 'llama3.2-vision:latest').toLowerCase();
-    return OLLAMA_VISION_MODELS.some(prefix => model.startsWith(prefix));
-  }
-
-  // Copilot models (gpt-4o, gpt-4.1, etc.) generally support vision
-  return true;
+  // User has selected either GitHub Copilot or Ollama as their provider.
+  // Trust their model choice — they are responsible for configuring a vision-capable model.
+  // If they misconfigure, they'll get an error from the model itself.
+  return provider === 'GitHub Copilot' || provider === 'Ollama';
 }
