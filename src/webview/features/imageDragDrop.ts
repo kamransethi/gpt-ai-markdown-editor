@@ -376,6 +376,21 @@ async function handlePaste(e: ClipboardEvent, editor: Editor, vscodeApi: VsCodeA
       targetFolder = options.targetFolder;
       if (options.rememberChoice) {
         setRememberedFolder(targetFolder);
+        // Send config changes back to extension to update settings
+        if (options.mediaPathBase && options.mediaPathBase !== (window as any).mediaPathBase) {
+          vscodeApi.postMessage({
+            type: MessageType.UPDATE_SETTING,
+            key: 'gptAiMarkdownEditor.mediaPathBase',
+            value: options.mediaPathBase,
+          });
+        }
+        if (options.mediaPath && options.mediaPath !== (window as any).mediaPath) {
+          vscodeApi.postMessage({
+            type: MessageType.UPDATE_SETTING,
+            key: 'gptAiMarkdownEditor.mediaPath',
+            value: options.mediaPath,
+          });
+        }
       }
     }
 
@@ -428,6 +443,21 @@ async function handlePaste(e: ClipboardEvent, editor: Editor, vscodeApi: VsCodeA
 
         if (options.rememberChoice) {
           setRememberedFolder(targetFolder);
+          // Send config changes back to extension to update settings
+          if (options.mediaPathBase && options.mediaPathBase !== (window as any).mediaPathBase) {
+            vscodeApi.postMessage({
+              type: MessageType.UPDATE_SETTING,
+              key: 'gptAiMarkdownEditor.mediaPathBase',
+              value: options.mediaPathBase,
+            });
+          }
+          if (options.mediaPath && options.mediaPath !== (window as any).mediaPath) {
+            vscodeApi.postMessage({
+              type: MessageType.UPDATE_SETTING,
+              key: 'gptAiMarkdownEditor.mediaPath',
+              value: options.mediaPath,
+            });
+          }
         }
       }
 

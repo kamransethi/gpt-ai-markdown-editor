@@ -13,6 +13,10 @@ import {
   getRememberedFolder,
   setRememberedFolder,
   getDefaultImagePath,
+  getSessionMediaPathBase,
+  setSessionMediaPathBase,
+  getSessionMediaPath,
+  setSessionMediaPath,
 } from '../../webview/features/imageConfirmation';
 
 describe('imageConfirmation', () => {
@@ -123,6 +127,56 @@ describe('imageConfirmation', () => {
       // Even though we're VS Code extension, handle gracefully
       setRememberedFolder('assets\\images');
       expect(getRememberedFolder()).toBe('assets\\images');
+    });
+  });
+
+  describe('session media config utilities', () => {
+    beforeEach(() => {
+      // Reset session config before each test
+      setSessionMediaPathBase(null);
+      setSessionMediaPath(null);
+    });
+
+    it('should return null for mediaPathBase when not set', () => {
+      expect(getSessionMediaPathBase()).toBeNull();
+    });
+
+    it('should store and retrieve mediaPathBase', () => {
+      setSessionMediaPathBase('relativeToDocument');
+      expect(getSessionMediaPathBase()).toBe('relativeToDocument');
+    });
+
+    it('should support all mediaPathBase values', () => {
+      const values = ['sameNameFolder', 'relativeToDocument', 'workspaceFolder'];
+      values.forEach(value => {
+        setSessionMediaPathBase(value);
+        expect(getSessionMediaPathBase()).toBe(value);
+      });
+    });
+
+    it('should return null for mediaPath when not set', () => {
+      expect(getSessionMediaPath()).toBeNull();
+    });
+
+    it('should store and retrieve mediaPath', () => {
+      setSessionMediaPath('assets/images');
+      expect(getSessionMediaPath()).toBe('assets/images');
+    });
+
+    it('should clear session config when set to null', () => {
+      setSessionMediaPathBase('workspaceFolder');
+      setSessionMediaPath('media');
+      setSessionMediaPathBase(null);
+      setSessionMediaPath(null);
+      expect(getSessionMediaPathBase()).toBeNull();
+      expect(getSessionMediaPath()).toBeNull();
+    });
+
+    it('should handle both mediaPathBase and mediaPath together', () => {
+      setSessionMediaPathBase('relativeToDocument');
+      setSessionMediaPath('assets/media');
+      expect(getSessionMediaPathBase()).toBe('relativeToDocument');
+      expect(getSessionMediaPath()).toBe('assets/media');
     });
   });
 });
