@@ -28,11 +28,21 @@ export async function confirmImageDrop(
   fileCount: number,
   defaultFolder: string = 'images'
 ): Promise<ImageDropOptions | null> {
-  const imagePathBase = (window as any).imagePathBase as string | undefined;
-  const pathBaseLabel =
-    imagePathBase === 'workspaceFolder'
-      ? 'Relative to workspace folder'
-      : 'Relative to current markdown file';
+  const mediaPathBase = (window as any).mediaPathBase as string | undefined;
+  const mediaPath = (window as any).mediaPath as string | undefined;
+
+  // Generate user-friendly description of the storage configuration
+  let configDescription = '';
+  if (mediaPathBase === 'sameNameFolder') {
+    configDescription = '📁 Saves to same-name folder next to your document (recommended)';
+  } else if (mediaPathBase === 'workspaceFolder') {
+    const pathLabel = mediaPath && mediaPath !== 'media' ? `→ ${mediaPath}` : '→ workspace root';
+    configDescription = `📁 Saves to workspace root ${pathLabel}`;
+  } else {
+    // relativeToDocument or default
+    const pathLabel = mediaPath || 'media';
+    configDescription = `📁 Saves to document folder → ${pathLabel} subfolder`;
+  }
 
   return new Promise(resolve => {
     let resolved = false;
@@ -61,6 +71,12 @@ export async function confirmImageDrop(
         📸 Save ${fileCount} Image${fileCount > 1 ? 's' : ''}
       </h3>
 
+      <div style="margin-bottom: 16px; padding: 10px; background: var(--md-comment-bg, rgba(128, 128, 128, 0.1)); border-radius: 3px; border-left: 3px solid var(--md-accent);">
+        <small style="color: var(--md-muted); display: block; line-height: 1.4;">
+          ${configDescription}
+        </small>
+      </div>
+
       <div style="margin-bottom: 16px;">
         <label style="display: block; margin-bottom: 8px; color: var(--md-foreground);">
           Save to folder:
@@ -81,7 +97,7 @@ export async function confirmImageDrop(
           placeholder="e.g., images, assets/img, docs/screenshots"
         />
         <small style="display: block; margin-top: 4px; color: var(--md-muted);">
-          ${pathBaseLabel}
+          This setting is controlled by "Media Path Base" configuration
         </small>
       </div>
 

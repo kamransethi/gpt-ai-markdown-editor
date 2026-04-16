@@ -597,7 +597,18 @@ export async function handleBrowseLocalFile(
           await vscode.workspace.fs.copy(selectedUri, targetUri, { overwrite: true });
           finalUri = targetUri;
 
-          vscode.window.showInformationMessage(`Copied file to: ${mediaFolderName}/${fileName}`);
+          // Generate user-friendly message about file location
+          const mediaPathBase = ctx.getConfig<string>('mediaPathBase', 'sameNameFolder');
+          let locationMsg = '';
+          if (mediaPathBase === 'sameNameFolder') {
+            locationMsg = `Copied to same-name folder (Media Path Base: sameNameFolder)`;
+          } else if (mediaPathBase === 'workspaceFolder') {
+            locationMsg = `Copied to workspace root → ${mediaFolderName}/ (Media Path Base: workspaceFolder)`;
+          } else {
+            // relativeToDocument
+            locationMsg = `Copied to document folder → ${mediaFolderName}/ (Media Path Base: relativeToDocument)`;
+          }
+          vscode.window.showInformationMessage(locationMsg);
         } catch (error) {
           vscode.window.showErrorMessage(`Failed to copy file: ${toErrorMessage(error)}`);
           // Continue with original path if copy fails

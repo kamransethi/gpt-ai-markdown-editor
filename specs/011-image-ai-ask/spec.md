@@ -88,17 +88,17 @@ A user has a specific question about an image that isn't covered by the preset p
 
 ### User Story 6 — Vision Model Required (Priority: P1)
 
-A user's currently configured LLM does not support image/vision inputs (e.g., a text-only Ollama model). When they click any item under the Ask menu, instead of failing silently or showing a cryptic error, they see a clear, friendly message explaining that the selected model does not support image analysis and suggesting how to switch to a vision-capable model.
+A user's currently configured LLM does not support image/vision inputs (e.g., a text-only Ollama model). When they click any item under the Ask menu, the system will attempt the request. If the LLM returns an error indicating it doesn't support images, a clear message is shown explaining the issue. Users are responsible for configuring actual vision-capable models for their Ollama instance.
 
-**Why this priority**: Without graceful handling of non-vision models, every other ASK feature would appear broken for those users. This is a prerequisite for a good experience.
+**Why this priority**: Without graceful error handling for non-vision models, ASK features would appear broken for those users. This is a prerequisite for a good experience.
 
-**Independent Test**: Can be tested by configuring a text-only model and clicking any ASK action; verifying the user sees a helpful message rather than an error.
+**Independent Test**: Can be tested by configuring a text-only model and clicking an ASK action; the system should attempt it and surface any errors from the model clearly.
 
 **Acceptance Scenarios**:
 
-1. **Given** the user's LLM provider is Ollama with a text-only model (e.g., `llama3.2:latest`), **When** they click any ASK menu item, **Then** a notification appears explaining that image analysis requires a vision-capable model and suggests models like `llava`, `llama3.2-vision`, or `bakllava`.
-2. **Given** the user's LLM provider is GitHub Copilot, **When** they click any ASK menu item, **Then** the system uses Copilot's vision-capable model (GPT-4o or equivalent) and the request proceeds normally.
-3. **Given** the non-vision-model notification is shown, **When** the user clicks "Open Settings", **Then** they are taken directly to the Ollama model setting to change it.
+1. **Given** the user's LLM provider is Ollama with a text-only model (e.g., `llama3.2:latest`), **When** they click any ASK menu item, **Then** the system attempts the request; Ollama returns an error, which is displayed to the user with guidance (e.g., "This model does not support images. Try configuring llava, bakllava, or another vision-capable model").
+2. **Given** the user's LLM provider is GitHub Copilot, **When** they click any ASK menu item, **Then** the system uses Copilot's vision-capable models and the request proceeds normally.
+3. **Given** the user has configured an Ollama model they claim supports vision, **When** they click an ASK action, **Then** the system trusts their model choice and sends the request. If the model doesn't actually support images, the LLM error is surfaced to the user.
 
 ---
 
@@ -123,8 +123,8 @@ A user's currently configured LLM does not support image/vision inputs (e.g., a 
 - **FR-005**: The results panel MUST include a **Copy** button to copy the response text to the clipboard.
 - **FR-006**: For Extract Text and Describe actions, the results panel MUST include an **Insert Below** button that inserts the response text into the document immediately after the image.
 - **FR-007**: For Generate Alt Text, the results panel MUST include an **Apply** button that updates the image's alt attribute in the editor.
-- **FR-008**: Before sending an image to the LLM, the system MUST verify that the configured provider supports vision/image inputs.
-- **FR-009**: If the configured LLM does not support vision, the system MUST show a notification explaining the limitation and providing a direct link to open the relevant settings.
+- **FR-008**: The system MUST attempt to send the image to the configured LLM provider without pre-validation of model vision capability.
+- **FR-009**: If the LLM returns an error indicating it does not support image inputs, the system MUST display this error message to the user clearly, showing the model name and endpoint. Users are responsible for configuring actual vision-capable models.
 - **FR-010**: The system MUST support both local images (read from disk) and external images (fetched via URL) for all ASK actions.
 - **FR-011**: For local images, the system MUST read the image file from the workspace and prepare it for transmission to the LLM.
 - **FR-012**: For external images, the system MUST fetch the image data from the URL and prepare it for transmission to the LLM.
@@ -161,3 +161,39 @@ A user's currently configured LLM does not support image/vision inputs (e.g., a 
 - SVG images are out of scope for v1 — if an image is SVG, the ASK menu items will be disabled with a tooltip explaining SVG is not yet supported.
 - **Image model is separately configured from text model**: When the provider is Ollama, Image Ask uses `gptAiMarkdownEditor.ollamaImageModel` (default `llama3.2-vision:latest`) rather than `gptAiMarkdownEditor.ollamaModel`. This allows users running a standard text Ollama model to separately configure a vision-capable model for image tasks. When the provider is GitHub Copilot, the same model is used for both text and image tasks.
 - **Model shown immediately on panel open**: The AI panel footer shows `<provider> / <model>` as soon as the panel opens (before the request completes), sourced from the webview's cached settings. This is consistent behavior for both AI Summary and Image Ask.
+- **Vision model selection is trust-based**: The system does not maintain a hardcoded whitelist of known vision models. Users can configure any Ollama model they wish (including new models, community models, or custom models). If a user selects a non-vision model, the LLM will return an error, which the system displays clearly to the user. This approach is future-proof and allows unlimited model choice.
+
+## Implementation Notes
+
+### Completed
+
+- **Vision model trust implementation** (Commit d9c9a75): Removed hardcoded OLLAMA_VISION_MODELS whitelist. System now trusts user's model choice — if the configured model doesn't support images, the LLM error is surfaced to the user.
+- **Provider availability detection** (Commit 8075030): Implemented graceful Copilot fallback with Ollama auto-detection (see spec 015).
+- **Image loading and encoding**: Supports local files, external URLs, and data URIs. Images are read as base64 before transmission.
+- **LLM provider integration**: Works with both GitHub Copilot (via Language Model API) and Ollama (HTTP `/api/chat` endpoint with `images` field).
+- **Separate image/text model configuration**: When provider is Ollama, uses `ollamaImageModel` setting instead of `ollamaModel`.
+
+### Other System Restrictions Found
+
+While implementing trust-based vision models, the team identified similar artificial restrictions in other parts of the system. These are documented for potential future improvement:
+
+1. **Hardcoded AI Model Enum** (`package.json` → `gptAiMarkdownEditor.aiModel`)
+   - **Current**: Restricted to 8 hardcoded models (gpt-4.1, gpt-4.1-mini, gpt-4o, claude-sonnet-4, o4-mini, o3-mini)
+   - **Impact**: Users cannot select newly released models like gpt-4-turbo, gpt-3.5, or future models without editing package.json
+   - **Similar to vision model whitelist**: This could be improved to allow user-provided model names via a text input with a recommended preset list
+   - **Recommendation**: Consider making this a free-form string with suggested defaults, similar to how we now handle Ollama models
+
+2. **LLM Provider Whitelist** (Spec 010, documented limitation)
+   - **Current**: Only GitHub Copilot and Ollama supported
+   - **Out of scope**: OpenAI Direct API, Anthropic Direct API, other endpoints
+   - **Note**: This is an architectural decision (not an unnecessary restriction like vision models), but documented for transparency
+
+3. **Image Size Hard Limit** (`imageAsk.ts` → `MAX_IMAGE_BYTES = 4MB`)
+   - **Current**: Images larger than 4 MB are rejected
+   - **Issue**: Some vision models (like Claude 3.5) can handle larger images; this may be unnecessarily restrictive
+   - **Recommendation**: Consider making this configurable or raising the limit with better error handling
+
+4. **SVG Support Out of Scope** (Assumption)
+   - **Current**: SVG images not supported in Image Ask
+   - **Technical reason**: SVGs aren't naturally "image pixels" — would need rasterization or special handling
+   - **Recommendation**: Document clearly in UI; consider for future sprint if demand exists
