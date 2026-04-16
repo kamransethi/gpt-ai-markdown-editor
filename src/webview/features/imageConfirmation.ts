@@ -50,12 +50,15 @@ export function setSessionMediaPath(value: string | null): void {
  * Returns null if user cancels, otherwise returns options
  */
 export async function confirmImageDrop(
-  fileCount: number,
-  defaultFolder: string = 'images'
+  fileCount: number
 ): Promise<ImageDropOptions | null> {
   // Get current settings (use session overrides if available)
-  const currentMediaPathBase = sessionMediaPathBase || ((window as any).mediaPathBase as string | undefined) || 'sameNameFolder';
-  const currentMediaPath = sessionMediaPath || ((window as any).mediaPath as string | undefined) || 'media';
+  const currentMediaPathBase =
+    sessionMediaPathBase ||
+    ((window as any).mediaPathBase as string | undefined) ||
+    'sameNameFolder';
+  const currentMediaPath =
+    sessionMediaPath || ((window as any).mediaPath as string | undefined) || 'media';
 
   const COMMON_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 
@@ -65,20 +68,24 @@ export async function confirmImageDrop(
     const handleSave = () => {
       if (resolved) return;
       resolved = true;
-      const folder = folderInput.value.trim() || defaultFolder;
       const remember = rememberCheckbox.checked;
       const newMediaPathBase = pathBaseSelect.value;
       const newMediaPath = mediaPathInput.value.trim() || 'media';
+      const targetFolder = newMediaPath; // Use mediaPath as the folder
 
       // Save to session storage
-      if (remember || newMediaPathBase !== currentMediaPathBase || newMediaPath !== currentMediaPath) {
+      if (
+        remember ||
+        newMediaPathBase !== currentMediaPathBase ||
+        newMediaPath !== currentMediaPath
+      ) {
         setSessionMediaPathBase(newMediaPathBase);
         setSessionMediaPath(newMediaPath);
       }
 
       remove();
       resolve({
-        targetFolder: folder,
+        targetFolder,
         rememberChoice: remember,
         mediaPathBase: newMediaPathBase,
         mediaPath: newMediaPath,
@@ -155,32 +162,6 @@ export async function confirmImageDrop(
           </div>
         </div>
 
-        <!-- Folder Customization -->
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--md-foreground); font-size: 13px; font-weight: 500; font-family: ${COMMON_FONT};">
-            Save to folder (override):
-          </label>
-          <input
-            type="text"
-            id="image-folder-input"
-            value="${defaultFolder}"
-            style="
-              width: 100%;
-              padding: 6px 8px;
-              background: var(--md-input-bg);
-              color: var(--md-input-fg);
-              border: 1px solid var(--md-border);
-              border-radius: 3px;
-              font-family: ${COMMON_FONT};
-              font-size: 13px;
-            "
-            placeholder="e.g., images, assets/img"
-          />
-          <small style="display: block; margin-top: 4px; color: var(--md-muted); font-family: ${COMMON_FONT};">
-            Leave blank to use default. This is a one-time override.
-          </small>
-        </div>
-
         <!-- Remember Choice -->
         <div style="margin-bottom: 20px;">
           <label style="display: flex; align-items: center; color: var(--md-foreground); cursor: pointer; font-family: ${COMMON_FONT}; font-size: 13px;">
@@ -203,7 +184,6 @@ export async function confirmImageDrop(
 
     const pathBaseSelect = dialog.querySelector('#path-base-select') as HTMLSelectElement;
     const mediaPathInput = dialog.querySelector('#media-path-input') as HTMLInputElement;
-    const folderInput = dialog.querySelector('#image-folder-input') as HTMLInputElement;
     const rememberCheckbox = dialog.querySelector('#remember-choice') as HTMLInputElement;
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
     const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
@@ -211,15 +191,15 @@ export async function confirmImageDrop(
     // Set current values
     pathBaseSelect.value = currentMediaPathBase;
 
-    folderInput.focus();
-    folderInput.select();
+    mediaPathInput.focus();
+    mediaPathInput.select();
 
     saveBtn.addEventListener('click', handleSave);
     cancelBtn.addEventListener('click', handleCancel);
 
-    // Enter to save
+    // Enter in any field (except dropdown) to save
     dialog.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && e.target !== folderInput) {
+      if (e.key === 'Enter' && e.target !== pathBaseSelect) {
         e.preventDefault();
         handleSave();
       }

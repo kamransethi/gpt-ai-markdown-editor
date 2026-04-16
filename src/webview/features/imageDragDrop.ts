@@ -23,7 +23,6 @@ import {
   confirmImageDrop,
   getRememberedFolder,
   setRememberedFolder,
-  getDefaultImagePath,
 } from './imageConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
 import { devLog } from '../utils/devLog';
@@ -279,7 +278,7 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
 
   // If no remembered preference, show confirmation dialog
   if (!targetFolder) {
-    const options = await confirmImageDrop(files.length, getDefaultImagePath());
+    const options = await confirmImageDrop(files.length);
     if (!options) {
       // User cancelled
       return;
@@ -369,7 +368,7 @@ async function handlePaste(e: ClipboardEvent, editor: Editor, vscodeApi: VsCodeA
 
     let targetFolder = getRememberedFolder();
     if (!targetFolder) {
-      const options = await confirmImageDrop(files.length, getDefaultImagePath());
+      const options = await confirmImageDrop(files.length);
       if (!options) {
         return;
       }
@@ -434,7 +433,7 @@ async function handlePaste(e: ClipboardEvent, editor: Editor, vscodeApi: VsCodeA
       let targetFolder = getRememberedFolder();
 
       if (!targetFolder) {
-        const options = await confirmImageDrop(1, getDefaultImagePath());
+        const options = await confirmImageDrop(1);
         if (!options) {
           return;
         }
