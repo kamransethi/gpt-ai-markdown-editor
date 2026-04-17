@@ -108,15 +108,15 @@ Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedLis
 
 ## 5. Complex Tables
 
-This table contains cells with bullet points separated by `<br />-` elements as requested.
+This table contains cells with bullet points separated by `<br>-` elements as requested.
 
 
 | Feature Type   | Description / Details    | Status |
 | -------------- | ------------------------ | ------ |
-| **Formatting** | - Bold<br />- Italic<br />- <mark>Highlight</mark> | ✅      |
-| **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra      | 🌀     |
-| **Media**      | - Images<br />- Videos<br />- Audio files            | 🎬     |
-| **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes         | 🚀     |
+| **Formatting** | - Bold<br>- Italic<br>- <mark>Highlight</mark> | ✅      |
+| **Logic**      | - Logical operators<br>- Bitwise shifts<br>- Boolean algebra      | 🌀     |
+| **Media**      | - Images<br>- Videos<br>- Audio files            | 🎬     |
+| **Advanced**   | - Mermaid Charts<br>- LaTeX Formulas<br>- Footnotes         | 🚀     |
 
 
 

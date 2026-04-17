@@ -115,7 +115,7 @@ export function serializeTableMatrixAsMarkdown(matrix: TableMatrix): string {
   const divider = Array.from({ length: columnCount }, () => '---');
   const bodyRows = normalized.slice(1);
   const lines = [header, divider, ...bodyRows].map(
-    row => `| ${row.map(cell => cell.replace(/\n/g, '<br />')).join(' | ')} |`
+    row => `| ${row.map(cell => cell.replace(/\n/g, '<br>')).join(' | ')} |`
   );
   return `${lines.join('\n')}\n`;
 }
@@ -142,7 +142,7 @@ export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
   const renderRow = (row: string[], cellTag: 'th' | 'td') =>
     `<tr>${row
       .map(cell => {
-        const content = escapeHtml(cell).replace(/\n/g, '<br />');
+        const content = escapeHtml(cell).replace(/\n/g, '<br>');
         // ProseMirror requires at least one block node inside table cells.
         // Empty <td></td> violates the schema — wrap with <p></p>.
         return `<${cellTag}>${content || '<p></p>'}</${cellTag}>`;

@@ -35,7 +35,7 @@ describe('HTML Preservation Markdown Parsing', () => {
       `
 | Test                                            |
 | ----------------------------------------------- |
-| **Works: This is bold text**<br />*Works: This is italics text*<br />~~*Works: This is strikethrough italics text*~~<br /><br />Sample:<br />    * <babayetu>Item 2</babayetu> <br />    * Item 2<br />    * Item 3 is ==now== ==highlighted==<br /><br />\`sdadasdasd\` |
+| **Works: This is bold text**<br>*Works: This is italics text*<br>~~*Works: This is strikethrough italics text*~~<br><br>Sample:<br>    * <babayetu>Item 2</babayetu> <br>    * Item 2<br>    * Item 3 is ==now== ==highlighted==<br><br>\`sdadasdasd\` |
 `,
       { parseOptions: { preserveWhitespace: 'full' } }
     );

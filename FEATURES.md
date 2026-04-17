@@ -12,7 +12,7 @@ A premium WYSIWYG markdown editing experience inside VS Code. Write naturally, f
 
 - **WYSIWYG editing** — Live rendered markdown as you type, no split panes needed
 - **Distraction-free writing** — Serif typography (Charter/Georgia), generous spacing
-- **Auto-formatting** — Type `# ` for headings, `- ` for lists, `> ` for blockquotes, ````` for code blocks, `[]` for task lists
+- **Auto-formatting** — Type `#`  for headings, `-`  for lists, `>`  for blockquotes, ````` for code blocks, `[]` for task lists
 - **Undo / Redo** — Full history (100 levels) with Cmd/Ctrl+Z and Cmd/Ctrl+Shift+Z
 - **Emoji insertion** — Insert emoji from the toolbar or right-click context menu
 
@@ -50,6 +50,7 @@ A persistent toolbar at the top of the editor with the same formatting options, 
 - [x] **Export** — PDF, Word (DOCX)
   - [ ] **View** — Toggle outline, Source view, Copy as Markdown, Configuration, Zoom
   - [ ] Sample Text
+
 - **Help (?)** — About dialog with version info, documentation links, issue reporting, and community discussions
 - **Theme toggle (☀/🌙)** — Switch between light and dark editor themes
 
@@ -71,7 +72,7 @@ A persistent toolbar at the top of the editor with the same formatting options, 
 
 - Full visual styling for H1–H6
 - Heading dropdown in toolbar (Paragraph, H1–H6)
-- Auto-created via markdown syntax (`# `, `## `, etc.)
+- Auto-created via markdown syntax (`#` , `##` , etc.)
 
 ---
 
@@ -85,8 +86,8 @@ A persistent toolbar at the top of the editor with the same formatting options, 
   2. Second item
   3. Third item
 - Task / checkbox lists:
-  - [ ] Completed task
-  - [ ] Pending task
+  - Completed task
+  - Pending task
 - Nested indentation with **Tab** / **Shift+Tab**
 - Checkbox toggling by clicking
 
@@ -94,7 +95,7 @@ A persistent toolbar at the top of the editor with the same formatting options, 
 
 ## Blockquotes
 
-> Blockquotes are fully supported with visual styling. Insert via the **Blocks** dropdown in the toolbar or type `> ` at the start of a line.
+> Blockquotes are fully supported with visual styling. Insert via the **Blocks** dropdown in the toolbar or type `>`  at the start of a line.
 
 > Nested blockquotes work too:
 > > Second level quote
@@ -143,7 +144,7 @@ The Table dropdown in the header toolbar provides full management:
 
 ![Drag & drop images](marketplace-assets/screenshots/Drag%20Drop%20Image%20Insertions.png)
 
-- **Drag & drop** from desktop or VS Code Explorer directly into the editor
+- **Drag &amp; drop** from desktop or VS Code Explorer directly into the editor
 - **Toolbar insert** — Insert image via the Insert dropdown menu
 - **In-place resizing** — Drag corner handles to adjust width with live preview
 - **Image renaming** — Change filename without leaving the editor (updates disk + markdown)
@@ -212,7 +213,6 @@ Links work in three modes — here's a live demonstration:
 - **Esc to close**
 
 ---
-
 
 Both formats are loaded regardless of the setting — only the **save** format changes.
 
@@ -321,7 +321,7 @@ $
 
 ---
 
-## Copy & Paste
+## Copy &amp; Paste
 
 ### Copy
 
@@ -445,22 +445,22 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 ### All Configuration Options
 
 
-| Setting                      | Type    | Default          | Description                                            |
-| ---------------------------- | ------- | ---------------- | ------------------------------------------------------ |
-| `mediaPath`                  | string  | `media`          | Subfolder name for saved media files                   |
-| `mediaPathBase`              | enum    | `sameNameFolder` | Where media files are saved                            |
-| `chromePath`                 | string  | (auto-detect)    | Chrome/Chromium path for PDF export                    |
-| `imageResize.skipWarning`    | boolean | `false`          | Skip resize confirmation dialog                        |
-| `lineSpacing`                | number  | `1`              | Line height multiplier (1–3)                           |
-| `paragraphSpacing`           | number  | `1`              | Paragraph gap in em (0–3)                              |
-| `tableCellSpacing`           | number  | `0.1`            | Table cell vertical padding in em (0–2)                |
-| `tableCellHorizontalSpacing` | number  | `0.2`            | Table cell horizontal padding in em (0–3)              |
-| `themeOverride`              | enum    | `light`          | Editor theme: light or dark                            |
-| `tocMaxDepth`                | number  | `3`              | Max heading depth in outline (1–6)                     |
-| `preserveHtmlComments`       | boolean | `false`          | Preserve `<!-- -->` comments                           |
-| `editorZoomLevel`            | number  | `1`              | Editor zoom (0.7–1.5)                                  |
-| `aiModel`                    | enum    | `gpt-4.1`        | AI model for text refinement (8 options)               |
-| `developerMode`              | boolean | `true`           | Show detailed runtime errors                           |
+| Setting                      | Type    | Default          | Description                               |
+| ---------------------------- | ------- | ---------------- | ----------------------------------------- |
+| `mediaPath`                  | string  | `media`          | Subfolder name for saved media files      |
+| `mediaPathBase`              | enum    | `sameNameFolder` | Where media files are saved               |
+| `chromePath`                 | string  | (auto-detect)    | Chrome/Chromium path for PDF export       |
+| `imageResize.skipWarning`    | boolean | `false`          | Skip resize confirmation dialog           |
+| `lineSpacing`                | number  | `1`              | Line height multiplier (1–3)              |
+| `paragraphSpacing`           | number  | `1`              | Paragraph gap in em (0–3)                 |
+| `tableCellSpacing`           | number  | `0.1`            | Table cell vertical padding in em (0–2)   |
+| `tableCellHorizontalSpacing` | number  | `0.2`            | Table cell horizontal padding in em (0–3) |
+| `themeOverride`              | enum    | `light`          | Editor theme: light or dark               |
+| `tocMaxDepth`                | number  | `3`              | Max heading depth in outline (1–6)        |
+| `preserveHtmlComments`       | boolean | `false`          | Preserve `<!-- -->` comments              |
+| `editorZoomLevel`            | number  | `1`              | Editor zoom (0.7–1.5)                     |
+| `aiModel`                    | enum    | `gpt-4.1`        | AI model for text refinement (8 options)  |
+| `developerMode`              | boolean | `true`           | Show detailed runtime errors              |
 
 
 ---
@@ -530,8 +530,8 @@ Command `gptAiMarkdownEditor.toggleSource` opens the raw markdown source in a VS
 
 | Metric                | Budget                 |
 | --------------------- | ---------------------- |
-| Editor initialization | < 500ms                |
-| Typing latency        | < 16ms                 |
-| Interactions          | < 50ms                 |
-| Menu/toolbar actions  | < 300ms                |
+| Editor initialization | &lt; 500ms             |
+| Typing latency        | &lt; 16ms              |
+| Interactions          | &lt; 50ms              |
+| Menu/toolbar actions  | &lt; 300ms             |
 | Large documents       | 10,000+ lines smoothly |

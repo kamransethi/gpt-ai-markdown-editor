@@ -101,9 +101,9 @@ export function getEditorMarkdownForSync(editor: Editor): string {
 
   const sanitizeSerialized = (content: string): string => {
     // @tiptap/markdown sometimes serializes hard breaks in tables as \x1F (Unit Separator).
-    // Let's replace those with standard markdown <br /> tags so they don't corrupt the file.
+    // Let's replace those with standard markdown <br> tags so they don't corrupt the file.
     // eslint-disable-next-line no-control-regex
-    const sanitized = content.replace(/\x1F/g, '<br />');
+    const sanitized = content.replace(/\x1F/g, '<br>');
     // Collapse over-produced blank lines from blank-line placeholder nodes (≥4 \n → 3 \n)
     return normalizeBlankLines(sanitized);
   };

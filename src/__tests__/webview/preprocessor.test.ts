@@ -5,7 +5,7 @@
  * Validates that:
  * 1. Unknown HTML tags in plain text are stripped but content is kept
  * 2. Code blocks and inline code spans are NEVER modified
- * 3. Known tags like <br />, <strong>, etc. are preserved
+ * 3. Known tags like <br>, <strong>, etc. are preserved
  * 4. <mark> is converted to == for Highlight
  */
 
@@ -97,9 +97,9 @@ describe('preprocessMarkdownContent (AST-based)', () => {
     expect(result).not.toContain('<babayetu>');
   });
 
-  it('should preserve known tags like <br />', () => {
-    const input = 'Hello<br />World';
-    expect(preprocessMarkdownContent(input)).toContain('<br />');
+  it('should preserve known tags like <br>', () => {
+    const input = 'Hello<br>World';
+    expect(preprocessMarkdownContent(input)).toContain('<br>');
   });
 
   it('should convert <mark> to == for Highlight', () => {
@@ -133,11 +133,11 @@ describe('preprocessMarkdownContent (AST-based)', () => {
   });
 
   it('should handle the full user test case from table cells', () => {
-    const input = '**Bold** text<br /><babayetu>Text</babayetu> ' + '`code <tag a></tag a>` ==hi==';
+    const input = '**Bold** text<br><babayetu>Text</babayetu> ' + '`code <tag a></tag a>` ==hi==';
     const result = preprocessMarkdownContent(input);
     expect(result).toContain('Text');
     expect(result).toContain('<tag a>');
-    expect(result).toContain('<br />');
+    expect(result).toContain('<br>');
     expect(result).not.toContain('<babayetu>');
   });
 

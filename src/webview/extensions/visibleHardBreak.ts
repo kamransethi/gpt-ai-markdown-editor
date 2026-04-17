@@ -5,7 +5,7 @@ export const VisibleHardBreak = HardBreak.extend({
     return [
       'span',
       { class: 'hard-break-wrapper' },
-      ['span', { class: 'hard-break-label', contenteditable: 'false' }, '<br />'],
+      ['span', { class: 'hard-break-label', contenteditable: 'false' }, '<br>'],
       ['br', HTMLAttributes],
     ];
   },

@@ -9,11 +9,11 @@ import { getSelectedTableLines } from '../utils/tableSelectionUtils';
 
 /**
  * When the cursor is inside a table cell, intercept the plain Enter key
- * and insert a hardBreak (<br />) instead of creating a new paragraph.
+ * and insert a hardBreak (<br>) instead of creating a new paragraph.
  *
  * This ensures that:
  * 1. Enter and Shift+Enter behave identically inside table cells
- * 2. The serialized markdown always uses <br /> for line breaks within cells
+ * 2. The serialized markdown always uses <br> for line breaks within cells
  * 3. Table structure is never broken by paragraph-level newlines
  *
  * Outside of table cells, Enter behaves normally (creates a new paragraph).

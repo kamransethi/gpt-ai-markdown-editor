@@ -25,17 +25,17 @@ User attempts to export a markdown document containing bullet lists to `.docx` f
 
 ### User Story 2 - Export Bullet Lists in Table Cells to DOCX (Priority: P1)
 
-User creates a table where individual cells contain bullet lists separated by `<br />` tags (e.g., `- Item 1<br />- Item 2<br />- Item 3`). When exporting to DOCX, each bullet should appear on its own line within the cell, not collapsed onto one line.
+User creates a table where individual cells contain bullet lists separated by `<br>` tags (e.g., `- Item 1<br>- Item 2<br>- Item 3`). When exporting to DOCX, each bullet should appear on its own line within the cell, not collapsed onto one line.
 
 **Why this priority**: Tables with bullet items are a documented use case (see STRESS_TEST_DOC.md). Users expect the same formatting preservation in tables as in regular content.
 
-**Independent Test**: Export a document containing a table with cells that have bullets separated by `<br />` tags. Verify each bullet appears on its own line within the table cell in the resulting `.docx` file.
+**Independent Test**: Export a document containing a table with cells that have bullets separated by `<br>` tags. Verify each bullet appears on its own line within the table cell in the resulting `.docx` file.
 
 **Acceptance Scenarios**:
 
-1. **Given** a table cell containing bullets like `- Item 1<br />- Item 2<br />- Item 3`, **When** user exports to DOCX, **Then** each item appears on a separate line within that table cell
-2. **Given** a table with multiple cells containing `<br />` separated bullets, **When** user exports to DOCX, **Then** all cells render with proper line breaks (not collapsed)
-3. **Given** table cells with `<br />` followed by bullet markers or other content, **When** user exports to DOCX, **Then** structure is correctly preserved
+1. **Given** a table cell containing bullets like `- Item 1<br>- Item 2<br>- Item 3`, **When** user exports to DOCX, **Then** each item appears on a separate line within that table cell
+2. **Given** a table with multiple cells containing `<br>` separated bullets, **When** user exports to DOCX, **Then** all cells render with proper line breaks (not collapsed)
+3. **Given** table cells with `<br>` followed by bullet markers or other content, **When** user exports to DOCX, **Then** structure is correctly preserved
 
 ---
 
@@ -45,7 +45,7 @@ User creates a table where individual cells contain bullet lists separated by `<
 - How does the system handle bullet lists with code blocks or nested elements?
 - What if the markdown has inconsistent spacing between bullet items?
 - Does the fix work correctly with ordered lists (`1.`, `2.`) in addition to unordered lists (`-`, `*`, `+`)?
-- How are `<br />` tags inside table cells currently being handled? Are they being converted to line breaks?
+- How are `<br>` tags inside table cells currently being handled? Are they being converted to line breaks?
 - Do bullets in table cells have a different structure than standalone bullets?
 
 ## Requirements
@@ -56,7 +56,7 @@ User creates a table where individual cells contain bullet lists separated by `<
 - **FR-002**: System MUST ensure each bullet list item renders on a separate line in the exported Word document (not collapsed)
 - **FR-003**: System MUST handle various bullet markers (`-`, `*`, `+`) and ordered list markers (`1.`, `2.`, etc.)
 - **FR-004**: System MUST prevent the existing markdown normalization regex from removing necessary newlines between list items
-- **FR-005**: System MUST convert `<br />` tags in table cells that precede bullet markers to proper markdown newlines so bullets are recognized as separate items
+- **FR-005**: System MUST convert `<br>` tags in table cells that precede bullet markers to proper markdown newlines so bullets are recognized as separate items
 - **FR-006**: System SHOULD apply any new Lua filter changes consistently across DOCX exports
 - **FR-007**: System MUST maintain backward compatibility with existing Pandoc export features (tables, colors, alerts, mermaid diagrams)
 
@@ -74,11 +74,11 @@ removes multiple newlines before list items, collapsing them. While this may be 
 
 **Issue 2: Bullets in Table Cells**
 
-When table cells contain bullet points separated by `<br />` tags (e.g., `- Item 1<br />- Item 2`), the current [table_formatting.lua](src/features/pandoc/lua/table_formatting.lua) converts HTML `<br />` to `pandoc.LineBreak()`, but this doesn't give Pandoc enough context to recognize subsequent bullets as separate list items. The bullets remain within a single paragraph in the table cell, causing them to collapse onto one line.
+When table cells contain bullet points separated by `<br>` tags (e.g., `- Item 1<br>- Item 2`), the current [table_formatting.lua](src/features/pandoc/lua/table_formatting.lua) converts HTML `<br>` to `pandoc.LineBreak()`, but this doesn't give Pandoc enough context to recognize subsequent bullets as separate list items. The bullets remain within a single paragraph in the table cell, causing them to collapse onto one line.
 
 **Solution Approach:**
 
-Update `table_formatting.lua` to detect `<br />` followed by a bullet marker (or ordered list marker) and convert it to a proper markdown structure that Pandoc's parser can recognize as a list item boundary.
+Update `table_formatting.lua` to detect `<br>` followed by a bullet marker (or ordered list marker) and convert it to a proper markdown structure that Pandoc's parser can recognize as a list item boundary.
 
 ### Existing Lua Filters (Reference)
 
@@ -91,7 +91,7 @@ The following Lua filters are already applied during DOCX export:
 ## Success Criteria
 
 1. **Correct bullet rendering**: Standalone bullet lists with 3+ items export to DOCX with each item on a separate line (verifiable by opening the `.docx` file in Word or PDF reader)
-2. **Correct table cell bullets**: Bullet lists within table cells (separated by `<br />` tags) render with each item on a separate line within the cell
+2. **Correct table cell bullets**: Bullet lists within table cells (separated by `<br>` tags) render with each item on a separate line within the cell
 3. **No regression**: Existing export features (table borders, text colors, GitHub alerts, mermaid diagrams) continue to work as expected
 4. **All list types supported**: Both unordered lists (`-`, `*`, `+`) and ordered lists (`1.`, `2.`) render correctly in both standalone and table contexts
 5. **Performance**: Export process completes in the same or faster time as before the fix
@@ -100,10 +100,10 @@ The following Lua filters are already applied during DOCX export:
 ## Assumptions
 
 - Pandoc version in use supports Lua filters (5.0+)
-- The root cause is the combination of regex normalization (for standalone lists) and inadequate `<br />` handling in table cells
+- The root cause is the combination of regex normalization (for standalone lists) and inadequate `<br>` handling in table cells
 - Users have Word or compatible software to validate `.docx` exports
 - Fix applies to DOCX exports; PDF exports already work correctly
-- Table cells use `<br />` tags to separate bullet items (as seen in STRESS_TEST_DOC.md)
+- Table cells use `<br>` tags to separate bullet items (as seen in STRESS_TEST_DOC.md)
 
 ## Implementation Strategy
 
@@ -112,7 +112,7 @@ The following Lua filters are already applied during DOCX export:
 - Only collapse 3+ consecutive newlines, not 2+
 
 **Phase 2: Enhanced Table Cell Processing (table_formatting.lua)**
-- Enhance the `RawInline` function to detect `<br />` followed by bullet markers
+- Enhance the `RawInline` function to detect `<br>` followed by bullet markers
 - Convert such patterns to proper markdown structure with actual newlines
 - Ensure ordered list markers (`1.`, `2.`, etc.) are also handled
 - Test with mixed content (bullets, text, formatting)

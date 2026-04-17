@@ -986,7 +986,7 @@ function initializeEditor(initialContent: string) {
           breaks: true, // Preserve single newlines as <br>
         },
       }),
-      // Custom Table extension that handles <br /> correctly and
+      // Custom Table extension that handles <br> correctly and
       // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>
       // for content rows (browsers auto-insert <tbody> during DOM parsing,
       // which would otherwise cause literal "<tbody>" text in cells).
@@ -1040,7 +1040,7 @@ function initializeEditor(initialContent: string) {
       OrderedListMarkdownFix,
       TabIndentation, // Enable Tab/Shift+Tab for list indentation
       ImageEnterSpacing, // Handle Enter key around images and gap cursor
-      TableCellEnterHandler, // Make Enter in table cells insert <br /> instead of new paragraph
+      TableCellEnterHandler, // Make Enter in table cells insert <br> instead of new paragraph
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {

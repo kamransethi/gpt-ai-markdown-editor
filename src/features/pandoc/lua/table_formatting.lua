@@ -8,14 +8,14 @@ function RawInline(el)
 
   local text = (el.text or ""):lower()
   if text:match("^<br%s*/?>$") then
-    -- Convert <br /> to LineBreak, which will be handled by Pandoc
+    -- Convert <br> to LineBreak, which will be handled by Pandoc
     return pandoc.LineBreak()
   end
 
   return nil
 end
 
--- Process Para nodes in table cells to convert <br /> + bullet patterns into proper markdown
+-- Process Para nodes in table cells to convert <br> + bullet patterns into proper markdown
 -- This ensures bullets after line breaks are recognized as separate list items
 function Para(el)
   -- Check if this paragraph contains line breaks followed by bullet-like content

@@ -14,14 +14,14 @@ Fixed a critical issue where bullet lists exported to DOCX would collapse onto a
 **Impact**: 
 
 - ✅ Standalone bullet lists now export with each item on a separate line
-- ✅ Bullet lists in table cells (separated by `<br />` tags) render correctly
+- ✅ Bullet lists in table cells (separated by `<br>` tags) render correctly
 - ✅ Both ordered and unordered lists supported
 - ✅ Backward compatible with existing features (tables, colors, alerts, mermaid diagrams)
 
 **Changes**:
 
 - Adjusted markdown normalization regex in `documentExport.ts` to preserve 2-newline runs before list items (only collapse 3+ newlines)
-- Enhanced `table_formatting.lua` Pandoc filter to detect `<br />` + bullet patterns and convert to proper markdown list structures
+- Enhanced `table_formatting.lua` Pandoc filter to detect `<br>` + bullet patterns and convert to proper markdown list structures
 - Test coverage for all list type combinations
 
 **Files Modified**:
