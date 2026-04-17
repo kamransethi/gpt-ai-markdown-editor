@@ -19,6 +19,10 @@ import { CustomImage } from './extensions/customImage';
 import { lowlight } from 'lowlight';
 import { Mermaid } from './extensions/mermaid';
 import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
+import {
+  parsePreservedCodeBlock,
+  renderPreservedCodeBlock,
+} from './extensions/preservedCodeBlock';
 import { SpaceFriendlyImagePaths } from './extensions/spaceFriendlyImagePaths';
 import { TabIndentation } from './extensions/tabIndentation';
 import { GitHubAlerts } from './extensions/githubAlerts';
@@ -27,7 +31,6 @@ import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { HtmlPreservingTable } from './extensions/htmlPreservingTable';
 import { DocumentAuditExtension } from './features/auditDocument';
-import { DraggableBlocks } from './extensions/draggableBlocks';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
 import {
@@ -431,7 +434,26 @@ function initializeEditor(initialContent: string) {
           },
         }),
         MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
-        CodeBlockLowlight.configure({
+        CodeBlockLowlight.extend({
+          addAttributes() {
+            return {
+              ...this.parent?.(),
+              'indent-prefix': {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-indent-prefix'),
+                renderHTML: (attributes) => {
+                  const prefix = attributes['indent-prefix'];
+                  if (typeof prefix !== 'string' || prefix.length === 0) {
+                    return {};
+                  }
+                  return { 'data-indent-prefix': prefix };
+                },
+              },
+            };
+          },
+          parseMarkdown: parsePreservedCodeBlock,
+          renderMarkdown: renderPreservedCodeBlock,
+        }).configure({
           lowlight,
           HTMLAttributes: {
             class: 'code-block-highlighted',
@@ -481,7 +503,6 @@ function initializeEditor(initialContent: string) {
           getShowImageHoverOverlay: () => (window as any).showImageHoverOverlay,
         } as any),
         DocumentAuditExtension,
-        DraggableBlocks,
       ],
       // Don't pass content here - we'll set it after init with contentType: 'markdown'
       editorProps: {
