@@ -889,7 +889,8 @@ export async function handleOpenDrawioFile(
  */
 async function openWithDrawio(uri: vscode.Uri): Promise<void> {
   try {
-    await vscode.commands.executeCommand('vscode.open', uri);
+    // Open beside the current editor so the markdown editor stays open.
+    await vscode.commands.executeCommand('vscode.open', uri, vscode.ViewColumn.Beside);
   } catch (err) {
     vscode.window.showErrorMessage(`Failed to open diagram: ${toErrorMessage(err)}`);
   }
