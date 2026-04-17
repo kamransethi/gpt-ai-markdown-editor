@@ -23,6 +23,7 @@ import { TIPTAP_ICONS, createSvgIcon } from './icons/tiptapIcons';
 import { buildSharedTableOps } from './utils/sharedTableOps';
 import { ToolbarStateHandler } from './handlers/ToolbarStateHandler';
 import { ToolbarAuxControlsFactory } from './factories/ToolbarAuxControlsFactory';
+import { MessageType } from '../shared/messageTypes';
 
 // Store reference to refresh functions so they can be called externally
 const toolbarRefreshFunctions: Array<() => void> = [];
@@ -156,6 +157,7 @@ type ToolbarSplitButton = {
   isActive?: () => boolean;
   action: () => void;
   dropdownItems: ToolbarDropdownItem[];
+  _dynamicDropdown?: boolean; // Internal flag to mark dynamic dropdown (e.g., markdown file list)
 };
 
 type ToolbarSeparator = { type: 'separator' };
@@ -349,6 +351,11 @@ function closeAllDropdowns(options?: { keepOverflow?: boolean }) {
     (btn as HTMLElement).setAttribute('aria-expanded', 'false');
   });
 }
+
+/**
+ * Export closeAllDropdowns for external use (e.g., from message handlers)
+ */
+export { closeAllDropdowns };
 
 /**
  * Update toolbar active states (can be called from outside)
@@ -617,7 +624,10 @@ export function createFormattingToolbar(
                 new CustomEvent('exportDocument', { detail: { format: 'pdf' } })
               ),
           },
+          { label: '', action: () => {}, isSeparator: true },
+          { label: 'Save and Open', action: () => {}, isSectionLabel: true },
         ],
+        _dynamicDropdown: true, // Mark this button for dynamic markdown file loading
       },
       { type: 'separator' },
       ...sharedControls,
@@ -1253,6 +1263,18 @@ export function createFormattingToolbar(
         if (splitToggle.disabled) return;
         const isMenuVisible = splitMenu.style.display === 'block';
         closeAllDropdowns({ keepOverflow: true });
+        
+        // If opening the menu and this is a dynamic dropdown, fetch markdown files
+        if (!isMenuVisible && btn._dynamicDropdown) {
+          const vscodeApi = window.vscode;
+          if (vscodeApi) {
+            vscodeApi.postMessage({ type: MessageType.GET_MARKDOWN_FILES });
+          }
+          // Store reference to menu for later population
+          (window as any).__saveDropdownMenu = splitMenu;
+          (window as any).__saveButton = btn;
+        }
+        
         splitMenu.style.display = isMenuVisible ? 'none' : 'block';
         splitToggle.setAttribute('aria-expanded', isMenuVisible ? 'false' : 'true');
       };

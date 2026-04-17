@@ -80,6 +80,7 @@ import { MessageType } from '../shared/messageTypes';
 import { toErrorMessage } from '../shared/errorUtils';
 import { debounce, rafThrottle } from './utils/debounce';
 import * as YAML from 'js-yaml';
+import { closeAllDropdowns } from './BubbleMenuView';
 
 /**
  * Tags that TipTap handles natively — never strip these.
@@ -1539,6 +1540,49 @@ window.addEventListener('message', (event: MessageEvent) => {
           const requestId = message.requestId as number;
           handleFileHeadingsResult(headings, requestId);
         });
+        break;
+      }
+      case MessageType.MARKDOWN_FILES_RESULT: {
+        // Populate the save button dropdown with markdown files
+        const files = message.files as Array<{ name: string; path: string }> || [];
+        const dropdownMenu = (window as any).__saveDropdownMenu as HTMLElement;
+        
+        if (dropdownMenu) {
+          // Find and remove existing markdown file items (after "Save and Open" label)
+          const saveOpenLabel = Array.from(dropdownMenu.querySelectorAll('.toolbar-dropdown-section-label'))
+            .find(el => el.textContent === 'Save and Open');
+          
+          if (saveOpenLabel) {
+            // Remove all items after the "Save and Open" label
+            let next = saveOpenLabel.nextElementSibling;
+            while (next && !next.classList.contains('toolbar-dropdown-section-label')) {
+              const toRemove = next;
+              next = next.nextElementSibling;
+              toRemove.remove();
+            }
+            
+            // Add file items
+            files.forEach(file => {
+              const fileItem = document.createElement('button');
+              fileItem.type = 'button';
+              fileItem.className = 'toolbar-dropdown-item';
+              fileItem.title = file.name;
+              fileItem.setAttribute('aria-label', file.name);
+              fileItem.textContent = file.name;
+              fileItem.onclick = e => {
+                e.preventDefault();
+                e.stopPropagation();
+                vscode.postMessage({
+                  type: MessageType.SAVE_AND_OPEN_FILE,
+                  filePath: file.path,
+                });
+                // Close dropdown
+                closeAllDropdowns();
+              };
+              dropdownMenu.appendChild(fileItem);
+            });
+          }
+        }
         break;
       }
       case MessageType.EXPORT_RESULT:

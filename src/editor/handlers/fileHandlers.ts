@@ -28,6 +28,8 @@ export function registerFileHandlers(router: MessageRouter): void {
   router.register(MessageType.OPEN_FILE_LINK, handleOpenFileLink);
   router.register(MessageType.BROWSE_LOCAL_FILE, handleBrowseLocalFile);
   router.register(MessageType.HANDLE_FILE_LINK_DROP, handleFileLinkDrop);
+  router.register(MessageType.GET_MARKDOWN_FILES, handleGetMarkdownFiles);
+  router.register(MessageType.SAVE_AND_OPEN_FILE, handleSaveAndOpenFile);
 }
 
 export async function handleOpenFileAtLocation(
@@ -693,4 +695,79 @@ export async function handleFileLinkDrop(
     text: formatFileLinkLabel(path.basename(finalUri.fsPath)),
     insertPosition,
   });
+}
+
+/**
+ * Get list of markdown files in the same folder as the current document.
+ * Returns up to 30 files, sorted alphabetically.
+ */
+export async function handleGetMarkdownFiles(
+  _message: { type: string; [key: string]: unknown },
+  ctx: HandlerContext
+): Promise<void> {
+  const { document, webview } = ctx;
+
+  try {
+    const documentDir = path.dirname(document.uri.fsPath);
+    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(documentDir));
+
+    const markdownFiles = entries
+      .filter(([name, type]) => {
+        // File type 1 = file, and ends with .md
+        return type === vscode.FileType.File && name.toLowerCase().endsWith('.md');
+      })
+      .map(([name]) => ({
+        name,
+        path: path.join(documentDir, name),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 30); // Limit to 30 files
+
+    webview.postMessage({
+      type: MessageType.MARKDOWN_FILES_RESULT,
+      files: markdownFiles,
+    });
+  } catch (error) {
+    const errorMessage = toErrorMessage(error);
+    console.error(`[DK-AI] Failed to get markdown files: ${errorMessage}`);
+    webview.postMessage({
+      type: MessageType.MARKDOWN_FILES_RESULT,
+      files: [],
+      error: errorMessage,
+    });
+  }
+}
+
+/**
+ * Save current document and open the selected markdown file.
+ */
+export async function handleSaveAndOpenFile(
+  message: { type: string; [key: string]: unknown },
+  ctx: HandlerContext
+): Promise<void> {
+  const { document } = ctx;
+  const targetPath = message.filePath as string;
+
+  try {
+    if (!targetPath) {
+      throw new Error('Missing filePath');
+    }
+
+    // Save current document
+    if (document.isDirty) {
+      await document.save();
+    }
+
+    // Open the target file in the same editor
+    const uri = vscode.Uri.file(targetPath);
+    const doc = await vscode.workspace.openTextDocument(uri);
+    await vscode.window.showTextDocument(doc, {
+      viewColumn: vscode.ViewColumn.Active,
+      preserveFocus: false,
+    });
+  } catch (error) {
+    const errorMessage = toErrorMessage(error);
+    console.error(`[DK-AI] Failed to save and open file: ${errorMessage}`);
+    vscode.window.showErrorMessage(`Failed to save and open file: ${errorMessage}`);
+  }
 }
