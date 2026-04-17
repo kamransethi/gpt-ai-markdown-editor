@@ -23,7 +23,8 @@ const noSourcemap = args.includes('--no-sourcemap');
 
 const buildOptions = {
   entryPoints: [
-    { in: 'src/webview/editor.ts', out: 'webview' }
+    { in: 'src/webview/editor.ts', out: 'webview' },
+    { in: 'src/webview/settings/settingsPanel.ts', out: 'settings' }
   ],
   bundle: true,
   outdir: 'dist',

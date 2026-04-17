@@ -12,6 +12,7 @@ import { outlineViewProvider } from './features/outlineView';
 import { MessageType } from './shared/messageTypes';
 import { getProviderAvailabilityCached } from './features/llm/providerAvailability';
 import { handleProviderError } from './features/llm/providerErrorMessages';
+import { openSettingsPanel } from './editor/SettingsPanel';
 
 /**
  * Constants for default markdown viewer prompt feature
@@ -216,6 +217,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.getActiveDocumentUri', () => {
       return getActiveDocumentUri()?.toString();
+    })
+  );
+
+  // Open custom settings panel
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gptAiMarkdownEditor.openSettingsPanel', () => {
+      openSettingsPanel(context);
     })
   );
 

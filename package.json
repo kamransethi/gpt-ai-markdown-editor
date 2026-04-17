@@ -114,6 +114,10 @@
       {
         "command": "gptAiMarkdownEditor.getSelectedText",
         "title": "Flux Flow Markdown Editor: Get Selected Text"
+      },
+      {
+        "command": "gptAiMarkdownEditor.openSettingsPanel",
+        "title": "Flux Flow: Open Settings"
       }
     ],
     "views": {
