@@ -28,6 +28,7 @@ import { registerFileHandlers } from './handlers/fileHandlers';
 import { registerUiHandlers } from './handlers/uiHandlers';
 import { DocumentSync } from './handlers/documentSync';
 import { getImageBasePath } from './utils/pathUtils';
+import { openSettingsPanel } from './SettingsPanel';
 
 /**
  * Parse an image filename to extract source prefix
@@ -489,10 +490,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         );
         break;
       case MessageType.OPEN_EXTENSION_SETTINGS:
-        vscode.commands.executeCommand(
-          'workbench.action.openSettings',
-          '@ext:kamransethi.gpt-ai-markdown-editor'
-        );
+        openSettingsPanel(this.context);
         break;
 
       case MessageType.SHOW_ERROR:
