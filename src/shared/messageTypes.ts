@@ -71,6 +71,7 @@ export const MessageType = {
   OPEN_EXTERNAL_LINK: 'openExternalLink',
   OPEN_IMAGE: 'openImage',
   OPEN_IMAGE_PICKER: 'openImagePicker',
+  OPEN_DRAWIO_FILE: 'openDrawioFile',
 
   // ── UI commands ──
   OPEN_SOURCE_VIEW: 'openSourceView',

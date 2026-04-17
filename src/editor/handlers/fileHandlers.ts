@@ -31,6 +31,7 @@ export function registerFileHandlers(router: MessageRouter): void {
   router.register(MessageType.GET_MARKDOWN_FILES, handleGetMarkdownFiles);
   router.register(MessageType.SAVE_AND_OPEN_FILE, handleSaveAndOpenFile);
   router.register(MessageType.SAVE_FILES, handleSaveFiles);
+  router.register(MessageType.OPEN_DRAWIO_FILE, handleOpenDrawioFile);
 }
 
 export async function handleOpenFileAtLocation(
@@ -776,7 +777,8 @@ export async function handleSaveFiles(
   const { document, webview } = ctx;
   const requestId = message.requestId as string;
   const filesToSave = message.files as Array<{ name: string; data: number[]; mimeType: string }>;
-  const targetFolderName = (message.targetFolder as string) || ctx.getConfig<string>('mediaPath', 'media');
+  const targetFolderName =
+    (message.targetFolder as string) || ctx.getConfig<string>('mediaPath', 'media');
 
   if (!filesToSave || filesToSave.length === 0) {
     webview.postMessage({ type: MessageType.FILES_SAVED, requestId, savedFiles: [] });
@@ -814,5 +816,113 @@ export async function handleSaveFiles(
     const errorMessage = toErrorMessage(error);
     vscode.window.showErrorMessage(`Failed to save files: ${errorMessage}`);
     webview.postMessage({ type: MessageType.FILE_SAVE_ERROR, requestId, error: errorMessage });
+  }
+}
+
+/** Draw.io Integration extension editor ID (hediet.vscode-drawio) */
+const DRAWIO_EDITOR_ID = 'hediet.vscode-drawio';
+
+/** VS Code Marketplace deeplink for the draw.io extension */
+const DRAWIO_MARKETPLACE_URL =
+  'https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio';
+
+/**
+ * Open a .drawio.svg file in the Draw.io Integration extension.
+ *
+ * Resolution order:
+ * 1. Resolve the relative path against the current document's directory.
+ * 2. Try to open with `hediet.vscode-drawio` editor ID.
+ * 3. If that fails (extension not installed), offer two actions:
+ *    - "Install Draw.io Integration" → opens marketplace page
+ *    - "Open as SVG" → falls back to default VS Code viewer
+ */
+export async function handleOpenDrawioFile(
+  message: { type: string; [key: string]: unknown },
+  ctx: HandlerContext
+): Promise<void> {
+  const { document } = ctx;
+  const rawPath = String(message.path || '');
+  if (!rawPath) return;
+
+  // Resolve to absolute path (same strategy as handleOpenImage)
+  const normalizedPath = rawPath.startsWith('./') ? rawPath.slice(2) : rawPath;
+  let baseDir: string | undefined;
+  if (document.uri.scheme === 'file') {
+    baseDir = path.dirname(document.uri.fsPath);
+  } else {
+    baseDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  }
+
+  if (!baseDir) {
+    vscode.window.showWarningMessage('Cannot resolve diagram path: no base directory available');
+    return;
+  }
+
+  const fullPath = path.resolve(baseDir, normalizedPath);
+  const fileUri = vscode.Uri.file(fullPath);
+
+  // Verify the file exists before attempting to open
+  try {
+    await vscode.workspace.fs.stat(fileUri);
+  } catch {
+    // Try workspace root as fallback
+    let found = false;
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (workspaceFolder) {
+      const wsFullPath = path.resolve(workspaceFolder.uri.fsPath, normalizedPath);
+      const wsUri = vscode.Uri.file(wsFullPath);
+      try {
+        await vscode.workspace.fs.stat(wsUri);
+        // Use workspace-root-relative path
+        await openWithDrawio(vscode.Uri.file(wsFullPath));
+        found = true;
+      } catch {
+        // not found there either
+      }
+    }
+    if (!found) {
+      vscode.window.showErrorMessage(`Diagram file not found: ${rawPath}`);
+    }
+    return;
+  }
+
+  await openWithDrawio(fileUri);
+}
+
+/**
+ * Attempt to open `uri` with the Draw.io Integration extension.
+ * Falls back gracefully when the extension is not installed.
+ */
+async function openWithDrawio(uri: vscode.Uri): Promise<void> {
+  try {
+    await vscode.commands.executeCommand('vscode.openWith', uri, DRAWIO_EDITOR_ID);
+  } catch (err) {
+    // vscode.openWith rejects when the given editor ID is not registered,
+    // which happens when the draw.io extension is not installed.
+    const errMsg = toErrorMessage(err);
+    const isNotInstalled =
+      errMsg.includes('Unknown editor') ||
+      errMsg.includes('No editor') ||
+      errMsg.includes('not found') ||
+      errMsg.includes(DRAWIO_EDITOR_ID);
+
+    if (isNotInstalled) {
+      const choice = await vscode.window.showErrorMessage(
+        'The Draw.io Integration extension is required to edit diagrams. Install it to get the full editing experience.',
+        'Install Draw.io Integration',
+        'Open as SVG'
+      );
+
+      if (choice === 'Install Draw.io Integration') {
+        await vscode.commands.executeCommand(
+          'vscode.open',
+          vscode.Uri.parse(DRAWIO_MARKETPLACE_URL)
+        );
+      } else if (choice === 'Open as SVG') {
+        await vscode.commands.executeCommand('vscode.open', uri);
+      }
+    } else {
+      vscode.window.showErrorMessage(`Failed to open diagram: ${errMsg}`);
+    }
   }
 }

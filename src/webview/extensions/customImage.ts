@@ -27,6 +27,7 @@ import {
 } from '../features/imageMenu';
 import { createCustomImageMessagePlugin } from './customImageMessagePlugin';
 import { showImageMetadataFooter, hideImageMetadataFooter } from '../features/imageMetadata';
+import { MessageType } from '../../shared/messageTypes';
 
 const INDENT_PIXELS_PER_LEVEL = 30;
 const INDENT_SPACES_PER_LEVEL = 4;
@@ -366,6 +367,38 @@ export const CustomImage = Image.extend({
           showImageMenu(menu, menuButton, dom, editor, vscodeApi);
         } else {
           hideImageMenu(menu);
+        }
+      });
+
+      // Double-click handler: open .drawio.svg files in the Draw.io extension
+      wrapper.addEventListener('dblclick', (e: MouseEvent) => {
+        // Determine the markdown source path (most reliable) or fall back to src
+        const markdownSrc = node.attrs['markdown-src'] as string | null;
+        const rawSrc = markdownSrc || (node.attrs.src as string | null) || '';
+
+        // Only handle local .drawio.svg files (not http:// or data: URLs)
+        if (
+          !rawSrc ||
+          rawSrc.startsWith('http://') ||
+          rawSrc.startsWith('https://') ||
+          rawSrc.startsWith('data:')
+        ) {
+          return;
+        }
+
+        if (!rawSrc.toLowerCase().endsWith('.drawio.svg')) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const vscodeApi = (window as any).vscode;
+        if (vscodeApi) {
+          vscodeApi.postMessage({
+            type: MessageType.OPEN_DRAWIO_FILE,
+            path: rawSrc,
+          });
         }
       });
 
