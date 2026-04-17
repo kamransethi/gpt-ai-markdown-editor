@@ -1569,7 +1569,16 @@ window.addEventListener('message', (event: MessageEvent) => {
               fileItem.className = 'toolbar-dropdown-item';
               fileItem.title = file.name;
               fileItem.setAttribute('aria-label', file.name);
-              fileItem.textContent = file.name;
+              
+              // Format display name: remove .md, replace underscores/hyphens with spaces, capitalize words
+              const displayName = file.name
+                .replace(/\.md$/i, '') // Remove .md extension
+                .replace(/[_-]/g, ' ') // Replace underscores and hyphens with spaces
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+              
+              fileItem.textContent = displayName;
               fileItem.onclick = e => {
                 e.preventDefault();
                 e.stopPropagation();
