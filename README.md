@@ -10,7 +10,7 @@
 
 Most Markdown tools still make you think like a formatter instead of a writer. This editor is built to remove that friction.
 
-You can write in a true WYSIWYG experience, edit tables visually, manage images inline, work with Mermaid diagrams, format richly, and still keep your files as plain Markdown on disk.
+You can write in a true WYSIWYG experience, edit tables visually, manage images inline, work with Mermaid diagrams, format richly, and **still keep your files as plain Markdown on disk—perfectly formatted for GitHub viewing**.
 
 **For enterprises and teams**: The UX is closely aligned with Confluence, making it instantly familiar to Product Owners, Delivery Managers, Technical Writers, and other enterprise writing roles. If you know how to work in Confluence, you'll feel at home here—but with the benefits of decentralized Markdown files in your repository instead of vendor lock-in.
 
@@ -27,7 +27,7 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 - **Mermaid diagram workflow** — render diagrams inline, use templates, and jump to source for editing
 - **Rich formatting tools** — bold, italic, highlight, text color, headings, inline code, lists, and more
 - **Advanced link creation** — create URL, file, and heading links from a guided dialog
-- **GitHub-flavored Markdown support** — alerts, code fences, tables, links, and clean Markdown output
+- **GitHub-perfect Markdown output** — 100% GitHub-Flavored Markdown compatible; render perfectly on GitHub without any adjustments needed
 - **Frontmatter management** — visual YAML editor with syntax highlighting and collapsible panel for document metadata
 
 ### AI & Intelligence Features
@@ -66,11 +66,25 @@ You can write in a true WYSIWYG experience, edit tables visually, manage images 
 | **Formatting**    | Toolbar plus contextual actions     | Shortcut-heavy or syntax-heavy |
 | **Navigation**    | Built-in outline and document aids  | Often minimal                  |
 | **Export**        | PDF and DOCX support                | Usually none or limited        |
-| **Enterprise UX** | Confluence-familiar workflows       | Technical/developer focus      |
-| **Data portability** | Plan Markdown files in version control | Often vendor lock-in        |
+| **Enterprise UX** | Confluence-familiar workflows       | Technical/developer focus      || **GitHub output** | 100% GFM compatible, renders perfectly on GitHub | Often requires adjustments || **Data portability** | Plan Markdown files in version control | Often vendor lock-in        |
 
 **Enterprise teams appreciate**: Product Owners, Delivery Managers, and Technical Writers familiar with Confluence find the interface instantly recognizable. No learning curve—the formatting toolbar, table editor, and document structure feel natural. But unlike Confluence, your content stays as portable Markdown files in your repository.
 
+
+---
+
+## GitHub-Perfect Output
+
+Every document you create in Flux Flow is **100% GitHub-Flavored Markdown compatible** and renders beautifully on GitHub, GitLab, Gitea, and other Git hosting platforms—without any conversion or adjustment needed.
+
+- **Tables render perfectly** on GitHub with proper pipe syntax
+- **Images link correctly** with relative paths that work across repositories
+- **Mermaid diagrams render natively** on GitHub (requires `mermaid` code fence syntax, which Flux Flow generates automatically)
+- **Alerts, code fences, and formatting** follow GitHub's Markdown specification exactly
+- **Frontmatter** is rendered as expected in README and documentation files
+- **No proprietary markup** — your files stay as clean, portable Markdown
+
+Write in Flux Flow, commit to GitHub, and your documents look exactly as intended. No surprises, no reformatting needed.
 
 ---
 
