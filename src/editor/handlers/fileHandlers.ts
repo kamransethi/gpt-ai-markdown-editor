@@ -758,13 +758,13 @@ export async function handleSaveAndOpenFile(
       await document.save();
     }
 
-    // Open the target file in the same editor
+    // Open the target file with the Flux Flow custom editor
     const uri = vscode.Uri.file(targetPath);
-    const doc = await vscode.workspace.openTextDocument(uri);
-    await vscode.window.showTextDocument(doc, {
-      viewColumn: vscode.ViewColumn.Active,
-      preserveFocus: false,
-    });
+    await vscode.commands.executeCommand(
+      'vscode.openWith',
+      uri,
+      'gptAiMarkdownEditor.editor'
+    );
   } catch (error) {
     const errorMessage = toErrorMessage(error);
     console.error(`[DK-AI] Failed to save and open file: ${errorMessage}`);

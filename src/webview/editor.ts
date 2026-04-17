@@ -1544,14 +1544,15 @@ window.addEventListener('message', (event: MessageEvent) => {
       }
       case MessageType.MARKDOWN_FILES_RESULT: {
         // Populate the save button dropdown with markdown files
-        const files = message.files as Array<{ name: string; path: string }> || [];
+        const files = (message.files as Array<{ name: string; path: string }>) || [];
         const dropdownMenu = (window as any).__saveDropdownMenu as HTMLElement;
-        
+
         if (dropdownMenu) {
           // Find and remove existing markdown file items (after "Save and Open" label)
-          const saveOpenLabel = Array.from(dropdownMenu.querySelectorAll('.toolbar-dropdown-section-label'))
-            .find(el => el.textContent === 'Save and Open');
-          
+          const saveOpenLabel = Array.from(
+            dropdownMenu.querySelectorAll('.toolbar-dropdown-section-label')
+          ).find(el => el.textContent === 'Save and Open');
+
           if (saveOpenLabel) {
             // Remove all items after the "Save and Open" label
             let next = saveOpenLabel.nextElementSibling;
@@ -1560,7 +1561,7 @@ window.addEventListener('message', (event: MessageEvent) => {
               next = next.nextElementSibling;
               toRemove.remove();
             }
-            
+
             // Add file items
             files.forEach(file => {
               const fileItem = document.createElement('button');

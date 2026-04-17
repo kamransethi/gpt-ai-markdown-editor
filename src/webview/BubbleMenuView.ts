@@ -1263,7 +1263,7 @@ export function createFormattingToolbar(
         if (splitToggle.disabled) return;
         const isMenuVisible = splitMenu.style.display === 'block';
         closeAllDropdowns({ keepOverflow: true });
-        
+
         // If opening the menu and this is a dynamic dropdown, fetch markdown files
         if (!isMenuVisible && btn._dynamicDropdown) {
           const vscodeApi = window.vscode;
@@ -1274,7 +1274,7 @@ export function createFormattingToolbar(
           (window as any).__saveDropdownMenu = splitMenu;
           (window as any).__saveButton = btn;
         }
-        
+
         splitMenu.style.display = isMenuVisible ? 'none' : 'block';
         splitToggle.setAttribute('aria-expanded', isMenuVisible ? 'false' : 'true');
       };
