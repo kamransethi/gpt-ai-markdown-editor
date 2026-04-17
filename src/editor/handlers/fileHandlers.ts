@@ -819,13 +819,6 @@ export async function handleSaveFiles(
   }
 }
 
-/** Draw.io Integration extension editor ID (hediet.vscode-drawio) */
-const DRAWIO_EDITOR_ID = 'hediet.vscode-drawio';
-
-/** VS Code Marketplace deeplink for the draw.io extension */
-const DRAWIO_MARKETPLACE_URL =
-  'https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio';
-
 /**
  * Open a .drawio.svg file in the Draw.io Integration extension.
  *
@@ -890,40 +883,12 @@ export async function handleOpenDrawioFile(
 }
 
 /**
- * Attempt to open `uri` with the Draw.io Integration extension.
- *
- * We use `vscode.open` (not `vscode.openWith`) so VS Code routes to the
- * custom editor that the Draw.io extension has registered for `.drawio.svg`
- * files. Using `openWith` with the extension/package ID causes Draw.io to
- * open a blank editor because the custom editor view type is different from
- * the extension's publisher.name ID.
- *
- * If the extension is not installed we offer to install it or fall back.
+ * Open `uri` using VS Code's default handler.
+ * If Draw.io Integration is installed it will open as a diagram editor;
+ * otherwise VS Code falls back to displaying the file as SVG/text.
  */
 async function openWithDrawio(uri: vscode.Uri): Promise<void> {
-  const drawioInstalled = !!vscode.extensions.getExtension(DRAWIO_EDITOR_ID);
-
-  if (!drawioInstalled) {
-    const choice = await vscode.window.showErrorMessage(
-      'The Draw.io Integration extension is required to edit diagrams. Install it to get the full editing experience.',
-      'Install Draw.io Integration',
-      'Open as SVG'
-    );
-
-    if (choice === 'Install Draw.io Integration') {
-      await vscode.commands.executeCommand(
-        'vscode.open',
-        vscode.Uri.parse(DRAWIO_MARKETPLACE_URL)
-      );
-    } else if (choice === 'Open as SVG') {
-      await vscode.commands.executeCommand('vscode.open', uri);
-    }
-    return;
-  }
-
   try {
-    // vscode.open lets VS Code use Draw.io's registered custom editor for
-    // .drawio.svg — same path as opening from the file explorer.
     await vscode.commands.executeCommand('vscode.open', uri);
   } catch (err) {
     vscode.window.showErrorMessage(`Failed to open diagram: ${toErrorMessage(err)}`);
