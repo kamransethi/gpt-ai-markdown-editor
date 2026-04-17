@@ -739,13 +739,12 @@ export async function handleGetMarkdownFiles(
 }
 
 /**
- * Save current document and open the selected markdown file.
+ * Open the selected markdown file with the Flux Flow editor.
  */
 export async function handleSaveAndOpenFile(
   message: { type: string; [key: string]: unknown },
-  ctx: HandlerContext
+  _ctx: HandlerContext
 ): Promise<void> {
-  const { document } = ctx;
   const targetPath = message.filePath as string;
 
   try {
@@ -753,21 +752,12 @@ export async function handleSaveAndOpenFile(
       throw new Error('Missing filePath');
     }
 
-    // Save current document
-    if (document.isDirty) {
-      await document.save();
-    }
-
     // Open the target file with the Flux Flow custom editor
     const uri = vscode.Uri.file(targetPath);
-    await vscode.commands.executeCommand(
-      'vscode.openWith',
-      uri,
-      'gptAiMarkdownEditor.editor'
-    );
+    await vscode.commands.executeCommand('vscode.openWith', uri, 'gptAiMarkdownEditor.editor');
   } catch (error) {
     const errorMessage = toErrorMessage(error);
-    console.error(`[DK-AI] Failed to save and open file: ${errorMessage}`);
-    vscode.window.showErrorMessage(`Failed to save and open file: ${errorMessage}`);
+    console.error(`[DK-AI] Failed to open file: ${errorMessage}`);
+    vscode.window.showErrorMessage(`Failed to open file: ${errorMessage}`);
   }
 }

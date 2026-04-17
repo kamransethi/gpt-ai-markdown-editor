@@ -1548,14 +1548,14 @@ window.addEventListener('message', (event: MessageEvent) => {
         const dropdownMenu = (window as any).__saveDropdownMenu as HTMLElement;
 
         if (dropdownMenu) {
-          // Find and remove existing markdown file items (after "Save and Open" label)
-          const saveOpenLabel = Array.from(
+          // Find and remove existing markdown file items (after "Quick Open" label)
+          const quickOpenLabel = Array.from(
             dropdownMenu.querySelectorAll('.toolbar-dropdown-section-label')
-          ).find(el => el.textContent === 'Save and Open');
+          ).find(el => el.textContent === 'Quick Open');
 
-          if (saveOpenLabel) {
-            // Remove all items after the "Save and Open" label
-            let next = saveOpenLabel.nextElementSibling;
+          if (quickOpenLabel) {
+            // Remove all items after the "Quick Open" label
+            let next = quickOpenLabel.nextElementSibling;
             while (next && !next.classList.contains('toolbar-dropdown-section-label')) {
               const toRemove = next;
               next = next.nextElementSibling;

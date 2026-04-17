@@ -625,7 +625,7 @@ export function createFormattingToolbar(
               ),
           },
           { label: '', action: () => {}, isSeparator: true },
-          { label: 'Save and Open', action: () => {}, isSectionLabel: true },
+          { label: 'Quick Open', action: () => {}, isSectionLabel: true },
         ],
         _dynamicDropdown: true, // Mark this button for dynamic markdown file loading
       },
