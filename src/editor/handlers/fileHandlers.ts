@@ -30,6 +30,7 @@ export function registerFileHandlers(router: MessageRouter): void {
   router.register(MessageType.HANDLE_FILE_LINK_DROP, handleFileLinkDrop);
   router.register(MessageType.GET_MARKDOWN_FILES, handleGetMarkdownFiles);
   router.register(MessageType.SAVE_AND_OPEN_FILE, handleSaveAndOpenFile);
+  router.register(MessageType.SAVE_FILES, handleSaveFiles);
 }
 
 export async function handleOpenFileAtLocation(
@@ -759,5 +760,59 @@ export async function handleSaveAndOpenFile(
     const errorMessage = toErrorMessage(error);
     console.error(`[DK-AI] Failed to open file: ${errorMessage}`);
     vscode.window.showErrorMessage(`Failed to open file: ${errorMessage}`);
+  }
+}
+
+/**
+ * Handle a multi-file drop: save all provided files to the workspace media
+ * folder and return their relative paths so the webview can build a bullet list.
+ *
+ * Reuses the same media-folder resolution and collision-safe naming as image saves.
+ */
+export async function handleSaveFiles(
+  message: { type: string; [key: string]: unknown },
+  ctx: HandlerContext
+): Promise<void> {
+  const { document, webview } = ctx;
+  const requestId = message.requestId as string;
+  const filesToSave = message.files as Array<{ name: string; data: number[]; mimeType: string }>;
+  const targetFolderName = (message.targetFolder as string) || ctx.getConfig<string>('mediaPath', 'media');
+
+  if (!filesToSave || filesToSave.length === 0) {
+    webview.postMessage({ type: MessageType.FILES_SAVED, requestId, savedFiles: [] });
+    return;
+  }
+
+  const targetDir = resolveMediaTargetFolder(document, targetFolderName, ctx.getConfig);
+  if (!targetDir) {
+    const err = 'Cannot save files: no base directory available';
+    vscode.window.showErrorMessage(err);
+    webview.postMessage({ type: MessageType.FILE_SAVE_ERROR, requestId, error: err });
+    return;
+  }
+
+  try {
+    await vscode.workspace.fs.createDirectory(vscode.Uri.file(targetDir));
+
+    const savedFiles: Array<{ name: string; relativePath: string }> = [];
+
+    for (const file of filesToSave) {
+      const targetUri = await createUniqueTargetFile(vscode.Uri.file(targetDir), file.name);
+      await vscode.workspace.fs.writeFile(targetUri, new Uint8Array(file.data));
+
+      const docDir = path.dirname(document.uri.fsPath);
+      let relativePath = path.relative(docDir, targetUri.fsPath).replace(/\\/g, '/');
+      if (!relativePath.startsWith('..') && !relativePath.startsWith('./')) {
+        relativePath = './' + relativePath;
+      }
+
+      savedFiles.push({ name: path.basename(targetUri.fsPath), relativePath });
+    }
+
+    webview.postMessage({ type: MessageType.FILES_SAVED, requestId, savedFiles });
+  } catch (error) {
+    const errorMessage = toErrorMessage(error);
+    vscode.window.showErrorMessage(`Failed to save files: ${errorMessage}`);
+    webview.postMessage({ type: MessageType.FILE_SAVE_ERROR, requestId, error: errorMessage });
   }
 }

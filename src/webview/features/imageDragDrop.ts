@@ -20,6 +20,7 @@ import type { Node as ProseMirrorNode, Schema as ProseMirrorSchema } from '@tipt
 import { Fragment, Slice } from '@tiptap/pm/model';
 import { dropPoint } from '@tiptap/pm/transform';
 import { confirmImageDrop, getRememberedFolder, setRememberedFolder } from './imageConfirmation';
+import { confirmFileDrop } from './fileDropConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
 import { devLog } from '../utils/devLog';
 import { MessageType } from '../../shared/messageTypes';
@@ -28,6 +29,12 @@ import { MessageType } from '../../shared/messageTypes';
  * Track images currently being saved to prevent document sync race conditions
  */
 const pendingImageSaves = new Set<string>();
+
+/**
+ * Pending file-drop insert positions, keyed by requestId.
+ * Used to insert the bullet list at the original drop position after save completes.
+ */
+const pendingFileDropPositions = new Map<string, number>();
 
 /**
  * Check if any images are currently being saved
@@ -116,12 +123,12 @@ export function setupImageDragDrop(editor: Editor, vscodeApi: VsCodeApi): void {
   // Paste handling
   editorElement.addEventListener('paste', e => handlePaste(e as ClipboardEvent, editor, vscodeApi));
 
-  // Listen for image save confirmations from extension
+  // Listen for image save confirmations and file save confirmations from extension
   window.addEventListener('message', event => handleImageMessage(event, editor));
 
-  // Guard against VS Code opening a new window when dropping images outside the editor
+  // Guard against VS Code opening a new window when dropping images/files outside the editor
   const blockWindowDrop = (e: DragEvent) => {
-    if (hasImageFiles(e.dataTransfer) || extractImagePathFromDataTransfer(e.dataTransfer)) {
+    if (hasAnyDroppedFiles(e.dataTransfer) || extractImagePathFromDataTransfer(e.dataTransfer)) {
       e.preventDefault();
       e.stopPropagation();
       if (e.dataTransfer) {
@@ -172,7 +179,7 @@ function handleDragOver(e: Event): void {
   const dragEvent = e as DragEvent;
   dragEvent.preventDefault();
 
-  const hasFiles = hasImageFiles(dragEvent.dataTransfer);
+  const hasFiles = hasAnyDroppedFiles(dragEvent.dataTransfer);
   const hasImagePath = extractImagePathFromDataTransfer(dragEvent.dataTransfer);
 
   if (hasFiles || hasImagePath) {
@@ -239,8 +246,12 @@ async function handleWorkspaceImageDrop(
 }
 
 /**
- * Handle drop event - insert dropped images
- * NO SHIFT KEY REQUIRED for better user experience
+ * Handle drop event - insert dropped images or files.
+ * - Pure image drops: use existing image flow (base64 preview, then replace).
+ * - Any non-image in the drop: "File mode" — all files saved & inserted as a
+ *   bulleted list of markdown links at the drop position.
+ *
+ * NO SHIFT KEY REQUIRED for better user experience.
  */
 async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): Promise<void> {
   e.preventDefault();
@@ -249,25 +260,37 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
   const dt = e.dataTransfer;
   if (!dt) return;
 
-  // Case 1: Check for actual File objects (from desktop/finder)
-  const files = getImageFiles(dt);
+  const allFiles = Array.from(dt.files);
+
   devLog('[DK-AI] Drop payload types:', {
     types: Array.from(dt.types || []),
-    fileCount: dt.files?.length || 0,
-    hasImageFiles: files.length > 0,
+    fileCount: allFiles.length,
+    imageCount: allFiles.filter(isImageFile).length,
   });
 
-  // Case 2: Check for VS Code file explorer drops (URI as text)
-  if (files.length === 0) {
+  // Case 1: No File objects — check for VS Code file explorer drops (URI as text)
+  if (allFiles.length === 0) {
     const imagePath = extractImagePathFromDataTransfer(dt);
     if (imagePath) {
-      // This is a workspace file path - handle it specially
       await handleWorkspaceImageDrop(imagePath, editor, vscodeApi, e);
       return;
     }
-    devLog('[DK-AI] Drop ignored: no image files or image paths detected');
-    return; // No images to process
+    devLog('[DK-AI] Drop ignored: no files or image paths detected');
+    return;
   }
+
+  const nonImageFiles = allFiles.filter(f => !isImageFile(f));
+
+  // Case 2: Any non-image file present → File mode (all files, including images)
+  if (nonImageFiles.length > 0) {
+    // Stop fileLinkDrop.ts from also handling this drop
+    e.stopImmediatePropagation();
+    await handleFileDrop(allFiles, editor, vscodeApi, e);
+    return;
+  }
+
+  // Case 3: Pure image drop — existing flow unchanged
+  const files = allFiles; // all are images at this point
 
   // Check if we have a remembered folder preference
   let targetFolder = getRememberedFolder();
@@ -326,6 +349,48 @@ async function handleDrop(e: DragEvent, editor: Editor, vscodeApi: VsCodeApi): P
 
     await insertImage(editor, file, vscodeApi, targetFolder, 'dropped', pos?.pos, resizeOptions);
   }
+}
+
+/**
+ * Handle a "File mode" drop: save all files (images + non-images) to the
+ * configured media folder and insert a bulleted list of markdown links.
+ */
+async function handleFileDrop(
+  files: File[],
+  editor: Editor,
+  vscodeApi: VsCodeApi,
+  e: DragEvent
+): Promise<void> {
+  const options = await confirmFileDrop(files);
+  if (!options) return; // user cancelled
+
+  // Capture cursor/drop position before the async round-trip
+  const dropPos =
+    editor.view.posAtCoords({ left: e.clientX, top: e.clientY })?.pos ??
+    editor.state.selection.from;
+
+  // Encode each file's binary data for transport
+  const filesPayload = await Promise.all(
+    files.map(async f => {
+      const buffer = await f.arrayBuffer();
+      return {
+        name: f.name,
+        mimeType: f.type || 'application/octet-stream',
+        data: Array.from(new Uint8Array(buffer)),
+      };
+    })
+  );
+
+  const requestId = `fd-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  pendingFileDropPositions.set(requestId, dropPos);
+
+  vscodeApi.postMessage({
+    type: MessageType.SAVE_FILES,
+    requestId,
+    files: filesPayload,
+    targetFolder: options.targetFolder,
+    mediaPathBase: options.mediaPathBase,
+  });
 }
 
 /**
@@ -502,6 +567,36 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
   }
 
   switch (message.type) {
+    case MessageType.FILES_SAVED: {
+      const requestId = message.requestId as string;
+      const savedFiles = message.savedFiles as Array<{ name: string; relativePath: string }>;
+      const insertPos = pendingFileDropPositions.get(requestId);
+      pendingFileDropPositions.delete(requestId);
+
+      if (!savedFiles || savedFiles.length === 0) break;
+
+      // Build an HTML bulleted list of markdown-style file links
+      const itemsHtml = savedFiles
+        .map(
+          f =>
+            `<li><a href="${f.relativePath}">${f.name}</a></li>`
+        )
+        .join('');
+      const listHtml = `<ul>${itemsHtml}</ul>`;
+
+      if (typeof insertPos === 'number') {
+        editor.chain().focus().insertContentAt(insertPos, listHtml).run();
+      } else {
+        editor.commands.insertContent(listHtml);
+      }
+      break;
+    }
+    case MessageType.FILE_SAVE_ERROR: {
+      console.error('[DK-AI] File save failed:', message.error);
+      const reqId = message.requestId as string;
+      pendingFileDropPositions.delete(reqId);
+      break;
+    }
     case MessageType.IMAGE_SAVED: {
       // Update placeholder with final path
       devLog(
@@ -579,6 +674,22 @@ function insertWorkspaceImage(
 export function hasImageFiles(dt: DataTransfer | null): boolean {
   if (!dt) return false;
   return Array.from(dt.types).includes('Files') && Array.from(dt.files).some(f => isImageFile(f));
+}
+
+/**
+ * Check if DataTransfer contains any files (image or non-image)
+ */
+export function hasAnyDroppedFiles(dt: DataTransfer | null): boolean {
+  if (!dt) return false;
+  return Array.from(dt.types).includes('Files') && dt.files.length > 0;
+}
+
+/**
+ * Check if DataTransfer contains non-image files
+ */
+export function hasNonImageFiles(dt: DataTransfer | null): boolean {
+  if (!dt) return false;
+  return Array.from(dt.files).some(f => !isImageFile(f));
 }
 
 /**
