@@ -42,7 +42,7 @@ And it saves well
 - <span style="color: #A5D6A7">Press Ctrl + S to save.</span>
 - [Sample Link](./Test.md)
 
-<img src="./STRESS_TEST.drawio.svg" alt="STRESS_TEST.drawio" width="404" height="686" />
+![STRESS_TEST.drawio](./STRESS_TEST.drawio.svg)
 
 ---
 
@@ -80,21 +80,21 @@ Both `1.` (dot) and `1)` (paren) styles should preserve **bold**, *italic*, `cod
 3. Third with ***both***
 4. Item with `code` and ~~strike~~
 5. Item with [link](https://example.com)
-6. Nested first - **bold nested**
-7. Nested second with *italic*
-8. Nested third with `code`
-- Back to bullets
-- Another **bold** bullet
-1. Ordered in bullets
-2. Another ordered
+  1. Nested first - **bold nested**
+  2. Nested second with *italic*
+  3. Nested third with `code`
+    - Back to bullets
+    - Another **bold** bullet
+    1. Ordered in bullets
+    2. Another ordered
 
 Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedListMarkdownFix works.
 
 ### Task List
 
-- Completed task
-- Incomplete task
-- Task with *formatting* and &lt;mark&gt;highlight&lt;/mark&gt;
+- [x] Completed task
+- [ ] Incomplete task
+- [ ] Task with *formatting* and <mark>highlight</mark>
 
 ---
 
@@ -119,6 +119,7 @@ This table contains cells with bullet points separated by `<br>-` elements as re
 | **Logic**      | - Logical operators<br>- Bitwise shifts<br>- Boolean algebra      | 🌀     |
 | **Media**      | - Images<br>- Videos<br>- Audio files            | 🎬     |
 | **Advanced**   | - Mermaid Charts<br>- LaTeX Formulas<br>- Footnotes         | 🚀     |
+
 
 
 | Feature Type | Description / Details                                | Status |
@@ -250,8 +251,11 @@ Inside this collapsible section, we can have more content:
 | Logic        | - Logical operators   |        |
 
 
+
 | Heading                   | Second | Third |
 | ------------------------- | ------ | ----- |
 | This iis a long first row |        |       |
 |                           |        |       |
 |                           |        |       |
+
+
