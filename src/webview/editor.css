@@ -616,7 +616,7 @@ body[data-theme="dark"] {
   border-bottom: 1px solid var(--md-border);
 }
 
-.markdown-editor :is(h1, h2) {
+.markdown-editor :is(h1, h2, h3) {
   color: var(--md-heading-primary-color);
 }
 
