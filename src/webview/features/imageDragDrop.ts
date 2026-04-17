@@ -577,10 +577,7 @@ function handleImageMessage(event: MessageEvent, editor: Editor): void {
 
       // Build an HTML bulleted list of markdown-style file links
       const itemsHtml = savedFiles
-        .map(
-          f =>
-            `<li><a href="${f.relativePath}">${f.name}</a></li>`
-        )
+        .map(f => `<li><a href="${f.relativePath}">${f.name}</a></li>`)
         .join('');
       const listHtml = `<ul>${itemsHtml}</ul>`;
 
