@@ -12,6 +12,15 @@ import * as providerFactory from '../../features/llm/providerFactory';
 // Mock the provider factory
 jest.mock('../../features/llm/providerFactory');
 
+// Mock provider availability — assume Copilot is available so tests reach the provider
+jest.mock('../../features/llm/providerAvailability', () => ({
+  getProviderAvailabilityCached: jest.fn().mockResolvedValue({
+    copilotAvailable: true,
+    ollamaAvailable: true,
+    environment: 'vscode',
+  }),
+}));
+
 const mockProviderFactory = jest.mocked(providerFactory);
 
 const mockWebview = {
@@ -85,7 +94,7 @@ describe('aiRefine with provider abstraction', () => {
 
     async function* mockGenerate() {
       throw new Error('Ollama is not reachable at http://localhost:11434');
-      yield; // unreachable, satisfies generator type
+      yield ''; // unreachable, satisfies generator type
     }
 
     createLlmProvider.mockReturnValue({
@@ -171,7 +180,7 @@ describe('aiExplain with provider abstraction', () => {
 
     async function* mockGenerate() {
       throw new Error('Ollama model "bad:model" is not available');
-      yield;
+      yield ''; // unreachable, satisfies generator type
     }
 
     createLlmProvider.mockReturnValue({

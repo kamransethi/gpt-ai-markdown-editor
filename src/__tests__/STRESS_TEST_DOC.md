@@ -42,7 +42,7 @@ And it saves well
 - <span style="color: #A5D6A7">Press Ctrl + S to save.</span>
 - [Sample Link](./Test.md)
 
-![STRESS_TEST.drawio](./STRESS_TEST.drawio.svg)s
+<img src="./STRESS_TEST.drawio.svg" alt="STRESS_TEST.drawio" width="404" height="686" />
 
 ---
 
@@ -115,10 +115,10 @@ This table contains cells with bullet points separated by `<br>-` elements as re
 
 | Feature Type   | Description / Details    | Status |
 | -------------- | ------------------------ | ------ |
-| **Formatting** | - Bold<br />- Italic<br />- <mark>Highlight</mark> | ✅      |
-| **Logic**      | - Logical operators<br />- Bitwise shifts<br />- Boolean algebra      | 🌀     |
-| **Media**      | - Images<br />- Videos<br />- Audio files            | 🎬     |
-| **Advanced**   | - Mermaid Charts<br />- LaTeX Formulas<br />- Footnotes         | 🚀     |
+| **Formatting** | - Bold<br>- Italic<br>- <mark>Highlight</mark> | ✅      |
+| **Logic**      | - Logical operators<br>- Bitwise shifts<br>- Boolean algebra      | 🌀     |
+| **Media**      | - Images<br>- Videos<br>- Audio files            | 🎬     |
+| **Advanced**   | - Mermaid Charts<br>- LaTeX Formulas<br>- Footnotes         | 🚀     |
 
 
 | Feature Type | Description / Details                                | Status |
