@@ -891,38 +891,41 @@ export async function handleOpenDrawioFile(
 
 /**
  * Attempt to open `uri` with the Draw.io Integration extension.
- * Falls back gracefully when the extension is not installed.
+ *
+ * We use `vscode.open` (not `vscode.openWith`) so VS Code routes to the
+ * custom editor that the Draw.io extension has registered for `.drawio.svg`
+ * files. Using `openWith` with the extension/package ID causes Draw.io to
+ * open a blank editor because the custom editor view type is different from
+ * the extension's publisher.name ID.
+ *
+ * If the extension is not installed we offer to install it or fall back.
  */
 async function openWithDrawio(uri: vscode.Uri): Promise<void> {
-  try {
-    await vscode.commands.executeCommand('vscode.openWith', uri, DRAWIO_EDITOR_ID);
-  } catch (err) {
-    // vscode.openWith rejects when the given editor ID is not registered,
-    // which happens when the draw.io extension is not installed.
-    const errMsg = toErrorMessage(err);
-    const isNotInstalled =
-      errMsg.includes('Unknown editor') ||
-      errMsg.includes('No editor') ||
-      errMsg.includes('not found') ||
-      errMsg.includes(DRAWIO_EDITOR_ID);
+  const drawioInstalled = !!vscode.extensions.getExtension(DRAWIO_EDITOR_ID);
 
-    if (isNotInstalled) {
-      const choice = await vscode.window.showErrorMessage(
-        'The Draw.io Integration extension is required to edit diagrams. Install it to get the full editing experience.',
-        'Install Draw.io Integration',
-        'Open as SVG'
+  if (!drawioInstalled) {
+    const choice = await vscode.window.showErrorMessage(
+      'The Draw.io Integration extension is required to edit diagrams. Install it to get the full editing experience.',
+      'Install Draw.io Integration',
+      'Open as SVG'
+    );
+
+    if (choice === 'Install Draw.io Integration') {
+      await vscode.commands.executeCommand(
+        'vscode.open',
+        vscode.Uri.parse(DRAWIO_MARKETPLACE_URL)
       );
-
-      if (choice === 'Install Draw.io Integration') {
-        await vscode.commands.executeCommand(
-          'vscode.open',
-          vscode.Uri.parse(DRAWIO_MARKETPLACE_URL)
-        );
-      } else if (choice === 'Open as SVG') {
-        await vscode.commands.executeCommand('vscode.open', uri);
-      }
-    } else {
-      vscode.window.showErrorMessage(`Failed to open diagram: ${errMsg}`);
+    } else if (choice === 'Open as SVG') {
+      await vscode.commands.executeCommand('vscode.open', uri);
     }
+    return;
+  }
+
+  try {
+    // vscode.open lets VS Code use Draw.io's registered custom editor for
+    // .drawio.svg — same path as opening from the file explorer.
+    await vscode.commands.executeCommand('vscode.open', uri);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to open diagram: ${toErrorMessage(err)}`);
   }
 }
