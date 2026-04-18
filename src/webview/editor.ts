@@ -235,10 +235,13 @@ declare global {
   }
 }
 
+import { initAiPrompts } from './features/aiPromptsLoader';
+
 const vscode = acquireVsCodeApi();
 
 // Make vscode API available globally for toolbar buttons
 window.vscode = vscode;
+initAiPrompts();
 
 /**
  * Mirror webview diagnostics into extension-host logs for easier alpha troubleshooting.
@@ -1261,6 +1264,16 @@ function initializeEditor(initialContent: string) {
       editorContainer.parentElement.insertBefore(formattingToolbar, editorContainer);
     }
 
+    window.addEventListener('aiPromptsLoaded', () => {
+      if (formattingToolbar && formattingToolbar.parentElement) {
+        const h = formattingToolbar.getBoundingClientRect().height;
+        const next = createFormattingToolbar(editorInstance);
+        formattingToolbar.parentElement.replaceChild(next, formattingToolbar);
+        formattingToolbar = next;
+        document.documentElement.style.setProperty('--toolbar-height', `${h}px`);
+      }
+    });
+
     // Publish toolbar height as CSS variable so the TOC pane can track it
     requestAnimationFrame(() => {
       if (formattingToolbar) {
@@ -1623,6 +1636,11 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case MessageType.AI_EXPLAIN_RESULT:
         handleAiExplainResult(message as any);
+        break;
+      case MessageType.AI_PROMPTS:
+        if (window.handleAiPromptsResult) {
+          window.handleAiPromptsResult(message.prompts);
+        }
         break;
       case MessageType.IMAGE_ASK_RESULT:
         handleImageAskResult(message as any);

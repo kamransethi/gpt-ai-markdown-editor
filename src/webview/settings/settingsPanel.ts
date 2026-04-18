@@ -29,6 +29,7 @@ const MSG = {
   OLLAMA_STATUS: 'settings.ollamaStatus',
   BROWSE_PATH: 'settings.browsePath',
   BROWSE_PATH_RESULT: 'settings.browsePathResult',
+  OPEN_FILE: 'settings.openFile',
   CHECK_COPILOT_MODELS: 'settings.checkCopilotModels',
   COPILOT_MODELS_RESULT: 'settings.copilotModelsResult',
 } as const;
@@ -198,6 +199,22 @@ const pages: PageDef[] = [
             placeholder: 'gpt-4.1',
             default: 'gpt-4.1',
             conditionalOn: { key: 'llmProvider', value: 'GitHub Copilot' },
+          },
+        ],
+      },
+      {
+        title: 'Custom Prompts',
+        items: [
+          {
+            key: 'customPromptsFile',
+            label: 'Custom AI Prompts File',
+            description:
+              'Optional path to a JSON file containing custom "Ask AI" and "AI Summary" dropdown prompts.',
+            type: 'path',
+            placeholder: 'Select a JSON file...',
+            default: '',
+            pathType: 'file',
+            filters: { 'JSON Files': ['json'] },
           },
         ],
       },
@@ -566,8 +583,25 @@ function renderPathInput(def: SettingDef, value: string): HTMLElement {
     });
   });
 
+  const openBtn = document.createElement('button');
+  openBtn.className = 'settings-btn';
+  openBtn.textContent = 'Open';
+  openBtn.disabled = !input.value;
+  openBtn.addEventListener('click', () => {
+    vscode.postMessage({
+      type: MSG.OPEN_FILE,
+      filePath: input.value,
+    });
+  });
+
+  // Enable/disable Open button based on input value
+  input.addEventListener('input', () => {
+    openBtn.disabled = !input.value;
+  });
+
   group.appendChild(input);
   group.appendChild(browseBtn);
+  group.appendChild(openBtn);
   return group;
 }
 

@@ -13,6 +13,7 @@ import { MessageType } from './shared/messageTypes';
 import { getProviderAvailabilityCached } from './features/llm/providerAvailability';
 import { handleProviderError } from './features/llm/providerErrorMessages';
 import { openSettingsPanel } from './editor/SettingsPanel';
+import * as FluxFlowGraph from './features/fluxflow/index';
 
 /**
  * Constants for default markdown viewer prompt feature
@@ -96,6 +97,17 @@ export function activate(context: vscode.ExtensionContext) {
   });
   outlineViewProvider.setTreeView(outlineTreeView);
   context.subscriptions.push(outlineTreeView);
+
+  // Initialize Knowledge Graph if feature flag is enabled
+  if (
+    vscode.workspace
+      .getConfiguration('gptAiMarkdownEditor')
+      .get<boolean>('knowledgeGraph.enabled', false)
+  ) {
+    FluxFlowGraph.initialize(context).catch(err => {
+      console.error('[FluxFlow] Failed to initialize Knowledge Graph:', err);
+    });
+  }
 
   // Initialize Word Count feature
   const wordCount = new WordCountFeature();
@@ -371,5 +383,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  // Cleanup handled by VS Code's subscription disposal
+  FluxFlowGraph.deactivate();
 }

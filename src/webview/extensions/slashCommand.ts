@@ -262,8 +262,16 @@ export const SlashCommand = Extension.create({
             // Position near cursor
             const coords = props.clientRect?.();
             if (coords && popupEl) {
-              popupEl.style.left = `${coords.left}px`;
-              popupEl.style.top = `${coords.bottom + 4}px`;
+              const { left, bottom, top } = coords;
+              // Basic viewport check to flip upwards if needed
+              const popupHeight = 350; // max-height typically used
+              const viewportHeight = window.innerHeight;
+              if (bottom + popupHeight > viewportHeight && top - popupHeight > 0) {
+                popupEl.style.top = `${top - popupHeight}px`;
+              } else {
+                popupEl.style.top = `${bottom + 4}px`;
+              }
+              popupEl.style.left = `${left}px`;
             }
           },
           onUpdate: (props: any) => {
@@ -272,8 +280,15 @@ export const SlashCommand = Extension.create({
 
             const coords = props.clientRect?.();
             if (coords && popupEl) {
-              popupEl.style.left = `${coords.left}px`;
-              popupEl.style.top = `${coords.bottom + 4}px`;
+              const { left, bottom, top } = coords;
+              const popupHeight = popupEl.clientHeight || 350;
+              const viewportHeight = window.innerHeight;
+              if (bottom + popupHeight > viewportHeight && top - popupHeight > 0) {
+                popupEl.style.top = `${top - popupHeight}px`;
+              } else {
+                popupEl.style.top = `${bottom + 4}px`;
+              }
+              popupEl.style.left = `${left}px`;
             }
           },
           onKeyDown: (props: any) => {

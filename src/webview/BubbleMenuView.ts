@@ -15,6 +15,7 @@
 import { MERMAID_TEMPLATES } from './mermaidTemplates';
 import { showTableInsertDialog } from './features/tableInsert';
 import { showLinkDialog } from './features/linkDialog';
+import { getCachedAiPrompts } from './features/aiPromptsLoader';
 import { showImagePicker } from './features/imagePicker';
 import { showEmojiPicker } from './features/emojiPicker';
 import type { Editor } from '@tiptap/core';
@@ -131,7 +132,7 @@ type ToolbarDropdown = {
   title?: string;
   className?: string;
   icon: ToolbarIcon;
-  items: ToolbarDropdownItem[];
+  items: ToolbarDropdownItem[] | (() => ToolbarDropdownItem[]);
   requiresFocus?: boolean; // Whether this dropdown requires editor focus to be enabled
   isActive?: () => boolean; // Function to determine if dropdown should appear active
   isEnabled?: () => boolean;
@@ -879,17 +880,39 @@ export function createFormattingToolbar(
       },
       // --- Separator before AI and View menu ---
       { type: 'separator' },
-      // --- AI Explain Document button ---
+      // --- AI Menu Dropdown ---
       {
-        type: 'button',
+        type: 'dropdown',
         label: '',
-        title: 'AI Summary — Analyze and summarize this document',
+        title: 'AI Actions',
         icon: { name: 'sparkle', fallback: '✨' },
         requiresFocus: false,
         isActive: () => false,
         isEnabled: () => true,
-        action: () => {
-          editor.commands.explainDocument();
+        items: () => {
+          const prompts = getCachedAiPrompts();
+          const items: ToolbarDropdownItem[] = [
+            {
+              label: 'Generate Summary',
+              action: () => editor.commands.explainDocument(),
+            },
+          ];
+
+          // Add custom document-level prompts
+          if (prompts && prompts.length > 0) {
+            const documentPrompts = prompts.filter((p: any) => p.type === 'document');
+            if (documentPrompts.length > 0) {
+              items.push({ isSeparator: true });
+              documentPrompts.forEach((prompt: any) => {
+                items.push({
+                  label: prompt.label,
+                  action: () => editor.commands.explainDocument(prompt.id),
+                });
+              });
+            }
+          }
+
+          return items;
         },
       },
       // --- View Menu Dropdown ---
@@ -1023,127 +1046,135 @@ export function createFormattingToolbar(
       const menu = document.createElement('div');
       menu.className = 'toolbar-dropdown-menu';
 
-      btn.items.forEach(item => {
-        // Render separator items
-        if (item.isSeparator) {
-          const sep = document.createElement('div');
-          sep.className = 'toolbar-dropdown-separator';
-          sep.setAttribute('role', 'separator');
-          menu.appendChild(sep);
-          return;
-        }
+      const renderDropdownItems = () => {
+        menu.innerHTML = ''; // Clear for re-render
 
-        // Render section labels (non-interactive headers)
-        if (item.isSectionLabel) {
-          const label = document.createElement('div');
-          label.className =
-            'toolbar-dropdown-section-label' + (item.className ? ` ${item.className}` : '');
-          label.textContent = item.label;
-          menu.appendChild(label);
-          return;
-        }
-
-        // Render button row (horizontal icon buttons — like context menu button rows)
-        if (item.isButtonRow && item.buttons) {
-          const row = document.createElement('div');
-          row.className = 'toolbar-dropdown-button-row';
-          item.buttons.forEach(b => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'toolbar-dropdown-icon-btn';
-            btn.title = b.title;
-            btn.setAttribute('aria-label', b.title);
-            const ic = createIconElement(b.icon, 'toolbar-dropdown-icon');
-            btn.appendChild(ic);
-            btn.onmousedown = e => e.preventDefault();
-            btn.onclick = e => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (btn.disabled) return;
-              b.action();
-              closeAllDropdowns();
-              refreshActiveStates();
-            };
-            row.appendChild(btn);
-          });
-          // Track button row items for state updates
-          item.buttons.forEach((b, idx) => {
-            if (b.isActive || b.isEnabled) {
-              const btnEl = row.children[idx] as HTMLButtonElement;
-              dropdownItems.push({
-                config: {
-                  label: b.title,
-                  action: b.action,
-                  isActive: b.isActive,
-                  isEnabled: b.isEnabled,
-                },
-                element: btnEl,
-              });
-            }
-          });
-          menu.appendChild(row);
-          return;
-        }
-
-        // Render custom widget items (e.g. Chrome-style zoom control)
-        if (item.isCustomWidget && item.customRender) {
-          const widget = item.customRender(refreshActiveStates);
-          menu.appendChild(widget);
-          // Track buttons inside custom widget for enable/disable states
-          if (item.isEnabled) {
-            widget.querySelectorAll('button').forEach(btn => {
-              dropdownItems.push({
-                config: {
-                  label: btn.title || btn.getAttribute('aria-label') || '',
-                  action: () => {},
-                  isEnabled: item.isEnabled,
-                },
-                element: btn as HTMLButtonElement,
-              });
-            });
-          }
-          return;
-        }
-
-        const menuItem = document.createElement('button');
-        menuItem.type = 'button';
-        menuItem.className = 'toolbar-dropdown-item' + (item.className ? ` ${item.className}` : '');
-        menuItem.title = item.label;
-        menuItem.setAttribute('aria-label', item.label);
-        menuItem.onmousedown = e => {
-          // Prevent focus from leaving editor before action runs.
-          e.preventDefault();
-        };
-
-        const text = document.createElement('span');
-        text.textContent = item.label;
-
-        if (item.icon) {
-          const menuIcon = createIconElement(item.icon, 'toolbar-dropdown-icon');
-          menuItem.append(menuIcon, text);
-        } else {
-          menuItem.append(text);
-        }
-
-        menuItem.onclick = e => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          // Don't execute action if disabled
-          if (menuItem.disabled) {
+        const itemsArray = typeof btn.items === 'function' ? btn.items() : btn.items;
+        itemsArray.forEach(item => {
+          // Render separator items
+          if (item.isSeparator) {
+            const sep = document.createElement('div');
+            sep.className = 'toolbar-dropdown-separator';
+            sep.setAttribute('role', 'separator');
+            menu.appendChild(sep);
             return;
           }
 
-          item.action();
-          closeAllDropdowns();
-          refreshActiveStates();
-        };
+          // Render section labels (non-interactive headers)
+          if (item.isSectionLabel) {
+            const label = document.createElement('div');
+            label.className =
+              'toolbar-dropdown-section-label' + (item.className ? ` ${item.className}` : '');
+            label.textContent = item.label;
+            menu.appendChild(label);
+            return;
+          }
 
-        // Store reference to dropdown item for state updates
-        dropdownItems.push({ config: item, element: menuItem });
+          // Render button row (horizontal icon buttons — like context menu button rows)
+          if (item.isButtonRow && item.buttons) {
+            const row = document.createElement('div');
+            row.className = 'toolbar-dropdown-button-row';
+            item.buttons.forEach(b => {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'toolbar-dropdown-icon-btn';
+              btn.title = b.title;
+              btn.setAttribute('aria-label', b.title);
+              const ic = createIconElement(b.icon, 'toolbar-dropdown-icon');
+              btn.appendChild(ic);
+              btn.onmousedown = e => e.preventDefault();
+              btn.onclick = e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (btn.disabled) return;
+                b.action();
+                closeAllDropdowns();
+                refreshActiveStates();
+              };
+              row.appendChild(btn);
+            });
+            // Track button row items for state updates
+            item.buttons.forEach((b, idx) => {
+              if (b.isActive || b.isEnabled) {
+                const btnEl = row.children[idx] as HTMLButtonElement;
+                dropdownItems.push({
+                  config: {
+                    label: b.title,
+                    action: b.action,
+                    isActive: b.isActive,
+                    isEnabled: b.isEnabled,
+                  },
+                  element: btnEl,
+                });
+              }
+            });
+            menu.appendChild(row);
+            return;
+          }
 
-        menu.appendChild(menuItem);
-      });
+          // Render custom widget items (e.g. Chrome-style zoom control)
+          if (item.isCustomWidget && item.customRender) {
+            const widget = item.customRender(refreshActiveStates);
+            menu.appendChild(widget);
+            // Track buttons inside custom widget for enable/disable states
+            if (item.isEnabled) {
+              widget.querySelectorAll('button').forEach(btn => {
+                dropdownItems.push({
+                  config: {
+                    label: btn.title || btn.getAttribute('aria-label') || '',
+                    action: () => {},
+                    isEnabled: item.isEnabled,
+                  },
+                  element: btn as HTMLButtonElement,
+                });
+              });
+            }
+            return;
+          }
+
+          const menuItem = document.createElement('button');
+          menuItem.type = 'button';
+          menuItem.className =
+            'toolbar-dropdown-item' + (item.className ? ` ${item.className}` : '');
+          menuItem.title = item.label;
+          menuItem.setAttribute('aria-label', item.label);
+          menuItem.onmousedown = e => {
+            // Prevent focus from leaving editor before action runs.
+            e.preventDefault();
+          };
+
+          const text = document.createElement('span');
+          text.textContent = item.label;
+
+          if (item.icon) {
+            const menuIcon = createIconElement(item.icon, 'toolbar-dropdown-icon');
+            menuItem.append(menuIcon, text);
+          } else {
+            menuItem.append(text);
+          }
+
+          menuItem.onclick = e => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Don't execute action if disabled
+            if (menuItem.disabled) {
+              return;
+            }
+
+            item.action();
+            closeAllDropdowns();
+            refreshActiveStates();
+          };
+
+          // Store reference to dropdown item for state updates
+          dropdownItems.push({ config: item, element: menuItem });
+
+          menu.appendChild(menuItem);
+        });
+      };
+
+      renderDropdownItems(); // Initial render
 
       button.onclick = e => {
         e.preventDefault();
@@ -1158,6 +1189,8 @@ export function createFormattingToolbar(
         closeAllDropdowns({ keepOverflow: true });
 
         if (!isVisible) {
+          // Re-render items dynamically based on current state before showing menu
+          renderDropdownItems();
           // Refresh enabled states before showing menu
           refreshActiveStates();
         }

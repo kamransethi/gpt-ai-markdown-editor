@@ -62,6 +62,16 @@ function copyPandocLuaFilters() {
   copyDirRecursive(srcLuaDir, distLuaDir);
 }
 
+function copySqlJsWasm() {
+  const wasmSrc = path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
+  const wasmDest = path.join(__dirname, '..', 'dist', 'sql-wasm.wasm');
+  if (fs.existsSync(wasmSrc)) {
+    fs.copyFileSync(wasmSrc, wasmDest);
+  } else {
+    console.warn('⚠️  sql-wasm.wasm not found — Knowledge Graph features will not work');
+  }
+}
+
 async function build() {
   if (isWatch) {
     // Watch mode - development build
@@ -78,6 +88,7 @@ async function build() {
     try {
       await esbuild.build(buildOptions);
       copyPandocLuaFilters();
+      copySqlJsWasm();
 
       // Ensure release builds don't leave stale sourcemaps in dist/
       if (isProduction || noSourcemap) {

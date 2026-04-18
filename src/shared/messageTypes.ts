@@ -95,6 +95,8 @@ export const MessageType = {
   AI_REFINE_RESULT: 'aiRefineResult',
   AI_EXPLAIN: 'aiExplain',
   AI_EXPLAIN_RESULT: 'aiExplainResult',
+  GET_AI_PROMPTS: 'getAiPrompts',
+  AI_PROMPTS: 'aiPrompts',
   IMAGE_ASK: 'imageAsk',
   IMAGE_ASK_RESULT: 'imageAskResult',
 

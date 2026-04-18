@@ -70,25 +70,6 @@ User Interface Layout Sample
 │  ║  ☑ Include code syntax highlighting                                   ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
-│  INTEGRATIONS                                                               │
-│  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  ☑ Enable GitHub Copilot AI features                                  ║  │
-│  ║  └─ Auto-refine text using Copilot                                    ║  │
-│  ║  └─ Explain selected text with Copilot                                ║  │
-│  ║  ☑ Enable Draw.io integration (if extension installed)                ║  │
-│  ║  ☑ Show Mermaid diagram support notice                                ║  │
-│  ║  ☐ Enable experimental Notion-like features                           ║  │
-│  ╚═══════════════════════════════════════════════════════════════════════╝  │
-│                                                                             │
-│  VIEWER PREFERENCES                                                         │
-│  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  Default markdown viewer: ⬃ This editor  ⬃ VS Code preview            ║  │
-│  ║  Ask when opening .md files: ☑ Yes                                    ║  │
-│  ║  Default outline depth (TOC): [──●────] 3 (H1-H3)                     ║  │
-│  ║  Show word count in status bar: ☑ Yes                                 ║  │
-│  ╚═══════════════════════════════════════════════════════════════════════╝  │
-│                                                                             │
-│  DEVELOPER OPTIONS                                                          │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
 │  ║  ☐ Developer mode (show runtime errors)                               ║  │
 │  ║  ☐ Enable verbose logging                                             ║  │

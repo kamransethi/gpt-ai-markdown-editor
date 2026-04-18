@@ -19,6 +19,7 @@ const MSG = {
   OLLAMA_STATUS: 'settings.ollamaStatus',
   BROWSE_PATH: 'settings.browsePath',
   BROWSE_PATH_RESULT: 'settings.browsePathResult',
+  OPEN_FILE: 'settings.openFile',
   CHECK_COPILOT_MODELS: 'settings.checkCopilotModels',
   COPILOT_MODELS_RESULT: 'settings.copilotModelsResult',
 } as const;
@@ -44,6 +45,7 @@ const SETTING_KEYS = [
   'chromePath',
   'pandocPath',
   'pandocTemplatePath',
+  'customPromptsFile',
 ] as const;
 
 let currentPanel: vscode.WebviewPanel | undefined;
@@ -180,6 +182,23 @@ async function handleSettingsMessage(
           settingKey,
           path: selectedPath,
         });
+      }
+      break;
+    }
+
+    case MSG.OPEN_FILE: {
+      const filePath = msg.filePath as string;
+      if (!filePath) {
+        vscode.window.showErrorMessage('No file path configured');
+        break;
+      }
+      try {
+        const uri = vscode.Uri.file(filePath);
+        await vscode.window.showTextDocument(uri);
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `Failed to open file: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
       break;
     }

@@ -522,7 +522,19 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case MessageType.AI_EXPLAIN:
         void handleAiExplainRequest(webview, {
           documentText: message.documentText as string,
+          actionId: message.actionId as string,
         });
+        break;
+
+      case MessageType.GET_AI_PROMPTS:
+        import('../features/aiPrompts').then(m =>
+          m.getCustomPrompts().then(prompts => {
+            webview.postMessage({
+              type: MessageType.AI_PROMPTS,
+              prompts,
+            });
+          })
+        );
         break;
 
       case MessageType.IMAGE_ASK:

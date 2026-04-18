@@ -114,6 +114,21 @@
       {
         "command": "gptAiMarkdownEditor.getSelectedText",
         "title": "Flux Flow Markdown Editor: Get Selected Text"
+      },
+      {
+        "command": "gptAiMarkdownEditor.knowledgeGraph.rebuildIndex",
+        "title": "Knowledge Graph: Rebuild Index",
+        "category": "Flux Flow"
+      },
+      {
+        "command": "gptAiMarkdownEditor.knowledgeGraph.search",
+        "title": "Knowledge Graph: Search All Documents",
+        "category": "Flux Flow"
+      },
+      {
+        "command": "gptAiMarkdownEditor.knowledgeGraph.stats",
+        "title": "Knowledge Graph: Show Stats",
+        "category": "Flux Flow"
       }
     ],
     "views": {
@@ -123,6 +138,12 @@
           "name": "Flux Flow Markdown Editor: Outline",
           "when": "gptAiMarkdownEditor.isActive",
           "icon": "$(layout-sidebar-right)"
+        },
+        {
+          "id": "gptAiMarkdownEditorBacklinks",
+          "name": "Flux Flow: Backlinks",
+          "when": "gptAiMarkdownEditor.knowledgeGraph.active",
+          "icon": "$(references)"
         }
       ]
     },
@@ -189,6 +210,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Optional path to a Pandoc template (.docx or .dotx) for DOCX export. If specified, Pandoc will use this template as the base for styling. Leave empty to use Pandoc's default template."
+        },
+        "gptAiMarkdownEditor.customPromptsFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional path to a JSON file containing custom AI prompts. Used to power the inline 'Ask AI' and 'AI Summary' dropdown menus. Example format: `[{ \"id\": \"score\", \"label\": \"Score Requirements\", \"prompt\": \"You are a Product Manager...\" }]`."
         },
         "gptAiMarkdownEditor.imageResize.skipWarning": {
           "type": "boolean",
@@ -279,6 +305,18 @@
           "default": false,
           "markdownDescription": "**Selection Toolbar (Beta)**: Show a floating formatting toolbar when text is selected. Provides quick access to Bold, Italic, Highlight, and other formatting options."
         },
+        "gptAiMarkdownEditor.knowledgeGraph.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "**Knowledge Graph (Experimental)**: Enable wiki-link indexing, backlinks panel, and full-text search across all markdown files in the workspace. Requires reload after changing.",
+          "order": 50
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.dataDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Custom directory for Knowledge Graph data. Defaults to `~/.fluxflow`. Data persists across extension reinstalls.",
+          "order": 51
+        },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",
           "default": true,
@@ -328,6 +366,7 @@
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.5.0",
+    "@types/sql.js": "^1.4.11",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
@@ -379,6 +418,7 @@
     "mermaid": "^11.13.0",
     "prosemirror-tables": "^1.8.5",
     "shiki": "^3.23.0",
+    "sql.js": "^1.14.1",
     "tiptap-extension-code-block-shiki": "^1.1.0",
     "tiptap-extension-global-drag-handle": "^0.1.18",
     "turndown": "^7.2.2"

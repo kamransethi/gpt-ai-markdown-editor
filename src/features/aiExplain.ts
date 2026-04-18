@@ -13,29 +13,16 @@ import { MessageType } from '../shared/messageTypes';
 import { createLlmProvider, getModelDisplayName } from './llm/providerFactory';
 import type { LlmMessage } from './llm/types';
 import { getProviderAvailabilityCached } from './llm/providerAvailability';
-
-const SYSTEM_PROMPT =
-  'You are a document analysis assistant embedded in a markdown editor. ' +
-  'The user will give you the full text of a technical document. ' +
-  'Produce a clear, structured summary that helps the reader quickly understand the content. ' +
-  'Use this format:\n' +
-  '# Summary\nA 2-3 sentence overview of what the document is about.\n\n' +
-  '## Key Points\n- Bullet point for each major concept or takeaway\n\n' +
-  '## Details\n- Bullet points explaining terms or concepts ' +
-  'in simple language\n\n' +
-  'Keep the explanation concise (under 500 words). ' +
-  'Use **bold** for important terms. ' +
-  'Do NOT include markdown code fences around the output. ' +
-  'Write as if explaining to a competent technologist who is new to this specific topic.';
+import { getPromptById } from './aiPrompts';
 
 /**
  * Handle an AI explain request from the webview.
  */
 export async function handleAiExplainRequest(
   webview: vscode.Webview,
-  data: { documentText: string }
+  data: { documentText: string; actionId?: string }
 ): Promise<void> {
-  const { documentText } = data;
+  const { documentText, actionId } = data;
 
   try {
     // Check provider availability
@@ -71,13 +58,24 @@ export async function handleAiExplainRequest(
         ? documentText.slice(0, maxChars) + '\n\n[Document truncated for analysis]'
         : documentText;
 
+    let sysPrompt = 'You are a document analysis assistant embedded in a markdown editor.';
+    let taskPrompt = 'Provide a clear analysis of the document.';
+
+    if (actionId) {
+      const p = await getPromptById(actionId);
+      if (p) {
+        if (p.systemPrompt) sysPrompt = p.systemPrompt;
+        taskPrompt = p.prompt;
+      }
+    }
+
     const provider = createLlmProvider();
     const modelName = getModelDisplayName();
     const abortController = new AbortController();
 
     const messages: LlmMessage[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Document content:\n\n${text}` },
+      { role: 'system', content: sysPrompt },
+      { role: 'user', content: `Document content:\n\n${text}\n\nTask: ${taskPrompt}` },
     ];
 
     let result = '';
