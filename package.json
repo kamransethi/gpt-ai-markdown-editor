@@ -2,7 +2,7 @@
   "name": "gpt-ai-markdown-editor",
   "displayName": "Flux Flow Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "2.0.39",
+  "version": "2.0.30",
   "publisher": "kamransethi",
   "author": {
     "name": "DK-AI",
@@ -114,10 +114,6 @@
       {
         "command": "gptAiMarkdownEditor.getSelectedText",
         "title": "Flux Flow Markdown Editor: Get Selected Text"
-      },
-      {
-        "command": "gptAiMarkdownEditor.openSettingsPanel",
-        "title": "Flux Flow: Open Settings"
       }
     ],
     "views": {
@@ -253,34 +249,6 @@
           "maximum": 2560,
           "description": "Maximum content width in pixels for the editor (800–2560px). At narrower viewport widths, content will be narrower than this maximum."
         },
-        "gptAiMarkdownEditor.llmProvider": {
-          "type": "string",
-          "enum": [
-            "GitHub Copilot",
-            "Ollama"
-          ],
-          "enumDescriptions": [
-            "Use GitHub Copilot's language models via the VS Code Language Model API (default)",
-            "Use a local Ollama installation for AI features"
-          ],
-          "default": "GitHub Copilot",
-          "markdownDescription": "**LLM Provider**: Choose which AI backend to use for text refinement and document explanation. GitHub Copilot requires a Copilot subscription. Ollama runs locally on your machine."
-        },
-        "gptAiMarkdownEditor.ollamaModel": {
-          "type": "string",
-          "default": "llama3.2:latest",
-          "markdownDescription": "**Ollama Text Model**: The model name used for AI text refinement and document explanation when the LLM provider is set to Ollama. Accepts any model tag installed on your Ollama instance (e.g., `llama3.2:latest`, `mistral:latest`, `codellama:7b`)."
-        },
-        "gptAiMarkdownEditor.ollamaImageModel": {
-          "type": "string",
-          "default": "llama3.2-vision:latest",
-          "markdownDescription": "**Ollama Image Model**: The model used for image analysis (Explain, Alt Text, Extract Text, etc.) when the LLM provider is set to Ollama. Must be a vision-capable model. Common options: `llama3.2-vision:latest`, `llava:latest`, `bakllava:latest`, `moondream:latest`."
-        },
-        "gptAiMarkdownEditor.ollamaEndpoint": {
-          "type": "string",
-          "default": "http://localhost:11434",
-          "markdownDescription": "**Ollama Endpoint**: The base URL of your Ollama server. Only used when the LLM provider is set to Ollama."
-        },
         "gptAiMarkdownEditor.aiModel": {
           "type": "string",
           "enum": [
@@ -359,21 +327,21 @@
     "@tiptap/extension-table-row": "^3.22.3",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.6.0",
-    "@types/vscode": "1.90.0",
-    "@typescript-eslint/eslint-plugin": "^8.58.1",
-    "@typescript-eslint/parser": "^8.58.1",
+    "@types/node": "^25.5.0",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "@vscode/vsce": "^3.7.1",
     "concurrently": "^9.2.1",
-    "esbuild": "^0.28.0",
-    "eslint": "^10.2.0",
+    "esbuild": "^0.27.4",
+    "eslint": "^10.1.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
-    "prettier": "^3.8.2",
-    "ts-jest": "^29.4.9",
-    "typescript": "^6.0.2"
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@tiptap/core": "^3.22.3",
@@ -404,15 +372,15 @@
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
     "image-size": "^2.0.2",
-    "katex": "^0.16.45",
+    "katex": "^0.16.43",
     "lowlight": "^3.3.0",
     "markdown-it": "^14.1.1",
     "markdown-it-mark": "^4.0.0",
-    "mermaid": "^11.14.0",
+    "mermaid": "^11.13.0",
     "prosemirror-tables": "^1.8.5",
     "shiki": "^3.23.0",
     "tiptap-extension-code-block-shiki": "^1.1.0",
     "tiptap-extension-global-drag-handle": "^0.1.18",
-    "turndown": "^7.2.4"
+    "turndown": "^7.2.2"
   }
 }

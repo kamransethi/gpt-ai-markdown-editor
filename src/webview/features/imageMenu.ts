@@ -67,6 +67,10 @@ export function createImageMenu(isLocal: boolean = true): HTMLElement {
       <span class="codicon codicon-refresh menu-icon"></span>
       <span class="menu-label">Revert to original size</span>
     </div>
+    <div class="menu-item" role="menuitem" tabindex="0" data-action="refresh">
+      <span class="codicon codicon-sync menu-icon"></span>
+      <span class="menu-label">Refresh from disk</span>
+    </div>
   `;
 
   // Only add file location options for local images
@@ -219,6 +223,15 @@ export function showImageMenu(
             type: MessageType.REVEAL_IMAGE_IN_OS,
             imagePath: imagePath,
           });
+        }
+      } else if (action === 'refresh') {
+        hideImageMenu(menu);
+        // Cache-bust by adding timestamp query parameter to force reload from disk
+        const imagePath = img.getAttribute('data-markdown-src') || img.getAttribute('src') || '';
+        if (imagePath) {
+          const timestamp = Date.now();
+          const separator = imagePath.includes('?') ? '&' : '?';
+          img.src = `${imagePath}${separator}t=${timestamp}`;
         }
       } else if (action === 'showInWorkspace') {
         hideImageMenu(menu);

@@ -23,9 +23,83 @@ style: |
 
 Welcome to the **Ultimate Markdown Stress Test**. This document is designed to push the boundaries of your markdown editor by combining every standard and extended element available.
 
+User Interface Layout Sample
+
 ```plaintext
-This is source code
-And it saves well
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  🔧  FLUX FLOW MARKDOWN EDITOR — CONFIGURATION PANEL                       │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  EDITOR BEHAVIOR                                                            │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  ☑ Enable auto-save on document change                               ║  │
+│  ║  ☑ Show formatting toolbar by default                                ║  │
+│  ║  ☐ Enable selection toolbar (beta)                                   ║  │
+│  ║  ☑ Auto-format on paste (HTML to Markdown)                           ║  │
+│  ║  ☑ Preserve heading hierarchy in TOC                                 ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  APPEARANCE & THEME                                                         │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  Theme: ⬤ System default  ○ Light  ○ Dark                            ║  │
+│  ║  Font size: [──●────] 14px                                            ║  │
+│  ║  Font: [San Francisco        ▼]                                       ║  │
+│  ║  Line height: [──●────] 1.5                                           ║  │
+│  ║  ☑ Show code block line numbers                                       ║  │
+│  ║  ☑ Enable syntax highlighting (11 languages)                          ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  IMAGE & MEDIA HANDLING                                                     │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  Default image resize: ⬤ Show dialog  ○ Auto-suggest                ║  │
+│  ║  Large image threshold: [──●────] 2 MB                               ║  │
+│  ║  ☑ Enable drag-and-drop image insertion                              ║  │
+│  ║  ☑ Show image preview on hover                                       ║  │
+│  ║  ☑ Embed images (when possible)                                      ║  │
+│  ║  Mermaid render mode: ⬃ SVG (default)  ⬃ PNG                        ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  EXPORT SETTINGS                                                            │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  Default export format: ⬃ PDF  ⬃ Word (.docx)                       ║  │
+│  ║  PDF page size: ⬃ A4  ⬃ Letter  ⬃ Legal                            ║  │
+│  ║  ☑ Include table of contents in exports                              ║  │
+│  ║  ☑ Include images in exports                                         ║  │
+│  ║  ☑ Include code syntax highlighting                                  ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  INTEGRATIONS                                                               │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  ☑ Enable GitHub Copilot AI features                                 ║  │
+│  ║    └─ Auto-refine text using Copilot                                 ║  │
+│  ║    └─ Explain selected text with Copilot                             ║  │
+│  ║  ☑ Enable Draw.io integration (if extension installed)               ║  │
+│  ║  ☑ Show Mermaid diagram support notice                               ║  │
+│  ║  ☐ Enable experimental Notion-like features                          ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  VIEWER PREFERENCES                                                         │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  Default markdown viewer: ⬃ This editor  ⬃ VS Code preview          ║  │
+│  ║  Ask when opening .md files: ☑ Yes                                   ║  │
+│  ║  Default outline depth (TOC): [──●────] 3 (H1-H3)                    ║  │
+│  ║  Show word count in status bar: ☑ Yes                                ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  DEVELOPER OPTIONS                                                          │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║  ☐ Developer mode (show runtime errors)                              ║  │
+│  ║  ☐ Enable verbose logging                                            ║  │
+│  ║  ☐ Show debug information in toolbar                                 ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │  [Reset to Defaults]              [Save Settings]    [Close Panel]  │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 1. Text Formatting &amp; Styles
@@ -80,21 +154,21 @@ Both `1.` (dot) and `1)` (paren) styles should preserve **bold**, *italic*, `cod
 3. Third with ***both***
 4. Item with `code` and ~~strike~~
 5. Item with [link](https://example.com)
-  1. Nested first - **bold nested**
-  2. Nested second with *italic*
-  3. Nested third with `code`
-    - Back to bullets
-    - Another **bold** bullet
-    1. Ordered in bullets
-    2. Another ordered
+6. Nested first - **bold nested**
+7. Nested second with *italic*
+8. Nested third with `code`
+- Back to bullets
+- Another **bold** bullet
+1. Ordered in bullets
+2. Another ordered
 
 Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedListMarkdownFix works.
 
 ### Task List
 
-- [x] Completed task
-- [ ] Incomplete task
-- [ ] Task with *formatting* and <mark>highlight</mark>
+- Completed task
+- Incomplete task
+- Task with *formatting* and &lt;mark&gt;highlight&lt;/mark&gt;
 
 ---
 
@@ -119,7 +193,6 @@ This table contains cells with bullet points separated by `<br>-` elements as re
 | **Logic**      | - Logical operators<br>- Bitwise shifts<br>- Boolean algebra      | 🌀     |
 | **Media**      | - Images<br>- Videos<br>- Audio files            | 🎬     |
 | **Advanced**   | - Mermaid Charts<br>- LaTeX Formulas<br>- Footnotes         | 🚀     |
-
 
 
 | Feature Type | Description / Details                                | Status |
@@ -251,11 +324,8 @@ Inside this collapsible section, we can have more content:
 | Logic        | - Logical operators   |        |
 
 
-
 | Heading                   | Second | Third |
 | ------------------------- | ------ | ----- |
 | This iis a long first row |        |       |
 |                           |        |       |
 |                           |        |       |
-
-
