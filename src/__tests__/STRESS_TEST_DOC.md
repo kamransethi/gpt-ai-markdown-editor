@@ -34,16 +34,16 @@ User Interface Layout Sample
 │                                                                             │
 │  EDITOR BEHAVIOR                                                            │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  ☑ Enable auto-save on document change                               ║  │
-│  ║  ☑ Show formatting toolbar by default                                ║  │
-│  ║  ☐ Enable selection toolbar (beta)                                   ║  │
-│  ║  ☑ Auto-format on paste (HTML to Markdown)                           ║  │
-│  ║  ☑ Preserve heading hierarchy in TOC                                 ║  │
+│  ║  ☑ Enable auto-save on document change                                ║  │
+│  ║  ☑ Show formatting toolbar by default                                 ║  │
+│  ║  ☐ Enable selection toolbar (beta)                                    ║  │
+│  ║  ☑ Auto-format on paste (HTML to Markdown)                            ║  │
+│  ║  ☑ Preserve heading hierarchy in TOC                                  ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
 │  APPEARANCE & THEME                                                         │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  Theme: ⬤ System default  ○ Light  ○ Dark                            ║  │
+│  ║  Theme: ⬤ System default  ○ Light  ○ Dark                             ║  │
 │  ║  Font size: [──●────] 14px                                            ║  │
 │  ║  Font: [San Francisco        ▼]                                       ║  │
 │  ║  Line height: [──●────] 1.5                                           ║  │
@@ -53,46 +53,46 @@ User Interface Layout Sample
 │                                                                             │
 │  IMAGE & MEDIA HANDLING                                                     │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  Default image resize: ⬤ Show dialog  ○ Auto-suggest                ║  │
-│  ║  Large image threshold: [──●────] 2 MB                               ║  │
-│  ║  ☑ Enable drag-and-drop image insertion                              ║  │
-│  ║  ☑ Show image preview on hover                                       ║  │
-│  ║  ☑ Embed images (when possible)                                      ║  │
-│  ║  Mermaid render mode: ⬃ SVG (default)  ⬃ PNG                        ║  │
+│  ║  Default image resize: ⬤ Show dialog  ○ Auto-suggest                  ║  │
+│  ║  Large image threshold: [──●────] 2 MB                                ║  │
+│  ║  ☑ Enable drag-and-drop image insertion                               ║  │
+│  ║  ☑ Show image preview on hover                                        ║  │
+│  ║  ☑ Embed images (when possible)                                       ║  │
+│  ║  Mermaid render mode: ⬃ SVG (default)  ⬃ PNG                          ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
 │  EXPORT SETTINGS                                                            │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  Default export format: ⬃ PDF  ⬃ Word (.docx)                       ║  │
-│  ║  PDF page size: ⬃ A4  ⬃ Letter  ⬃ Legal                            ║  │
-│  ║  ☑ Include table of contents in exports                              ║  │
-│  ║  ☑ Include images in exports                                         ║  │
-│  ║  ☑ Include code syntax highlighting                                  ║  │
+│  ║  Default export format: ⬃ PDF  ⬃ Word (.docx)                         ║  │
+│  ║  PDF page size: ⬃ A4  ⬃ Letter  ⬃ Legal                               ║  │
+│  ║  ☑ Include table of contents in exports                               ║  │
+│  ║  ☑ Include images in exports                                          ║  │
+│  ║  ☑ Include code syntax highlighting                                   ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
 │  INTEGRATIONS                                                               │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  ☑ Enable GitHub Copilot AI features                                 ║  │
-│  ║    └─ Auto-refine text using Copilot                                 ║  │
-│  ║    └─ Explain selected text with Copilot                             ║  │
-│  ║  ☑ Enable Draw.io integration (if extension installed)               ║  │
-│  ║  ☑ Show Mermaid diagram support notice                               ║  │
-│  ║  ☐ Enable experimental Notion-like features                          ║  │
+│  ║  ☑ Enable GitHub Copilot AI features                                  ║  │
+│  ║  └─ Auto-refine text using Copilot                                    ║  │
+│  ║  └─ Explain selected text with Copilot                                ║  │
+│  ║  ☑ Enable Draw.io integration (if extension installed)                ║  │
+│  ║  ☑ Show Mermaid diagram support notice                                ║  │
+│  ║  ☐ Enable experimental Notion-like features                           ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
 │  VIEWER PREFERENCES                                                         │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  Default markdown viewer: ⬃ This editor  ⬃ VS Code preview          ║  │
-│  ║  Ask when opening .md files: ☑ Yes                                   ║  │
-│  ║  Default outline depth (TOC): [──●────] 3 (H1-H3)                    ║  │
-│  ║  Show word count in status bar: ☑ Yes                                ║  │
+│  ║  Default markdown viewer: ⬃ This editor  ⬃ VS Code preview            ║  │
+│  ║  Ask when opening .md files: ☑ Yes                                    ║  │
+│  ║  Default outline depth (TOC): [──●────] 3 (H1-H3)                     ║  │
+│  ║  Show word count in status bar: ☑ Yes                                 ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
 │  DEVELOPER OPTIONS                                                          │
 │  ╔═══════════════════════════════════════════════════════════════════════╗  │
-│  ║  ☐ Developer mode (show runtime errors)                              ║  │
-│  ║  ☐ Enable verbose logging                                            ║  │
-│  ║  ☐ Show debug information in toolbar                                 ║  │
+│  ║  ☐ Developer mode (show runtime errors)                               ║  │
+│  ║  ☐ Enable verbose logging                                             ║  │
+│  ║  ☐ Show debug information in toolbar                                  ║  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝  │
 │                                                                             │
 │  ┌─────────────────────────────────────────────────────────────────────┐  │
@@ -157,8 +157,10 @@ Both `1.` (dot) and `1)` (paren) styles should preserve **bold**, *italic*, `cod
 6. Nested first - **bold nested**
 7. Nested second with *italic*
 8. Nested third with `code`
+
 - Back to bullets
 - Another **bold** bullet
+
 1. Ordered in bullets
 2. Another ordered
 
