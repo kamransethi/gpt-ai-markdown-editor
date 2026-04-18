@@ -882,7 +882,7 @@ body[data-theme="dark"] {
   background: none;
   padding: 0;
   color: inherit;
-  font-size: calc(var(--md-base-size) * 0.95);
+  font-size: calc(var(--md-base-size) * 0.85);
 
 }
 
