@@ -149,7 +149,7 @@ export function renderTableToMarkdownWithBreaks(
   // For column width computation, we need the display length (without <br> tags)
   const displayLen = (text: string) => {
     // Split on markers to get the longest segment for column width
-    const segments = text.split(/§§|<br>|\x1F/);
+    const segments = text.split(new RegExp('§§|<br>|' + String.fromCharCode(31)));
     return Math.max(...segments.map(s => s.length), 0);
   };
 

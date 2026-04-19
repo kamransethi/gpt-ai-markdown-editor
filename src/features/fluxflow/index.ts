@@ -408,7 +408,9 @@ async function reinitializeEmbeddings(): Promise<void> {
     try {
       const out = vscode.window.createOutputChannel('FluxFlow Debug');
       out.appendLine(`[FluxFlow] Embedding detailed error: ${embeddingErrorFull}`);
-    } catch {}
+    } catch (e) {
+      void e;
+    }
   }
 }
 

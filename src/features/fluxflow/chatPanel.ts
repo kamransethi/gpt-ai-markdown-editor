@@ -10,7 +10,7 @@ import * as path from 'path';
 import type { GraphDatabase } from './database';
 import type { VectorStore } from './vectorStore';
 import type { EmbeddingEngine } from './embeddingEngine';
-import { streamAnswer, type ChatMessage, type StreamEvent } from './graphChat';
+import { streamAnswer, type ChatMessage } from './graphChat';
 import { getModelDisplayName } from '../llm/providerFactory';
 
 const PANEL_ID = 'gptAiMarkdownEditor.graphChatPanel';

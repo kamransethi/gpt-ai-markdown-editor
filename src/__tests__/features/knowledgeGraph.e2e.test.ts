@@ -9,6 +9,7 @@
  */
 
 import initSqlJs, { type Database as SqlJsDatabase } from 'sql.js';
+import * as vscode from 'vscode';
 import { parseMarkdownFile } from '../../features/fluxflow/indexer';
 import { GraphDatabase } from '../../features/fluxflow/database';
 import * as fs from 'fs';
@@ -255,7 +256,6 @@ describe('FluxFlow Knowledge Graph — end-to-end', () => {
     // Override getDataDir via vscode mock: the mock returns '' for all config,
     // which makes getDataDir() return ~/.fluxflow. We want to use our temp dir.
     // Instead, we'll set the mock config to return our temp data dir.
-    const vscode = require('vscode');
     const mockDataDir = path.join(tempDir, 'data');
     vscode.workspace.getConfiguration = jest.fn().mockReturnValue({
       get: jest.fn((key: string, defaultVal: unknown) => {

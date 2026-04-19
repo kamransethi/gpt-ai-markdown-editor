@@ -395,7 +395,7 @@ describe('STRESS_TEST_DOC.md roundtrip', () => {
     serialized = serialized
       .replace(/§§/g, '<br>')
       .replace(/\[\[BR\]\]/g, '<br>')
-      .replace(/\x1F/g, '<br>');
+      .replace(new RegExp(String.fromCharCode(31), 'g'), '<br>');
 
     expect(serialized).toContain('- [x] Completed task');
     expect(serialized).toContain('- [ ] Incomplete task');
@@ -412,7 +412,7 @@ describe('STRESS_TEST_DOC.md roundtrip', () => {
     serialized = serialized
       .replace(/§§/g, '<br>')
       .replace(/\[\[BR\]\]/g, '<br>')
-      .replace(/\x1F/g, '<br>');
+      .replace(new RegExp(String.fromCharCode(31), 'g'), '<br>');
 
     expect(serialized).toContain('<mark>Highlight</mark>');
     expect(serialized).not.toContain('==Highlight==');

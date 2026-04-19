@@ -6,11 +6,12 @@
  */
 
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as os from 'os';
 import { isOllamaAvailable } from '../features/llm/providerAvailability';
 import { setProgressPushCallback } from '../features/fluxflow/index';
 
 const PANEL_ID = 'gptAiMarkdownEditor.settingsPanel';
-const CONFIG_SECTION = 'gptAiMarkdownEditor'; // unused, for legacy
 
 const MSG = {
   GET_ALL_SETTINGS: 'settings.getAllSettings',
@@ -211,7 +212,7 @@ async function handleSettingsMessage(
         vscode.workspace
           .getConfiguration('gptAiMarkdownEditor')
           .update(key, value, vscode.ConfigurationTarget.Global)
-          .catch(err => {
+          .then(undefined, (err: unknown) => {
             console.error('[FluxFlow] Failed to sync setting to VS Code:', err);
           });
       }
@@ -271,7 +272,7 @@ async function handleSettingsMessage(
           vscode.workspace
             .getConfiguration('gptAiMarkdownEditor')
             .update(settingKey, selectedPath, vscode.ConfigurationTarget.Global)
-            .catch(err => {
+            .then(undefined, (err: unknown) => {
               console.error('[FluxFlow] Failed to sync setting to VS Code:', err);
             });
         }

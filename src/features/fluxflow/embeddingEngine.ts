@@ -48,7 +48,8 @@ export function createEmbeddingEngine(): EmbeddingEngine {
     const output = (() => {
       try {
         return vscode.window.createOutputChannel('FluxFlow Debug');
-      } catch {
+      } catch (e) {
+        void e;
         return null;
       }
     })();
@@ -142,8 +143,10 @@ export function createEmbeddingEngine(): EmbeddingEngine {
         out.appendLine(`[EmbeddingEngine] Embedding request error: ${errMsg}`);
         out.appendLine(`[EmbeddingEngine] Request payload: ${payloadStr}`);
         out.show(true);
-      } catch {}
-      throw new Error(`Embedding request failed: ${errMsg}`);
+      } catch (e) {
+        void e;
+      }
+      throw err;
     }
 
     if (!res.ok) {
@@ -157,7 +160,9 @@ export function createEmbeddingEngine(): EmbeddingEngine {
         out.appendLine(`[EmbeddingEngine] Offender cleaned string length: ${cleanedText.length}`);
         out.appendLine(`[EmbeddingEngine] Request payload: ${payloadStr}`);
         out.show(true);
-      } catch {}
+      } catch (e) {
+        void e;
+      }
 
       if (res.status === 404 || body.toLowerCase().includes('not found')) {
         throw new Error(
@@ -179,7 +184,9 @@ export function createEmbeddingEngine(): EmbeddingEngine {
         out.appendLine('[EmbeddingEngine] Server returned empty embeddings');
         out.appendLine(`[EmbeddingEngine] Request payload: ${payloadStr}`);
         out.show(true);
-      } catch {}
+      } catch (e) {
+        void e;
+      }
       throw new Error('Server returned empty embeddings');
     }
 
