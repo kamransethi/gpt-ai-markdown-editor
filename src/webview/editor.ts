@@ -1647,9 +1647,8 @@ window.addEventListener('message', (event: MessageEvent) => {
         handleAiExplainResult(message as any);
         break;
       case MessageType.AI_PROMPTS:
-        if (window.handleAiPromptsResult) {
-          window.handleAiPromptsResult(message.prompts);
-        }
+        (window as any).handleAiPromptsResult?.(message.prompts);
+        break;
         break;
       case MessageType.IMAGE_ASK_RESULT:
         handleImageAskResult(message as any);

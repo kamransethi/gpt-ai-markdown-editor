@@ -52,7 +52,12 @@ export function openChatPanel(
   });
 
   currentPanel = panel;
-  panel.iconPath = new vscode.ThemeIcon('comment-discussion');
+  // Use extension icon as panel icon (ThemeIcon isn't assignable to WebviewPanel.iconPath)
+  try {
+    panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.png');
+  } catch (e) {
+    void e;
+  }
 
   const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
   const themeOverride = config.get<string>('themeOverride', 'light');

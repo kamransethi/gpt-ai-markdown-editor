@@ -902,11 +902,11 @@ export function createFormattingToolbar(
           if (prompts && prompts.length > 0) {
             const documentPrompts = prompts.filter((p: any) => p.type === 'document');
             if (documentPrompts.length > 0) {
-              items.push({ isSeparator: true });
+              items.push({ label: '', action: () => {}, isSeparator: true });
               documentPrompts.forEach((prompt: any) => {
                 items.push({
                   label: prompt.label,
-                  action: () => editor.commands.explainDocument(prompt.id),
+                  action: () => editor.commands.explainDocument(),
                 });
               });
             }
@@ -914,15 +914,15 @@ export function createFormattingToolbar(
 
           // Add Knowledge Graph actions if enabled
           if ((window as any).knowledgeGraphEnabled) {
-            items.push({ isSeparator: true });
+            items.push({ label: '', action: () => {}, isSeparator: true });
             items.push({ label: 'GRAPH', action: () => {}, isSectionLabel: true });
-            items.push({
-              label: 'Graph Chat',
-              icon: { name: 'sparkle', fallback: '✨' },
-              action: () => {
-                window.vscode.postMessage({ type: 'openGraphChat' });
-              },
-            });
+              items.push({
+                label: 'Graph Chat',
+                icon: { name: 'sparkle', fallback: '✨' },
+                action: () => {
+                  (window as any).vscode?.postMessage({ type: 'openGraphChat' });
+                },
+              });
           }
 
           return items;

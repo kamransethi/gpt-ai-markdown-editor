@@ -13,7 +13,7 @@ type BacklinksSupplier = (docPath: string) => BacklinkEntry[];
 class BacklinkTreeItem extends vscode.TreeItem {
   constructor(
     public readonly entry: BacklinkEntry,
-    private workspacePath: string
+    workspacePath: string
   ) {
     super(entry.sourceTitle || path.basename(entry.sourcePath));
     this.description = entry.sourcePath;
