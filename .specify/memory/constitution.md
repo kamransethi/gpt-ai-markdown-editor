@@ -21,7 +21,7 @@ Typography and readability are the product. Every decision must serve the readin
 1. Write failing tests BEFORE implementation
 2. Implement the simplest clean solution to make tests pass
 3. Refactor while keeping tests green
-4. Run `npm test` — ALL tests must pass (new + existing)
+4. Run `npm test` — ALL tests must pass (new + existing, currently 1000+)
 5. Cover positive, negative, and edge cases
 
 Bug fixes follow the same flow: write a failing test that replicates the bug, then fix it.
@@ -104,7 +104,7 @@ If one toolbar reorders shared controls, the other must be updated in the same c
 
 ## VIII. Modular Tiptap Extension Strategy
 
-All custom functionality MUST be implemented as modular Tiptap Extensions.
+All custom functionality MUST be implemented as modular Tiptap Extensions. The project baseline is TipTap 3.22.4+, which provides hardened serialization for tables and task lists.
 
 1. **No Core Redundancy**: If StarterKit or an official `@tiptap/extension-*` provides it, use that. Don't write custom input rules for things official packages handle.
 2. **Total Encapsulation**: Extensions must be self-sufficient. DOM manipulation (e.g., drag handles) MUST be in `addNodeView`, NOT via global event listeners in `editor.ts`.
@@ -140,7 +140,7 @@ All custom functionality MUST be implemented as modular Tiptap Extensions.
 
 These are critical known issues — read before working on sync/editor state:
 
-1. **Feedback loops**: Set `ignoreNextUpdate` flag when applying edits. Check `lastEditTimestamp` before updating from external changes. Skip if content unchanged.
+1. **Feedback loops**: Set `ignoreNextUpdate` flag when applying edits. Check `lastEditTimestamp` before updating from external changes. Skip if content unchanged. Frontmatter is parsed using `gray-matter` to ensure metadata integrity independent of TipTap serialization.
 2. **Cursor position**: Save cursor before content updates, restore after. Update selection AFTER content, or cursor jumps to start.
 3. **Performance with large docs**: 500ms debounce on updates. Skip redundant updates. Respect user editing state.
 4. **Mermaid rendering**: Always wrap in try/catch. Provide fallback UI with error message and code view option.
@@ -457,8 +457,8 @@ All 828 tests pass.
 - Load a document → edit in Flux Flow → save → reload in VS Code source editor → verify content unchanged
 - Run on documents 100+ lines, complex tables, images, Mermaid diagrams, all formatting types
 - Test stress scenarios: rapid typing, undo/redo loops, large pastes, external file changes
-- STRESS_TEST_DOC.md is the canonical stress test corpus — update it when new features land
-- `npm test` must include roundtrip tests — no manual testing handoff to users
+- `STRESS_TEST_DOC.md` (located in project root) is the canonical stress test corpus — update it when new features land
+- `npm test` must include roundtrip tests (stressTestRoundTrip) — no manual testing handoff to users
 
 ### Tracked Bandaids & Fixes
 
@@ -573,4 +573,15 @@ After implementing performance-sensitive features:
 
 ---
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-09 | **Last Amended**: 2026-04-09
+## XV. Knowledge Graph (Phase 1)
+
+The Knowledge Graph provides hybrid search and relationship tracking across the entire workspace.
+
+- **Hybrid Search**: Uses Reciprocal Rank Fusion (RRF) to combine lexical (FTS4) and semantic (Float32 vectors) search results.
+- **Data Mobility**: Cross-platform portability is ensured by using `sql.js` (WASM) and a flat binary vector store.
+- **Persistence**: Data resides in `~/.fluxflow` (or a custom `dataDir`).
+- **Graph Chat**: A RAG-enabled streaming interface for conversational querying of the workspace.
+
+---
+
+**Version**: 1.1.0 | **Ratified**: 2026-04-09 | **Last Amended**: 2026-04-19

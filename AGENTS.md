@@ -32,12 +32,14 @@
 | Toolbar button | `src/webview/BubbleMenuView.ts` |
 | TipTap extension | `src/webview/extensions/` |
 | Document sync | `src/editor/MarkdownEditorProvider.ts` |
+| Knowledge Graph | `src/features/fluxflow/` |
+| Draw.io Integration | `src/webview/extensions/drawio.ts` |
 | Dependencies | Update `THIRD_PARTY_LICENSES.md` if adding/removing |
 
 ## Key Principles
 
 - **spec.md** = business problem + success criteria (NO tech)
 - **plan.md** = architecture + files + approach (NO user stories)
-- **Code** = TDD (RED test → GREEN code → all 828 pass)
+- **Code** = TDD (RED test → GREEN code → all 1000+ pass)
 - **Tests** = add regression test when fixing bugs
 - **Git** = commit to main directly: `spec(NNN)`, `plan(NNN)`, `feat(NNN)`, `fix(NNN)` — no branching

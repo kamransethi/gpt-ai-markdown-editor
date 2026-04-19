@@ -10,9 +10,9 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as vscode from 'vscode';
-import type { GraphDocument, BacklinkEntry, SearchResult } from './types';
+import type { GraphDocument, BacklinkEntry, SearchResult, Chunk } from './types';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const SCHEMA_DDL = `
 CREATE TABLE IF NOT EXISTS documents (
@@ -46,11 +46,18 @@ CREATE TABLE IF NOT EXISTS properties (
   value       TEXT    NOT NULL DEFAULT ''
 );
 
-CREATE VIRTUAL TABLE IF NOT EXISTS fts USING fts5(
+CREATE VIRTUAL TABLE IF NOT EXISTS fts USING fts4(
   title,
   body,
-  content='',
-  tokenize='porter unicode61'
+  tokenize=porter
+);
+
+CREATE TABLE IF NOT EXISTS chunks (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  doc_id      INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  header_path TEXT    NOT NULL DEFAULT '',
+  content     TEXT    NOT NULL DEFAULT '',
+  token_count INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_links_source ON links(source_id);
@@ -60,9 +67,10 @@ CREATE INDEX IF NOT EXISTS idx_tags_doc ON tags(doc_id);
 CREATE INDEX IF NOT EXISTS idx_tags_tag ON tags(tag);
 CREATE INDEX IF NOT EXISTS idx_properties_doc ON properties(doc_id);
 CREATE INDEX IF NOT EXISTS idx_properties_key ON properties(key);
+CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(doc_id);
 `;
 
-function getDataDir(): string {
+export function getDataDir(): string {
   const custom = vscode.workspace
     .getConfiguration('gptAiMarkdownEditor')
     .get<string>('knowledgeGraph.dataDir', '');
@@ -72,7 +80,7 @@ function getDataDir(): string {
   return path.join(os.homedir(), '.fluxflow');
 }
 
-function getWorkspaceHash(workspacePath: string): string {
+export function getWorkspaceHash(workspacePath: string): string {
   return crypto.createHash('sha256').update(workspacePath).digest('hex').slice(0, 16);
 }
 
@@ -118,7 +126,17 @@ export class GraphDatabase {
     const currentVersion = (result[0]?.values[0]?.[0] as number) ?? 0;
 
     if (currentVersion < SCHEMA_VERSION) {
-      for (const statement of SCHEMA_DDL.split(';')) {
+      if (currentVersion > 0) {
+        // Old schema — drop everything and start fresh
+        this.db.run('DROP TABLE IF EXISTS chunks;');
+        this.db.run('DROP TABLE IF EXISTS properties;');
+        this.db.run('DROP TABLE IF EXISTS tags;');
+        this.db.run('DROP TABLE IF EXISTS links;');
+        this.db.run('DELETE FROM fts;');
+        this.db.run('DROP TABLE IF EXISTS documents;');
+      }
+
+      for (const statement of SCHEMA_DDL.split(/;\s*\n/)) {
         const trimmed = statement.trim();
         if (trimmed) {
           this.db.run(trimmed + ';');
@@ -197,6 +215,10 @@ export class GraphDatabase {
     return rows[0].values[0][0] as number;
   }
 
+  getDbPath(): string {
+    return this.dbPath;
+  }
+
   // --- Link operations ---
 
   clearLinksForDocument(docId: number): void {
@@ -248,7 +270,7 @@ export class GraphDatabase {
     if (!doc || !doc.title) return [];
 
     const titleLower = doc.title.toLowerCase();
-    // Escape FTS5 special characters
+    // Escape FTS special characters
     const safeTitle = doc.title.replace(/['"^*(){}[\]]/g, '').trim();
     if (!safeTitle) return [];
 
@@ -317,36 +339,27 @@ export class GraphDatabase {
   // --- FTS operations ---
 
   clearFtsForDocument(docId: number): void {
-    try {
-      this.db!.run('DELETE FROM fts WHERE rowid = ?', [docId]);
-    } catch {
-      // FTS contentless tables may not support direct DELETE — ignore
-    }
+    this.db!.run('DELETE FROM fts WHERE rowid = ?', [docId]);
   }
 
   upsertFts(docId: number, title: string, body: string): void {
-    // For contentless FTS5, we use INSERT OR REPLACE via rowid
-    try {
-      this.db!.run('DELETE FROM fts WHERE rowid = ?', [docId]);
-    } catch {
-      // ignore
-    }
+    // Delete old entry then insert new one
+    this.db!.run('DELETE FROM fts WHERE rowid = ?', [docId]);
     this.db!.run('INSERT INTO fts (rowid, title, body) VALUES (?, ?, ?)', [docId, title, body]);
   }
 
-  search(query: string): SearchResult[] {
+  search(query: string, snippetTokens = 40, limit = 50): SearchResult[] {
     const safeQuery = query.replace(/['"]/g, '').trim();
     if (!safeQuery) return [];
 
     try {
       const rows = this.db!.exec(
-        `SELECT d.path, d.title, snippet(fts, 1, '**', '**', '...', 20) as snippet
+        `SELECT d.path, d.title, snippet(fts, '**', '**', '...', 1, ?) as snippet
          FROM fts
          JOIN documents d ON d.id = fts.rowid
          WHERE fts MATCH ?
-         ORDER BY rank
-         LIMIT 50`,
-        [safeQuery]
+         LIMIT ?`,
+        [snippetTokens, safeQuery, limit]
       );
 
       if (!rows.length) return [];
@@ -369,5 +382,90 @@ export class GraphDatabase {
   commit(): void {
     this.db!.run('COMMIT;');
     this.dirty = true;
+  }
+
+  // --- Chunk operations (Phase 2) ---
+
+  clearChunksForDocument(docId: number): void {
+    this.db!.run('DELETE FROM chunks WHERE doc_id = ?', [docId]);
+  }
+
+  insertChunk(docId: number, headerPath: string, content: string, tokenCount: number): number {
+    this.db!.run(
+      'INSERT INTO chunks (doc_id, header_path, content, token_count) VALUES (?, ?, ?, ?)',
+      [docId, headerPath, content, tokenCount]
+    );
+    const rows = this.db!.exec('SELECT last_insert_rowid()');
+    return rows[0].values[0][0] as number;
+  }
+
+  getChunksForDocument(docId: number): Chunk[] {
+    const rows = this.db!.exec(
+      'SELECT id, doc_id, header_path, content, token_count FROM chunks WHERE doc_id = ? ORDER BY id',
+      [docId]
+    );
+    if (!rows.length) return [];
+    return rows[0].values.map(row => ({
+      id: row[0] as number,
+      docId: row[1] as number,
+      headerPath: row[2] as string,
+      content: row[3] as string,
+      tokenCount: row[4] as number,
+    }));
+  }
+
+  getChunkById(chunkId: number): Chunk | null {
+    const rows = this.db!.exec(
+      'SELECT id, doc_id, header_path, content, token_count FROM chunks WHERE id = ?',
+      [chunkId]
+    );
+    if (!rows.length || !rows[0].values.length) return null;
+    const row = rows[0].values[0];
+    return {
+      id: row[0] as number,
+      docId: row[1] as number,
+      headerPath: row[2] as string,
+      content: row[3] as string,
+      tokenCount: row[4] as number,
+    };
+  }
+
+  getAllChunkIds(): number[] {
+    const rows = this.db!.exec('SELECT id FROM chunks ORDER BY id');
+    if (!rows.length) return [];
+    return rows[0].values.map(row => row[0] as number);
+  }
+
+  getChunkCount(): number {
+    const rows = this.db!.exec('SELECT COUNT(*) FROM chunks');
+    return rows[0].values[0][0] as number;
+  }
+
+  /** Get linked document IDs from the links table (for graph expansion) */
+  getLinkedDocIds(docId: number): number[] {
+    const rows = this.db!.exec(
+      `SELECT DISTINCT target_id FROM links WHERE source_id = ? AND target_id IS NOT NULL
+       UNION
+       SELECT DISTINCT source_id FROM links WHERE target_id = ?`,
+      [docId, docId]
+    );
+    if (!rows.length) return [];
+    return rows[0].values.map(row => row[0] as number);
+  }
+
+  getDocumentById(docId: number): GraphDocument | null {
+    const rows = this.db!.exec(
+      'SELECT id, path, title, hash, indexed_at FROM documents WHERE id = ?',
+      [docId]
+    );
+    if (!rows.length || !rows[0].values.length) return null;
+    const r = rows[0].values[0];
+    return {
+      id: r[0] as number,
+      path: r[1] as string,
+      title: r[2] as string,
+      hash: r[3] as string,
+      indexedAt: r[4] as number,
+    };
   }
 }

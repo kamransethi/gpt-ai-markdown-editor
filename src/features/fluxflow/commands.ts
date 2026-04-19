@@ -7,17 +7,60 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import type { GraphDatabase } from './database';
-import type { SearchResult } from './types';
+import type { VectorStore } from './vectorStore';
+import type { EmbeddingEngine } from './embeddingEngine';
+import { hybridSearch } from './hybridSearch';
 
+/**
+ * Register all FluxFlow Knowledge Graph commands.
+ * Commands are always registered so VS Code doesn't show "command not found".
+ * They check `getDb()` at runtime — if the graph isn't active, they prompt the user.
+ */
 export function registerFluxFlowCommands(
-  db: GraphDatabase,
-  workspacePath: string,
-  rebuildFn: () => Promise<void>
+  getDb: () => GraphDatabase | null,
+  getWorkspacePath: () => string | null,
+  rebuildFn: () => Promise<void>,
+  getVectorStore?: () => VectorStore | null,
+  getEmbeddingEngine?: () => EmbeddingEngine | null
 ): vscode.Disposable[] {
   const disposables: vscode.Disposable[] = [];
 
+  function requireGraph(): { db: GraphDatabase; workspacePath: string } | null {
+    const db = getDb();
+    const workspacePath = getWorkspacePath();
+    if (!db || !workspacePath) {
+      const enabled = vscode.workspace
+        .getConfiguration('gptAiMarkdownEditor')
+        .get<boolean>('knowledgeGraph.enabled', false);
+      if (!enabled) {
+        vscode.window
+          .showWarningMessage(
+            'Knowledge Graph is disabled. Enable it in Settings → "Knowledge Graph: Enabled" and reload.',
+            'Open Settings'
+          )
+          .then(action => {
+            if (action === 'Open Settings') {
+              vscode.commands.executeCommand(
+                'workbench.action.openSettings',
+                'gptAiMarkdownEditor.knowledgeGraph.enabled'
+              );
+            }
+          });
+      } else {
+        vscode.window.showWarningMessage(
+          'Knowledge Graph is still initializing. Please try again in a moment.'
+        );
+      }
+      return null;
+    }
+    return { db, workspacePath };
+  }
+
   disposables.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.knowledgeGraph.rebuildIndex', async () => {
+      const graph = requireGraph();
+      if (!graph) return;
+
       const start = Date.now();
       await vscode.window.withProgress(
         {
@@ -29,7 +72,7 @@ export function registerFluxFlowCommands(
           await rebuildFn();
         }
       );
-      const count = db.getDocumentCount();
+      const count = graph.db.getDocumentCount();
       const elapsed = ((Date.now() - start) / 1000).toFixed(1);
       vscode.window.showInformationMessage(
         `Knowledge Graph: Indexed ${count} documents in ${elapsed}s`
@@ -39,13 +82,23 @@ export function registerFluxFlowCommands(
 
   disposables.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.knowledgeGraph.search', async () => {
+      const graph = requireGraph();
+      if (!graph) return;
+
       const query = await vscode.window.showInputBox({
-        prompt: 'Search across all markdown files',
+        prompt: 'Search across all markdown files (hybrid: FTS + semantic)',
         placeHolder: 'Enter search terms...',
       });
       if (!query) return;
 
-      const results: SearchResult[] = db.search(query);
+      const results = await hybridSearch(
+        query,
+        graph.db,
+        getVectorStore?.() ?? null,
+        getEmbeddingEngine?.() ?? null,
+        { topK: 20 }
+      );
+
       if (results.length === 0) {
         vscode.window.showInformationMessage(`No results for "${query}"`);
         return;
@@ -54,7 +107,7 @@ export function registerFluxFlowCommands(
       const picked = await vscode.window.showQuickPick(
         results.map(r => ({
           label: r.title,
-          description: r.path,
+          description: `${r.path} ${r.sources.length > 0 ? '(' + r.sources.join('+') + ')' : ''}`,
           detail: r.snippet,
           result: r,
         })),
@@ -62,7 +115,7 @@ export function registerFluxFlowCommands(
       );
 
       if (picked) {
-        const uri = vscode.Uri.file(path.join(workspacePath, picked.result.path));
+        const uri = vscode.Uri.file(path.join(graph.workspacePath, picked.result.path));
         await vscode.commands.executeCommand('vscode.open', uri);
       }
     })
@@ -70,15 +123,29 @@ export function registerFluxFlowCommands(
 
   disposables.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.knowledgeGraph.stats', () => {
-      const count = db.getDocumentCount();
-      const tags = db.getAllTags();
+      const graph = requireGraph();
+      if (!graph) return;
+
+      const count = graph.db.getDocumentCount();
+      const chunks = graph.db.getChunkCount();
+      const tags = graph.db.getAllTags();
+      const vs = getVectorStore?.();
+      const eng = getEmbeddingEngine?.();
+      const vectorCount = vs?.getEmbeddedChunkIds().size ?? 0;
+      const modelName = eng?.getModel() ?? null;
       const topTags = tags
         .slice(0, 10)
         .map(t => `#${t.tag} (${t.count})`)
         .join(', ');
-      vscode.window.showInformationMessage(
-        `Knowledge Graph: ${count} documents, ${tags.length} unique tags. Top: ${topTags || 'none'}`
-      );
+
+      let msg = `Knowledge Graph: ${count} docs, ${chunks} chunks, ${tags.length} tags.`;
+      if (modelName) {
+        msg += ` Semantic: ${vectorCount} vectors (${modelName}).`;
+      } else {
+        msg += ' Semantic: unavailable (local AI server not reachable).';
+      }
+      msg += ` Top tags: ${topTags || 'none'}`;
+      vscode.window.showInformationMessage(msg);
     })
   );
 

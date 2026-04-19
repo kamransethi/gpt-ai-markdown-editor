@@ -14,7 +14,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { TableKit, Table } from '@tiptap/extension-table';
 import { TableOfContents, type TableOfContentData } from '@tiptap/extension-table-of-contents';
-import { ListKit } from '@tiptap/extension-list';
+import { ListKit, TaskList } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import { BubbleMenu as BubbleMenuExtension } from '@tiptap/extension-bubble-menu';
 import CharacterCount from '@tiptap/extension-character-count';
@@ -1039,6 +1039,11 @@ function initializeEditor(initialContent: string) {
         orderedList: false,
         taskItem: false, // Replaced by TaskItemClipboardFix below
       }),
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
+        },
+      }),
       TaskItemClipboardFix.configure({ nested: true }),
       OrderedListMarkdownFix,
       TabIndentation, // Enable Tab/Shift+Tab for list indentation
@@ -1496,6 +1501,10 @@ function applyWebviewSettings(message: any) {
       (window as any).gptAiApplyTheme(message.themeOverride);
     }
     window.dispatchEvent(new CustomEvent('themeChange'));
+  }
+
+  if (typeof message.knowledgeGraphEnabled === 'boolean') {
+    (window as any).knowledgeGraphEnabled = message.knowledgeGraphEnabled;
   }
 }
 

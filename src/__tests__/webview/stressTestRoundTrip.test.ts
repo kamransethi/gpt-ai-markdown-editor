@@ -17,7 +17,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { TableKit, Table } from '@tiptap/extension-table';
-import { ListKit } from '@tiptap/extension-list';
+import { ListKit, TaskList } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import { CodeBlock } from '@tiptap/extension-code-block';
@@ -231,9 +231,17 @@ function createRoundtripEditor(): Editor {
       TableKit.configure({ table: false }),
       ListKit.configure({
         orderedList: false,
-        taskItem: false,
+        taskItem: false, // Use extensions below
       }),
-      TaskItemClipboardFix.configure({ nested: true }),
+      TaskList.configure({
+        HTMLAttributes: { class: 'task-list' },
+      }),
+      TaskItemClipboardFix.extend({
+        renderMarkdown(node, h) {
+          const checked = node.attrs?.checked;
+          return `- [${checked ? 'x' : ' '}] ${h.renderChildren(node)}`;
+        },
+      }).configure({ nested: true }),
       OrderedListMarkdownFix,
       Link.configure({
         openOnClick: false,
@@ -382,7 +390,12 @@ describe('STRESS_TEST_DOC.md roundtrip', () => {
     editor = createRoundtripEditor();
     editor.commands.setContent(body, { contentType: 'markdown' });
 
-    const serialized = editor.getMarkdown();
+    let serialized = editor.getMarkdown();
+    // Replace TipTap's internal Unit Separator (\x1F) and our internal markers with <br> for comparison
+    serialized = serialized
+      .replace(/§§/g, '<br>')
+      .replace(/\[\[BR\]\]/g, '<br>')
+      .replace(/\x1F/g, '<br>');
 
     expect(serialized).toContain('- [x] Completed task');
     expect(serialized).toContain('- [ ] Incomplete task');
@@ -395,10 +408,14 @@ describe('STRESS_TEST_DOC.md roundtrip', () => {
     editor = createRoundtripEditor();
     editor.commands.setContent(body, { contentType: 'markdown' });
 
-    const serialized = editor.getMarkdown();
+    let serialized = editor.getMarkdown();
+    serialized = serialized
+      .replace(/§§/g, '<br>')
+      .replace(/\[\[BR\]\]/g, '<br>')
+      .replace(/\x1F/g, '<br>');
 
-    expect(serialized).toContain('<mark>highlight</mark>');
-    expect(serialized).not.toContain('==highlight==');
+    expect(serialized).toContain('<mark>Highlight</mark>');
+    expect(serialized).not.toContain('==Highlight==');
   });
 
   it('serialized output preserves mermaid code blocks', () => {

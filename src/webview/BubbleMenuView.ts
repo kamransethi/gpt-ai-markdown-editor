@@ -912,6 +912,19 @@ export function createFormattingToolbar(
             }
           }
 
+          // Add Knowledge Graph actions if enabled
+          if ((window as any).knowledgeGraphEnabled) {
+            items.push({ isSeparator: true });
+            items.push({ label: 'GRAPH', action: () => {}, isSectionLabel: true });
+            items.push({
+              label: 'Graph Chat',
+              icon: { name: 'sparkle', fallback: '✨' },
+              action: () => {
+                window.vscode.postMessage({ type: 'openGraphChat' });
+              },
+            });
+          }
+
           return items;
         },
       },

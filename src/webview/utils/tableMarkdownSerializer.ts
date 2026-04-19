@@ -52,7 +52,7 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       const items = (node.content || []).map(n => {
         return '- ' + renderBlockNode(n, h);
       });
-      return items.join('<br>');
+      return items.join(' \n');
     }
     case 'orderedList': {
       // Ordered list inside table cell -> plain text with "1. ", "2. " prefix
@@ -63,7 +63,7 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
         index++;
         return prefix + itemHtml; // We don't prepend here because listItem doesn't know its index easily unless we pass it, so let's let listItem just return text and we prepend here
       });
-      return items.join('<br>');
+      return items.join(' \n');
     }
     case 'listItem': {
       const content = (node.content || []).map(n => renderBlockNode(n, h)).join('');
@@ -75,12 +75,12 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       return content;
     }
     case 'blockquote': {
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('<br>');
+      const content = (node.content || []).map(n => renderBlockNode(n, h)).join(' \n');
       return `<blockquote>${content}</blockquote>`;
     }
     case 'githubAlert': {
       const alertType = node.attrs?.alertType || 'NOTE';
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('<br>');
+      const content = (node.content || []).map(n => renderBlockNode(n, h)).join(' \n');
       return `<blockquote>[!${alertType}]<br>${content}</blockquote>`;
     }
     default: {
@@ -89,7 +89,7 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       }
       if (node.content) {
         // Fallback for unhandled blocks with content (like codeBlock inside a table, if allowed)
-        return node.content.map(n => renderBlockNode(n, h)).join('<br>');
+        return node.content.map(n => renderBlockNode(n, h)).join(' \n');
       }
       // Truly unhandled node, let the default renderer try
       return h.renderChildren([node] as unknown as JSONContent[]);
@@ -113,13 +113,12 @@ function renderCellContent(cellNode: JSONContent, h: MarkdownRendererHelpers): s
     parts.push(renderBlockNode(block, h));
   }
 
-  // Join multiple blocks with <br> (e.g. multiple paragraphs in one cell)
-  const raw = parts.join('<br>');
+  // Join multiple blocks with §§ (Temporary marker)
+  // This prevents TipTap 3.22.4 from collapsing breaks in tables
+  const withBreaks = parts.join('§§');
 
   // Only collapse spaces, NOT newlines — preserve <br> markers
-  // Use trimEnd so we don't accidentally collapse multiple spaces at the start of a logical line,
-  // which might be acting as indentation (e.g. `  - list item`).
-  return (raw || '').trimEnd();
+  return (withBreaks || '').trimEnd();
 }
 
 export function renderTableToMarkdownWithBreaks(
@@ -149,8 +148,8 @@ export function renderTableToMarkdownWithBreaks(
 
   // For column width computation, we need the display length (without <br> tags)
   const displayLen = (text: string) => {
-    // Split on <br> to get the longest segment for column width
-    const segments = text.split('<br>');
+    // Split on markers to get the longest segment for column width
+    const segments = text.split(/§§|<br>|\x1F/);
     return Math.max(...segments.map(s => s.length), 0);
   };
 

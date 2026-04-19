@@ -36,3 +36,46 @@ export interface SearchResult {
   title: string;
   snippet: string;
 }
+
+// ── Phase 2: Semantic / Hybrid RAG types ──
+
+/** A chunk produced by hierarchical markdown splitting */
+export interface Chunk {
+  id: number;
+  docId: number;
+  /** Heading breadcrumb, e.g. "Architecture > Database > Schema" */
+  headerPath: string;
+  /** The chunk text content */
+  content: string;
+  /** Approximate token count */
+  tokenCount: number;
+}
+
+/** Result from vector similarity search */
+export interface VectorSearchResult {
+  chunkId: number;
+  docId: number;
+  score: number;
+  headerPath: string;
+  content: string;
+}
+
+/** Unified result after RRF reranking */
+export interface HybridSearchResult {
+  path: string;
+  title: string;
+  snippet: string;
+  score: number;
+  /** Where this result came from */
+  sources: Array<'fts' | 'vector' | 'graph'>;
+}
+
+/** Configuration for the embedding provider */
+export interface EmbeddingConfig {
+  /** Ollama base URL (default: http://localhost:11434) */
+  ollamaUrl: string;
+  /** Embedding model name (default: nomic-embed-text) */
+  model: string;
+  /** Vector dimensions (determined by model) */
+  dimensions: number;
+}

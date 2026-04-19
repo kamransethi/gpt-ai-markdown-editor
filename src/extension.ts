@@ -98,6 +98,9 @@ export function activate(context: vscode.ExtensionContext) {
   outlineViewProvider.setTreeView(outlineTreeView);
   context.subscriptions.push(outlineTreeView);
 
+  // Register Knowledge Graph commands (always, so "command not found" never occurs)
+  FluxFlowGraph.registerCommands(context);
+
   // Initialize Knowledge Graph if feature flag is enabled
   if (
     vscode.workspace
@@ -235,7 +238,8 @@ export function activate(context: vscode.ExtensionContext) {
   // Open custom settings panel
   context.subscriptions.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.openSettingsPanel', () => {
-      openSettingsPanel(context);
+      const graphCbs = FluxFlowGraph.getGraphCallbacks();
+      openSettingsPanel(context, graphCbs ? { graph: graphCbs } : undefined);
     })
   );
 

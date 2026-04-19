@@ -2,14 +2,15 @@
  * Settings Panel — Extension-side provider
  *
  * Opens a webview panel with the custom settings UI.
- * Handles settings reads/writes and interactive actions (Ollama check, browse).
+ * Handles settings reads/writes and interactive actions (connectivity check, browse).
  */
 
 import * as vscode from 'vscode';
 import { isOllamaAvailable } from '../features/llm/providerAvailability';
+import { setProgressPushCallback } from '../features/fluxflow/index';
 
 const PANEL_ID = 'gptAiMarkdownEditor.settingsPanel';
-const CONFIG_SECTION = 'gptAiMarkdownEditor';
+const CONFIG_SECTION = 'gptAiMarkdownEditor'; // unused, for legacy
 
 const MSG = {
   GET_ALL_SETTINGS: 'settings.getAllSettings',
@@ -17,11 +18,19 @@ const MSG = {
   UPDATE_SETTING: 'updateSetting',
   CHECK_OLLAMA: 'settings.checkOllama',
   OLLAMA_STATUS: 'settings.ollamaStatus',
+  FETCH_OLLAMA_MODELS: 'settings.fetchOllamaModels',
+  OLLAMA_MODELS_RESULT: 'settings.ollamaModelsResult',
   BROWSE_PATH: 'settings.browsePath',
   BROWSE_PATH_RESULT: 'settings.browsePathResult',
   OPEN_FILE: 'settings.openFile',
   CHECK_COPILOT_MODELS: 'settings.checkCopilotModels',
   COPILOT_MODELS_RESULT: 'settings.copilotModelsResult',
+  GRAPH_GET_STATS: 'graph.getStats',
+  GRAPH_STATS_RESULT: 'graph.statsResult',
+  GRAPH_REBUILD: 'graph.rebuild',
+  GRAPH_REBUILD_RESULT: 'graph.rebuildResult',
+  GRAPH_PROGRESS: 'graph.progress', // host → webview: live progress push
+  THEME_UPDATE: 'theme.update',
 } as const;
 
 /** All setting keys (without the gptAiMarkdownEditor. prefix) */
@@ -46,11 +55,43 @@ const SETTING_KEYS = [
   'pandocPath',
   'pandocTemplatePath',
   'customPromptsFile',
+  'knowledgeGraph.enabled',
+  'knowledgeGraph.dataDir',
+  'knowledgeGraph.embeddingModel',
+  'knowledgeGraph.rag.topK',
+  'knowledgeGraph.rag.charsPerDoc',
+  'knowledgeGraph.rag.ftsSnippetTokens',
+  'knowledgeGraph.rag.historyTurns',
 ] as const;
+
+export interface GraphCallbacks {
+  getStats: () => {
+    docCount: number;
+    tagCount: number;
+    dbSizeKb: number;
+    chunkCount: number;
+    vectorCount: number;
+    embeddingModel: string | null;
+    embeddingStatus: 'ready' | 'server-unavailable' | 'model-missing';
+    embeddingError?: string | null;
+    phase: 'idle' | 'indexing' | 'embedding' | 'ready';
+    indexTotal: number;
+    indexDone: number;
+    embedTotal: number;
+    embedDone: number;
+  } | null;
+  rebuild: () => Promise<{ docCount: number; elapsedS: string }>;
+}
+
+let graphCallbacks: GraphCallbacks | undefined;
 
 let currentPanel: vscode.WebviewPanel | undefined;
 
-export function openSettingsPanel(context: vscode.ExtensionContext): void {
+export function openSettingsPanel(
+  context: vscode.ExtensionContext,
+  callbacks?: { graph?: GraphCallbacks }
+): void {
+  if (callbacks?.graph) graphCallbacks = callbacks.graph;
   if (currentPanel) {
     currentPanel.reveal();
     return;
@@ -77,8 +118,35 @@ export function openSettingsPanel(context: vscode.ExtensionContext): void {
     context.subscriptions
   );
 
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration('gptAiMarkdownEditor.themeOverride')) {
+        const theme = vscode.workspace
+          .getConfiguration('gptAiMarkdownEditor')
+          .get<string>('themeOverride', 'light');
+        panel.webview.postMessage({ type: MSG.THEME_UPDATE, theme });
+      }
+    })
+  );
+
   panel.onDidDispose(() => {
     currentPanel = undefined;
+    // Remove the push callback so we don't call into a dead panel
+    setProgressPushCallback(() => {});
+  });
+
+  // Wire up live progress push: whenever the backend reports progress,
+  // send the latest stats to the webview immediately.
+  setProgressPushCallback(() => {
+    if (!currentPanel || !graphCallbacks) return;
+    try {
+      const stats = graphCallbacks.getStats();
+      if (stats) {
+        currentPanel.webview.postMessage({ type: MSG.GRAPH_STATS_RESULT, ...stats });
+      }
+    } catch {
+      /* ignore */
+    }
   });
 }
 
@@ -95,9 +163,9 @@ function getSettingsHtml(webview: vscode.Webview, context: vscode.ExtensionConte
   const scriptUrl = `${scriptUri}${scriptUri.includes('?') ? '&' : '?'}v=${cacheBust}`;
   const styleUrl = `${styleUri}${styleUri.includes('?') ? '&' : '?'}v=${cacheBust}`;
 
-  const themeOverride = vscode.workspace
-    .getConfiguration(CONFIG_SECTION)
-    .get<string>('themeOverride', 'light');
+  // Read themeOverride from VS Code settings (default: 'light')
+  const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
+  const themeOverride = config.get<string>('themeOverride', 'light');
 
   const nonce = getNonce();
 
@@ -127,7 +195,7 @@ async function handleSettingsMessage(
 ): Promise<void> {
   switch (msg.type) {
     case MSG.GET_ALL_SETTINGS: {
-      const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
+      const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
       const data: Record<string, unknown> = {};
       for (const key of SETTING_KEYS) {
         data[key] = config.get(key);
@@ -140,9 +208,12 @@ async function handleSettingsMessage(
       const key = msg.key as string;
       const value = msg.value;
       if (typeof key === 'string' && SETTING_KEYS.includes(key as (typeof SETTING_KEYS)[number])) {
-        await vscode.workspace
-          .getConfiguration(CONFIG_SECTION)
-          .update(key, value, vscode.ConfigurationTarget.Global);
+        vscode.workspace
+          .getConfiguration('gptAiMarkdownEditor')
+          .update(key, value, vscode.ConfigurationTarget.Global)
+          .catch(err => {
+            console.error('[FluxFlow] Failed to sync setting to VS Code:', err);
+          });
       }
       break;
     }
@@ -150,6 +221,30 @@ async function handleSettingsMessage(
     case MSG.CHECK_OLLAMA: {
       const available = await isOllamaAvailable();
       panel.webview.postMessage({ type: MSG.OLLAMA_STATUS, available });
+      break;
+    }
+
+    case MSG.FETCH_OLLAMA_MODELS: {
+      try {
+        const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
+        const endpoint = config.get<string>('ollamaEndpoint', 'http://localhost:11434');
+        const res = await fetch(`${endpoint}/api/tags`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(3000),
+        });
+        if (!res.ok) {
+          panel.webview.postMessage({
+            type: MSG.OLLAMA_MODELS_RESULT,
+            error: `Server returned ${res.status}`,
+          });
+          break;
+        }
+        const data = (await res.json()) as { models?: Array<{ name: string }> };
+        const models = (data.models ?? []).map(m => m.name).sort();
+        panel.webview.postMessage({ type: MSG.OLLAMA_MODELS_RESULT, models });
+      } catch {
+        panel.webview.postMessage({ type: MSG.OLLAMA_MODELS_RESULT, error: 'Server unreachable' });
+      }
       break;
     }
 
@@ -173,9 +268,12 @@ async function handleSettingsMessage(
         const selectedPath = result[0].fsPath;
         // Persist the setting
         if (SETTING_KEYS.includes(settingKey as (typeof SETTING_KEYS)[number])) {
-          await vscode.workspace
-            .getConfiguration(CONFIG_SECTION)
-            .update(settingKey, selectedPath, vscode.ConfigurationTarget.Global);
+          vscode.workspace
+            .getConfiguration('gptAiMarkdownEditor')
+            .update(settingKey, selectedPath, vscode.ConfigurationTarget.Global)
+            .catch(err => {
+              console.error('[FluxFlow] Failed to sync setting to VS Code:', err);
+            });
         }
         panel.webview.postMessage({
           type: MSG.BROWSE_PATH_RESULT,
@@ -188,16 +286,24 @@ async function handleSettingsMessage(
 
     case MSG.OPEN_FILE: {
       const filePath = msg.filePath as string;
+      const pathType = msg.pathType as string | undefined;
       if (!filePath) {
-        vscode.window.showErrorMessage('No file path configured');
+        vscode.window.showErrorMessage('No path configured');
         break;
       }
       try {
-        const uri = vscode.Uri.file(filePath);
-        await vscode.window.showTextDocument(uri);
+        const resolved = filePath.startsWith('~')
+          ? path.join(os.homedir(), filePath.slice(1))
+          : filePath;
+        const uri = vscode.Uri.file(resolved);
+        if (pathType === 'folder') {
+          await vscode.env.openExternal(uri);
+        } else {
+          await vscode.window.showTextDocument(uri);
+        }
       } catch (error) {
         vscode.window.showErrorMessage(
-          `Failed to open file: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to open: ${error instanceof Error ? error.message : String(error)}`
         );
       }
       break;
@@ -228,6 +334,53 @@ async function handleSettingsMessage(
           type: MSG.COPILOT_MODELS_RESULT,
           available: false,
           error: errorMsg,
+        });
+      }
+      break;
+    }
+
+    case MSG.GRAPH_GET_STATS: {
+      if (!graphCallbacks) {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_STATS_RESULT,
+          error: 'Knowledge Graph is not active. Enable it and reload.',
+        });
+        break;
+      }
+      try {
+        const stats = graphCallbacks.getStats();
+        if (!stats) {
+          panel.webview.postMessage({
+            type: MSG.GRAPH_STATS_RESULT,
+            error: 'Knowledge Graph is still initializing.',
+          });
+        } else {
+          panel.webview.postMessage({ type: MSG.GRAPH_STATS_RESULT, ...stats });
+        }
+      } catch (err) {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_STATS_RESULT,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      break;
+    }
+
+    case MSG.GRAPH_REBUILD: {
+      if (!graphCallbacks) {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_REBUILD_RESULT,
+          error: 'Knowledge Graph is not active.',
+        });
+        break;
+      }
+      try {
+        const result = await graphCallbacks.rebuild();
+        panel.webview.postMessage({ type: MSG.GRAPH_REBUILD_RESULT, ...result });
+      } catch (err) {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_REBUILD_RESULT,
+          error: err instanceof Error ? err.message : String(err),
         });
       }
       break;

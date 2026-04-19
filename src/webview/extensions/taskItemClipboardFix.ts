@@ -44,4 +44,9 @@ export const TaskItemClipboardFix = TaskItem.extend({
       },
     ];
   },
+
+  renderMarkdown(node, h) {
+    const checked = node.attrs?.checked;
+    return `- [${checked ? 'x' : ' '}] ${h.renderChildren(node)}`;
+  },
 });

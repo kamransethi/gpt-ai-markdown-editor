@@ -89,7 +89,7 @@ User Interface Layout Sample
 - *Italic Text* using single asterisks or single underscores.
 - ***Bold &amp; Italic*** mixed together.
 - ~~Strikethrough~~ text to show deleted items.
-- <mark>Highlighted Text</mark> to test highlight support (Mark extension).
+- <mark>Highlight</mark> to test highlight support (Mark extension).
 - `Inline Code` for short snippets.
 - Text with a ^superscript^ and a ~~subscript~~.
 - Text with underlining ++text++.
@@ -149,9 +149,9 @@ Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedLis
 
 ### Task List
 
-- Completed task
-- Incomplete task
-- Task with *formatting* and &lt;mark&gt;highlight&lt;/mark&gt;
+- [x] Completed task
+- [ ] Incomplete task
+- [ ] Task with *formatting* and <mark>highlight</mark>
 
 ---
 

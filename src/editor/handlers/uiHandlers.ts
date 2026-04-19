@@ -20,6 +20,7 @@ export function registerUiHandlers(router: MessageRouter): void {
   router.register(MessageType.SHOW_EMOJI_PICKER, handleShowEmojiPicker);
   router.register(MessageType.EDIT_MERMAID_SOURCE, handleEditMermaidSource);
   router.register(MessageType.UPDATE_SETTING, handleUpdateSetting);
+  router.register(MessageType.OPEN_GRAPH_CHAT, handleOpenGraphChat);
 }
 
 /**
@@ -340,16 +341,21 @@ export async function handleUpdateSetting(
   const value = message.value as unknown;
 
   try {
-    const config = vscode.workspace.getConfiguration();
-    await config.update(key, value, vscode.ConfigurationTarget.Global);
-    console.log(`[DK-AI] Setting updated: ${key} = ${value}`);
-
-    // Do NOT re-broadcast settings to the webview here.
-    // The webview already applied the change locally before requesting the save.
-    // Re-broadcasting causes race conditions (stale config.get() values)
-    // because config.update() is async and the new value may not have propagated yet.
+    const cfg = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
+    await cfg.update(key, value, vscode.ConfigurationTarget.Global);
+    console.log(`[DK-AI] Setting updated (vscode): ${key} = ${value}`);
   } catch (error) {
     const errorMessage = toErrorMessage(error);
-    console.error(`[DK-AI] Failed to update setting: ${errorMessage}`);
+    console.error(`[DK-AI] Failed to update setting (vscode): ${errorMessage}`);
   }
+}
+
+/**
+ * Handle request to open Graph Chat interface
+ */
+export async function handleOpenGraphChat(
+  _message: { type: string; [key: string]: unknown },
+  _ctx: HandlerContext
+): Promise<void> {
+  await vscode.commands.executeCommand('gptAiMarkdownEditor.graphChat');
 }

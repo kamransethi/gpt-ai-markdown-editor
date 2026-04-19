@@ -29,6 +29,7 @@ import { registerUiHandlers } from './handlers/uiHandlers';
 import { DocumentSync } from './handlers/documentSync';
 import { getImageBasePath } from './utils/pathUtils';
 import { openSettingsPanel } from './SettingsPanel';
+import { getGraphCallbacks } from '../features/fluxflow/index';
 
 /**
  * Parse an image filename to extract source prefix
@@ -187,6 +188,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
       modelDisplayName: getModelDisplayName(),
       imageModelDisplayName: getImageModelDisplayName(),
+      knowledgeGraphEnabled: this.getConfig<boolean>('knowledgeGraph.enabled', false),
     };
   }
 
@@ -489,9 +491,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           vscode.ViewColumn.Beside
         );
         break;
-      case MessageType.OPEN_EXTENSION_SETTINGS:
-        openSettingsPanel(this.context);
+      case MessageType.OPEN_EXTENSION_SETTINGS: {
+        const graphCbs = getGraphCallbacks();
+        openSettingsPanel(this.context, graphCbs ? { graph: graphCbs } : undefined);
         break;
+      }
 
       case MessageType.SHOW_ERROR:
         vscode.window.showErrorMessage(message.message as string);

@@ -119,7 +119,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 24px 32px;
-  max-width: 700px;
+  max-width: 1240px;
 }
 
 .settings-page {
@@ -421,4 +421,80 @@ input[type="number"].settings-input {
   border-top: 1px solid var(--settings-border);
   font-size: 11px;
   color: var(--settings-text-secondary);
+}
+
+/* Progress Bar and Phase Badges */
+.graph-progress-container {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graph-progress-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.graph-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--settings-text-secondary);
+}
+
+.graph-progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--settings-sidebar-bg);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.graph-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--settings-accent);
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+.graph-phase-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+
+.graph-phase-badge.phase-idle { background: var(--settings-border); color: var(--settings-text-secondary); }
+.graph-phase-badge.phase-indexing { background: #fff8e1; color: #b58105; } /* Amber */
+.graph-phase-badge.phase-embedding { background: #e8f0fe; color: #1967d2; } /* Blue */
+.graph-phase-badge.phase-ready { background: #e6ffed; color: #1a7f37; } /* Green */
+
+[data-theme="dark"] .graph-phase-badge.phase-indexing { background: #3e2e01; color: #ffca28; }
+[data-theme="dark"] .graph-phase-badge.phase-embedding { background: #1a2a44; color: #4db8ff; }
+[data-theme="dark"] .graph-phase-badge.phase-ready { background: #102a1a; color: #3fb950; }
+
+.graph-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.graph-chip {
+  background: var(--settings-sidebar-bg);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--settings-text-secondary);
+  border: 1px solid var(--settings-border);
 }

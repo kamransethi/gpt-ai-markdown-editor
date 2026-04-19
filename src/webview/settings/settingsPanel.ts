@@ -27,11 +27,18 @@ const MSG = {
   UPDATE_SETTING: 'updateSetting',
   CHECK_OLLAMA: 'settings.checkOllama',
   OLLAMA_STATUS: 'settings.ollamaStatus',
+  FETCH_OLLAMA_MODELS: 'settings.fetchOllamaModels',
+  OLLAMA_MODELS_RESULT: 'settings.ollamaModelsResult',
   BROWSE_PATH: 'settings.browsePath',
   BROWSE_PATH_RESULT: 'settings.browsePathResult',
   OPEN_FILE: 'settings.openFile',
   CHECK_COPILOT_MODELS: 'settings.checkCopilotModels',
   COPILOT_MODELS_RESULT: 'settings.copilotModelsResult',
+  GRAPH_GET_STATS: 'graph.getStats',
+  GRAPH_STATS_RESULT: 'graph.statsResult',
+  GRAPH_REBUILD: 'graph.rebuild',
+  GRAPH_REBUILD_RESULT: 'graph.rebuildResult',
+  THEME_UPDATE: 'theme.update',
 } as const;
 
 // ── State ──
@@ -56,6 +63,9 @@ interface SettingDef {
   pathType?: 'file' | 'folder';
   filters?: Record<string, string[]>;
   conditionalOn?: { key: string; value: unknown };
+  hideBrowse?: boolean;
+  /** Actual default path used by Open button when input is empty (not shown as placeholder text) */
+  defaultPath?: string;
 }
 
 interface SettingGroup {
@@ -182,7 +192,7 @@ const pages: PageDef[] = [
             type: 'select',
             options: [
               { value: 'GitHub Copilot', label: 'GitHub Copilot' },
-              { value: 'Ollama', label: 'Ollama (local)' },
+              { value: 'Ollama', label: 'Local AI' },
             ],
             default: 'GitHub Copilot',
           },
@@ -219,12 +229,12 @@ const pages: PageDef[] = [
         ],
       },
       {
-        title: 'Ollama',
+        title: 'Local AI',
         items: [
           {
             key: 'ollamaEndpoint',
             label: 'Server URL',
-            description: 'Base URL of your Ollama server.',
+            description: 'Base URL of your local AI server.',
             type: 'text',
             placeholder: 'http://localhost:11434',
             default: 'http://localhost:11434',
@@ -234,7 +244,8 @@ const pages: PageDef[] = [
             key: 'ollamaModel',
             label: 'Text Model',
             description: 'Model for text refinement and explanation.',
-            type: 'text',
+            type: 'select',
+            options: [],
             placeholder: 'llama3.2:latest',
             default: 'llama3.2:latest',
             conditionalOn: { key: 'llmProvider', value: 'Ollama' },
@@ -244,7 +255,8 @@ const pages: PageDef[] = [
             label: 'Vision Model',
             description:
               'Model for image analysis. Must be vision-capable (e.g. llava, moondream).',
-            type: 'text',
+            type: 'select',
+            options: [],
             placeholder: 'llama3.2-vision:latest',
             default: 'llama3.2-vision:latest',
             conditionalOn: { key: 'llmProvider', value: 'Ollama' },
@@ -343,6 +355,121 @@ const pages: PageDef[] = [
       },
     ],
   },
+  {
+    id: 'graph',
+    label: 'Graph (beta)',
+    icon: '🕸️',
+    title: 'Knowledge Graph',
+    description:
+      'Hybrid search (FTS + semantic), backlinks, and AI chat. Semantic search requires a local AI server with an embedding model.',
+    groups: [
+      {
+        title: 'Feature',
+        items: [
+          {
+            key: 'knowledgeGraph.enabled',
+            label: 'Enable Knowledge Graph',
+            description:
+              'Index your markdown workspace for hybrid search, backlinks, and AI chat. Reload window after changing.',
+            type: 'toggle',
+            default: false,
+          },
+        ],
+      },
+      {
+        title: 'Storage',
+        items: [
+          {
+            key: 'knowledgeGraph.dataDir',
+            label: 'Data Directory',
+            description:
+              'Where the graph database and vector store are persisted. Defaults to ~/.fluxflow. Supports ~ expansion.',
+            type: 'path',
+            placeholder: '~/.fluxflow',
+            defaultPath: '~/.fluxflow',
+            default: '',
+            pathType: 'folder',
+            hideBrowse: true,
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
+          },
+        ],
+      },
+      {
+        title: 'Semantic Search',
+        items: [
+          {
+            key: 'knowledgeGraph.embeddingModel',
+            label: 'Embedding Model',
+            description:
+              'Model used for vector embeddings. Must be installed on your local AI server.',
+            type: 'select',
+            options: [],
+            placeholder: 'nomic-embed-text',
+            default: 'nomic-embed-text',
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
+          },
+        ],
+      },
+      {
+        title: 'RAG — Retrieval',
+        items: [
+          {
+            key: 'knowledgeGraph.rag.topK',
+            label: 'Max Documents Retrieved',
+            description:
+              'How many documents the hybrid search returns as candidates. Higher = more context, but slower and may dilute relevance.',
+            type: 'slider',
+            min: 1,
+            max: 30,
+            step: 1,
+            default: 8,
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
+          },
+          {
+            key: 'knowledgeGraph.rag.charsPerDoc',
+            label: 'Characters Per Document',
+            description:
+              'Max characters extracted from each document section. Higher = richer context, uses more of the LLM context window.',
+            type: 'slider',
+            min: 200,
+            max: 6000,
+            step: 250,
+            default: 2500,
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
+          },
+          {
+            key: 'knowledgeGraph.rag.ftsSnippetTokens',
+            label: 'FTS Snippet Tokens',
+            description:
+              'Number of tokens in the FTS preview snippet used for relevance scoring. Affects search result quality.',
+            type: 'slider',
+            min: 10,
+            max: 64,
+            step: 2,
+            default: 40,
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
+          },
+        ],
+      },
+      {
+        title: 'RAG — Chat',
+        items: [
+          {
+            key: 'knowledgeGraph.rag.historyTurns',
+            label: 'History Turns',
+            description:
+              'How many past conversation exchanges (user + assistant pairs) to include in the LLM prompt.',
+            type: 'slider',
+            min: 0,
+            max: 10,
+            step: 1,
+            default: 4,
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // ── Render ──
@@ -365,7 +492,7 @@ function render(): void {
     sidebar.appendChild(nav);
   }
 
-  // Ollama status button in sidebar (under AI nav)
+  // Status button in sidebar (under AI nav)
   root.appendChild(sidebar);
 
   // Content
@@ -387,9 +514,14 @@ function renderPage(page: PageDef): HTMLElement {
     container.appendChild(renderGroup(group, page.id));
   }
 
-  // Ollama connectivity check on AI page
+  // Local AI connectivity check on AI page
   if (page.id === 'ai') {
-    container.appendChild(renderOllamaCheck());
+    container.appendChild(renderLocalAiCheck());
+  }
+
+  // Graph actions and stats on graph page
+  if (page.id === 'graph') {
+    container.appendChild(renderGraphActions());
   }
 
   return container;
@@ -454,6 +586,26 @@ function renderSettingRow(def: SettingDef): HTMLElement {
       break;
   }
 
+  // Add refresh button next to Server URL or Embedding Model
+  if (def.key === 'ollamaEndpoint' || def.key === 'knowledgeGraph.embeddingModel') {
+    const refreshBtn = document.createElement('button');
+    refreshBtn.className = 'settings-btn';
+    refreshBtn.textContent = 'Refresh Models';
+    refreshBtn.style.marginLeft = '8px';
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.textContent = 'Loading…';
+      refreshBtn.disabled = true;
+      vscode.postMessage({ type: MSG.CHECK_OLLAMA });
+      vscode.postMessage({ type: MSG.FETCH_OLLAMA_MODELS });
+      // Re-enable after 3s as fallback
+      setTimeout(() => {
+        refreshBtn.textContent = 'Refresh Models';
+        refreshBtn.disabled = false;
+      }, 3000);
+    });
+    controlWrap.appendChild(refreshBtn);
+  }
+
   row.appendChild(controlWrap);
   return row;
 }
@@ -461,13 +613,27 @@ function renderSettingRow(def: SettingDef): HTMLElement {
 function renderSelect(def: SettingDef, value: string): HTMLElement {
   const select = document.createElement('select');
   select.className = 'settings-select';
-  for (const opt of def.options || []) {
+  select.dataset.settingKey = def.key;
+
+  const staticOptions = def.options || [];
+  if (staticOptions.length > 0) {
+    // Static options (e.g. LLM Provider)
+    for (const opt of staticOptions) {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      if (opt.value === value) option.selected = true;
+      select.appendChild(option);
+    }
+  } else if (value) {
+    // Dynamic select with no options yet — show current value
     const option = document.createElement('option');
-    option.value = opt.value;
-    option.textContent = opt.label;
-    if (opt.value === value) option.selected = true;
+    option.value = value;
+    option.textContent = value;
+    option.selected = true;
     select.appendChild(option);
   }
+
   select.addEventListener('change', () => {
     updateSetting(def.key, select.value);
   });
@@ -569,38 +735,47 @@ function renderPathInput(def: SettingDef, value: string): HTMLElement {
     }, 400);
   });
 
-  const browseBtn = document.createElement('button');
-  browseBtn.className = 'settings-btn';
-  browseBtn.textContent = 'Browse…';
-  browseBtn.addEventListener('click', () => {
-    pendingBrowseKey = def.key;
-    pendingBrowseInput = input;
-    vscode.postMessage({
-      type: MSG.BROWSE_PATH,
-      settingKey: def.key,
-      pathType: def.pathType || 'file',
-      filters: def.filters,
+  if (!def.hideBrowse) {
+    const browseBtn = document.createElement('button');
+    browseBtn.className = 'settings-btn';
+    browseBtn.textContent = 'Browse…';
+    browseBtn.addEventListener('click', () => {
+      pendingBrowseKey = def.key;
+      pendingBrowseInput = input;
+      vscode.postMessage({
+        type: MSG.BROWSE_PATH,
+        settingKey: def.key,
+        pathType: def.pathType || 'file',
+        filters: def.filters,
+      });
     });
-  });
+    group.appendChild(browseBtn);
+  }
 
   const openBtn = document.createElement('button');
   openBtn.className = 'settings-btn';
   openBtn.textContent = 'Open';
-  openBtn.disabled = !input.value;
+  // For folder paths, always enable (fall back to placeholder default when empty)
+  const isFolder = def.pathType === 'folder';
+  openBtn.disabled = !isFolder && !input.value;
   openBtn.addEventListener('click', () => {
+    const filePath = input.value || def.defaultPath || '';
+    if (!filePath) return;
     vscode.postMessage({
       type: MSG.OPEN_FILE,
-      filePath: input.value,
+      filePath,
+      pathType: def.pathType || 'file',
     });
   });
 
-  // Enable/disable Open button based on input value
-  input.addEventListener('input', () => {
-    openBtn.disabled = !input.value;
-  });
+  // Enable/disable Open button based on input value (files only)
+  if (!isFolder) {
+    input.addEventListener('input', () => {
+      openBtn.disabled = !input.value;
+    });
+  }
 
   group.appendChild(input);
-  group.appendChild(browseBtn);
   group.appendChild(openBtn);
   return group;
 }
@@ -651,17 +826,129 @@ let pendingBrowseKey: string | null = null;
 let pendingBrowseInput: HTMLInputElement | null = null;
 let pendingCheckButton: HTMLButtonElement | null = null;
 
-// ── Ollama connectivity check ──
+// ── Graph actions & stats ──
 
-function renderOllamaCheck(): HTMLElement {
+function renderGraphActions(): HTMLElement {
+  const wrap = el('div', 'settings-group');
+
+  // Conditional visibility for actions
+  const isEnabled = !!settings['knowledgeGraph.enabled'];
+  if (!isEnabled) {
+    wrap.classList.add('settings-conditional', 'hidden');
+  } else {
+    wrap.classList.add('settings-conditional');
+  }
+  wrap.dataset.conditionalKey = 'knowledgeGraph.enabled';
+  wrap.dataset.conditionalValue = 'true';
+
+  wrap.appendChild(elText('div', 'Index Actions', 'settings-group-title'));
+
+  // ── Stats row ──
+  const statsRow = el('div', 'settings-row');
+  const statsLabel = el('div', 'settings-row-label');
+  const statsLabelTitle = el('div', 'settings-row-label-title', 'label-text');
+  statsLabelTitle.style.display = 'flex';
+  statsLabelTitle.style.alignItems = 'center';
+  statsLabelTitle.appendChild(document.createTextNode('Index Stats'));
+  const phaseBadge = el('span', 'graph-phase-badge phase-idle');
+  phaseBadge.id = 'graph-phase-badge';
+  phaseBadge.textContent = 'Idle';
+  statsLabelTitle.appendChild(phaseBadge);
+  statsLabel.appendChild(statsLabelTitle);
+  statsLabel.appendChild(
+    elText('div', 'Monitor indexing and vectorization progress.', 'label-description')
+  );
+  statsRow.appendChild(statsLabel);
+
+  const statsControl = el('div', 'settings-row-control');
+  const refreshBtn = document.createElement('button');
+  refreshBtn.className = 'settings-btn';
+  refreshBtn.textContent = 'Refresh';
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.textContent = 'Loading…';
+    refreshBtn.disabled = true;
+    vscode.postMessage({ type: MSG.GRAPH_GET_STATS });
+  });
+  statsControl.appendChild(refreshBtn);
+  statsRow.appendChild(statsControl);
+  wrap.appendChild(statsRow);
+
+  // ── Progress & Details container ──
+  const detailsRow = el('div', 'settings-row');
+  detailsRow.style.flexDirection = 'column';
+  detailsRow.style.alignItems = 'flex-start';
+  detailsRow.style.borderBottom = 'none';
+  detailsRow.style.paddingTop = '0';
+
+  const progressContainer = el('div', 'graph-progress-container');
+  progressContainer.id = 'graph-progress-container';
+  progressContainer.style.width = '100%';
+  detailsRow.appendChild(progressContainer);
+
+  const chipsContainer = el('div', 'graph-summary-chips');
+  chipsContainer.id = 'graph-summary-chips';
+  detailsRow.appendChild(chipsContainer);
+
+  wrap.appendChild(detailsRow);
+
+  // ── Rebuild row ──
+  const rebuildRow = el('div', 'settings-row');
+  const rebuildLabel = el('div', 'settings-row-label');
+  rebuildLabel.appendChild(elText('div', 'Rebuild Index', 'label-text'));
+  rebuildLabel.appendChild(
+    elText(
+      'div',
+      'Re-scan all workspace .md files and update the search index.',
+      'label-description'
+    )
+  );
+  rebuildRow.appendChild(rebuildLabel);
+
+  const rebuildControl = el('div', 'settings-row-control');
+  const rebuildGroup = el('div', 'settings-input-group');
+
+  const rebuildStatus = el('span', 'settings-status');
+  rebuildStatus.id = 'graph-rebuild-status';
+  rebuildStatus.style.fontSize = '12px';
+
+  const rebuildBtn = document.createElement('button');
+  rebuildBtn.className = 'settings-btn';
+  rebuildBtn.textContent = 'Rebuild Index';
+  rebuildBtn.addEventListener('click', () => {
+    rebuildBtn.textContent = 'Rebuilding…';
+    rebuildBtn.disabled = true;
+    rebuildStatus.textContent = '';
+    vscode.postMessage({ type: MSG.GRAPH_REBUILD });
+  });
+
+  rebuildGroup.appendChild(rebuildStatus);
+  rebuildGroup.appendChild(rebuildBtn);
+  rebuildControl.appendChild(rebuildGroup);
+  rebuildRow.appendChild(rebuildControl);
+  wrap.appendChild(rebuildRow);
+
+  // Request stats on initial render
+  setTimeout(() => vscode.postMessage({ type: MSG.GRAPH_GET_STATS }), 100);
+
+  return wrap;
+}
+
+// ── Local AI connectivity check ──
+
+function renderLocalAiCheck(): HTMLElement {
   const wrap = el('div', 'settings-group');
   wrap.appendChild(elText('div', 'Connectivity', 'settings-group-title'));
 
+  // Server status row
   const row = el('div', 'settings-row');
   const labelWrap = el('div', 'settings-row-label');
-  labelWrap.appendChild(elText('div', 'Ollama Server Status', 'label-text'));
+  labelWrap.appendChild(elText('div', 'Server Status', 'label-text'));
   labelWrap.appendChild(
-    elText('div', 'Check if your Ollama server is reachable.', 'label-description')
+    elText(
+      'div',
+      'Check if your local AI server is reachable and refresh available models.',
+      'label-description'
+    )
   );
   row.appendChild(labelWrap);
 
@@ -674,12 +961,13 @@ function renderOllamaCheck(): HTMLElement {
 
   const checkBtn = document.createElement('button');
   checkBtn.className = 'settings-btn';
-  checkBtn.textContent = 'Check';
+  checkBtn.textContent = 'Check & Refresh Models';
   checkBtn.addEventListener('click', () => {
     const badge = document.getElementById('ollama-status')!;
     badge.className = 'settings-status checking';
     badge.innerHTML = '<span class="settings-status-dot"></span> Checking…';
     vscode.postMessage({ type: MSG.CHECK_OLLAMA });
+    vscode.postMessage({ type: MSG.FETCH_OLLAMA_MODELS });
   });
 
   statusGroup.appendChild(statusBadge);
@@ -687,6 +975,7 @@ function renderOllamaCheck(): HTMLElement {
   controlWrap.appendChild(statusGroup);
   row.appendChild(controlWrap);
   wrap.appendChild(row);
+
   return wrap;
 }
 
@@ -744,6 +1033,38 @@ function handleMessage(event: MessageEvent): void {
       break;
     }
 
+    case MSG.OLLAMA_MODELS_RESULT: {
+      if (msg.error) break;
+      const models = msg.models as string[];
+      // Update all dynamic model selects (ollamaModel, ollamaImageModel)
+      const modelKeys = ['ollamaModel', 'ollamaImageModel', 'knowledgeGraph.embeddingModel'];
+      for (const key of modelKeys) {
+        const select = document.querySelector<HTMLSelectElement>(
+          `select[data-setting-key="${key}"]`
+        );
+        if (!select) continue;
+        const currentValue = (settings[key] as string) || select.value;
+        select.innerHTML = '';
+        // Add fetched models as options
+        for (const m of models) {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          if (m === currentValue) opt.selected = true;
+          select.appendChild(opt);
+        }
+        // If current value not in list, add it at the top
+        if (currentValue && !models.includes(currentValue)) {
+          const opt = document.createElement('option');
+          opt.value = currentValue;
+          opt.textContent = `${currentValue} (not installed)`;
+          opt.selected = true;
+          select.insertBefore(opt, select.firstChild);
+        }
+      }
+      break;
+    }
+
     case MSG.BROWSE_PATH_RESULT:
       if (msg.settingKey && msg.path) {
         settings[msg.settingKey] = msg.path;
@@ -779,10 +1100,163 @@ function handleMessage(event: MessageEvent): void {
       }
       break;
     }
+
+    case MSG.GRAPH_STATS_RESULT: {
+      const phaseBadge = document.getElementById('graph-phase-badge');
+      const progressContainer = document.getElementById('graph-progress-container');
+      const chipsContainer = document.getElementById('graph-summary-chips');
+      const refreshBtn = document.querySelector(
+        '.settings-row-control .settings-btn'
+      ) as HTMLButtonElement | null;
+
+      if (refreshBtn) {
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.disabled = false;
+      }
+
+      if (msg.error) {
+        if (progressContainer) {
+          progressContainer.innerHTML = `<div class="settings-status offline">⚠️ ${msg.error}</div>`;
+        }
+        break;
+      }
+
+      const {
+        phase,
+        docCount,
+        tagCount,
+        dbSizeKb,
+        chunkCount,
+        vectorCount,
+        embeddingModel,
+        embeddingStatus,
+        indexDone,
+        indexTotal,
+        embedDone,
+        embedTotal,
+      } = msg;
+
+      // Update Phase Badge
+      if (phaseBadge) {
+        phaseBadge.className = `graph-phase-badge phase-${phase}`;
+        phaseBadge.textContent = phase.charAt(0).toUpperCase() + phase.slice(1);
+      }
+
+      // Update Progress Bars
+      if (progressContainer) {
+        progressContainer.innerHTML = '';
+
+        if (
+          phase === 'indexing' ||
+          (phase === 'idle' && indexTotal > 0 && indexDone < indexTotal)
+        ) {
+          progressContainer.appendChild(
+            renderProgressSegment('Indexing Workspace', indexDone, indexTotal, 'files')
+          );
+        }
+
+        if (
+          phase === 'embedding' ||
+          (phase === 'ready' && embedTotal > 0 && embedDone < embedTotal)
+        ) {
+          progressContainer.appendChild(
+            renderProgressSegment('Vectorizing Chunks', embedDone, embedTotal, 'chunks')
+          );
+        }
+
+        // Show "Initialising" if phase is idle and counts are zero
+        if (phase === 'idle' && docCount === 0 && indexTotal === 0) {
+          const initMsg = el('div', 'settings-status checking');
+          initMsg.textContent = '⏳ Initialising Knowledge Graph...';
+          progressContainer.appendChild(initMsg);
+        }
+      }
+
+      // Update Summary Chips
+      if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        if (docCount > 0 || vectorCount > 0) {
+          chipsContainer.appendChild(renderChip(`${docCount} Documents`));
+          chipsContainer.appendChild(renderChip(`${tagCount} Tags`));
+          chipsContainer.appendChild(renderChip(`${chunkCount} Chunks`));
+          if (dbSizeKb > 0) chipsContainer.appendChild(renderChip(`${dbSizeKb} KB`));
+
+          if (embeddingStatus === 'ready' && embeddingModel) {
+            chipsContainer.appendChild(renderChip(`🔍 ${vectorCount} Vectors (${embeddingModel})`));
+          } else if (embeddingStatus === 'model-missing') {
+            chipsContainer.appendChild(renderChip(`⚠️ Model missing: ${embeddingModel}`));
+          } else if (embeddingStatus === 'server-unavailable') {
+            chipsContainer.appendChild(renderChip(`⚠️ AI Server unreachable`));
+          }
+        }
+      }
+
+      // Auto-poll if not ready (fallback to push channel)
+      if (phase !== 'ready' && phase !== 'idle') {
+        setTimeout(() => vscode.postMessage({ type: MSG.GRAPH_GET_STATS }), 3000);
+      } else if (phase === 'idle' && docCount === 0) {
+        // Still initialising database
+        setTimeout(() => vscode.postMessage({ type: MSG.GRAPH_GET_STATS }), 2000);
+      }
+      break;
+    }
+
+    case MSG.GRAPH_REBUILD_RESULT: {
+      const rebuildBtn = document
+        .getElementById('graph-rebuild-status')
+        ?.parentElement?.querySelector('button') as HTMLButtonElement | null;
+      const rebuildStatus = document.getElementById('graph-rebuild-status');
+      if (rebuildBtn) {
+        rebuildBtn.textContent = 'Rebuild Index';
+        rebuildBtn.disabled = false;
+      }
+      if (rebuildStatus) {
+        rebuildStatus.textContent = msg.error
+          ? `❌ ${msg.error as string}`
+          : `✅ ${msg.docCount as number} docs in ${msg.elapsedS as string}s`;
+      }
+      // Refresh stats after rebuild
+      vscode.postMessage({ type: MSG.GRAPH_GET_STATS });
+      break;
+    }
+
+    case MSG.THEME_UPDATE: {
+      const theme = msg.theme as string;
+      document.documentElement.setAttribute('data-theme', theme);
+      break;
+    }
   }
 }
 
 // ── Helpers ──
+
+function renderProgressSegment(
+  label: string,
+  done: number,
+  total: number,
+  unit: string
+): HTMLElement {
+  const segment = el('div', 'graph-progress-segment');
+
+  const meta = el('div', 'graph-progress-meta');
+  meta.appendChild(elText('span', label));
+
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  meta.appendChild(elText('span', `${done} / ${total} ${unit} (${pct}%)`));
+  segment.appendChild(meta);
+
+  const track = el('div', 'graph-progress-track');
+  const fill = el('div', 'graph-progress-fill');
+  fill.style.width = `${pct}%`;
+  track.appendChild(fill);
+  segment.appendChild(track);
+
+  return segment;
+}
+
+function renderChip(text: string): HTMLElement {
+  return elText('div', text, 'graph-chip');
+}
 
 function el(tag: string, className?: string): HTMLElement {
   const e = document.createElement(tag);

@@ -108,6 +108,9 @@ export const MessageType = {
 
   // ── Mermaid ──
   EDIT_MERMAID_SOURCE: 'editMermaidSource',
+
+  // ── Knowledge Graph ──
+  OPEN_GRAPH_CHAT: 'openGraphChat',
 } as const;
 
 /** Union of all valid message type string values. */
