@@ -957,6 +957,8 @@ function initializeEditor(initialContent: string) {
         bulletList: false,
         orderedList: false,
         listItem: false,
+        taskList: false,
+        taskItem: false,
         listKeymap: false,
         // Disable StarterKit's Link - we configure our own with shouldAutoLink validation
         link: false,
@@ -964,7 +966,7 @@ function initializeEditor(initialContent: string) {
         undoRedo: {
           depth: 100,
         },
-      }),
+      } as any),
       MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
       CodeBlockWithUi.configure({
         lowlight: createLowlight(common),
@@ -1037,6 +1039,7 @@ function initializeEditor(initialContent: string) {
       }),
       ListKit.configure({
         orderedList: false,
+        taskList: false, // Registered separately below with custom HTMLAttributes
         taskItem: false, // Replaced by TaskItemClipboardFix below
       }),
       TaskList.configure({

@@ -181,10 +181,12 @@ function createRoundtripEditor(): Editor {
         bulletList: false,
         orderedList: false,
         listItem: false,
+        taskList: false,
+        taskItem: false,
         listKeymap: false,
         link: false,
         undoRedo: { depth: 100 },
-      }),
+      } as any),
       MarkdownParagraph,
       CodeBlock.configure({
         defaultLanguage: 'plaintext',
@@ -231,6 +233,7 @@ function createRoundtripEditor(): Editor {
       TableKit.configure({ table: false }),
       ListKit.configure({
         orderedList: false,
+        taskList: false, // Registered separately below with custom HTMLAttributes
         taskItem: false, // Use extensions below
       }),
       TaskList.configure({

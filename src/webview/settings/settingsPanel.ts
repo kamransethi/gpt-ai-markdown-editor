@@ -846,7 +846,7 @@ function renderGraphActions(): HTMLElement {
   // ── Stats row ──
   const statsRow = el('div', 'settings-row');
   const statsLabel = el('div', 'settings-row-label');
-  const statsLabelTitle = el('div', 'settings-row-label-title', 'label-text');
+  const statsLabelTitle = el('div', 'label-text');
   statsLabelTitle.style.display = 'flex';
   statsLabelTitle.style.alignItems = 'center';
   statsLabelTitle.appendChild(document.createTextNode('Index Stats'));

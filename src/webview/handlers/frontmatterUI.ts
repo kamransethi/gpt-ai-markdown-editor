@@ -6,7 +6,8 @@
  */
 
 import { Editor } from '@tiptap/core';
-import type { MessageData } from '../hostBridge';
+/** Generic message payload received from the extension host. */
+type MessageData = { type: string; [key: string]: unknown };
 import { MessageType } from '../../shared/messageTypes';
 import * as YAML from 'js-yaml';
 
@@ -15,9 +16,9 @@ import * as YAML from 'js-yaml';
  */
 export function handleFrontmatterValidate(
   _editor: Editor,
-  message: MessageData & { type: 'FRONTMATTER_VALIDATE' }
+  message: MessageData & { type: 'FRONTMATTER_VALIDATE'; yaml?: string }
 ): void {
-  const yaml = message.yaml || '';
+  const yaml: string = (message.yaml as string) || '';
 
   try {
     // Parse YAML to check validity
@@ -76,7 +77,7 @@ export function handleFrontmatterSaveOverride(
  */
 export function handleFrontmatterError(
   _editor: Editor,
-  message: MessageData & { type: 'FRONTMATTER_ERROR' }
+  message: MessageData & { type: 'FRONTMATTER_ERROR'; error: string; errorLine?: number; yaml: string }
 ): void {
   const { error, errorLine, yaml } = message;
 

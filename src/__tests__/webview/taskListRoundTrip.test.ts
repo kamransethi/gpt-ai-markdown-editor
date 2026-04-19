@@ -33,9 +33,11 @@ function createTestEditor(): Editor {
         bulletList: false,
         orderedList: false,
         listItem: false,
+        taskList: false,
+        taskItem: false,
         listKeymap: false,
         undoRedo: { depth: 100 },
-      }),
+      } as any),
       MarkdownParagraph,
       Markdown.configure({
         markedOptions: { gfm: true, breaks: true },
