@@ -35,7 +35,7 @@ const MSG = {
 } as const;
 
 /** All setting keys (without the gptAiMarkdownEditor. prefix) */
-const SETTING_KEYS = [
+export const SETTING_KEYS = [
   'themeOverride',
   'editorZoomLevel',
   'editorWidth',
@@ -190,7 +190,7 @@ function getSettingsHtml(webview: vscode.Webview, context: vscode.ExtensionConte
 </html>`;
 }
 
-async function handleSettingsMessage(
+export async function handleSettingsMessage(
   msg: { type: string; [key: string]: unknown },
   panel: vscode.WebviewPanel
 ): Promise<void> {

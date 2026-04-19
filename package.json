@@ -300,6 +300,63 @@
           "default": "gpt-4.1",
           "markdownDescription": "**AI Model**: The language model used for AI text refinement (Rephrase, Shorten, Summarize, etc.). All models are free with GitHub Copilot."
         },
+        "gptAiMarkdownEditor.llmProvider": {
+          "type": "string",
+          "enum": [
+            "GitHub Copilot",
+            "Ollama"
+          ],
+          "default": "GitHub Copilot",
+          "description": "Select the AI provider used for text and image generation features."
+        },
+        "gptAiMarkdownEditor.ollamaEndpoint": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "The Ollama server endpoint used for Ollama model calls."
+        },
+        "gptAiMarkdownEditor.ollamaModel": {
+          "type": "string",
+          "default": "llama3.2:latest",
+          "description": "The Ollama text model used for AI text operations when Ollama is selected."
+        },
+        "gptAiMarkdownEditor.ollamaImageModel": {
+          "type": "string",
+          "default": "llama3.2-vision:latest",
+          "description": "The Ollama image model used for image creation when Ollama is selected."
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.embeddingModel": {
+          "type": "string",
+          "default": "nomic-embed-text",
+          "description": "The embedding model used for knowledge graph indexing and search."
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.rag.topK": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Number of knowledge graph results used for retrieval-augmented generation." 
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.rag.charsPerDoc": {
+          "type": "number",
+          "default": 2500,
+          "minimum": 500,
+          "maximum": 10000,
+          "description": "The number of characters to include from each document when building RAG context." 
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.rag.ftsSnippetTokens": {
+          "type": "number",
+          "default": 40,
+          "minimum": 10,
+          "maximum": 160,
+          "description": "Number of tokens used when generating full-text search snippets." 
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.rag.historyTurns": {
+          "type": "number",
+          "default": 4,
+          "minimum": 0,
+          "maximum": 20,
+          "description": "The number of RAG history turns to keep for retrieval-augmented generation." 
+        },
         "gptAiMarkdownEditor.showSelectionToolbar": {
           "type": "boolean",
           "default": false,
@@ -329,9 +386,10 @@
   "scripts": {
     "prepackage:release": "node scripts/clean-vsix-artifacts.js",
     "vscode:prepublish": "npm run build:release",
-    "build:debug": "npm run build:extension:debug && npm run build:webview:debug",
-    "build:release": "npm run build:extension:release && npm run build:webview:release && npm run test:roundtrip && npm run verify-build",
+    "build:debug": "npm run test:settings && npm run build:extension:debug && npm run build:webview:debug",
+    "build:release": "npm run test:settings && npm run build:extension:release && npm run build:webview:release && npm run test:roundtrip && npm run verify-build",
     "verify-build": "node scripts/verify-build.js",
+    "test:settings": "jest __tests__/extension/settingsPersistence.test.ts",
     "build:extension:debug": "node scripts/build-extension.js",
     "build:extension:release": "node scripts/build-extension.js --prod --no-sourcemap",
     "build:webview:debug": "node scripts/build-webview.js",
