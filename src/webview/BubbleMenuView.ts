@@ -916,13 +916,13 @@ export function createFormattingToolbar(
           if ((window as any).knowledgeGraphEnabled) {
             items.push({ label: '', action: () => {}, isSeparator: true });
             items.push({ label: 'GRAPH', action: () => {}, isSectionLabel: true });
-              items.push({
-                label: 'Graph Chat',
-                icon: { name: 'sparkle', fallback: '✨' },
-                action: () => {
-                  (window as any).vscode?.postMessage({ type: 'openGraphChat' });
-                },
-              });
+            items.push({
+              label: 'Graph Chat',
+              icon: { name: 'sparkle', fallback: '✨' },
+              action: () => {
+                (window as any).vscode?.postMessage({ type: 'openGraphChat' });
+              },
+            });
           }
 
           return items;

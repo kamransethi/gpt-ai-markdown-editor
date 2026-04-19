@@ -2,9 +2,31 @@
 
 All notable changes to DK-AI Markdown Editor will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0/).
 
 **Note:** This is the ONLY changelog file. Use this content for GitHub releases (copy and polish as needed with emojis and user-friendly sections).
+
+## [3.0.0] - 2026-04-19
+
+### Added
+
+- Knowledge Graph beta: workspace-wide markdown indexing, backlinks, hybrid search, and AI-powered graph chat.
+- Backlinks explorer view for markdown files, with live updates as documents change.
+- Configurable graph data directory via `knowledgeGraph.dataDir`, defaulting to `~/.fluxflow` and supporting custom storage folders.
+- Support for semantic search and retrieval-augmented generation when a local AI embedding server is available.
+- Graph Chat panel for asking questions over your indexed markdown workspace.
+
+### Changed
+
+- Bumped the extension major version to 3.0.0 for a new wave of graph and editor platform features.
+- Upgraded TipTap dependencies to the 3.22.x line for improved Markdown round-tripping and table serialization.
+- Improved local configuration support with a dedicated config/data folder for graph database and vector storage.
+
+### Fixed
+
+- Stabilized table hard-break serialization across the TipTap Markdown pipeline.
+
+---
 
 ## [Unreleased]
 

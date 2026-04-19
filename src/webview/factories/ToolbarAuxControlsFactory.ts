@@ -97,7 +97,7 @@ export class ToolbarAuxControlsFactory {
     });
 
     // Dependency versions from package.json (update these when dependencies change)
-    const tiptapVersion = '3.22.3';
+    const tiptapVersion = '3.22.4';
     const mermaidVersion = '11.14.0';
     const shikiVersion = '3.23.0';
 
