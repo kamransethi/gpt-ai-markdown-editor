@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 /**
  * Tests for CodeBlockWithUi — the lowlight-based code block extension with

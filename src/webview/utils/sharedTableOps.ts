@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Shared table operation SVGs and DOM builder used by BOTH the toolbar

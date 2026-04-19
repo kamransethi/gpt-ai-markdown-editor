@@ -1,4 +1,4 @@
-# Feature Specification: Graceful Copilot Fallback & Lower Version Support
+﻿# Feature Specification: Graceful Copilot Fallback & Lower Version Support
 
 **Folder**: `specs/015-graceful-copilot-fallback/`  
 **Created**: April 16, 2026  

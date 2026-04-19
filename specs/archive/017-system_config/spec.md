@@ -1,4 +1,4 @@
-# 017 - Custom Configuration Panel for Flux Flow
+﻿# 017 - Custom Configuration Panel for Flux Flow
 
 **Status:** Implemented ✅  
 **Date:** April 2026  

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Image Path Resolution Tests
  *
  * Tests the normalizeImagePath function that handles URL-encoded image paths.

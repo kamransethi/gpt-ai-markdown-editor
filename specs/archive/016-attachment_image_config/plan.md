@@ -1,4 +1,4 @@
-# Plan 016: Show Image/Attachment Configuration During Paste & Insert
+﻿# Plan 016: Show Image/Attachment Configuration During Paste & Insert
 
 ## Overview
 Enhance image paste/drop dialog to show and allow editing both configuration options (mediaPathBase and mediaPath) with persistent storage to VS Code settings.

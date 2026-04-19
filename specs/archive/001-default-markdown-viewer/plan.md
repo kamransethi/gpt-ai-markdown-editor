@@ -1,4 +1,4 @@
-# Implementation Plan: Default Markdown Viewer Setup
+﻿# Implementation Plan: Default Markdown Viewer Setup
 
 **Feature Branch**: `001-default-markdown-viewer`  
 **Specification**: `specs/001-default-markdown-viewer/spec.md`  

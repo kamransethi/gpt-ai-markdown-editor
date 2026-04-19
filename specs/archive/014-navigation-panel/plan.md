@@ -1,4 +1,4 @@
-# Implementation Plan: Navigation Panel Search & Filter
+﻿# Implementation Plan: Navigation Panel Search & Filter
 
 **Folder**: `specs/014-navigation-panel/plan.md` | **Date**: 2026-04-12 | **Spec**: [spec.md](spec.md)  
 **Status**: Draft → Approved ✅

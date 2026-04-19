@@ -1,4 +1,4 @@
----
+﻿---
 name: Bug Report
 about: Report a problem with the editor
 title: "[BUG] "

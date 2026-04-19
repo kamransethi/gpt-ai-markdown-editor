@@ -1,4 +1,4 @@
-# Feature Specification: Lossless Markdown Load/Save Compatibility Check
+﻿# Feature Specification: Lossless Markdown Load/Save Compatibility Check
 
 **Feature Branch**: `002-lossless-load-save-check`  
 **Created**: 2026-04-06  

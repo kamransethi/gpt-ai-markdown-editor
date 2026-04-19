@@ -1,4 +1,4 @@
-# Plugin System - README & Quick Start
+﻿# Plugin System - README & Quick Start
 **For Plugin Developers**
 
 ---

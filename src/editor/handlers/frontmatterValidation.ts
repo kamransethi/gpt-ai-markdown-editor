@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Front Matter YAML validation handler for the extension host.
  *
  * Validates front matter YAML blocks extracted from markdown documents

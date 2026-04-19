@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Ollama LLM provider — streams responses from a local Ollama instance via HTTP.
  *
  * Uses the `/api/chat` endpoint with streaming JSON (newline-delimited).

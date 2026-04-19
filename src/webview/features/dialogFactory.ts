@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared dialog/overlay factory — eliminates inline-style duplication across 8+ dialog files.
  *
  * Usage:

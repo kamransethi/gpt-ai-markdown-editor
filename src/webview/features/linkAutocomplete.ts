@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Autocomplete dropdown for the link dialog.
  *
  * Contains all DOM creation, keyboard navigation, positioning,

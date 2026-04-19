@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 /**
  * Tests for frontmatter extraction, restoration, parsing, and panel update logic.
  *

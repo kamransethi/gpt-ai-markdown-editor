@@ -1,4 +1,4 @@
-/**
+﻿/**
  * In-Memory File Support Tests
  *
  * Tests for untitled (unsaved) file support in Markdown Editor.

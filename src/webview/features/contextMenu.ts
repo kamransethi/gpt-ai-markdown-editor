@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Text context menu for the WYSIWYG markdown editor.

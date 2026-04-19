@@ -1,4 +1,4 @@
-# Flux Flow Markdown Editor — Constitution
+﻿# Flux Flow Markdown Editor — Constitution
 
 > Governing principles for the VS Code WYSIWYG Markdown Editor.
 > This is the single source of truth for project constraints, quality standards, and architectural decisions.

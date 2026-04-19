@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Central message type constants for webview ↔ extension communication.
  *
  * Both the extension host and the webview import from this single source of truth

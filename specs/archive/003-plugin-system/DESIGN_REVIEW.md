@@ -1,4 +1,4 @@
-# Plugin System - Design Review Document
+﻿# Plugin System - Design Review Document
 **For Technical Validation & Improvement**
 
 **Version:** 1.0  

@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Image AI Ask Menu
+﻿# Specification Quality Checklist: Image AI Ask Menu
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-04-11

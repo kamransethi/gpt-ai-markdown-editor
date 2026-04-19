@@ -1,4 +1,4 @@
-# Plugin System Specification
+﻿# Plugin System Specification
 
 **Flux Flow Markdown Editor - Plugin Architecture**
 

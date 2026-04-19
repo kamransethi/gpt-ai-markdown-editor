@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import { CustomImage } from '../../webview/extensions/customImage';
 

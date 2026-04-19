@@ -1,4 +1,4 @@
-import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
+﻿import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 
 /**
  * DraggableBlocks Extension

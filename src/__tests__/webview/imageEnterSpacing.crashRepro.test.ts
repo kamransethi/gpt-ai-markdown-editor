@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import { Schema } from '@tiptap/pm/model';
 import { ImageEnterSpacing } from '../../webview/extensions/imageEnterSpacing';

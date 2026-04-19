@@ -1,4 +1,4 @@
-import { WorkspaceEdit, Position, workspace, ExtensionContext, TextDocument } from 'vscode';
+﻿import { WorkspaceEdit, Position, workspace, ExtensionContext, TextDocument } from 'vscode';
 import { MarkdownEditorProvider } from '../../editor/MarkdownEditorProvider';
 import { DocumentSync } from '../../editor/handlers/documentSync';
 

@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import { isHugeImage, showHugeImageDialog } from '../../webview/features/hugeImageDialog';
 

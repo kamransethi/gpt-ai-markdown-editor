@@ -1,4 +1,4 @@
-# Spec 020: File Drag & Drop into Editor
+﻿# Spec 020: File Drag & Drop into Editor
 
 **Status:** Implemented  
 **Version:** 2.0.37  

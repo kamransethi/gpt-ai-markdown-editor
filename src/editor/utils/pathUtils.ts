@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Path resolution utilities for the markdown editor.

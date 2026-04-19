@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Provider factory — reads VS Code settings and returns the appropriate LLM provider.
  *
  * Fresh instance per call (no caching) so setting changes take effect immediately.

@@ -1,4 +1,4 @@
-# Implementation Plan: Pandoc Bullet List Newline Handling
+﻿# Implementation Plan: Pandoc Bullet List Newline Handling
 
 **Folder**: `specs/013-pandoc-bullet-newlines/plan.md` | **Date**: April 12, 2026 | **Spec**: [spec.md](./spec.md)  
 **Status**: ✅ Approved & Implemented

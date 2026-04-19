@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copilot LLM provider — wraps the VS Code Language Model API.
  *
  * @module llm/copilotProvider

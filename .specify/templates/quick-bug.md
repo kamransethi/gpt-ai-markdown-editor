@@ -1,4 +1,4 @@
-# Quick Bug Spec: [BUG TITLE]
+﻿# Quick Bug Spec: [BUG TITLE]
 
 **Ticket**: NNN-BUG-title  
 **Severity**: Critical / High / Medium / Low  

@@ -1,4 +1,4 @@
-import { expect, describe, it } from '@jest/globals';
+﻿import { expect, describe, it } from '@jest/globals';
 
 // Patch: import the normalization logic directly for testability
 function normalizeModelName(s: string) {

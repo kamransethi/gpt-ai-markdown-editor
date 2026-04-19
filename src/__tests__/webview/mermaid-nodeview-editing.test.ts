@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 jest.mock('mermaid', () => ({
   __esModule: true,

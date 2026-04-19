@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 /**
  * Build-time lossless roundtrip test for STRESS_TEST_DOC.md (FR-001, FR-002, FR-003).

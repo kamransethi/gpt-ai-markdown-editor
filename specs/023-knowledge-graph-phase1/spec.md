@@ -1,4 +1,4 @@
-# Spec 023: FluxFlow Knowledge Graph — Foundation & Semantic Search
+﻿# Spec 023: FluxFlow Knowledge Graph — Foundation & Semantic Search
 
 **Status:** ✅ Implemented  
 **Date:** April 19, 2026  

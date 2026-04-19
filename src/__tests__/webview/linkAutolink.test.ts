@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @jest-environment jsdom
  *
  * Tests for Link autolink prevention - bare extensions like .MD should NOT become links

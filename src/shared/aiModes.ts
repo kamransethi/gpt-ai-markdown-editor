@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI Refine mode definitions — single source of truth.
  *
  * Consumed by both the webview (context menu) and the extension host (prompt builder).

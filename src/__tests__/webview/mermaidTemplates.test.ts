@@ -1,4 +1,4 @@
-import { MERMAID_TEMPLATES } from '../../webview/mermaidTemplates';
+﻿import { MERMAID_TEMPLATES } from '../../webview/mermaidTemplates';
 
 describe('Mermaid Templates', () => {
   describe('MERMAID_TEMPLATES array', () => {

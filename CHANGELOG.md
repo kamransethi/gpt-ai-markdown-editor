@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to DK-AI Markdown Editor will be documented in this file.
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Word Count Feature Tests
  *
  * Tests the pure logic functions (calculateStats, formatStatsTooltip)

@@ -1,4 +1,4 @@
-# Development Workflow
+﻿# Development Workflow
 
 **Single-dev workflow**: Spec → Plan → Code → Test
 

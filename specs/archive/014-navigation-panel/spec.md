@@ -1,4 +1,4 @@
-# Feature Specification: Navigation Panel Search & Filter
+﻿# Feature Specification: Navigation Panel Search & Filter
 
 **Folder**: `specs/014-navigation-panel/`  
 **Created**: 2026-04-12  

@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Graceful Copilot Fallback & Lower Version Support
+﻿# Specification Quality Checklist: Graceful Copilot Fallback & Lower Version Support
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: April 16, 2026

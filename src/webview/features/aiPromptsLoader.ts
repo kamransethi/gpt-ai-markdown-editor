@@ -1,4 +1,4 @@
-import { MessageType } from '../../shared/messageTypes';
+﻿import { MessageType } from '../../shared/messageTypes';
 
 let cachedPrompts: any[] = [];
 

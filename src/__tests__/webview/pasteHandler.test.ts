@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for pasteHandler - HTML to Markdown conversion
  *
  * Tests the smart paste functionality that converts HTML from clipboard

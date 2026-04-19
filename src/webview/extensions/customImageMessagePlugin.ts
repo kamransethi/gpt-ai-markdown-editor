@@ -1,4 +1,4 @@
-import { Plugin, PluginKey } from '@tiptap/pm/state';
+﻿import { Plugin, PluginKey } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/core';
 import { getCachedImageMetadata } from '../features/imageMetadata';
 import { MessageType } from '../../shared/messageTypes';

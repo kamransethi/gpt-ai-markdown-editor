@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import { showLocalImageOutsideRepoDialog } from '../../webview/features/localImageOutsideRepoDialog';
 import { getRememberedFolder, setRememberedFolder } from '../../webview/features/imageConfirmation';

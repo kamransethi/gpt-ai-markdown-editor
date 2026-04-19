@@ -1,4 +1,4 @@
-# Spec 024: FluxFlow Stable Config Folder (`~/.fluxflow`)
+﻿# Spec 024: FluxFlow Stable Config Folder (`~/.fluxflow`)
 
 **Status:** 🔲 Not Started  
 **Date:** April 18, 2026  

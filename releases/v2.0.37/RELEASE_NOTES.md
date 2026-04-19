@@ -1,4 +1,4 @@
-# Version 2.0.37
+﻿# Version 2.0.37
 
 **Release Date**: April 12, 2026  
 **Previous Release**: [v2.0.36](../v2.0.36/)

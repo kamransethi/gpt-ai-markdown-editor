@@ -1,4 +1,4 @@
-# Spec 016: Show Image/Attachment Configuration During Paste & Insert
+﻿# Spec 016: Show Image/Attachment Configuration During Paste & Insert
 
 ## Business Problem
 

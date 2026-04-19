@@ -1,4 +1,4 @@
-import { MarkdownEditorProvider } from '../../editor/MarkdownEditorProvider';
+﻿import { MarkdownEditorProvider } from '../../editor/MarkdownEditorProvider';
 import * as vscode from 'vscode';
 
 jest.mock('vscode', () => ({

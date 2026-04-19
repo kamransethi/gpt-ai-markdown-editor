@@ -1,4 +1,4 @@
-# Release Notes — v3.0.0
+﻿# Release Notes — v3.0.0
 
 Date: 2026-04-19
 

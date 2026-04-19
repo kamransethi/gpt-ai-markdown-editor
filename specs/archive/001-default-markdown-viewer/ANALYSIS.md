@@ -1,4 +1,4 @@
-# Specification Analysis Report
+﻿# Specification Analysis Report
 
 **Feature**: Default Markdown Viewer Setup  
 **Feature Branch**: `001-default-markdown-viewer`  

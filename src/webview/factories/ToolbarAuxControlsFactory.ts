@@ -1,4 +1,4 @@
-import type { Editor } from '@tiptap/core';
+﻿import type { Editor } from '@tiptap/core';
 import { MessageType } from '../../shared/messageTypes';
 
 const REPO_URL = 'https://github.com/kamransethi/gpt-ai-markdown-editor';

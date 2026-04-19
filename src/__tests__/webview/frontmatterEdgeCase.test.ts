@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Edge case tests for front matter handling.
  *
  * Tests behavior with:

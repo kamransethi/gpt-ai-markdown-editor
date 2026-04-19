@@ -1,4 +1,4 @@
-# Spec 021 — Double-Click `.drawio.svg` Images to Open in Draw.io
+﻿# Spec 021 — Double-Click `.drawio.svg` Images to Open in Draw.io
 
 ## Problem
 

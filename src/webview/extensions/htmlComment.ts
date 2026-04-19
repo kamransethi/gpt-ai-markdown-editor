@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HTML Comment Preservation Extension
  *
  * Preserves HTML comments (<!-- ... -->) during markdown round-trip.

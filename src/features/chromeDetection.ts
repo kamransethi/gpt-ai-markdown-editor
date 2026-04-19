@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Chrome/Chromium executable detection, validation, and user-prompting.
  *
  * @module chromeDetection

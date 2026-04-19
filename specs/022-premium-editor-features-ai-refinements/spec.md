@@ -1,4 +1,4 @@
-# Spec 022: Premium Editor Features &amp; AI Refinements
+﻿# Spec 022: Premium Editor Features &amp; AI Refinements
 
 **Status:** ✅ Implemented &amp; Shipped  
 **Date:** April 18, 2026  

@@ -1,4 +1,4 @@
-# Implementation Plan: VIEW FRONTMATTER Button
+﻿# Implementation Plan: VIEW FRONTMATTER Button
 
 **Branch**: `008-view-frontmatter-button` | **Status**: ✅ COMPLETE | **Spec**: [spec.md](spec.md)
 

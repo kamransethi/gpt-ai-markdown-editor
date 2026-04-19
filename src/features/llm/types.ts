@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LLM provider abstraction types.
  *
  * Defines the common interface that both the Copilot and Ollama providers implement.

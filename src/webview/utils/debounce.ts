@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Generic debounce and throttle utilities with cancellation support.
  */
 

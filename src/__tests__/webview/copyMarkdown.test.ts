@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for copyMarkdown - Copy selection as markdown
  *
  * Tests the copy functionality that serializes editor selection to markdown

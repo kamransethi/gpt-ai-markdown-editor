@@ -1,4 +1,4 @@
-# Feature Specification: Versioned Release Management
+﻿# Feature Specification: Versioned Release Management
 
 **Folder**: `specs/009-versioned-releases/`  
 **Created**: April 11, 2026  

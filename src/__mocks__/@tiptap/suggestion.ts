@@ -1,2 +1,2 @@
-export const Suggestion = jest.fn(() => []);
+﻿export const Suggestion = jest.fn(() => []);
 export default Suggestion;

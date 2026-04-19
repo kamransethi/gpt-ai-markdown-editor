@@ -1,4 +1,4 @@
-# Spec 019: HTML `<br>` Tag Optimization for Token Efficiency
+﻿# Spec 019: HTML `<br>` Tag Optimization for Token Efficiency
 
 **Status:** Implemented  
 **Version:** 2.0.37  

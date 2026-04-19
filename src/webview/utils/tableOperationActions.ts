@@ -1,4 +1,4 @@
-import type { Editor } from '@tiptap/core';
+﻿import type { Editor } from '@tiptap/core';
 import { findTable, moveTableColumn, moveTableRow, TableMap } from 'prosemirror-tables';
 
 function getSelectedTableCellLocation(editor: Editor): {

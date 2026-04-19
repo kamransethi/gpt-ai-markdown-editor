@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Image operation handlers for the markdown editor.

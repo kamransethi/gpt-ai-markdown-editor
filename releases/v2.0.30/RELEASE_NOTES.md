@@ -1,4 +1,4 @@
-# Release Notes: v2.0.30
+﻿# Release Notes: v2.0.30
 
 **Release Date**: April 11, 2026
 

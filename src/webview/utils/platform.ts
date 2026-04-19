@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Platform detection utilities for keyboard shortcut labels and platform-specific behavior.
  *
  * @module platform

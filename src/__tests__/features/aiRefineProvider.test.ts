@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for AI Refine and AI Explain integration with the provider abstraction.
  *
  * Verifies that both features correctly route through createLlmProvider()

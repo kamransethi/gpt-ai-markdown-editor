@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Ollama Embedding Engine
  *
  * Calls Ollama's /api/embed endpoint for vector embeddings.

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SVG icon definitions using Google Material Symbols.
  *
  * All icons are 24x24 viewBox, fill="currentColor" for theme compatibility.

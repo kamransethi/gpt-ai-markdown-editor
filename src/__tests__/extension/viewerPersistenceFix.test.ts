@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Test Suite: Default Markdown Viewer Persistence Bug Fix
  *
  * Specification: specs/006-BUG-viewer-prompt-persistence/spec.md

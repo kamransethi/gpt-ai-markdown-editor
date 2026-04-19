@@ -1,4 +1,4 @@
-# Implementation: Fix H1-H3 Scroll Regression
+﻿# Implementation: Fix H1-H3 Scroll Regression
 
 **Related Spec**: [spec.md](spec.md)  
 **Date Implemented**: April 11, 2026  

@@ -1,4 +1,4 @@
-# Implementation Plan: LLM Provider Selection
+﻿# Implementation Plan: LLM Provider Selection
 
 **Folder**: `specs/010-llm-provider-selection/plan.md` | **Date**: 2026-04-11 | **Spec**: [spec.md](./spec.md)  
 **Status**: Draft → Approved ✅

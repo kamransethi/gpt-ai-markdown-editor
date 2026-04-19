@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared error utilities used across extension host and webview.
  */
 

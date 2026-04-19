@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Versioned Release Management
+﻿# Specification Quality Checklist: Versioned Release Management
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: April 11, 2025

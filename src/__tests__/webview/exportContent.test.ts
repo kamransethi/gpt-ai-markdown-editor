@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Export Content Tests
  *
  * Tests the content collection and Mermaid conversion functionality

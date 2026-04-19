@@ -1,4 +1,4 @@
-import { MarkdownManager } from '@tiptap/markdown';
+﻿import { MarkdownManager } from '@tiptap/markdown';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import CodeBlock from '@tiptap/extension-code-block';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Image Conversion Tests
  *
  * Tests the image-to-data-URL conversion functions used in export

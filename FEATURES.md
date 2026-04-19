@@ -1,4 +1,4 @@
-# Flux Flow Markdown Editor — Feature Guide
+﻿# Flux Flow Markdown Editor — Feature Guide
 
 A premium WYSIWYG markdown editing experience inside VS Code. Write naturally, focus on content — not syntax.
 

@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 /**
  * Failing tests for all known issues in the markdown editor.

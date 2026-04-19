@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for front matter serialization and round-trip save/load.
  *
  * Tests that front matter content is preserved when saved and reloaded:

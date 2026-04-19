@@ -1,4 +1,4 @@
-# Implementation Plan: Image AI Ask Menu
+﻿# Implementation Plan: Image AI Ask Menu
 
 **Folder**: `specs/011-image-ai-ask/plan.md` | **Date**: 2026-04-11 | **Spec**: [spec.md](spec.md)  
 **Status**: Draft → Approved ✅

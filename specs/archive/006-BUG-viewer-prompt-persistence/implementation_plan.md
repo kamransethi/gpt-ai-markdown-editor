@@ -1,4 +1,4 @@
-# Implementation Plan: Default Markdown Viewer Prompt Persistence
+﻿# Implementation Plan: Default Markdown Viewer Prompt Persistence
 
 **Spec**: 006-BUG-viewer-prompt-persistence  
 **Status**: Ready for Code Implementation  

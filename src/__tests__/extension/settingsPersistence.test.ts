@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+﻿import * as vscode from 'vscode';
 import packageJson from '../../../package.json';
 import { SETTING_KEYS, handleSettingsMessage } from '../../editor/SettingsPanel';
 

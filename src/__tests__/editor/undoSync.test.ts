@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+﻿import * as vscode from 'vscode';
 import { WorkspaceEdit, Position, workspace } from 'vscode';
 import { MarkdownEditorProvider } from '../../editor/MarkdownEditorProvider';
 import { DocumentSync } from '../../editor/handlers/documentSync';

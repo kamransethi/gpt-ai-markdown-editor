@@ -1,4 +1,4 @@
-# LLM Prompt Templates
+﻿# LLM Prompt Templates
 
 These are copy-paste prompts for handing off work to LLM at each stage of the workflow.
 

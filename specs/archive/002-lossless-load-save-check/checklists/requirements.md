@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Lossless Markdown Load/Save Compatibility Check
+﻿# Specification Quality Checklist: Lossless Markdown Load/Save Compatibility Check
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: 2026-04-06  

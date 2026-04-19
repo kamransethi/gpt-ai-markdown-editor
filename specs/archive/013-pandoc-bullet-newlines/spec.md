@@ -1,4 +1,4 @@
-# Feature Specification: Pandoc Bullet List Newline Handling
+﻿# Feature Specification: Pandoc Bullet List Newline Handling
 
 **Folder**: `specs/013-pandoc-bullet-newlines/`  
 **Created**: April 12, 2026  

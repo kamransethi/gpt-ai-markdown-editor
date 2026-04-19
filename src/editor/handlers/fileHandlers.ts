@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * File and navigation handlers for the markdown editor.

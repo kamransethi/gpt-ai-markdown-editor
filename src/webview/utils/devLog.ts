@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Developer-mode gated logging utility.
  *
  * When `gptaiDeveloperMode` is false, all debug logging is suppressed.

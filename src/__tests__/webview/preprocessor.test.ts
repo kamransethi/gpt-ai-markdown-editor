@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Test suite for preprocessMarkdownContent logic.
  *
  * Uses `marked.lexer()` AST to safely separate code from non-code content.

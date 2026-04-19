@@ -1,4 +1,4 @@
-# Release Notes: v2.0.35
+﻿# Release Notes: v2.0.35
 
 **Release Date**: April 11, 2026  
 **Previous Release**: [v2.0.24](https://github.com/kamransethi/gpt-ai-markdown-editor/tree/v2.0.24)

@@ -1,4 +1,4 @@
-# Implementation: Copilot Integration & AI Refine Improvements
+﻿# Implementation: Copilot Integration & AI Refine Improvements
 
 **Related Spec**: [spec.md](spec.md)  
 **Date Implemented**: April 11, 2026  

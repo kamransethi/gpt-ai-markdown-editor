@@ -1,4 +1,4 @@
-// Global type definitions for VS Code Webview API
+﻿// Global type definitions for VS Code Webview API
 
 /**
  * A standard interface for the VS Code Webview API.

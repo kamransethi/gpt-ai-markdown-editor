@@ -1,4 +1,4 @@
-# Feature Specification: VIEW FRONTMATTER Button
+﻿# Feature Specification: VIEW FRONTMATTER Button
 
 **Feature Branch**: `008-view-frontmatter-button`  
 **Created**: 2026-04-11  

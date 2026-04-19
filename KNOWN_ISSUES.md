@@ -1,4 +1,4 @@
-# Known Issues
+﻿# Known Issues
 
 > **Maintained by:** All contributors
 > **Convention:** See METHOD in `.specify/memory/constitution.md` § XIII

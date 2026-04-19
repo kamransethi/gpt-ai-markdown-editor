@@ -1,4 +1,4 @@
-const CodeBlockShiki = {
+﻿const CodeBlockShiki = {
   configure: () => CodeBlockShiki,
   extend: () => CodeBlockShiki,
   name: 'codeBlock',

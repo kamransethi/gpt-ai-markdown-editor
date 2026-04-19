@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unit tests for front matter YAML validation.
  *
  * Tests the validateFrontmatterYaml() function with various YAML inputs:

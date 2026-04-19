@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Jest test setup (before test files)
  *
  * This file runs BEFORE test files are loaded.

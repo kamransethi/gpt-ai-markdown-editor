@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Default Markdown Viewer Setup
+﻿# Specification Quality Checklist: Default Markdown Viewer Setup
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: April 5, 2026

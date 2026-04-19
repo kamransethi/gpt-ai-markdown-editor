@@ -1,4 +1,4 @@
-/**
+﻿/**
  * RAG Chat Orchestrator — builds context from hybrid search, streams LLM answers.
  *
  * Flow:

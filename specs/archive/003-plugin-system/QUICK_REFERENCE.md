@@ -1,4 +1,4 @@
-# Plugin System - Architecture Quick Reference
+﻿# Plugin System - Architecture Quick Reference
 **Visual Guide & Cheat Sheet**
 
 ---

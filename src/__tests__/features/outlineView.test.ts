@@ -1,4 +1,4 @@
-import { OutlineViewProvider, OutlineEntry } from '../../features/outlineView';
+﻿import { OutlineViewProvider, OutlineEntry } from '../../features/outlineView';
 
 describe('OutlineViewProvider', () => {
   // Sample outline: H1 > H2 > H3, H1 > H2b

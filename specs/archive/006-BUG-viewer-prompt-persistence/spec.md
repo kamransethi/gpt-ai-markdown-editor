@@ -1,4 +1,4 @@
-# Quick Bug Spec: Default Markdown Viewer Prompt Not Persisting
+﻿# Quick Bug Spec: Default Markdown Viewer Prompt Not Persisting
 
 **Ticket**: 006-BUG-viewer-prompt-persistence  
 **Severity**: High  

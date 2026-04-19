@@ -1,4 +1,4 @@
-# Implementation Plan: Versioned Release Management
+﻿# Implementation Plan: Versioned Release Management
 
 **Branch**: `009-versioned-releases` | **Status**: ✅ COMPLETE | **Spec**: [spec.md](spec.md)
 

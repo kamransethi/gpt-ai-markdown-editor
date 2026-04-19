@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Image Insert Dialog Tests
  *
  * Tests for the image insert dialog functionality including:

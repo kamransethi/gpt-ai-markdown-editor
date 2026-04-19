@@ -1,4 +1,4 @@
-# Spec: H1-H3 Scroll Regression Bug
+﻿# Spec: H1-H3 Scroll Regression Bug
 
 **Ticket**: Scroll jiggle/snap-to-top regression with H1-H3 headings  
 **Severity**: Critical (user cannot scroll content)  

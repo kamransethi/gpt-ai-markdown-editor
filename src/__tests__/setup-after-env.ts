@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Jest test setup (after environment)
  *
  * This file runs after the test environment is set up.

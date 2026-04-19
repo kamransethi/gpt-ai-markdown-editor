@@ -1,4 +1,4 @@
-# Feature Specification: LLM Provider Selection
+﻿# Feature Specification: LLM Provider Selection
 
 **Folder**: `specs/010-llm-provider-selection/`  
 **Created**: April 11, 2026  

@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Viewer Prompt Persistence Bug
+﻿# Specification Quality Checklist: Viewer Prompt Persistence Bug
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: 2026-04-11  

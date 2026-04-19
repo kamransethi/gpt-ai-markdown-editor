@@ -1,4 +1,4 @@
-export const EPIC_READER_FRIENDLY_MD = `# Epic: Reader‑Friendly Markdown Workspace
+﻿export const EPIC_READER_FRIENDLY_MD = `# Epic: Reader‑Friendly Markdown Workspace
 
 This document describes a mock product epic  for a **reader‑friendly** **markdown workspace**.
 It is intentionally rich in Markdown examples so we can see how the editor behaves

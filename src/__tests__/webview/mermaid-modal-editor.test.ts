@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @jest-environment jsdom
  *
  * Tests for mermaid modal editor and content updates

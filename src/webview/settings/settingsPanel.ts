@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Settings Panel — Webview entry point
  *
  * Renders a multi-page settings UI that reads/writes VS Code configuration

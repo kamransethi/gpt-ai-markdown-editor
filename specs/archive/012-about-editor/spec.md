@@ -1,4 +1,4 @@
-# Feature Specification: About Editor Dialog
+﻿# Feature Specification: About Editor Dialog
 
 **Folder**: `specs/012-about-editor/`  
 **Created**: April 11, 2026  

@@ -1,4 +1,4 @@
-import type { EditorState, Selection, Transaction } from '@tiptap/pm/state';
+﻿import type { EditorState, Selection, Transaction } from '@tiptap/pm/state';
 import type { Node as ProseMirrorNode, Schema } from '@tiptap/pm/model';
 import { CellSelection, TableMap, findTable, selectedRect } from 'prosemirror-tables';
 

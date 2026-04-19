@@ -1,4 +1,4 @@
-# Specification Quality Checklist: LLM Provider Selection
+﻿# Specification Quality Checklist: LLM Provider Selection
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: April 11, 2026  

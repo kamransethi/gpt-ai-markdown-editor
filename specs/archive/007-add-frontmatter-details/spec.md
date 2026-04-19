@@ -1,4 +1,4 @@
-# Feature Specification: Collapsible Front Matter Panel
+﻿# Feature Specification: Collapsible Front Matter Panel
 
 **Feature Branch**: `007-add-frontmatter-details`  
 **Created**: 2026-04-11  

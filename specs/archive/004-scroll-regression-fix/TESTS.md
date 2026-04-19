@@ -1,4 +1,4 @@
-# Test Suite: H1-H3 Scroll Regression Prevention
+﻿# Test Suite: H1-H3 Scroll Regression Prevention
 
 **Related Spec**: [spec.md](spec.md)  
 **Related Implementation**: [IMPLEMENTATION.md](IMPLEMENTATION.md)

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Link autolink validation utility
  *
  * Prevents bare file extensions (like .MD, .txt) and filename patterns

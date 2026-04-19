@@ -1,4 +1,4 @@
-# Flux Flow Markdown Editor
+﻿# Flux Flow Markdown Editor
 
 **Flux Flow Markdown Editor** — The most feature-rich visual Markdown experience for VS Code, built for people who want Markdown files, not Markdown friction - formats perfectly in GitHub.
 

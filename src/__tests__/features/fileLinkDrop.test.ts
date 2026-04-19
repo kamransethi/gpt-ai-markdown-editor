@@ -1,4 +1,4 @@
-import { extractPathFromDataTransfer } from '../../webview/features/fileLinkDrop';
+﻿import { extractPathFromDataTransfer } from '../../webview/features/fileLinkDrop';
 
 function createMockDataTransfer(
   files: File[] = [],

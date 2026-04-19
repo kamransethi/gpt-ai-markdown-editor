@@ -1,4 +1,4 @@
-import type { Editor } from '@tiptap/core';
+﻿import type { Editor } from '@tiptap/core';
 import { escapeHtml } from '../utils/fileLinks';
 import { MessageType } from '../../shared/messageTypes';
 

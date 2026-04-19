@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HTML / CSS generation for PDF export.
  *
  * @module exportStyles

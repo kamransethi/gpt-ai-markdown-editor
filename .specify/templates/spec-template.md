@@ -1,4 +1,4 @@
-# Feature Specification: [FEATURE NAME]
+﻿# Feature Specification: [FEATURE NAME]
 
 **Folder**: `specs/NNN-TYPE-title/`  
 **Created**: [DATE]  

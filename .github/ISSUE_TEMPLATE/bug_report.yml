@@ -1,4 +1,4 @@
-name: Bug Report
+﻿name: Bug Report
 description: Report a bug or issue with Flux Flow Markdown Editor
 title: "[Bug]: "
 labels: ["bug", "triage"]

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared context menu builder used by both text and table context menus.
  * Encapsulates menu DOM creation, item builders, submenu management,
  * viewport clamping, and show/hide/destroy lifecycle.

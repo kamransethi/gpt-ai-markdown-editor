@@ -1,4 +1,4 @@
-# Implementation Progress Checklist: Default Markdown Viewer Setup
+﻿# Implementation Progress Checklist: Default Markdown Viewer Setup
 
 **Feature Branch**: `001-default-markdown-viewer`  
 **Start Date**: April 5, 2026  

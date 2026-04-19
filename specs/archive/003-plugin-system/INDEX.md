@@ -1,4 +1,4 @@
-# Plugin System Specification Index
+﻿# Plugin System Specification Index
 **Flux Flow Markdown Editor - Plugin Architecture**
 
 **Last Updated**: April 10, 2026  

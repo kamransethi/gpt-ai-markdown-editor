@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Flat Vector Store with Cosine Similarity
  *
  * Stores embeddings as a flat Float32Array for brute-force cosine similarity.

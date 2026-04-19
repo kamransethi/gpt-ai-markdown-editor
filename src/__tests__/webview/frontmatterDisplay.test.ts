@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for front matter display and rendering.
  *
  * Tests the UI rendering of front matter panels:

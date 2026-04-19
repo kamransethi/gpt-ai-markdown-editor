@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontmatter editor modal.
  * Simple, robust YAML editor using native textarea (no heavy TipTap/extensions).
  */

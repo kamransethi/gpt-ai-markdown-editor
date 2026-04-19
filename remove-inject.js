@@ -1,4 +1,4 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 let code = fs.readFileSync('src/webview/editor.ts', 'utf-8');
 
 code = code.replace(/function injectFrontmatterBlock\([\s\S]*?\n\}/, '');

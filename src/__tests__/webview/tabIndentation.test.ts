@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for Tab indentation support - Comprehensive Coverage
  *
  * Testing strategy per AGENTS.md:

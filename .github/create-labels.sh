@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Script to create GitHub labels from labels.json
 # Requires: GitHub CLI (gh) installed and authenticated
 # Run from repo root: bash .github/create-labels.sh

@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Pandoc Bullet Newlines
+﻿# Specification Quality Checklist: Pandoc Bullet Newlines
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: April 12, 2026  

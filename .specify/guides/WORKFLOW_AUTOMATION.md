@@ -1,4 +1,4 @@
-# Workflow: Spec → Plan → Code → Test
+﻿# Workflow: Spec → Plan → Code → Test
 
 **Work directly on main. No branching. At each phase, copy prompts from [llm-prompts.md](llm-prompts.md)** (your copy-paste reference).
 

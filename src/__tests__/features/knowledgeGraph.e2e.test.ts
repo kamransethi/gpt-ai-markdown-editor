@@ -1,4 +1,4 @@
-/**
+﻿/**
  * End-to-end tests for FluxFlow Knowledge Graph
  *
  * Tests the full pipeline: indexer parsing → database schema creation →

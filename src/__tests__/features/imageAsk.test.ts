@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for the Image AI Ask feature.
  *
  * Covers: imageAsk handler, vision capability detection, provider vision methods,

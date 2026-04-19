@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Test Suite: Default Markdown Viewer Prompt Feature
  *
  * Specification: specs/001-default-markdown-viewer/spec.md (FR-001 through FR-008)

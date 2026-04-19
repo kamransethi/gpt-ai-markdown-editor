@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Graph Chat — Webview entry point
  *
  * Renders a chat interface for RAG queries against the knowledge graph.

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Hierarchical Markdown Chunker
  *
  * Splits markdown content into chunks based on heading structure (H1–H3).

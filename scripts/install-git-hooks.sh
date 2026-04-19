@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 #
 # Install git hooks from .github/hooks/ to .git/hooks/
 #

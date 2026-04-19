@@ -1,4 +1,4 @@
-import { HardBreak } from '@tiptap/extension-hard-break';
+﻿import { HardBreak } from '@tiptap/extension-hard-break';
 
 export const VisibleHardBreak = HardBreak.extend({
   renderHTML({ HTMLAttributes }) {

@@ -1,4 +1,4 @@
-import { Node, JSONContent } from '@tiptap/core';
+﻿import { Node, JSONContent } from '@tiptap/core';
 
 // List of block-level tags that should NOT be captured by the generic inline mark
 const KNOWN_BLOCK_TAGS = [

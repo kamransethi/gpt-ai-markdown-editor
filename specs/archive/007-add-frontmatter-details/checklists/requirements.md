@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Collapsible Front Matter Panel
+﻿# Specification Quality Checklist: Collapsible Front Matter Panel
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-04-11  

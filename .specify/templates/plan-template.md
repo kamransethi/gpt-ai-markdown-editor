@@ -1,4 +1,4 @@
-# Implementation Plan: [FEATURE]
+﻿# Implementation Plan: [FEATURE]
 
 **Folder**: `specs/NNN-TYPE-title/plan.md` | **Date**: [DATE] | **Spec**: [link to spec.md]  
 **Status**: Draft → Approved ✅

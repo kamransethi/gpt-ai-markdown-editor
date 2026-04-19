@@ -1,4 +1,4 @@
-# Specification Quality Checklist: About Editor Dialog
+﻿# Specification Quality Checklist: About Editor Dialog
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: April 11, 2026  

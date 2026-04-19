@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 /**
  * Regression tests for webview undo/redo guards.
  *

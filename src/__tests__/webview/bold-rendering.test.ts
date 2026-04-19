@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import type { JSONContent } from '@tiptap/core';
 import { Editor } from '@tiptap/core';

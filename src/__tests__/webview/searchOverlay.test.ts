@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 /**
  * Tests for Search Overlay - In-document Search Feature

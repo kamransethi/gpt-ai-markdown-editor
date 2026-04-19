@@ -1,4 +1,4 @@
-# Plugin System - Implementation Checklist
+﻿# Plugin System - Implementation Checklist
 **Use this as a roadmap for implementation**
 
 **Target**: 2-3 weeks for Phase 1 (MVP)

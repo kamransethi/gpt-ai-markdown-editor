@@ -1,4 +1,4 @@
-import { handleCheckImageRename } from '../../editor/handlers/imageHandlers';
+﻿import { handleCheckImageRename } from '../../editor/handlers/imageHandlers';
 import * as vscode from 'vscode';
 
 jest.mock('vscode', () => ({

@@ -1,4 +1,4 @@
-import { Color } from '@tiptap/extension-color';
+﻿import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { marked } from 'marked';
 import { Mark } from '@tiptap/core';

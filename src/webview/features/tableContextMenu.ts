@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Google Docs-style table context menu for the WYSIWYG markdown editor.

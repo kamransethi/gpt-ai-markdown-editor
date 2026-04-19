@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mock VS Code API for unit testing
  *
  * This provides minimal mocks for VS Code APIs used in our extension.

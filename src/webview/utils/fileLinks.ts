@@ -1,4 +1,4 @@
-export function formatFileLinkLabel(fileName: string): string {
+﻿export function formatFileLinkLabel(fileName: string): string {
   const trimmed = fileName.trim();
   if (!trimmed) {
     return 'Attachment';

@@ -1,4 +1,4 @@
-# Feature Specification: Image AI Ask Menu
+﻿# Feature Specification: Image AI Ask Menu
 
 **Folder**: `specs/011-image-ai-ask/`  
 **Created**: 2026-04-11  

@@ -1,4 +1,4 @@
-# Specs: Issue Fixes & Regression Prevention
+﻿# Specs: Issue Fixes & Regression Prevention
 
 Two resolved issues are now documented with separated concerns:
 

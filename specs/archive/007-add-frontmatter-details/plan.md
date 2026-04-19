@@ -1,4 +1,4 @@
-# Implementation Plan: Collapsible Front Matter Panel
+﻿# Implementation Plan: Collapsible Front Matter Panel
 
 **Branch**: `007-add-frontmatter-details` | **Status**: ⚠️ PARTIALLY IMPLEMENTED | **Spec**: [spec.md](spec.md)
 

@@ -1,4 +1,4 @@
-# Implementation Tasks: Default Markdown Viewer Setup
+﻿# Implementation Tasks: Default Markdown Viewer Setup
 
 **Feature Branch**: `001-default-markdown-viewer`  
 **Specification**: [spec.md](spec.md)  

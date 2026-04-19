@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Image / markdown path resolution utilities for document export.
  *
  * Pure functions — no VS Code API dependency.

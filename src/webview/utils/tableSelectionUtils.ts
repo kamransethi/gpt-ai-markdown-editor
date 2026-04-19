@@ -1,4 +1,4 @@
-import type { EditorState } from 'prosemirror-state';
+﻿import type { EditorState } from 'prosemirror-state';
 
 export interface TableLineMapping {
   start: number;

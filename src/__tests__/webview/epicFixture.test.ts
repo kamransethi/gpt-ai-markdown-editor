@@ -1,4 +1,4 @@
-import { looksLikeMarkdown, markdownToHtml } from '../../webview/utils/pasteHandler';
+﻿import { looksLikeMarkdown, markdownToHtml } from '../../webview/utils/pasteHandler';
 import { EPIC_READER_FRIENDLY_MD } from '../fixtures/epicReaderFriendly';
 
 describe('Reader-friendly epic fixture', () => {

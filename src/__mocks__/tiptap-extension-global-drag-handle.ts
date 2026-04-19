@@ -1,4 +1,4 @@
-const GlobalDragHandle = {
+﻿const GlobalDragHandle = {
   configure: () => GlobalDragHandle,
   extend: () => GlobalDragHandle,
   name: 'globalDragHandle',

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Image Drag & Drop Feature Tests
  *
  * Tests the pure utility functions that don't depend on DOM or VS Code APIs.

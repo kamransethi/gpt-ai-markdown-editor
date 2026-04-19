@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Image Rename Tests
  *
  * Tests for image rename + resize filename helpers.

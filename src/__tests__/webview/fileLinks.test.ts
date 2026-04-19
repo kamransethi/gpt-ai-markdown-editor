@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import { formatFileLinkLabel, isPotentialFileDropPath } from '../../webview/utils/fileLinks';
 

@@ -1,4 +1,4 @@
-import { mergeAttributes } from '@tiptap/core';
+﻿import { mergeAttributes } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/core';
 import type { Node as PmNode } from '@tiptap/pm/model';
 import { CodeBlock } from '@tiptap/extension-code-block';

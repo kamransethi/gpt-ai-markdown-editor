@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Settings Panel — Extension-side provider
  *
  * Opens a webview panel with the custom settings UI.

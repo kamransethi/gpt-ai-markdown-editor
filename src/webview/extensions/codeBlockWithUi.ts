@@ -1,4 +1,4 @@
-import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+﻿import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 
 const CODE_BLOCK_LANGUAGES = [
   { value: 'plaintext', label: 'Plain Text' },

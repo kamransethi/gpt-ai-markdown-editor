@@ -1,4 +1,4 @@
-# Implementation Tasks: LLM Provider Selection
+﻿# Implementation Tasks: LLM Provider Selection
 
 **Specification**: [spec.md](spec.md)  
 **Plan**: [plan.md](plan.md)  

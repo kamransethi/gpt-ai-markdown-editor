@@ -1,4 +1,4 @@
-# Spec: Copilot Integration & AI Refine Improvements
+﻿# Spec: Copilot Integration & AI Refine Improvements
 
 **Category**: Bug Fix + Feature Requests  
 **Status**: IMPLEMENTED ✅  

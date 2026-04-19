@@ -1,4 +1,4 @@
-/** @jest-environment jsdom */
+﻿/** @jest-environment jsdom */
 
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';

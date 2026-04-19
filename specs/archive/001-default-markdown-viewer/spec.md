@@ -1,4 +1,4 @@
-# Feature Specification: Default Markdown Viewer Setup
+﻿# Feature Specification: Default Markdown Viewer Setup
 
 **Feature Branch**: `001-default-markdown-viewer`  
 **Created**: April 5, 2026  

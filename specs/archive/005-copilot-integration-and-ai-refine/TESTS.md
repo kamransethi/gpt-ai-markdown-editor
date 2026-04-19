@@ -1,4 +1,4 @@
-# Test Suite: Copilot Integration & AI Refine Improvements
+﻿# Test Suite: Copilot Integration & AI Refine Improvements
 
 **Related Spec**: [spec.md](spec.md)  
 **Related Implementation**: [IMPLEMENTATION.md](IMPLEMENTATION.md)  

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests for Image Confirmation Dialog
  *
  * Tests the dialog that appears when users drop images, allowing them

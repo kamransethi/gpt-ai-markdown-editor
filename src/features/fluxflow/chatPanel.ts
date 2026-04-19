@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Chat Panel — Extension-side WebviewPanel host for the RAG chat interface.
  *
  * Creates and manages the webview, handles message routing between
