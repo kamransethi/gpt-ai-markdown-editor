@@ -62,9 +62,10 @@ const KNOWN_OUT_OF_SCOPE = [
  * `key: value\n---` as a setext H2 heading.
  */
 function stripFrontmatter(markdown: string): string {
-  const match = markdown.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/);
-  if (!match) return markdown;
-  return markdown.slice(match[0].length);
+  const normalized = markdown.replace(/^\uFEFF/, '');
+  const match = normalized.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/);
+  if (!match) return normalized;
+  return normalized.slice(match[0].length);
 }
 
 /**

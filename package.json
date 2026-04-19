@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "gpt-ai-markdown-editor",
   "displayName": "Flux Flow Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
