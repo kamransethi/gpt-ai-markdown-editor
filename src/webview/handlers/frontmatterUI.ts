@@ -77,7 +77,12 @@ export function handleFrontmatterSaveOverride(
  */
 export function handleFrontmatterError(
   _editor: Editor,
-  message: MessageData & { type: 'FRONTMATTER_ERROR'; error: string; errorLine?: number; yaml: string }
+  message: MessageData & {
+    type: 'FRONTMATTER_ERROR';
+    error: string;
+    errorLine?: number;
+    yaml: string;
+  }
 ): void {
   const { error, errorLine, yaml } = message;
 
