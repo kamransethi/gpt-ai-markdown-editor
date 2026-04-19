@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Script to automatically:
  * 1. Increment package.json minor version
  * 2. Run release build

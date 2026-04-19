@@ -4,7 +4,7 @@
     "noEmit": true,
     "lib": ["ES2022", "DOM"],
     "types": ["jest", "node"],
-    "moduleResolution": "node"
+    "moduleResolution": "bundler"
   },
   "include": ["./**/*.ts"],
   "exclude": []
