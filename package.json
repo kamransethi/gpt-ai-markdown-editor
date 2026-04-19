@@ -2,7 +2,7 @@
   "name": "gpt-ai-markdown-editor",
   "displayName": "Flux Flow Markdown Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "publisher": "kamransethi",
   "author": {
     "name": "DK-AI",
@@ -334,28 +334,28 @@
           "default": 8,
           "minimum": 1,
           "maximum": 20,
-          "description": "Number of knowledge graph results used for retrieval-augmented generation." 
+          "description": "Number of knowledge graph results used for retrieval-augmented generation."
         },
         "gptAiMarkdownEditor.knowledgeGraph.rag.charsPerDoc": {
           "type": "number",
           "default": 2500,
           "minimum": 500,
           "maximum": 10000,
-          "description": "The number of characters to include from each document when building RAG context." 
+          "description": "The number of characters to include from each document when building RAG context."
         },
         "gptAiMarkdownEditor.knowledgeGraph.rag.ftsSnippetTokens": {
           "type": "number",
           "default": 40,
           "minimum": 10,
           "maximum": 160,
-          "description": "Number of tokens used when generating full-text search snippets." 
+          "description": "Number of tokens used when generating full-text search snippets."
         },
         "gptAiMarkdownEditor.knowledgeGraph.rag.historyTurns": {
           "type": "number",
           "default": 4,
           "minimum": 0,
           "maximum": 20,
-          "description": "The number of RAG history turns to keep for retrieval-augmented generation." 
+          "description": "The number of RAG history turns to keep for retrieval-augmented generation."
         },
         "gptAiMarkdownEditor.showSelectionToolbar": {
           "type": "boolean",
