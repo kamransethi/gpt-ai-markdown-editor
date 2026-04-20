@@ -10,15 +10,72 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.1.6] - 2026-04-20
+
+### Changed
+
+- Patch version bump to resolve a marketplace re-publish. No code changes from 0.1.5.
+
+---
+
+## [0.1.5] - 2026-04-20
+
+### 🎯 What's New
+
+#### Document Audit Tool
+A new audit panel lets you check document quality without leaving the editor:
+- Validates all URLs and local file links for broken references
+- Auto-fix suggestions for common issues
+- Toast notifications for audit results
+- Enhanced overlay with issue navigation and a horizontal separator for clarity
+
+#### Image Overlay Controls
+New image overlay feature (contributed by @tomarsuraj13):
+- Contextual controls appear on image hover for quick resize and alignment
+- Improved image resize modal with better interaction
+- Fixed nested checkbox list rendering within image captions
+- Resolved VS Code keyboard shortcut conflicts introduced by image handling
+
+#### Code Block Improvements
+- Pastes inside code blocks now insert as raw text, preventing unwanted markdown parsing
+- Improved code context detection using TipTap state and DOM checks
+- Raw HTML source no longer auto-renders when pasted as plain text
+
+#### HTML-Preserving Tables
+- New `HtmlPreservingTable` extension maintains HTML classes when syncing tables to markdown
+
+### 🛠️ Bug Fixes
+
+- Fixed Mermaid theme loading (themes were not applying on open)
+- Fixed audit panel horizontal scrolling
+- Fixed image resize modal behavior
+- Fixed CI workflows to correctly handle fork PRs in Claude AI code review
+
+### Added
+
+- Claude AI PR review workflow via GitHub Actions (`@claude` mention trigger)
+
+---
+
+## [0.1.4] - 2026-01-20
+
+### Changed
+
+- Updated display name to "Markdown for Humans: WYSIWYG Editor" for better brand clarity and search ranking
+- Expanded keywords from 6 to 30 terms for improved marketplace discoverability
+- Updated marketplace description to highlight key features for SEO
+
+---
+
 ## [0.1.3] - 2026-01-16
 
 ### 🎯 What's New
 
 #### Critical Bug Fix
-**Fixed Auto-Linking Bug** — Previously, typing text ending with file extensions (like `.md`, `.txt`, `.pdf`) would automatically convert them into links. This has been fixed! File extensions now remain as plain text, giving you complete control over when text becomes a link.
+**Fixed Auto-Linking Bug:** Previously, typing text ending with file extensions (like `.md`, `.txt`, `.pdf`) would automatically convert them into links. This has been fixed. File extensions now remain as plain text, giving you complete control over when text becomes a link.
 
 #### Enhanced Link Creation Experience
-**Completely Redesigned Link Dialog** — Creating links is now faster and more intuitive:
+**Completely Redesigned Link Dialog:** Creating links is now faster and more intuitive:
 - **Three Link Modes**: Switch between URL, File, and Headings with radio buttons positioned right after the Link Text input
 - **Smart File Search**: Type to search workspace files with fuzzy matching and category filters (Markdown, Images, Code, Config)
 - **In-Document Headings**: Instantly link to any heading (H1-H6) within your current document
@@ -26,8 +83,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Better Navigation**: Fixed image and file link clicking - images now open in VS Code's preview, files open correctly in both development and packaged builds
 
 #### Documentation & Discovery
-- **Enhanced README** — Added comparison table showing how Markdown for Humans differs from other markdown editors
-- **Improved Marketplace Listing** — Better keywords and descriptions to help users discover the extension more easily
+- **Enhanced README:** Added comparison table showing how Markdown for Humans differs from other markdown editors
+- **Improved Marketplace Listing:** Better keywords and descriptions to help users discover the extension more easily
 
 ### 🛠️ Technical Improvements
 
@@ -137,6 +194,9 @@ This release includes several under-the-hood improvements that make the extensio
 
 ---
 
-[Unreleased]: https://github.com/concretios/markdown-for-humans/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/concretios/markdown-for-humans/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/concretios/markdown-for-humans/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/concretios/markdown-for-humans/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/concretios/markdown-for-humans/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/concretios/markdown-for-humans/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/concretios/markdown-for-humans/compare/v0.1.0...v0.1.3
 [0.1.0]: https://github.com/concretios/markdown-for-humans/releases/tag/v0.1.0
