@@ -10,6 +10,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.1.4] - 2026-04-20
+
+### 🎯 What's New
+
+#### Automated Document Audit
+**No More Broken Links or Missing Images** — The new Audit feature scans your markdown for errors and helps you fix them instantly:
+- **Interactive Overlay Panel**: View all document issues (broken links, missing files, heading structure) in one place.
+- **Auto-Fix Recommendations**: Automatically identifies typos in file paths and suggests the correct file, allowing for one-click fixes.
+- **Smart URL Verification**: Validates both internal workspace files and external web links. Includes fallback GET requests for servers that block standard HEAD checks.
+- **Toast Notifications**: Real-time feedback on document health and audit completion.
+- **Visual Previews**: Hover over suggested fixes in the audit panel to preview images or files before applying them.
+
+#### Enhanced Editing Experience
+- **Image Hover Overlay Toggle**: Added a new setting `markdownForHumans.imagePreview.hover.enabled` to toggle the image shading and metadata display on/off.
+- **Reliable Code Pasting**: Pasting code into blocks is now significantly more robust. The editor better detects code context to ensure raw text insertion and prevent unwanted HTML parsing.
+- **HTML-Preserving Tables**: Added a new extension that maintains HTML classes and attributes during markdown synchronization, perfect for custom-styled tables.
+- **Image Overlay & Resize**: Fixed issues with the image resize modal and improved the image overlay metadata display.
+- **Streamlined Mermaid Diagrams**: Improved theme loading speed and fixed double-click editing reliability.
+
+### 🛠️ Technical Improvements
+- **Performance Optimization**: Standardized network request patterns for audit checks to reduce latency.
+- **Git Integration**: Refined full-document synchronization to ensure VS Code's internal diffing and Git history work seamlessly.
+- **UI Polish**: Standardized UI components, improved horizontal scrolling in overlays, and polished button active states.
+- **Hardened Security**: Improved security validation for external URL checks.
+
+### Fixed
+- Fixed image resize modal breaking in certain responsive layouts.
+- Fixed Mermaid diagrams theme not loading correctly on initial render.
+- Fixed horizontal scrolling bug in the audit side panel.
+- Fixed code block pasting where copied HTML source would sometimes auto-render as UI elements.
+- Fixed URL validation false positives for websites that block HEAD requests.
+- Fixed audit button timing issues and active state persistence.
+- Fixed issue where navigation in audit panel would accidentally trigger auto-fixes.
+
+---
+
 ## [0.1.3] - 2026-01-16
 
 ### 🎯 What's New
@@ -137,6 +173,8 @@ This release includes several under-the-hood improvements that make the extensio
 
 ---
 
-[Unreleased]: https://github.com/concretios/markdown-for-humans/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/concretios/markdown-for-humans/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/concretios/markdown-for-humans/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/concretios/markdown-for-humans/compare/v0.1.1...v0.1.3
 [0.1.1]: https://github.com/concretios/markdown-for-humans/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/concretios/markdown-for-humans/releases/tag/v0.1.0
