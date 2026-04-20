@@ -46,9 +46,9 @@ Fixes #
 <!-- Describe the testing you've done -->
 
 - [ ] All existing tests pass (`npm test`)
-- [ ] Linting passes (`npm run lint`)
-- [ ] Build succeeds (`npm run build && npm run verify-build`)
-- [ ] Extension can be packaged (`npm run package`)
+- [ ] Linting passes with no errors (`npm run lint:fix`)
+- [ ] Build succeeds (`npm run build:release`)
+- [ ] Extension can be packaged (`npm run package:release`)
 - [ ] Manually tested in VS Code Extension Development Host
 - [ ] Tested with both saved files (`file:`) and untitled files (`untitled:`)
 - [ ] Tested in light and dark themes
