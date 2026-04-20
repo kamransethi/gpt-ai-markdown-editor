@@ -32,7 +32,7 @@
  */
 
 import { Extension, type Editor } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { type EditorView } from '@tiptap/pm/view';
 import { Node as ProsemirrorNode } from '@tiptap/pm/model';
 
@@ -152,7 +152,7 @@ function computeDropTarget(
   // }
 
   const block = topLevelBlockAt(view, pos);
-  
+
   if (!block) {
     const isTopHalf = clientY < editorRect.top + editorRect.height / 2;
     return { insertPos: isTopHalf ? 0 : view.state.doc.content.size, valid: true };
@@ -162,9 +162,8 @@ function computeDropTarget(
   if (!domNode) return { insertPos: block.pos, valid: true };
 
   const rect = domNode.getBoundingClientRect();
-  const insertPos = clientY < rect.top + rect.height / 2
-    ? block.pos
-    : block.pos + block.node.nodeSize;
+  const insertPos =
+    clientY < rect.top + rect.height / 2 ? block.pos : block.pos + block.node.nodeSize;
 
   return { insertPos, valid: true };
 }
@@ -262,7 +261,7 @@ class DragHandleController {
 
     // Drag over + drop + end: on DOCUMENT in CAPTURE phase
     document.addEventListener('dragover', this._onDragOver, { capture: true, passive: false });
-    document.addEventListener('drop',    this._onDrop,    { capture: true });
+    document.addEventListener('drop', this._onDrop, { capture: true });
     document.addEventListener('dragend', this._onDragEnd, { capture: true });
     this.handle.addEventListener('dragend', this._onDragEnd);
   }
@@ -279,7 +278,10 @@ class DragHandleController {
     }
 
     const coords = this.view.posAtCoords({ left: e.clientX, top: e.clientY });
-    if (!coords) { this.hideHandle(); return; }
+    if (!coords) {
+      this.hideHandle();
+      return;
+    }
 
     const block = topLevelBlockAt(this.view, coords.pos);
     if (!block || !BLOCK_TYPES.has(block.node.type.name)) {
@@ -288,7 +290,7 @@ class DragHandleController {
     }
 
     this.hoveredBlock = block;
-    this._handleBlock  = block; // persist even if hoveredBlock is later cleared
+    this._handleBlock = block; // persist even if hoveredBlock is later cleared
     this.positionHandle(block.pos);
   }
 
@@ -312,7 +314,7 @@ class DragHandleController {
   }
 
   // Add these alongside your other event handler methods (e.g., below onMouseLeave)
-  
+
   private onHandleMouseEnter(_e: MouseEvent): void {
     // Cancel any pending deferred hide (mouse crossed the gap successfully).
     if (this._hideTimeoutId !== null) {
@@ -344,10 +346,13 @@ class DragHandleController {
    */
   private positionHandle(blockPos: number): void {
     const domNode = this.view.nodeDOM(blockPos) as HTMLElement | null;
-    if (!domNode) { this.hideHandle(); return; }
+    if (!domNode) {
+      this.hideHandle();
+      return;
+    }
 
     const editorRect = this.view.dom.getBoundingClientRect();
-    const nodeRect   = domNode.getBoundingClientRect();
+    const nodeRect = domNode.getBoundingClientRect();
 
     // Centre vertically on the first line of the block, clamp within editor
     const centreY = Math.min(
@@ -357,14 +362,14 @@ class DragHandleController {
 
     const HANDLE_W = 28;
     const HANDLE_H = 32;
-    const GAP      = 4; // gap between handle right edge and content left edge
+    const GAP = 4; // gap between handle right edge and content left edge
 
     // fixed coordinates
     const left = editorRect.left - GAP - HANDLE_W;
-    const top  = centreY - HANDLE_H / 2;
+    const top = centreY - HANDLE_H / 2;
 
-    this.handle.style.left    = `${left}px`;
-    this.handle.style.top     = `${top}px`;
+    this.handle.style.left = `${left}px`;
+    this.handle.style.top = `${top}px`;
     this.handle.style.display = 'flex';
   }
 
@@ -380,10 +385,13 @@ class DragHandleController {
     // dragstart (e.g. Chrome fires mouseleave on the dragged element as the
     // drag begins). Fall back to _handleBlock which is not cleared on hide.
     const block = this.hoveredBlock ?? this._handleBlock;
-    if (!block) { e.preventDefault(); return; }
+    if (!block) {
+      e.preventDefault();
+      return;
+    }
 
-    this.isDragging      = true;
-    this.draggedPos      = block.pos;
+    this.isDragging = true;
+    this.draggedPos = block.pos;
 
     // Invisible ghost (the indicator line acts as visual feedback instead)
     const ghost = document.createElement('div');
@@ -414,10 +422,14 @@ class DragHandleController {
     e.preventDefault();
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
 
-
-    const { insertPos, valid } = computeDropTarget(this.view, e.clientX, e.clientY, this.draggedPos);
+    const { insertPos, valid } = computeDropTarget(
+      this.view,
+      e.clientX,
+      e.clientY,
+      this.draggedPos
+    );
     this.dropInsertPos = insertPos;
-    this.dropValid     = valid;
+    this.dropValid = valid;
 
     this.positionIndicator(e.clientY, insertPos, valid);
     this.maybeAutoScroll(e.clientY);
@@ -443,9 +455,9 @@ class DragHandleController {
       }
     }
 
-    this.indicator.style.left    = `${editorRect.left}px`;
-    this.indicator.style.width   = `${editorRect.width}px`;
-    this.indicator.style.top     = `${indicatorY}px`;
+    this.indicator.style.left = `${editorRect.left}px`;
+    this.indicator.style.width = `${editorRect.width}px`;
+    this.indicator.style.top = `${indicatorY}px`;
     this.indicator.style.display = 'block';
     this.indicator.classList.toggle('drag-block-indicator--invalid', !valid);
   }
@@ -454,7 +466,7 @@ class DragHandleController {
 
   private maybeAutoScroll(clientY: number): void {
     const vh = window.innerHeight;
-    const distTop    = clientY;
+    const distTop = clientY;
     const distBottom = vh - clientY;
 
     let speed = 0;
@@ -511,7 +523,7 @@ class DragHandleController {
 
       // Prevent unnecessary transactions if dropping in the exact same place
       if (
-        this.dropInsertPos !== this.draggedPos && 
+        this.dropInsertPos !== this.draggedPos &&
         this.dropInsertPos !== this.draggedPos + draggedSize
       ) {
         const tr = state.tr;
@@ -554,9 +566,9 @@ class DragHandleController {
     const blockDom = this.view.nodeDOM(this.draggedPos) as HTMLElement | null;
     if (blockDom) blockDom.classList.remove('drag-block-dragging');
 
-    this.draggedPos    = -1;
+    this.draggedPos = -1;
     this.dropInsertPos = -1;
-    this.dropValid     = true;
+    this.dropValid = true;
 
     this.indicator.style.display = 'none';
     this.indicator.classList.remove('drag-block-indicator--invalid');
@@ -577,11 +589,11 @@ class DragHandleController {
     this.view.dom.removeEventListener('mouseleave', this._onMouseLeave);
     this.handle.removeEventListener('dragstart', this._onDragStart);
     document.removeEventListener('dragover', this._onDragOver, { capture: true });
-    document.removeEventListener('drop',    this._onDrop,    { capture: true });
+    document.removeEventListener('drop', this._onDrop, { capture: true });
     document.removeEventListener('dragend', this._onDragEnd, { capture: true });
     this.handle.removeEventListener('dragend', this._onDragEnd);
 
-    // Remove the custom mouseleave listener if it was named, but since we used arrow fn, 
+    // Remove the custom mouseleave listener if it was named, but since we used arrow fn,
     // it will be cleaned up when the handle is removed from DOM.
     // For completeness, we should have used a named function, but the handle is destroyed anyway.
 
@@ -619,16 +631,16 @@ export const DraggableBlocks = Extension.create({
           }
           if (!startNode || startPos === -1) return false;
 
-          const $sp    = state.doc.resolve(startPos);
-          const index  = $sp.index();
+          const $sp = state.doc.resolve(startPos);
+          const index = $sp.index();
           if (index === 0) return false;
 
           const prevNode = $sp.parent.child(index - 1);
-          const prevPos  = startPos - prevNode.nodeSize;
+          const prevPos = startPos - prevNode.nodeSize;
 
           if (dispatch) {
             const tr = state.tr;
-            
+
             // 1. Calculate relative cursor offsets before doing anything
             const fromOffset = state.selection.from - startPos;
             const toOffset = state.selection.to - startPos;
@@ -639,9 +651,11 @@ export const DraggableBlocks = Extension.create({
             tr.insert(prevPos, content.content);
 
             // 3. Manually recreate the selection at the new coordinates
-            const SelectionClass = state.selection.constructor as any;
-            tr.setSelection(SelectionClass.create(tr.doc, prevPos + fromOffset, prevPos + toOffset));
-            
+            const SelectionClass = state.selection.constructor as typeof TextSelection;
+            tr.setSelection(
+              SelectionClass.create(tr.doc, prevPos + fromOffset, prevPos + toOffset)
+            );
+
             dispatch(tr.scrollIntoView());
           }
           return true;
@@ -663,7 +677,7 @@ export const DraggableBlocks = Extension.create({
           }
           if (!startNode || startPos === -1) return false;
 
-          const $sp   = state.doc.resolve(startPos);
+          const $sp = state.doc.resolve(startPos);
           const index = $sp.index();
           if (index === $sp.parent.childCount - 1) return false;
 
@@ -671,7 +685,7 @@ export const DraggableBlocks = Extension.create({
 
           if (dispatch) {
             const tr = state.tr;
-            
+
             // 1. Calculate relative cursor offsets before doing anything
             const fromOffset = state.selection.from - startPos;
             const toOffset = state.selection.to - startPos;
@@ -679,14 +693,16 @@ export const DraggableBlocks = Extension.create({
             // 2. Perform the swap
             const content = state.doc.slice(startPos, startPos + startNode.nodeSize);
             tr.delete(startPos, startPos + startNode.nodeSize);
-            
+
             const insertPos = startPos + nextNode.nodeSize;
             tr.insert(insertPos, content.content);
 
             // 3. Manually recreate the selection at the new coordinates
-            const SelectionClass = state.selection.constructor as any;
-            tr.setSelection(SelectionClass.create(tr.doc, insertPos + fromOffset, insertPos + toOffset));
-            
+            const SelectionClass = state.selection.constructor as typeof TextSelection;
+            tr.setSelection(
+              SelectionClass.create(tr.doc, insertPos + fromOffset, insertPos + toOffset)
+            );
+
             dispatch(tr.scrollIntoView());
           }
           return true;
@@ -698,7 +714,7 @@ export const DraggableBlocks = Extension.create({
 
   addKeyboardShortcuts() {
     return {
-      'Alt-ArrowUp':   () => this.editor.commands.moveBlockUp(),
+      'Alt-ArrowUp': () => this.editor.commands.moveBlockUp(),
       'Alt-ArrowDown': () => this.editor.commands.moveBlockDown(),
     };
   },
