@@ -14,7 +14,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { TableKit, Table } from '@tiptap/extension-table';
 import { TableOfContents, type TableOfContentData } from '@tiptap/extension-table-of-contents';
-import { ListKit, TaskList } from '@tiptap/extension-list';
+import { BulletList, ListKit, TaskList } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import { BubbleMenu as BubbleMenuExtension } from '@tiptap/extension-bubble-menu';
 import CharacterCount from '@tiptap/extension-character-count';
@@ -1037,7 +1037,13 @@ function initializeEditor(initialContent: string) {
       TableKit.configure({
         table: false,
       }),
+      BulletList.extend({
+        addInputRules() {
+          return [];
+        },
+      }),
       ListKit.configure({
+        bulletList: false,
         orderedList: false,
         taskList: false, // Registered separately below with custom HTMLAttributes
         taskItem: false, // Replaced by TaskItemClipboardFix below

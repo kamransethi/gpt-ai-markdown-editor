@@ -22,6 +22,7 @@ import type { Editor } from '@tiptap/core';
 import { modLabel as modKeyLabel } from './utils/platform';
 import { TIPTAP_ICONS, createSvgIcon } from './icons/tiptapIcons';
 import { buildSharedTableOps } from './utils/sharedTableOps';
+import { isTableBulletSelection, toggleTableBulletHack } from './utils/tableBulletUtils';
 import { ToolbarStateHandler } from './handlers/ToolbarStateHandler';
 import { ToolbarAuxControlsFactory } from './factories/ToolbarAuxControlsFactory';
 import { MessageType } from '../shared/messageTypes';
@@ -639,8 +640,16 @@ export function createFormattingToolbar(
         label: '',
         title: 'Bullet list',
         icon: { name: 'list-unordered', fallback: '•' },
-        action: () => editor.chain().focus().toggleBulletList().run(),
-        isActive: () => editor.isActive('bulletList'),
+        action: () => {
+          if (editor.isActive('table')) {
+            toggleTableBulletHack(editor);
+          } else {
+            editor.chain().focus().toggleBulletList().run();
+          }
+        },
+        isActive: () =>
+          editor.isActive('bulletList') ||
+          (editor.isActive('table') && isTableBulletSelection(editor)),
         requiresFocus: true,
       },
       {
@@ -650,6 +659,7 @@ export function createFormattingToolbar(
         icon: { name: 'list-ordered', fallback: '1.' },
         action: () => editor.chain().focus().toggleOrderedList().run(),
         isActive: () => editor.isActive('orderedList'),
+        isEnabled: () => !editor.isActive('table'),
         requiresFocus: true,
       },
       {
