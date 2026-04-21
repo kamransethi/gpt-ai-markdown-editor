@@ -324,6 +324,46 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
+    // Guard: only handle file:// and untitled:// URIs.
+    // git://, vscode-git://, and other schemes arrive here when the user has
+    // set this extension as the default editor via workbench.editorAssociations,
+    // which ignores the scheme filter in package.json.
+    const SUPPORTED_SCHEMES = new Set(['file', 'untitled']);
+    if (!SUPPORTED_SCHEMES.has(document.uri.scheme)) {
+      webviewPanel.webview.html = this.getFallbackDiffHtml(
+        'This file is from a read-only source (scheme: ' + document.uri.scheme + ').',
+        document.uri
+      );
+      return;
+    }
+
+    // Guard: detect if this document is being opened as part of a diff tab.
+    // When the user opens a git diff from the Source Control sidebar, VS Code
+    // creates a TabInputTextDiff whose .modified URI matches our file:// document.
+    // CustomTextEditorProvider cannot participate in diff editors, so we show a
+    // lightweight fallback instead of the full WYSIWYG editor.
+    const isDiffTab = vscode.window.tabGroups.all.some(group =>
+      group.tabs.some(tab => {
+        const input = tab.input;
+        if (input instanceof vscode.TabInputTextDiff) {
+          const docStr = document.uri.toString();
+          return (
+            input.modified.toString() === docStr ||
+            input.original.toString() === docStr
+          );
+        }
+        return false;
+      })
+    );
+
+    if (isDiffTab) {
+      webviewPanel.webview.html = this.getFallbackDiffHtml(
+        'Git Diff view is not supported in the Markdown for Humans visual editor.',
+        document.uri
+      );
+      return;
+    }
+
     // Setup webview options
     // Allow loading resources from extension and the workspace folder containing the document
     let workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
@@ -639,6 +679,11 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'auditPickFile':
         void this.handleAuditPickFile(message, document, webview);
         break;
+      case 'openWithTextEditor': {
+        const targetUri = vscode.Uri.parse(message.uri as string);
+        void vscode.commands.executeCommand('vscode.openWith', targetUri, 'default');
+        break;
+      }
     }
   }
 
@@ -2968,6 +3013,54 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
     const separator = body.length > 0 ? newline : '';
     return frontmatterSection + separator + body;
+  }
+
+  private getFallbackDiffHtml(reason: string, uri: vscode.Uri): string {
+    const encodedUri = encodeURIComponent(uri.toString());
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: var(--vscode-font-family, sans-serif);
+      font-size: var(--vscode-font-size, 13px);
+      color: var(--vscode-foreground, #ccc);
+      background: var(--vscode-editor-background, #1e1e1e);
+      gap: 12px;
+    }
+    p { margin: 0; opacity: 0.8; }
+    button {
+      padding: 6px 14px;
+      background: var(--vscode-button-background, #0e639c);
+      color: var(--vscode-button-foreground, #fff);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: inherit;
+    }
+    button:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <p>${reason}</p>
+  <p>The visual editor cannot be used inside a diff view.</p>
+  <button onclick="openTextEditor()">Open in Text Editor</button>
+  <script>
+    const vscode = acquireVsCodeApi();
+    function openTextEditor() {
+      vscode.postMessage({ type: 'openWithTextEditor', uri: decodeURIComponent('${encodedUri}') });
+    }
+  </script>
+</body>
+</html>`;
   }
 
   /**
