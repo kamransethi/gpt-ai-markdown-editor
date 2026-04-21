@@ -200,6 +200,9 @@ export const CustomImage = Image.extend({
 
   addNodeView() {
     return ({ node, HTMLAttributes, editor, extension }) => {
+      const isHoverOverlayEnabled = () =>
+        extension?.options?.getShowImageHoverOverlay?.() !== false;
+
       // Create wrapper to hold image and resize icon
       const wrapper = document.createElement('span');
       wrapper.className = 'image-wrapper';
@@ -301,18 +304,18 @@ export const CustomImage = Image.extend({
 
       // Only show menu button on hover if image is loaded and not external
       const handleMouseEnter = () => {
-        if (
-          isImageLoaded &&
-          dom.complete &&
-          !isExternal &&
-          extension.options.getShowImageHoverOverlay() !== false
-        ) {
-          wrapper.classList.add('image-hover-active');
-          // Show metadata footer
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const vscodeApi = (window as any).vscode;
-          if (vscodeApi) {
-            showImageMetadataFooter(dom, wrapper, vscodeApi);
+        if (isImageLoaded && dom.complete && !isExternal) {
+          // Keep the image menu reachable regardless of hover overlay setting.
+          wrapper.classList.add('image-menu-active');
+
+          if (isHoverOverlayEnabled()) {
+            wrapper.classList.add('image-hover-active');
+            // Show metadata footer
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const vscodeApi = (window as any).vscode;
+            if (vscodeApi) {
+              showImageMetadataFooter(dom, wrapper, vscodeApi);
+            }
           }
         }
       };
@@ -327,11 +330,10 @@ export const CustomImage = Image.extend({
         if (relatedTarget && wrapper.contains(relatedTarget)) {
           return;
         }
-        if (extension.options.getShowImageHoverOverlay() !== false) {
-          wrapper.classList.remove('image-hover-active');
-          // Hide metadata footer
-          hideImageMetadataFooter(wrapper);
-        }
+        wrapper.classList.remove('image-menu-active');
+        wrapper.classList.remove('image-hover-active');
+        // Hide metadata footer
+        hideImageMetadataFooter(wrapper);
       };
 
       wrapper.addEventListener('mouseenter', handleMouseEnter);

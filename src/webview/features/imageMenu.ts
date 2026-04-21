@@ -233,6 +233,7 @@ export function showImageMenu(
         hideImageMenu(menu);
         // Only remove hover state if click is truly outside wrapper
         if (!wrapper.contains(target)) {
+          wrapper.classList.remove('image-menu-active');
           wrapper.classList.remove('image-hover-active');
         }
       }

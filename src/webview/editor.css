@@ -2201,7 +2201,8 @@
   }
 
   /* Show menu button on image hover */
-  .image-wrapper.image-hover-active .image-menu-button {
+  .image-wrapper.image-hover-active .image-menu-button,
+  .image-wrapper.image-menu-active .image-menu-button {
     display: flex;
     opacity: 1;
     transform: scale(1);
