@@ -46,6 +46,14 @@ const BLOCK_TYPES = new Set([
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+export function isDraggableBlock(node: ProsemirrorNode): boolean {
+  if (!BLOCK_TYPES.has(node.type.name)) return false;
+  // Skip empty paragraphs — including the trailing-node placeholder that TipTap
+  // auto-appends when the document ends in a non-paragraph block.
+  if (node.type.name === 'paragraph' && node.content.size === 0) return false;
+  return true;
+}
+
 function topLevelBlockAt(
   view: EditorView,
   pos: number
@@ -63,39 +71,85 @@ function topLevelBlockAt(
   return null;
 }
 
+/**
+ * Y-axis-based top-level block lookup. Walks the doc's top-level children,
+ * inspecting each one's DOM bounding rect. Returns the block whose vertical
+ * range contains clientY (a "hit"), otherwise the nearest block by Y distance.
+ *
+ * Needed because posAtCoords() returns null when the cursor is over NodeView
+ * content the editor treats as opaque (e.g. Mermaid SVGs, or the gap between
+ * two stacked NodeViews) — so both the drag handle and the drop indicator
+ * lose their reference block.
+ */
+function findBlockByClientY(
+  view: EditorView,
+  clientY: number
+): { node: ProsemirrorNode; pos: number; dom: HTMLElement; hit: boolean } | null {
+  const doc = view.state.doc;
+  let pos = 0;
+  let closest: {
+    node: ProsemirrorNode;
+    pos: number;
+    dom: HTMLElement;
+    dist: number;
+  } | null = null;
+
+  for (let i = 0; i < doc.childCount; i++) {
+    const node = doc.child(i);
+    const blockPos = pos;
+    pos += node.nodeSize;
+    const dom = view.nodeDOM(blockPos) as HTMLElement | null;
+    if (!dom || typeof dom.getBoundingClientRect !== 'function') continue;
+    const rect = dom.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) continue;
+    if (clientY >= rect.top && clientY <= rect.bottom) {
+      return { node, pos: blockPos, dom, hit: true };
+    }
+    const dist = clientY < rect.top ? rect.top - clientY : clientY - rect.bottom;
+    if (!closest || dist < closest.dist) {
+      closest = { node, pos: blockPos, dom, dist };
+    }
+  }
+
+  return closest ? { ...closest, hit: false } : null;
+}
+
 function computeDropTarget(
   view: EditorView,
   clientX: number,
   clientY: number,
   draggedPos: number
-): { insertPos: number; valid: boolean } {
+): { insertPos: number } {
   const editorRect = view.dom.getBoundingClientRect();
-  let coords = view.posAtCoords({ left: clientX, top: clientY });
 
-  if (!coords) {
-    if (clientY <= editorRect.top) return { insertPos: 0, valid: true };
-    if (clientY >= editorRect.bottom)
-      return { insertPos: view.state.doc.content.size, valid: true };
-    coords = view.posAtCoords({ left: editorRect.left + editorRect.width / 2, top: clientY });
-    if (!coords) return { insertPos: draggedPos, valid: false };
+  // Primary path: posAtCoords → top-level block. Works reliably for regular
+  // text/heading/list content.
+  const coords = view.posAtCoords({ left: clientX, top: clientY });
+  if (coords) {
+    const block = topLevelBlockAt(view, coords.pos);
+    if (block) {
+      const domNode = view.nodeDOM(block.pos) as HTMLElement | null;
+      if (domNode) {
+        const rect = domNode.getBoundingClientRect();
+        const insertPos =
+          clientY < rect.top + rect.height / 2 ? block.pos : block.pos + block.node.nodeSize;
+        return { insertPos };
+      }
+    }
   }
 
-  const { pos } = coords;
-  const block = topLevelBlockAt(view, pos);
-
-  if (!block) {
-    const isTopHalf = clientY < editorRect.top + editorRect.height / 2;
-    return { insertPos: isTopHalf ? 0 : view.state.doc.content.size, valid: true };
+  // Fallback: Y-based block lookup — used when posAtCoords returns null over
+  // NodeView content (Mermaid SVGs) or in the gap between two stacked NodeViews.
+  const hit = findBlockByClientY(view, clientY);
+  if (hit) {
+    const rect = hit.dom.getBoundingClientRect();
+    const insertPos = clientY < rect.top + rect.height / 2 ? hit.pos : hit.pos + hit.node.nodeSize;
+    return { insertPos };
   }
 
-  const domNode = view.nodeDOM(block.pos) as HTMLElement | null;
-  if (!domNode) return { insertPos: block.pos, valid: true };
-
-  const rect = domNode.getBoundingClientRect();
-  const insertPos =
-    clientY < rect.top + rect.height / 2 ? block.pos : block.pos + block.node.nodeSize;
-
-  return { insertPos, valid: true };
+  if (clientY <= editorRect.top) return { insertPos: 0 };
+  if (clientY >= editorRect.bottom) return { insertPos: view.state.doc.content.size };
+  return { insertPos: draggedPos };
 }
 
 // ─── Drag-handle overlay controller ──────────────────────────────────────────
@@ -112,7 +166,6 @@ class DragHandleController {
   private isDragging = false;
   private draggedPos = -1;
   private dropInsertPos = -1;
-  private dropValid = true;
   private scrollRafId: number | null = null;
   private _autoScrollSpeed = 0;
 
@@ -131,7 +184,10 @@ class DragHandleController {
     this.handle = document.createElement('div');
     this.handle.className = 'drag-block-handle';
     this.handle.setAttribute('draggable', 'true');
-    this.handle.innerHTML = `<svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor"><circle cx="3" cy="3" r="1.8"/><circle cx="9" cy="3" r="1.8"/><circle cx="3" cy="9" r="1.8"/><circle cx="9" cy="9" r="1.8"/><circle cx="3" cy="15" r="1.8"/><circle cx="9" cy="15" r="1.8"/></svg>`;
+    this.handle.setAttribute('role', 'button');
+    this.handle.setAttribute('aria-label', 'Drag to move block');
+    this.handle.setAttribute('title', 'Drag to move block');
+    this.handle.innerHTML = `<svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.8"/><circle cx="9" cy="3" r="1.8"/><circle cx="3" cy="9" r="1.8"/><circle cx="9" cy="9" r="1.8"/><circle cx="3" cy="15" r="1.8"/><circle cx="9" cy="15" r="1.8"/></svg>`;
     document.body.appendChild(this.handle);
 
     this.indicator = document.createElement('div');
@@ -163,13 +219,22 @@ class DragHandleController {
       clearTimeout(this._hideTimeoutId);
       this._hideTimeoutId = null;
     }
+
+    let block: { node: ProsemirrorNode; pos: number; index: number } | null = null;
     const coords = this.view.posAtCoords({ left: e.clientX, top: e.clientY });
-    if (!coords) {
-      this.hideHandle();
-      return;
+    if (coords) {
+      block = topLevelBlockAt(this.view, coords.pos);
     }
-    const block = topLevelBlockAt(this.view, coords.pos);
-    if (!block || !BLOCK_TYPES.has(block.node.type.name)) {
+    // Fallback for NodeViews (Mermaid, etc.) where posAtCoords may fail over
+    // opaque content — so the handle still works when hovering a diagram.
+    if (!block) {
+      const hit = findBlockByClientY(this.view, e.clientY);
+      if (hit && hit.hit) {
+        block = { node: hit.node, pos: hit.pos, index: -1 };
+      }
+    }
+
+    if (!block || !isDraggableBlock(block.node)) {
       this.hideHandle();
       return;
     }
@@ -181,6 +246,7 @@ class DragHandleController {
   private onMouseLeave(e: MouseEvent): void {
     if (this.isDragging) return;
     if (e.relatedTarget instanceof Node && this.handle.contains(e.relatedTarget)) return;
+    if (this._hideTimeoutId !== null) clearTimeout(this._hideTimeoutId);
     this._hideTimeoutId = setTimeout(() => {
       this._hideTimeoutId = null;
       if (!this.isDragging) this.hideHandle();
@@ -254,19 +320,13 @@ class DragHandleController {
     if (!this.isDragging) return;
     e.preventDefault();
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-    const { insertPos, valid } = computeDropTarget(
-      this.view,
-      e.clientX,
-      e.clientY,
-      this.draggedPos
-    );
+    const { insertPos } = computeDropTarget(this.view, e.clientX, e.clientY, this.draggedPos);
     this.dropInsertPos = insertPos;
-    this.dropValid = valid;
-    this.positionIndicator(e.clientY, insertPos, valid);
+    this.positionIndicator(e.clientY, insertPos);
     this.maybeAutoScroll(e.clientY);
   }
 
-  private positionIndicator(clientY: number, insertPos: number, valid: boolean): void {
+  private positionIndicator(clientY: number, insertPos: number): void {
     if (insertPos === -1) {
       this.indicator.style.display = 'none';
       return;
@@ -285,7 +345,6 @@ class DragHandleController {
     this.indicator.style.width = `${editorRect.width}px`;
     this.indicator.style.top = `${indicatorY}px`;
     this.indicator.style.display = 'block';
-    this.indicator.classList.toggle('drag-block-indicator--invalid', !valid);
   }
 
   private maybeAutoScroll(clientY: number): void {
@@ -329,7 +388,7 @@ class DragHandleController {
 
     const { state } = this.view;
     const draggedNode = state.doc.resolve(this.draggedPos).nodeAfter;
-    if (draggedNode && this.dropInsertPos !== -1 && this.dropValid) {
+    if (draggedNode && this.dropInsertPos !== -1) {
       const draggedSize = draggedNode.nodeSize;
       if (
         this.dropInsertPos !== this.draggedPos &&
@@ -362,6 +421,8 @@ class DragHandleController {
     if (blockDom) blockDom.classList.remove('drag-block-dragging');
     this.draggedPos = -1;
     this.dropInsertPos = -1;
+    this._handleBlock = null;
+    this.hoveredBlock = null;
     this.indicator.style.display = 'none';
     this.handle.classList.remove('drag-block-handle--active');
   }
@@ -406,6 +467,9 @@ export const DraggableBlocks = Extension.create({
           if (index === 0) return false;
 
           const prevNode = $sp.parent.child(index - 1);
+          // Treat empty paragraphs (including TipTap's trailing-node placeholder)
+          // as non-movable neighbors — otherwise Alt+↑ can drift past the boundary.
+          if (!isDraggableBlock(prevNode)) return false;
           const prevPos = startPos - prevNode.nodeSize;
 
           if (dispatch) {
@@ -450,6 +514,10 @@ export const DraggableBlocks = Extension.create({
           if (index === $sp.parent.childCount - 1) return false;
 
           const nextNode = $sp.parent.child(index + 1);
+          // Treat empty paragraphs (including TipTap's trailing-node placeholder)
+          // as non-movable neighbors — otherwise Alt+↓ would keep moving past
+          // the visible end of the document as new trailing nodes are appended.
+          if (!isDraggableBlock(nextNode)) return false;
 
           if (dispatch) {
             const tr = state.tr;
