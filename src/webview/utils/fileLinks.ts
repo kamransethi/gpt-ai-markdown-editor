@@ -1,20 +1,7 @@
-﻿export function formatFileLinkLabel(fileName: string): string {
-  const trimmed = fileName.trim();
-  if (!trimmed) {
-    return 'Attachment';
-  }
+import { formatLinkDisplay } from '../../shared/formatters';
 
-  const extensionMatch = trimmed.match(/\.([^.]+)$/);
-  const extension = extensionMatch ? extensionMatch[1].toUpperCase() : '';
-  const baseName = extensionMatch ? trimmed.slice(0, -extensionMatch[0].length) : trimmed;
-
-  const normalizedBase = baseName
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, character => character.toUpperCase());
-
-  return extension ? `${normalizedBase} (${extension})` : normalizedBase;
+export function formatFileLinkLabel(fileName: string): string {
+  return formatLinkDisplay(fileName) || 'Attachment';
 }
 
 export function isPotentialFileDropPath(value: string): boolean {

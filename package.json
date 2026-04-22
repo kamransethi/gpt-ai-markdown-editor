@@ -307,7 +307,16 @@
             "Ollama"
           ],
           "default": "GitHub Copilot",
-          "description": "Select the AI provider used for text and image generation features."
+          "description": "Select the AI provider used for text generation features."
+        },
+        "gptAiMarkdownEditor.llmVisionProvider": {
+          "type": "string",
+          "enum": [
+            "Disabled",
+            "Ollama"
+          ],
+          "default": "Ollama",
+          "description": "Select the AI provider used for image analysis (Vision) features."
         },
         "gptAiMarkdownEditor.ollamaEndpoint": {
           "type": "string",
@@ -326,8 +335,12 @@
         },
         "gptAiMarkdownEditor.knowledgeGraph.embeddingModel": {
           "type": "string",
+          "enum": [
+            "Disabled",
+            "nomic-embed-text"
+          ],
           "default": "nomic-embed-text",
-          "description": "The embedding model used for knowledge graph indexing and search."
+          "description": "The embedding model used for knowledge graph semantic indexing and search. Set to Disabled to use lexical search only."
         },
         "gptAiMarkdownEditor.knowledgeGraph.rag.topK": {
           "type": "number",

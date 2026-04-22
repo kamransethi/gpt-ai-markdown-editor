@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * File and navigation handlers for the markdown editor.
@@ -32,6 +32,7 @@ export function registerFileHandlers(router: MessageRouter): void {
   router.register(MessageType.SAVE_AND_OPEN_FILE, handleSaveAndOpenFile);
   router.register(MessageType.SAVE_FILES, handleSaveFiles);
   router.register(MessageType.OPEN_DRAWIO_FILE, handleOpenDrawioFile);
+  router.register(MessageType.GET_WORKSPACE_FILES, handleGetWorkspaceFiles);
 }
 
 export async function handleOpenFileAtLocation(
@@ -894,5 +895,52 @@ async function openWithDrawio(uri: vscode.Uri): Promise<void> {
     await vscode.commands.executeCommand('vscode.open', uri, vscode.ViewColumn.Active);
   } catch (err) {
     vscode.window.showErrorMessage(`Failed to open diagram: ${toErrorMessage(err)}`);
+  }
+}
+
+/**
+ * Handle bulk workspace file list request for client-side caching.
+ */
+export async function handleGetWorkspaceFiles(
+  _message: { type: string; [key: string]: unknown },
+  ctx: HandlerContext
+): Promise<void> {
+  const { webview, document } = ctx;
+  try {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      webview.postMessage({ type: MessageType.WORKSPACE_FILES_RESULT, results: [] });
+      return;
+    }
+
+    const excludePattern =
+      '{**/node_modules/**,**/.git/**,**/.vscode/**,**/dist/**,**/build/**,**/.next/**,**/coverage/**}';
+    
+    // Find all files in the workspace (limit to 20,000 for sanity)
+    const allFiles = await vscode.workspace.findFiles('**/*', excludePattern, 20000);
+    const docDir = path.dirname(document.uri.fsPath);
+
+    const results = allFiles.map(uri => {
+      const filename = path.basename(uri.fsPath);
+      let relativePath = path.relative(docDir, uri.fsPath).replace(/\\/g, '/');
+      if (!relativePath) relativePath = filename;
+      
+      return {
+        filename,
+        path: relativePath,
+      };
+    });
+
+    webview.postMessage({
+      type: MessageType.WORKSPACE_FILES_RESULT,
+      results,
+    });
+  } catch (error) {
+    console.error('[DK-AI] Error getting workspace files:', error);
+    webview.postMessage({
+      type: MessageType.WORKSPACE_FILES_RESULT,
+      results: [],
+      error: 'Failed to get workspace files',
+    });
   }
 }

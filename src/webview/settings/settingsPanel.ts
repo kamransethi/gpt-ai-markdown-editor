@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Settings Panel — Webview entry point
  *
  * Renders a multi-page settings UI that reads/writes VS Code configuration
@@ -183,11 +183,69 @@ const pages: PageDef[] = [
     description: 'Configure AI text refinement, explanation, and image analysis.',
     groups: [
       {
-        title: 'Provider',
+        title: 'GitHub Copilot',
+        items: [
+          {
+            key: 'aiModel',
+            label: 'GitHub Copilot',
+            description: 'Language model for AI features. All models are free with GitHub Copilot.',
+            type: 'checkable-text',
+            placeholder: 'gpt-4.1',
+            default: 'gpt-4.1',
+          },
+        ],
+      },
+      {
+        title: 'Local AI',
+        items: [
+          {
+            key: 'ollamaEndpoint',
+            label: 'Server URL',
+            description: 'Base URL of your local AI server.',
+            type: 'text',
+            placeholder: 'http://localhost:11434',
+            default: 'http://localhost:11434',
+          },
+          {
+            key: 'ollamaModel',
+            label: 'Text Model',
+            description: 'Model for text refinement and explanation.',
+            type: 'select',
+            options: [],
+            placeholder: 'llama3.2:latest',
+            default: 'llama3.2:latest',
+          },
+          {
+            key: 'ollamaImageModel',
+            label: 'Vision Model',
+            description:
+              'Model for image analysis. Must be vision-capable (e.g. llava, moondream).',
+            type: 'select',
+            options: [],
+            placeholder: 'llama3.2-vision:latest',
+            default: 'llama3.2-vision:latest',
+          },
+          {
+            key: 'knowledgeGraph.embeddingModel',
+            label: 'Embedding Model',
+            description:
+              'Model used for vector embeddings. Must be installed on your local AI server.',
+            type: 'select',
+            options: [
+              { value: 'Disabled', label: 'Disabled' },
+              { value: 'nomic-embed-text', label: 'nomic-embed-text' },
+            ],
+            placeholder: 'nomic-embed-text',
+            default: 'nomic-embed-text',
+          },
+        ],
+      },
+      {
+        title: 'LLM Provider',
         items: [
           {
             key: 'llmProvider',
-            label: 'LLM Provider',
+            label: 'Text',
             description: 'Backend for AI text refinement and document explanation.',
             type: 'select',
             options: [
@@ -196,19 +254,16 @@ const pages: PageDef[] = [
             ],
             default: 'GitHub Copilot',
           },
-        ],
-      },
-      {
-        title: 'GitHub Copilot',
-        items: [
           {
-            key: 'aiModel',
-            label: 'Model',
-            description: 'Language model for AI features. All models are free with GitHub Copilot.',
-            type: 'checkable-text',
-            placeholder: 'gpt-4.1',
-            default: 'gpt-4.1',
-            conditionalOn: { key: 'llmProvider', value: 'GitHub Copilot' },
+            key: 'llmVisionProvider',
+            label: 'Vision',
+            description: 'Backend for image analysis and multimodal features.',
+            type: 'select',
+            options: [
+              { value: 'Disabled', label: 'Disabled' },
+              { value: 'Ollama', label: 'Local AI' },
+            ],
+            default: 'Ollama',
           },
         ],
       },
@@ -225,41 +280,6 @@ const pages: PageDef[] = [
             default: '',
             pathType: 'file',
             filters: { 'JSON Files': ['json'] },
-          },
-        ],
-      },
-      {
-        title: 'Local AI',
-        items: [
-          {
-            key: 'ollamaEndpoint',
-            label: 'Server URL',
-            description: 'Base URL of your local AI server.',
-            type: 'text',
-            placeholder: 'http://localhost:11434',
-            default: 'http://localhost:11434',
-            conditionalOn: { key: 'llmProvider', value: 'Ollama' },
-          },
-          {
-            key: 'ollamaModel',
-            label: 'Text Model',
-            description: 'Model for text refinement and explanation.',
-            type: 'select',
-            options: [],
-            placeholder: 'llama3.2:latest',
-            default: 'llama3.2:latest',
-            conditionalOn: { key: 'llmProvider', value: 'Ollama' },
-          },
-          {
-            key: 'ollamaImageModel',
-            label: 'Vision Model',
-            description:
-              'Model for image analysis. Must be vision-capable (e.g. llava, moondream).',
-            type: 'select',
-            options: [],
-            placeholder: 'llama3.2-vision:latest',
-            default: 'llama3.2-vision:latest',
-            conditionalOn: { key: 'llmProvider', value: 'Ollama' },
           },
         ],
       },
@@ -390,22 +410,6 @@ const pages: PageDef[] = [
             default: '',
             pathType: 'folder',
             hideBrowse: true,
-            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
-          },
-        ],
-      },
-      {
-        title: 'Semantic Search',
-        items: [
-          {
-            key: 'knowledgeGraph.embeddingModel',
-            label: 'Embedding Model',
-            description:
-              'Model used for vector embeddings. Must be installed on your local AI server.',
-            type: 'select',
-            options: [],
-            placeholder: 'nomic-embed-text',
-            default: 'nomic-embed-text',
             conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
           },
         ],
@@ -587,7 +591,7 @@ function renderSettingRow(def: SettingDef): HTMLElement {
   }
 
   // Add refresh button next to Server URL or Embedding Model
-  if (def.key === 'ollamaEndpoint' || def.key === 'knowledgeGraph.embeddingModel') {
+  if (def.key === 'ollamaEndpoint') {
     const refreshBtn = document.createElement('button');
     refreshBtn.className = 'settings-btn';
     refreshBtn.textContent = 'Refresh Models';
@@ -842,6 +846,32 @@ function renderGraphActions(): HTMLElement {
   wrap.dataset.conditionalValue = 'true';
 
   wrap.appendChild(elText('div', 'Index Actions', 'settings-group-title'));
+
+  // ── Search Mode / Status ──
+  const statusRow = el('div', 'settings-row');
+  const statusLabel = el('div', 'settings-row-label');
+  statusLabel.appendChild(elText('div', 'Search Mode', 'label-text'));
+
+  const embeddingModel = settings['knowledgeGraph.embeddingModel'];
+  const isSemantic = embeddingModel && embeddingModel !== 'Disabled';
+
+  statusLabel.appendChild(
+    elText(
+      'div',
+      isSemantic
+        ? 'Hybrid Mode: Lexical + Semantic search enabled.'
+        : 'Lexical Only: Semantic search is disabled.',
+      'label-description'
+    )
+  );
+  statusRow.appendChild(statusLabel);
+
+  const statusControl = el('div', 'settings-row-control');
+  const modeBadge = el('span', `graph-phase-badge ${isSemantic ? 'phase-ready' : 'phase-idle'}`);
+  modeBadge.textContent = isSemantic ? 'Hybrid' : 'Lexical Only';
+  statusControl.appendChild(modeBadge);
+  statusRow.appendChild(statusControl);
+  wrap.appendChild(statusRow);
 
   // ── Stats row ──
   const statsRow = el('div', 'settings-row');

@@ -1,4 +1,4 @@
-﻿/* Graph Chat — Webview styles */
+/* Graph Chat — Webview styles */
 
 :root {
   --chat-bg: #ffffff;
@@ -24,7 +24,7 @@
   --chat-welcome-bg: #fafafa;
 }
 
-[data-theme="dark"], .vscode-dark {
+[data-theme="dark"] {
   --chat-bg: #1e1e1e;
   --chat-msg-user-bg: #264f78;
   --chat-msg-user-text: #e0e0e0;

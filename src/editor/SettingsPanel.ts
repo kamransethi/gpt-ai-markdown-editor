@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Settings Panel — Extension-side provider
  *
  * Opens a webview panel with the custom settings UI.
@@ -45,6 +45,7 @@ export const SETTING_KEYS = [
   'preserveHtmlComments',
   'developerMode',
   'llmProvider',
+  'llmVisionProvider',
   'aiModel',
   'ollamaModel',
   'ollamaImageModel',

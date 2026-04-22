@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -65,7 +65,8 @@ import { setupClipboardHandlers } from './features/clipboardHandling';
 import { createKeydownHandler } from './features/keyboardShortcuts';
 import { createLinkClickHandler } from './features/linkHandling';
 import { SearchAndReplace } from './extensions/searchAndReplace';
-import { SlashCommand } from './extensions/slashCommand';
+import { CommandRegistry } from './extensions/CommandRegistry';
+import { fileCache } from './utils/fileCache';
 import { AiExplain, handleAiExplainResult, handleImageAskResult } from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
 
@@ -1119,7 +1120,7 @@ function initializeEditor(initialContent: string) {
         },
       }),
       SearchAndReplace,
-      SlashCommand,
+      CommandRegistry,
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
       // Front matter support with collapsible details panel
@@ -1427,6 +1428,8 @@ function initializeEditor(initialContent: string) {
     // Allow floating bar to show after init settles (prevents flash on open)
     setTimeout(() => {
       editorFullyInitialized = true;
+      // Request bulk file list for slash command cache
+      vscode.postMessage({ type: MessageType.GET_WORKSPACE_FILES });
     }, 400);
   } catch (error) {
     console.error('[DK-AI] Fatal error initializing editor:', error);
@@ -1661,6 +1664,11 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case MessageType.IMAGE_ASK_RESULT:
         handleImageAskResult(message as any);
+        break;
+      case MessageType.WORKSPACE_FILES_RESULT:
+        if (message.results) {
+          fileCache.setFiles(message.results);
+        }
         break;
       case MessageType.INSERT_EMOJI:
         if (editor && typeof message.emoji === 'string') {

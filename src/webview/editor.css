@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    Deterministic Color System
    Light theme (default) and dark theme
    No VS Code theme dependency
@@ -4285,6 +4285,25 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.file-link-search-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 1px solid var(--md-border);
+  border-radius: var(--ui-radius-sm) var(--ui-radius-sm) 0 0;
+  background: transparent;
+  color: var(--md-foreground);
+  font-family: var(--md-font-sans);
+  font-size: var(--ui-font-base);
+  outline: none;
+}
+
+.file-link-search-input::placeholder {
+  color: var(--md-input-placeholder);
 }
 
 /* ============================================

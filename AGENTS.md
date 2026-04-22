@@ -1,4 +1,4 @@
-﻿# Development Workflow
+# Development Workflow
 
 **Single-dev workflow**: Spec → Plan → Code → Test
 
@@ -43,3 +43,8 @@
 - **Code** = TDD (RED test → GREEN code → all 1000+ pass)
 - **Tests** = add regression test when fixing bugs
 - **Git** = commit to main directly: `spec(NNN)`, `plan(NNN)`, `feat(NNN)`, `fix(NNN)` — no branching
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

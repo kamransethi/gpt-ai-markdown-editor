@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Central message type constants for webview ↔ extension communication.
  *
  * Both the extension host and the webview import from this single source of truth
@@ -56,8 +56,9 @@ export const MessageType = {
   FILE_SEARCH_RESULTS: 'fileSearchResults',
   GET_FILE_HEADINGS: 'getFileHeadings',
   FILE_HEADINGS_RESULT: 'fileHeadingsResult',
-  GET_MARKDOWN_FILES: 'getMarkdownFiles',
   MARKDOWN_FILES_RESULT: 'markdownFilesResult',
+  GET_WORKSPACE_FILES: 'getWorkspaceFiles',
+  WORKSPACE_FILES_RESULT: 'workspaceFilesResult',
   SAVE_AND_OPEN_FILE: 'saveAndOpenFile',
   BROWSE_LOCAL_FILE: 'browseLocalFile',
   LOCAL_FILE_SELECTED: 'localFileSelected',

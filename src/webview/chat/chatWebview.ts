@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Graph Chat — Webview entry point
  *
  * Renders a chat interface for RAG queries against the knowledge graph.
@@ -332,6 +332,15 @@ function renderMessageContent(el: HTMLElement, msg: MessageEntry): void {
   el.querySelectorAll('.chat-source-item').forEach(item => {
     item.addEventListener('click', () => {
       const p = (item as HTMLElement).dataset.path;
+      if (p) openFile(p);
+    });
+  });
+
+  // Attach click handlers to inline file references
+  el.querySelectorAll('.chat-file-ref').forEach(ref => {
+    ref.addEventListener('click', e => {
+      e.stopPropagation();
+      const p = (ref as HTMLElement).dataset.path;
       if (p) openFile(p);
     });
   });
