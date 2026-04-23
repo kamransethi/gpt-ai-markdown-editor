@@ -115,8 +115,7 @@ describe('convertMermaidToImages', () => {
       const commands = (spawn as jest.Mock).mock.calls.map(call => call[0]);
       expect(
         commands.some(
-          (cmd: unknown) =>
-            typeof cmd === 'string' && /^mmdc(\.cmd)?$/.test(path.basename(cmd))
+          (cmd: unknown) => typeof cmd === 'string' && /^mmdc(\.cmd)?$/.test(path.basename(cmd))
         )
       ).toBe(true);
       expect(
