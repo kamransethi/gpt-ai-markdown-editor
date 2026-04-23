@@ -10,19 +10,22 @@ export class FluxFlowWatcher implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
 
   constructor(
+    private filePatterns: string[],
     private onFileChanged: (uri: vscode.Uri) => void,
     private onFileDeleted: (uri: vscode.Uri) => void
   ) {}
 
   start(): void {
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*.md');
-
-    this.disposables.push(
-      watcher.onDidChange(uri => this.onFileChanged(uri)),
-      watcher.onDidCreate(uri => this.onFileChanged(uri)),
-      watcher.onDidDelete(uri => this.onFileDeleted(uri)),
-      watcher
-    );
+    const patterns = this.filePatterns.length > 0 ? this.filePatterns : ['**/*.md'];
+    for (const pattern of patterns) {
+      const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+      this.disposables.push(
+        watcher.onDidChange(uri => this.onFileChanged(uri)),
+        watcher.onDidCreate(uri => this.onFileChanged(uri)),
+        watcher.onDidDelete(uri => this.onFileDeleted(uri)),
+        watcher
+      );
+    }
   }
 
   dispose(): void {

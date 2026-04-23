@@ -46,7 +46,8 @@ export class SuggestionList {
       return true;
     }
     if (event.key === 'ArrowUp') {
-      this.selectedIndex = (this.selectedIndex - 1 + (this.items.length || 1)) % (this.items.length || 1);
+      this.selectedIndex =
+        (this.selectedIndex - 1 + (this.items.length || 1)) % (this.items.length || 1);
       this.updateSelection();
       return true;
     }
@@ -99,7 +100,9 @@ export class SuggestionList {
 
       btn.addEventListener('click', () => this.onSelect(item));
       btn.addEventListener('mouseenter', () => {
-        this.popupEl?.querySelectorAll('.slash-command-item').forEach(el => el.classList.remove('is-selected'));
+        this.popupEl
+          ?.querySelectorAll('.slash-command-item')
+          .forEach(el => el.classList.remove('is-selected'));
         btn.classList.add('is-selected');
         this.selectedIndex = i;
       });
@@ -121,11 +124,11 @@ export class SuggestionList {
 
   private position(coords: any) {
     if (!coords || !this.popupEl) return;
-    
+
     const { left, bottom, top } = coords;
     const popupHeight = this.popupEl.clientHeight || 350;
     const viewportHeight = window.innerHeight;
-    
+
     if (bottom + popupHeight > viewportHeight && top - popupHeight > 0) {
       this.popupEl.style.top = `${top - popupHeight}px`;
     } else {

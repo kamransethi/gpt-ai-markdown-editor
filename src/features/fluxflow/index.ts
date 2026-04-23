@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { GraphDatabase } from './database';
-import { parseMarkdownFile } from './indexer';
+import { parseDocumentFile } from './indexer';
 import { chunkMarkdown } from './chunker';
 
 import { FluxFlowWatcher } from './watcher';
@@ -44,6 +44,40 @@ let onProgressPush: (() => void) | null = null;
 
 export function setProgressPushCallback(cb: () => void): void {
   onProgressPush = cb;
+}
+
+function normalizeGraphFileTypes(raw: string): string[] {
+  const seen = new Set<string>();
+  return raw
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(ext => (ext.startsWith('*.') ? ext.slice(1) : ext))
+    .map(ext => (ext.startsWith('.') ? ext : `.${ext}`))
+    .map(ext => ext.toLowerCase())
+    .filter(ext => {
+      if (seen.has(ext)) return false;
+      seen.add(ext);
+      return true;
+    });
+}
+
+function getConfiguredGraphFileTypes(): string[] {
+  const workspaceCfg = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
+  const rawTypes = workspaceCfg.get<string>(
+    'knowledgeGraph.indexedFileTypes',
+    '.md, .csv, .html, .drawio.svg, .bpmn'
+  );
+  const fileTypes = normalizeGraphFileTypes(rawTypes);
+  return fileTypes.length > 0 ? fileTypes : ['.md'];
+}
+
+function buildGraphGlobPatterns(fileTypes: string[]): string[] {
+  return fileTypes.map(ext => `**/*${ext}`);
+}
+
+function createGraphWatcherPatterns(fileTypes: string[]): string[] {
+  return fileTypes.length > 0 ? buildGraphGlobPatterns(fileTypes) : ['**/*.md'];
 }
 
 /** Register commands unconditionally (call from activate, always). */
@@ -135,7 +169,10 @@ export async function initialize(_context: vscode.ExtensionContext): Promise<voi
   );
 
   // 4. Start file watcher
+  const fileTypes = getConfiguredGraphFileTypes();
+  const watcherPatterns = createGraphWatcherPatterns(fileTypes);
   watcher = new FluxFlowWatcher(
+    watcherPatterns,
     uri => {
       const relPath = path.relative(workspacePath, uri.fsPath).split(path.sep).join('/');
       indexSingleFile(workspacePath, relPath);
@@ -165,7 +202,10 @@ export async function initialize(_context: vscode.ExtensionContext): Promise<voi
   // 8. Listen for setting changes
   disposables.push(
     vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration('gptAiMarkdownEditor.knowledgeGraph.enabled')) {
+      if (
+        e.affectsConfiguration('gptAiMarkdownEditor.knowledgeGraph.enabled') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.knowledgeGraph.indexedFileTypes')
+      ) {
         vscode.window
           .showInformationMessage(
             'Knowledge Graph setting changed. Reload window to apply.',
@@ -193,12 +233,21 @@ export async function initialize(_context: vscode.ExtensionContext): Promise<voi
 }
 
 /**
- * Full re-index of all .md files in the workspace.
+ * Full re-index of all configured Knowledge Graph file types in the workspace.
  */
 async function fullIndex(workspacePath: string): Promise<void> {
   if (!database) return;
 
-  const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
+  const fileTypes = getConfiguredGraphFileTypes();
+  const patterns = buildGraphGlobPatterns(fileTypes);
+  const filesByPath = new Map<string, vscode.Uri>();
+  for (const pattern of patterns) {
+    const found = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
+    for (const fileUri of found) {
+      filesByPath.set(fileUri.fsPath, fileUri);
+    }
+  }
+  const files = Array.from(filesByPath.values());
 
   // Update progress state
   progressState.phase = 'indexing';
@@ -227,7 +276,7 @@ async function fullIndex(workspacePath: string): Promise<void> {
         continue;
       }
 
-      const parsed = parseMarkdownFile(content, relPath);
+      const parsed = parseDocumentFile(content, relPath);
       const docId = database.upsertDocument(relPath, parsed.title, hash);
 
       database.clearLinksForDocument(docId);
@@ -295,7 +344,7 @@ function indexSingleFile(workspacePath: string, relPath: string): void {
   const existingHash = database.getDocumentHash(relPath);
   if (existingHash === hash) return;
 
-  const parsed = parseMarkdownFile(content, relPath);
+  const parsed = parseDocumentFile(content, relPath);
   const docId = database.upsertDocument(relPath, parsed.title, hash);
 
   database.clearLinksForDocument(docId);

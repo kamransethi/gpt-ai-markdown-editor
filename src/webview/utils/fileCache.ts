@@ -21,22 +21,22 @@ class FileCache {
 
   public search(query: string, limit: number = 10): CachedFile[] {
     if (!query) return [];
-    
+
     const lowerQuery = query.toLowerCase();
-    
+
     // Simple fast search: startsWith, then includes
     const results: CachedFile[] = [];
     const includesResults: CachedFile[] = [];
 
     for (const file of this.files) {
       const lowerName = file.filename.toLowerCase();
-      
+
       if (lowerName.startsWith(lowerQuery)) {
         results.push(file);
       } else if (lowerName.includes(lowerQuery)) {
         includesResults.push(file);
       }
-      
+
       if (results.length >= limit) break;
     }
 

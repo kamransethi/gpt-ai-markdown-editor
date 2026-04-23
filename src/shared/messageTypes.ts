@@ -56,6 +56,7 @@ export const MessageType = {
   FILE_SEARCH_RESULTS: 'fileSearchResults',
   GET_FILE_HEADINGS: 'getFileHeadings',
   FILE_HEADINGS_RESULT: 'fileHeadingsResult',
+  GET_MARKDOWN_FILES: 'getMarkdownFiles',
   MARKDOWN_FILES_RESULT: 'markdownFilesResult',
   GET_WORKSPACE_FILES: 'getWorkspaceFiles',
   WORKSPACE_FILES_RESULT: 'workspaceFilesResult',

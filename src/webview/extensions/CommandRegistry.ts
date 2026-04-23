@@ -47,10 +47,16 @@ function openFilePicker(editor: any, insertFrom: number): void {
   input.placeholder = 'Search files…';
   input.className = 'file-link-search-input';
   input.style.cssText = [
-    'width:100%', 'box-sizing:border-box', 'padding:6px 10px',
-    'border:none', 'border-bottom:1px solid var(--md-border)',
-    'background:transparent', 'color:var(--md-foreground)',
-    'font-family:var(--md-font-sans)', 'font-size:13px', 'outline:none'
+    'width:100%',
+    'box-sizing:border-box',
+    'padding:6px 10px',
+    'border:none',
+    'border-bottom:1px solid var(--md-border)',
+    'background:transparent',
+    'color:var(--md-foreground)',
+    'font-family:var(--md-font-sans)',
+    'font-size:13px',
+    'outline:none',
   ].join(';');
 
   // --- Results list ---
@@ -100,7 +106,9 @@ function openFilePicker(editor: any, insertFrom: number): void {
         </span>
       `;
       btn.addEventListener('mouseenter', () => {
-        resultEl.querySelectorAll('.slash-command-item').forEach(el => el.classList.remove('is-selected'));
+        resultEl
+          .querySelectorAll('.slash-command-item')
+          .forEach(el => el.classList.remove('is-selected'));
         btn.classList.add('is-selected');
         selectedIdx = i;
       });
@@ -118,10 +126,18 @@ function openFilePicker(editor: any, insertFrom: number): void {
   }
 
   function insertLink(file: { filename: string; path: string }) {
-    editor.chain().focus().insertContentAt(insertFrom, [
-      { type: 'text', marks: [{ type: 'link', attrs: { href: file.path } }], text: formatLinkDisplay(file.filename) },
-      { type: 'text', text: ' ' },
-    ]).run();
+    editor
+      .chain()
+      .focus()
+      .insertContentAt(insertFrom, [
+        {
+          type: 'text',
+          marks: [{ type: 'link', attrs: { href: file.path } }],
+          text: formatLinkDisplay(file.filename),
+        },
+        { type: 'text', text: ' ' },
+      ])
+      .run();
     cleanup();
   }
 
@@ -138,7 +154,7 @@ function openFilePicker(editor: any, insertFrom: number): void {
     renderResults(fileCache.search(input.value.trim(), 15));
   });
 
-  input.addEventListener('keydown', (e) => {
+  input.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown') {
       selectedIdx = Math.min(selectedIdx + 1, currentFiles.length - 1);
       updateSelection();
@@ -245,7 +261,9 @@ function makeBlockItems(): CommandProviderItem[] {
       icon: '⊞',
       command: ({ editor, range }) => {
         editor
-          .chain().focus().deleteRange(range)
+          .chain()
+          .focus()
+          .deleteRange(range)
           .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
           .run();
       },
@@ -265,7 +283,9 @@ function makeBlockItems(): CommandProviderItem[] {
       icon: '◇',
       command: ({ editor, range }) => {
         editor
-          .chain().focus().deleteRange(range)
+          .chain()
+          .focus()
+          .deleteRange(range)
           .insertContent(
             `\`\`\`mermaid\n${MERMAID_TEMPLATES[0]?.diagram ?? 'graph TD\nA-->B'}\n\`\`\``,
             { contentType: 'markdown' }
@@ -278,8 +298,12 @@ function makeBlockItems(): CommandProviderItem[] {
       description: 'GitHub note callout',
       icon: 'ℹ',
       command: ({ editor, range }) => {
-        editor.chain().focus().deleteRange(range)
-          .insertContent('> [!NOTE]\n> ', { contentType: 'markdown' }).run();
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent('> [!NOTE]\n> ', { contentType: 'markdown' })
+          .run();
       },
     },
     {
@@ -287,8 +311,12 @@ function makeBlockItems(): CommandProviderItem[] {
       description: 'GitHub warning callout',
       icon: '⚠',
       command: ({ editor, range }) => {
-        editor.chain().focus().deleteRange(range)
-          .insertContent('> [!WARNING]\n> ', { contentType: 'markdown' }).run();
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent('> [!WARNING]\n> ', { contentType: 'markdown' })
+          .run();
       },
     },
     {
@@ -317,9 +345,15 @@ function makeFileItem(file: { filename: string; path: string }): CommandProvider
     icon: '📄',
     command: ({ editor, range }) => {
       editor
-        .chain().focus().deleteRange(range)
+        .chain()
+        .focus()
+        .deleteRange(range)
         .insertContent([
-          { type: 'text', marks: [{ type: 'link', attrs: { href: file.path } }], text: formatLinkDisplay(file.filename) },
+          {
+            type: 'text',
+            marks: [{ type: 'link', attrs: { href: file.path } }],
+            text: formatLinkDisplay(file.filename),
+          },
           { type: 'text', text: ' ' },
         ])
         .run();
@@ -362,9 +396,7 @@ export const CommandRegistry = Extension.create({
 
         // Default: block commands filtered by what the user has typed so far
         return blockItems.filter(
-          item =>
-            item.title.toLowerCase().includes(q) ||
-            item.description.toLowerCase().includes(q)
+          item => item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
         );
       },
 
@@ -375,7 +407,7 @@ export const CommandRegistry = Extension.create({
         return {
           onStart: (props: any) => {
             activeCommandCallback = props.command;
-            component = new SuggestionList((item) => {
+            component = new SuggestionList(item => {
               if (activeCommandCallback) {
                 activeCommandCallback(item);
               }

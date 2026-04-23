@@ -390,9 +390,19 @@ const pages: PageDef[] = [
             key: 'knowledgeGraph.enabled',
             label: 'Enable Knowledge Graph',
             description:
-              'Index your markdown workspace for hybrid search, backlinks, and AI chat. Reload window after changing.',
+              'Enable workspace indexing, backlinks, hybrid search, and AI chat for configured file types. Reload window after changing.',
             type: 'toggle',
             default: false,
+          },
+          {
+            key: 'knowledgeGraph.indexedFileTypes',
+            label: 'Indexed File Types',
+            description:
+              'Comma-separated list of file extensions included in Knowledge Graph indexing and vectorization.',
+            type: 'text',
+            placeholder: '.md, .csv, .html, .drawio.svg, .bpmn',
+            default: '.md, .csv, .html, .drawio.svg, .bpmn',
+            conditionalOn: { key: 'knowledgeGraph.enabled', value: true },
           },
         ],
       },

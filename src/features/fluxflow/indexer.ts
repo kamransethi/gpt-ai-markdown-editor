@@ -137,3 +137,30 @@ export function parseMarkdownFile(content: string, filePath: string): ParsedDocu
     bodyText: body,
   };
 }
+
+function stripFileTitle(filePath: string): string {
+  const fileName = path.basename(filePath);
+  const multiPartSuffixes = ['.drawio.svg'];
+  for (const suffix of multiPartSuffixes) {
+    if (fileName.toLowerCase().endsWith(suffix)) {
+      return fileName.slice(0, -suffix.length);
+    }
+  }
+  return path.basename(filePath, path.extname(filePath));
+}
+
+export function parseDocumentFile(content: string, filePath: string): ParsedDocument {
+  const ext = path.extname(filePath).toLowerCase();
+  const markdownExtensions = new Set(['.md', '.markdown']);
+  if (markdownExtensions.has(ext)) {
+    return parseMarkdownFile(content, filePath);
+  }
+
+  return {
+    title: stripFileTitle(filePath),
+    links: [],
+    tags: [],
+    properties: [],
+    bodyText: content,
+  };
+}

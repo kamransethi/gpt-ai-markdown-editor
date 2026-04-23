@@ -915,7 +915,7 @@ export async function handleGetWorkspaceFiles(
 
     const excludePattern =
       '{**/node_modules/**,**/.git/**,**/.vscode/**,**/dist/**,**/build/**,**/.next/**,**/coverage/**}';
-    
+
     // Find all files in the workspace (limit to 20,000 for sanity)
     const allFiles = await vscode.workspace.findFiles('**/*', excludePattern, 20000);
     const docDir = path.dirname(document.uri.fsPath);
@@ -924,7 +924,7 @@ export async function handleGetWorkspaceFiles(
       const filename = path.basename(uri.fsPath);
       let relativePath = path.relative(docDir, uri.fsPath).replace(/\\/g, '/');
       if (!relativePath) relativePath = filename;
-      
+
       return {
         filename,
         path: relativePath,

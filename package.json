@@ -378,14 +378,20 @@
         "gptAiMarkdownEditor.knowledgeGraph.enabled": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "**Knowledge Graph (Experimental)**: Enable wiki-link indexing, backlinks panel, and full-text search across all markdown files in the workspace. Requires reload after changing.",
+          "markdownDescription": "**Knowledge Graph (Experimental)**: Enable workspace indexing, backlinks panel, and hybrid search for configured file types. Requires reload after changing.",
           "order": 50
+        },
+        "gptAiMarkdownEditor.knowledgeGraph.indexedFileTypes": {
+          "type": "string",
+          "default": ".md, .csv, .html, .drawio.svg, .bpmn",
+          "markdownDescription": "Comma-separated file extensions to include in Knowledge Graph indexing and vectorization. Split on commas and trim spaces; each extension should start with a dot.",
+          "order": 51
         },
         "gptAiMarkdownEditor.knowledgeGraph.dataDir": {
           "type": "string",
           "default": "",
           "markdownDescription": "Custom directory for Knowledge Graph data. Defaults to `~/.fluxflow`. Data persists across extension reinstalls.",
-          "order": 51
+          "order": 52
         },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",
