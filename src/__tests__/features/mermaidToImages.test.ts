@@ -23,7 +23,12 @@ jest.mock('child_process', () => {
       proc.stderr = new EventEmitter();
       proc.stdout = new EventEmitter();
 
-      if (cmd === 'mmdc' || String(cmd).includes('node_modules/.bin/mmdc')) {
+      const normalizedCmd = String(cmd).replace(/\\/g, '/');
+      if (
+        cmd === 'mmdc' ||
+        cmd === 'mmdc.cmd' ||
+        normalizedCmd.includes('node_modules/.bin/mmdc')
+      ) {
         setImmediate(() => {
           proc.emit('error', new Error('ENOENT'));
         });
