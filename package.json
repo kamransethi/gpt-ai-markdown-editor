@@ -126,6 +126,13 @@
           "group": "navigation"
         }
       ],
+      "editor/title/context": [
+        {
+          "command": "markdownForHumans.openFile",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
       "view/title": [
         {
           "command": "markdownForHumans.outline.revealCurrent",
