@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -183,6 +183,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       developerMode: this.getConfig<boolean>('developerMode', true),
       tocMaxDepth: this.getConfig<number>('tocMaxDepth', 3),
       preserveHtmlComments: this.getConfig<boolean>('preserveHtmlComments', false),
+      compressTables: this.getConfig<boolean>('compressTables', false),
+      trimBlankLines: this.getConfig<boolean>('trimBlankLines', false),
       editorZoomLevel: this.getConfig<number>('editorZoomLevel', 1),
       editorWidth: this.getConfig<number>('editorWidth', 1920),
       showSelectionToolbar: this.getConfig<boolean>('showSelectionToolbar', false),
@@ -326,6 +328,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('gptAiMarkdownEditor.developerMode') ||
         e.affectsConfiguration('gptAiMarkdownEditor.tocMaxDepth') ||
         e.affectsConfiguration('gptAiMarkdownEditor.preserveHtmlComments') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.compressTables') ||
+        e.affectsConfiguration('gptAiMarkdownEditor.trimBlankLines') ||
         e.affectsConfiguration('gptAiMarkdownEditor.editorZoomLevel') ||
         e.affectsConfiguration('gptAiMarkdownEditor.showSelectionToolbar') ||
         e.affectsConfiguration('gptAiMarkdownEditor.llmProvider') ||

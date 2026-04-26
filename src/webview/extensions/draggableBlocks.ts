@@ -1,4 +1,4 @@
-﻿import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
+import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 
 /**
  * DraggableBlocks Extension
@@ -8,4 +8,5 @@
 export const DraggableBlocks = GlobalDragHandle.configure({
   dragHandleWidth: 20,
   scrollTreshold: 100,
+  excludedTagList: ['table', 'td', 'th', 'tr'],
 });

@@ -82,7 +82,7 @@ interface PageDef {
   groups: SettingGroup[];
 }
 
-const pages: PageDef[] = [
+export const pages: PageDef[] = [
   {
     id: 'editor',
     label: 'Editor',
@@ -170,6 +170,27 @@ const pages: PageDef[] = [
             description: 'Show detailed runtime errors and diagnostic logging.',
             type: 'toggle',
             default: true,
+          },
+        ],
+      },
+      {
+        title: 'COMPRESSION',
+        items: [
+          {
+            key: 'compressTables',
+            label: 'Compress Tables',
+            description:
+              'Minimize padding and alignment spacing in Markdown tables for token savings.',
+            type: 'toggle',
+            default: false,
+          },
+          {
+            key: 'trimBlankLines',
+            label: 'Trim Blank Lines',
+            description:
+              'Collapse multiple blank lines outside code blocks to a single blank line.',
+            type: 'toggle',
+            default: false,
           },
         ],
       },
@@ -624,7 +645,7 @@ function renderSettingRow(def: SettingDef): HTMLElement {
   return row;
 }
 
-function renderSelect(def: SettingDef, value: string): HTMLElement {
+export function renderSelect(def: SettingDef, value: string): HTMLElement {
   const select = document.createElement('select');
   select.className = 'settings-select';
   select.dataset.settingKey = def.key;
@@ -638,6 +659,15 @@ function renderSelect(def: SettingDef, value: string): HTMLElement {
       option.textContent = opt.label;
       if (opt.value === value) option.selected = true;
       select.appendChild(option);
+    }
+
+    // Preserve existing, unknown values by rendering them as a selected fallback option.
+    if (value && !staticOptions.some(opt => opt.value === value)) {
+      const fallback = document.createElement('option');
+      fallback.value = value;
+      fallback.textContent = value;
+      fallback.selected = true;
+      select.appendChild(fallback);
     }
   } else if (value) {
     // Dynamic select with no options yet — show current value

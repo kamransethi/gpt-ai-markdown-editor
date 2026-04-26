@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -10,6 +10,11 @@ import { devLog } from '../utils/devLog';
 type MarkdownManager = {
   serialize?: (json: JSONContent) => string;
   getMarkdown?: () => string;
+};
+
+export type CompressionOptions = {
+  compressTables?: boolean;
+  trimBlankLines?: boolean;
 };
 
 function isMeaningfulInlineNode(node: JSONContent): boolean {
@@ -39,18 +44,73 @@ function isEmptyParagraph(node: JSONContent): boolean {
 }
 
 /**
- * Collapse runs of 4+ consecutive newlines down to exactly 3 (= one blank line)
- * in the regions outside fenced code blocks. This prevents blank-line placeholder
- * nodes from emitting double blank lines (the serializer wraps each block with \n\n,
- * so an empty paragraph produces \n\n\n\n which we normalize to \n\n\n).
+ * Collapse redundant newlines in the regions outside fenced code blocks.
  */
-function normalizeBlankLines(markdown: string): string {
+function normalizeBlankLines(markdown: string, aggressive: boolean = false): string {
   const segments = markdown.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g);
-  return segments
+  const normalized = segments
     .map((seg, i) => {
       // Odd-indexed segments are fenced code blocks — leave untouched
       if (i % 2 === 1) return seg;
-      return seg.replace(/\n{4,}/g, '\n\n\n');
+      // Normal: Collapse 4+ newlines to 3 (avoids double-blank-line glitches)
+      // Aggressive: Collapse 3+ newlines to 2 (one blank line maximum)
+      const threshold = aggressive ? 3 : 4;
+      const target = aggressive ? '\n\n' : '\n\n\n';
+      const regex = new RegExp(`\\n{${threshold},}`, 'g');
+      return seg.replace(regex, target);
+    })
+    .join('');
+
+  return aggressive ? normalized.trim() : normalized;
+}
+
+function compressTableLine(line: string): string {
+  const trimmed = line.trim();
+  if (!trimmed.includes('|')) {
+    return line;
+  }
+
+  const cells = trimmed.split('|');
+  const compressed = cells.map(cell => cell.trim()).join('|');
+  return compressed;
+}
+
+function compressMarkdown(markdown: string, options: CompressionOptions): string {
+  const segments = markdown.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g);
+  let inIndentedCode = false;
+
+  return segments
+    .map((seg, i) => {
+      if (i % 2 === 1) {
+        return seg;
+      }
+
+      const lines = seg.split('\n');
+      const compressedLines = lines.map(line => {
+        if (inIndentedCode) {
+          if (line.trim() === '' || /^( {4}|\t)/.test(line)) {
+            return line;
+          }
+          inIndentedCode = false;
+        }
+
+        if (line.trim() === '') {
+          return '';
+        }
+
+        if (/^( {4}|\t)/.test(line)) {
+          inIndentedCode = true;
+          return line;
+        }
+
+        if (options.compressTables && line.includes('|') && line.split('|').length >= 3) {
+          return compressTableLine(line);
+        }
+
+        return line.replace(/[ \t]+$/g, '');
+      });
+
+      return compressedLines.join('\n');
     })
     .join('');
 }
@@ -68,7 +128,10 @@ export function stripEmptyDocParagraphsFromJson(doc: JSONContent): JSONContent {
   };
 }
 
-export function getEditorMarkdownForSync(editor: Editor): string {
+export function getEditorMarkdownForSync(
+  editor: Editor,
+  compression: CompressionOptions = {}
+): string {
   const editorUnknown = editor as unknown as {
     markdown?: MarkdownManager;
     storage?: {
@@ -105,8 +168,8 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     // Let's replace those with standard markdown <br> tags so they don't corrupt the file.
     // eslint-disable-next-line no-control-regex
     const sanitized = content.replace(/[\x1F§§]/g, '<br>');
-    // Collapse over-produced blank lines from blank-line placeholder nodes (≥4 \n → 3 \n)
-    return normalizeBlankLines(sanitized);
+    // Collapse over-produced blank lines from blank-line placeholder nodes
+    return normalizeBlankLines(sanitized, !!compression.trimBlankLines);
   };
 
   const trySerialize = (label: string, fn: () => string): string | null => {
@@ -168,7 +231,8 @@ export function getEditorMarkdownForSync(editor: Editor): string {
       'Serialized len:',
       normalizedSerialized.length
     );
-    return sanitizeSerialized(normalizedSerialized);
+    const sanitized = sanitizeSerialized(normalizedSerialized);
+    return compressMarkdown(sanitized, compression);
   }
 
   if (normalizedSerialized !== null && normalizedSerialized.length === 0 && nonEmptyDoc) {
@@ -185,7 +249,8 @@ export function getEditorMarkdownForSync(editor: Editor): string {
       'Serialized len:',
       rawSerialized.length
     );
-    return sanitizeSerialized(rawSerialized);
+    const sanitized = sanitizeSerialized(rawSerialized);
+    return compressMarkdown(sanitized, compression);
   }
 
   if (rawSerialized !== null && rawSerialized.length === 0 && nonEmptyDoc) {
@@ -198,7 +263,8 @@ export function getEditorMarkdownForSync(editor: Editor): string {
       '[DK-AI] Using getMarkdown fallback after serializer failures. Output len:',
       fallback.length
     );
-    return sanitizeSerialized(fallback);
+    const sanitized = sanitizeSerialized(fallback);
+    return compressMarkdown(sanitized, compression);
   }
 
   console.error(

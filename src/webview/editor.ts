@@ -13,6 +13,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { TableKit, Table } from '@tiptap/extension-table';
+import { CellSelection } from 'prosemirror-tables';
 import { TableOfContents, type TableOfContentData } from '@tiptap/extension-table-of-contents';
 import { BulletList, ListKit, TaskList } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
@@ -302,6 +303,8 @@ let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
 let showSelectionToolbar = false;
+let compressTables = false;
+let trimBlankLines = false;
 // Dirty state tracking — true when webview has unsaved edits
 let docDirty = false;
 // Guard: suppress floating bar until first real user interaction
@@ -654,7 +657,7 @@ function saveDocument() {
       updateTimeout = null;
     }
 
-    const markdown = getEditorMarkdownForSync(editor);
+    const markdown = getEditorMarkdownForSync(editor, { compressTables, trimBlankLines });
     const plainTextLength = editor.getText().trim().length;
     const saveRequestId = createRequestId('save');
     const contentHash = hashString(markdown);
@@ -728,7 +731,7 @@ async function openFrontmatterEditor(): Promise<void> {
 
       // Trigger a document edit to mark as dirty and sync
       if (editor) {
-        const markdown = getEditorMarkdownForSync(editor);
+        const markdown = getEditorMarkdownForSync(editor, { compressTables, trimBlankLines });
         const withFrontmatter = restoreFrontmatter(markdown, currentFrontmatter);
 
         // Send the update to VS Code
@@ -996,6 +999,8 @@ function initializeEditor(initialContent: string) {
       // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>
       // for content rows (browsers auto-insert <tbody> during DOM parsing,
       // which would otherwise cause literal "<tbody>" text in cells).
+      // Unified Table registration: we extend the base Table node for custom
+      // markdown serialization and HTML parsing.
       Table.extend({
         renderMarkdown(node, h) {
           return renderTableToMarkdownWithBreaks(node, h);
@@ -1034,7 +1039,7 @@ function initializeEditor(initialContent: string) {
         },
       }),
       // Still use TableKit for rows and cells, but disable its internal table
-      // to avoid duplicate registration of the 'table' node
+      // to avoid duplicate registration of the 'table' node.
       TableKit.configure({
         table: false,
       }),
@@ -1091,6 +1096,8 @@ function initializeEditor(initialContent: string) {
           if (empty || from === to) return false;
           // Don't show for node selections (images, code blocks, etc.)
           if (state.selection.constructor.name === 'NodeSelection') return false;
+          // Don't show for cell selections (grids of cells)
+          if (state.selection instanceof CellSelection) return false;
           return currentEditor.isEditable;
         },
         options: {
@@ -1181,7 +1188,7 @@ function initializeEditor(initialContent: string) {
 
           // Sync front matter from the inline details block (if the user edited it)
 
-          const markdown = getEditorMarkdownForSync(_editor);
+          const markdown = getEditorMarkdownForSync(_editor, { compressTables, trimBlankLines });
           devLog(`[DK-AI] onUpdate: markdown serialized (len=${markdown.length})`);
           debouncedUpdate(markdown);
         } catch (error) {
@@ -1518,6 +1525,13 @@ function applyWebviewSettings(message: any) {
   if (typeof message.knowledgeGraphEnabled === 'boolean') {
     (window as any).knowledgeGraphEnabled = message.knowledgeGraphEnabled;
   }
+
+  if (typeof message.compressTables === 'boolean') {
+    compressTables = message.compressTables;
+  }
+  if (typeof message.trimBlankLines === 'boolean') {
+    trimBlankLines = message.trimBlankLines;
+  }
 }
 
 /**
@@ -1717,7 +1731,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         if (message.override === 'save-anyway') {
           // Proceed with save despite validation error
           if (editor) {
-            const markdown = getEditorMarkdownForSync(editor);
+            const markdown = getEditorMarkdownForSync(editor, { compressTables, trimBlankLines });
             window.vscode?.postMessage({
               type: MessageType.UPDATE,
               content: markdown,
@@ -1791,7 +1805,7 @@ function updateEditorContent(markdown: string) {
 
     // Compare body content only (both without frontmatter) to avoid spurious re-renders
     // caused by the frontmatter block that TipTap never serializes back.
-    const currentMarkdown = getEditorMarkdownForSync(editor);
+    const currentMarkdown = getEditorMarkdownForSync(editor, { compressTables, trimBlankLines });
     if (currentMarkdown === incomingBody) {
       devLog('[DK-AI] Update skipped (content unchanged)');
       return;

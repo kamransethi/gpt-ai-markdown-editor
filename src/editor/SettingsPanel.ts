@@ -43,6 +43,8 @@ export const SETTING_KEYS = [
   'defaultMarkdownViewer',
   'tocMaxDepth',
   'preserveHtmlComments',
+  'compressTables',
+  'trimBlankLines',
   'developerMode',
   'llmProvider',
   'llmVisionProvider',

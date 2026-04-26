@@ -261,6 +261,18 @@
           "default": true,
           "markdownDescription": "**Preserve HTML Comments**: When enabled, HTML comments (`<!-- ... -->`) in markdown files are retained during editing and round-trip on save. Comments are shown as subtle badges in the editor."
         },
+        "gptAiMarkdownEditor.compressTables": {
+          "type": "boolean",
+          "default": false,
+          "description": "Minimize padding and alignment spacing in Markdown tables for token savings.",
+          "order": 25
+        },
+        "gptAiMarkdownEditor.trimBlankLines": {
+          "type": "boolean",
+          "default": false,
+          "description": "Collapse multiple blank lines outside code blocks to a single blank line.",
+          "order": 26
+        },
         "gptAiMarkdownEditor.editorZoomLevel": {
           "type": "number",
           "default": 1,
