@@ -1,4 +1,4 @@
-﻿import type { EditorState, Selection, Transaction } from '@tiptap/pm/state';
+import type { EditorState, Selection, Transaction } from '@tiptap/pm/state';
 import type { Node as ProseMirrorNode, Schema } from '@tiptap/pm/model';
 import { CellSelection, TableMap, findTable, selectedRect } from 'prosemirror-tables';
 
@@ -20,7 +20,7 @@ export function parseHtmlTable(html: string): TableMatrix | null {
 
   const matrix: TableMatrix = rows.map(row => {
     const cells = Array.from(row.querySelectorAll('th, td'));
-    return cells.map(cell => (cell.textContent || '').trim());
+    return cells.map(cell => cell.innerHTML.trim());
   });
 
   const maxCols = Math.max(...matrix.map(r => r.length), 0);
@@ -35,6 +35,11 @@ function normalizeCellText(cell: ProseMirrorNode | null): string {
     return '';
   }
 
+  // Use JSON content or HTML for the cell to preserve formatting?
+  // Actually, for the matrix (used for TSV/CSV fallback), plain text is safer.
+  // But for within-editor matrix logic, we want the HTML.
+  // Let's use textBetween with \n to get the "display" text for TSV,
+  // but we should probably have a separate "RichMatrix" for editor paste.
   return cell.textBetween(0, cell.content.size, '\n', '\n').trim();
 }
 
@@ -129,6 +134,10 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+function isHtml(value: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(value);
+}
+
 export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
   if (matrix.length === 0 || matrix[0].length === 0) {
     return '';
@@ -142,9 +151,10 @@ export function renderTableMatrixAsHtml(matrix: TableMatrix): string {
   const renderRow = (row: string[], cellTag: 'th' | 'td') =>
     `<tr>${row
       .map(cell => {
-        const content = escapeHtml(cell).replace(/\n/g, '<br>');
+        // If it looks like HTML (from parseHtmlTable), don't double-escape it.
+        // Otherwise (plain text from TSV), escape it.
+        const content = isHtml(cell) ? cell : escapeHtml(cell).replace(/\n/g, '<br>');
         // ProseMirror requires at least one block node inside table cells.
-        // Empty <td></td> violates the schema — wrap with <p></p>.
         return `<${cellTag}>${content || '<p></p>'}</${cellTag}>`;
       })
       .join('')}</tr>`;

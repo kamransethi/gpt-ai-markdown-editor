@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -10,80 +10,28 @@
  * - HTML → Markdown: Uses turndown.js to convert rich HTML to markdown
  * - Markdown → HTML: Uses markdown-it to parse markdown for TipTap insertion
  *
- * This enables pasting from Word, Google Docs, Notion, web pages, AND raw markdown.
  */
 
 import TurndownService from 'turndown';
+import { gfm } from 'turndown-plugin-gfm';
 import MarkdownIt from 'markdown-it';
 // @ts-expect-error - markdown-it-mark does not have types available
 import markdownItMark from 'markdown-it-mark';
 
-// Create and configure turndown instance
+// Create and configure turndown instance with GFM support for tables, task lists, etc.
 const turndown = new TurndownService({
-  headingStyle: 'atx', // # style headings
-  codeBlockStyle: 'fenced', // ``` style code blocks
-  bulletListMarker: '-', // - for bullets
-  emDelimiter: '*', // *italic*
-  strongDelimiter: '**', // **bold**
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  bulletListMarker: '-',
+  emDelimiter: '*',
+  strongDelimiter: '**',
   hr: '---',
-});
+}).use(gfm);
 
-// Add rule for strikethrough (del, s, strike elements)
-turndown.addRule('strikethrough', {
-  filter: (node: HTMLElement) => {
-    const tagName = node.nodeName.toLowerCase();
-    return tagName === 'del' || tagName === 's' || tagName === 'strike';
-  },
-  replacement: content => `~~${content}~~`,
-});
-
-// Add rule for highlight (mark elements)
+// Add rule for highlight (mark elements) - not in standard GFM
 turndown.addRule('highlight', {
   filter: ['mark'],
   replacement: content => `==${content}==`,
-});
-
-// Add rule for task lists (checkboxes) - handles both standard HTML checkboxes
-// and TipTap's specific task list rendering with data-checked, <label>, <div> wrappers.
-turndown.addRule('taskListItem', {
-  filter: (node: HTMLElement) => {
-    if (node.nodeName !== 'LI') return false;
-    // TipTap uses data-type="taskItem" with data-checked attribute
-    if (node.getAttribute('data-type') === 'taskItem') return true;
-    // Standard HTML: <li> containing an <input type="checkbox">
-    const checkbox = node.querySelector('input[type="checkbox"]');
-    if (!checkbox) return false;
-    return (checkbox as HTMLInputElement).type === 'checkbox';
-  },
-  replacement: (_content: string, node: HTMLElement) => {
-    // Determine checked state: TipTap uses data-checked="true", standard uses input.checked
-    let isChecked: boolean;
-    const dataChecked = node.getAttribute('data-checked');
-    if (dataChecked !== null) {
-      isChecked = dataChecked === 'true';
-    } else {
-      const checkbox = node.querySelector('input[type="checkbox"]') as HTMLInputElement;
-      isChecked = checkbox?.checked ?? false;
-    }
-    // Extract text content, ignoring <label>/<input>/<span> wrappers from TipTap.
-    // TipTap structure: <li><label><input><span></span></label><div><p>text</p></div></li>
-    // We want only the text from the <div> (content container), not the <label>.
-    const contentDiv = node.querySelector(':scope > div');
-    let text: string;
-    if (contentDiv) {
-      // TipTap structure: convert inner HTML to preserve formatting (bold, italic, etc.)
-      text = turndown.turndown(contentDiv.innerHTML).trim();
-    } else {
-      // Standard HTML structure: convert inner HTML, strip checkbox notation
-      const clone = node.cloneNode(true) as HTMLElement;
-      const checkbox = clone.querySelector('input[type="checkbox"]');
-      if (checkbox) checkbox.remove();
-      const label = clone.querySelector('label');
-      if (label) label.remove();
-      text = turndown.turndown(clone.innerHTML).trim();
-    }
-    return `- [${isChecked ? 'x' : ' '}] ${text}\n`;
-  },
 });
 
 // Add rule for preserving code blocks better

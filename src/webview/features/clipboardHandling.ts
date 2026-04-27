@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -76,28 +76,6 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
   };
   window.addEventListener('copyAsMarkdown', handleCopyAsMarkdown);
 
-  const copyHandler = (event: ClipboardEvent) => {
-    const editor = getEditor();
-    if (!editor || !event.clipboardData || isEmbeddedEditorTarget(event.target)) {
-      return;
-    }
-
-    if (!isTableSelection(editor.state.selection)) {
-      return;
-    }
-
-    const matrix = getCurrentTableMatrix(editor.state);
-    if (!matrix) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.clipboardData.setData('text/plain', serializeTableMatrix(matrix, '\t'));
-    event.clipboardData.setData('text/csv', serializeTableMatrix(matrix, ','));
-    event.clipboardData.setData('text/markdown', serializeTableMatrixAsMarkdown(matrix));
-  };
-
   const pasteHandler = (event: ClipboardEvent) => {
     const editor = getEditor();
     if (!editor || isEmbeddedEditorTarget(event.target)) return;
@@ -121,82 +99,10 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
       return;
     }
 
-    // ── PRIORITY 0: ProseMirror's own clipboard (within-editor copy-paste) ──
-    // ProseMirror marks its clipboard HTML with data-pm-slice for lossless
-    // round-tripping. Let ProseMirror handle it natively — it preserves
-    // node types, attributes (checked state, etc.), and structure far better
-    // than any HTML→Markdown→HTML conversion we could do.
-    const clipboardHtml = clipboardData.getData('text/html') || '';
-    if (clipboardHtml && /data-pm-slice/i.test(clipboardHtml)) {
-      // Exception: if explicit table formats are also present (e.g. our copy
-      // handler sets TSV/CSV alongside data-pm-slice for table selections),
-      // still handle those — but only for table-specific paste-into-cells.
-      const explicitTsv = clipboardData.getData('text/tab-separated-values');
-      if (explicitTsv && findTable(editor.state.selection.$from)) {
-        const parsedTable = parseClipboardTable(explicitTsv);
-        if (parsedTable) {
-          event.preventDefault();
-          event.stopPropagation();
-          insertTableMatrix(editor, parsedTable);
-          return;
-        }
-      }
-      // Let ProseMirror's native paste handler take over
-      return;
-    }
-
-    // ── PRIORITY 1: Explicit TSV format (from spreadsheets, our copy handler) ──
-    // Tab-separated values are intentionally set by the source app and are
-    // unambiguous. CSV is NOT parsed from clipboard to avoid false positives
-    // with prose that contains commas.
-    const explicitTsv = clipboardData.getData('text/tab-separated-values');
-    if (explicitTsv) {
-      const parsedTable = parseClipboardTable(explicitTsv);
-      if (parsedTable) {
-        event.preventDefault();
-        event.stopPropagation();
-        insertTableMatrix(editor, parsedTable);
-        return;
-      }
-    }
-
-    // ── PRIORITY 2: HTML clipboard with table(s) ──
-    // Check HTML BEFORE text/plain to avoid greedily parsing mixed
-    // content (text + multiple tables) as a single tab-separated table.
-    if (clipboardHtml && /<table[\s>]/i.test(clipboardHtml)) {
-      // Single isolated table → normalize through matrix roundtrip.
-      // This strips <tbody>/<thead> wrappers and <colgroup> artifacts.
-      if (!isMixedTableContent(clipboardHtml)) {
-        const htmlTable = parseHtmlTable(clipboardHtml);
-        if (htmlTable) {
-          event.preventDefault();
-          event.stopPropagation();
-          insertTableMatrix(editor, htmlTable);
-          return;
-        }
-      }
-
-      // Mixed content (text + tables, multiple tables, full-document paste)
-      // or parseHtmlTable failed (e.g. single-column table):
-      // Let ProseMirror's native paste handler deal with it.
-      // - ProseMirror strips <meta>, <colgroup>, <style>, etc.
-      // - Our Table extension's contentElement hook handles <tbody>/<thead>/<tfoot>
-      return;
-    }
-
-    // ── PRIORITY 3: Plain text that looks like a table (TSV from text editors) ──
-    // Only reached when no HTML table is available — avoids the greedy-parse
-    // problem where browser text/plain mixes table tabs with non-table text.
-    const plainText = clipboardData.getData('text/plain') || '';
-    const parsedTable = parseClipboardTable(plainText);
-    if (parsedTable) {
-      event.preventDefault();
-      event.stopPropagation();
-      insertTableMatrix(editor, parsedTable);
-      return;
-    }
-
-    // ── PRIORITY 4: Rich HTML / Markdown / plain text ──
+    // ── PRIORITY 1: Rich HTML / Markdown / plain text ──
+    // Let TipTap's native handlers deal with most content.
+    // Our processPasteContent helper only handles image/markdown/html conversions
+    // for external content that TipTap doesn't recognize natively.
     const result = processPasteContent(clipboardData);
 
     // Images handled by imageDragDrop - don't interfere
@@ -222,13 +128,11 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // Otherwise: default paste behavior for plain text
   };
 
-  // Must use capture phase to intercept BEFORE TipTap's default handling
-  document.addEventListener('copy', copyHandler, true);
+  // Use capture phase to intercept BEFORE TipTap's default handling
   document.addEventListener('paste', pasteHandler, true);
 
   return () => {
     window.removeEventListener('copyAsMarkdown', handleCopyAsMarkdown);
-    document.removeEventListener('copy', copyHandler, true);
     document.removeEventListener('paste', pasteHandler, true);
   };
 }

@@ -479,6 +479,7 @@
     "@tiptap/extension-color": "^3.22.4",
     "@tiptap/extension-details": "^3.22.3",
     "@tiptap/extension-drag-handle": "^3.22.4",
+    "@tiptap/extension-gapcursor": "^3.22.4",
     "@tiptap/extension-highlight": "^3.22.4",
     "@tiptap/extension-image": "^3.22.4",
     "@tiptap/extension-link": "^3.22.4",
@@ -510,6 +511,7 @@
     "sql.js": "^1.14.1",
     "tiptap-extension-code-block-shiki": "^1.1.0",
     "tiptap-extension-global-drag-handle": "^0.1.18",
-    "turndown": "^7.2.2"
+    "turndown": "^7.2.2",
+    "turndown-plugin-gfm": "^1.0.2"
   }
 }

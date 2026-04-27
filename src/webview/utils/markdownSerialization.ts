@@ -163,13 +163,14 @@ export function getEditorMarkdownForSync(
   };
 
   const sanitizeSerialized = (content: string): string => {
-    // @tiptap/markdown sometimes serializes hard breaks in tables as \x1F (Unit Separator).
     // Our custom table serializer uses §§ to preserve breaks during the TipTap pass.
     // Let's replace those with standard markdown <br> tags so they don't corrupt the file.
+    const sanitized = content.split('§§').join('<br>');
+    // Also handle \x1F (Unit Separator) which @tiptap/markdown sometimes uses
     // eslint-disable-next-line no-control-regex
-    const sanitized = content.replace(/[\x1F§§]/g, '<br>');
+    const fullySanitized = sanitized.replace(/\x1F/g, '<br>');
     // Collapse over-produced blank lines from blank-line placeholder nodes
-    return normalizeBlankLines(sanitized, !!compression.trimBlankLines);
+    return normalizeBlankLines(fullySanitized, !!compression.trimBlankLines);
   };
 
   const trySerialize = (label: string, fn: () => string): string | null => {

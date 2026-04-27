@@ -23,6 +23,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
 import Typography from '@tiptap/extension-typography';
 import DragHandle from '@tiptap/extension-drag-handle';
+import Gapcursor from '@tiptap/extension-gapcursor';
 import { marked as markedInstance, Marked } from 'marked';
 import { CustomImage } from './extensions/customImage';
 import { CodeBlockWithUi } from './extensions/codeBlockShikiWithUi';
@@ -999,7 +1000,7 @@ function initializeEditor(initialContent: string) {
       // teaches ProseMirror's DOMParser to look inside <thead>/<tbody>/<tfoot>
       // for content rows (browsers auto-insert <tbody> during DOM parsing,
       // which would otherwise cause literal "<tbody>" text in cells).
-      // Unified Table registration: we extend the base Table node for custom
+      // Table registration: we extend the base Table node for custom
       // markdown serialization and HTML parsing.
       Table.extend({
         renderMarkdown(node, h) {
@@ -1009,15 +1010,8 @@ function initializeEditor(initialContent: string) {
           return [
             {
               tag: 'table',
-              // Browsers auto-insert <tbody> when parsing <table> HTML via
-              // innerHTML. ProseMirror's DOMParser has no rule for these
-              // section wrappers so they'd leak as literal text.  Unwrap them
-              // before ProseMirror reads children of the <table> element.
               contentElement(node: HTMLElement) {
-                // Remove <colgroup> — only contains <col> styling hints,
-                // no content for ProseMirror. Would leak as literal text.
                 node.querySelectorAll(':scope > colgroup').forEach(el => el.remove());
-
                 const sections = node.querySelectorAll(
                   ':scope > thead, :scope > tbody, :scope > tfoot'
                 );
@@ -1038,8 +1032,8 @@ function initializeEditor(initialContent: string) {
           class: 'markdown-table',
         },
       }),
-      // Still use TableKit for rows and cells, but disable its internal table
-      // to avoid duplicate registration of the 'table' node.
+      // Use TableKit only for row, cell, and header registration.
+      // We disable its 'table' node to avoid duplicate registration.
       TableKit.configure({
         table: false,
       }),
@@ -1130,6 +1124,7 @@ function initializeEditor(initialContent: string) {
       CommandRegistry,
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
+      Gapcursor,
       // Front matter support with collapsible details panel
     ];
 
