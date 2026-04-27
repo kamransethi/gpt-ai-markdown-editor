@@ -1,4 +1,4 @@
-﻿/** @jest-environment jsdom */
+/** @jest-environment jsdom */
 /**
  * Regression tests for webview undo/redo guards.
  *
@@ -85,7 +85,7 @@ jest.mock('./../../webview/extensions/customImage', () => ({
 jest.mock('./../../webview/extensions/mermaid', () => ({ Mermaid: {} }));
 jest.mock('./../../webview/extensions/tabIndentation', () => ({ TabIndentation: {} }));
 jest.mock('./../../webview/extensions/imageEnterSpacing', () => ({ ImageEnterSpacing: {} }));
-jest.mock('./../../webview/extensions/markdownParagraph', () => ({ MarkdownParagraph: {} }));
+ => ({ MarkdownParagraph: {} }));
 jest.mock('./../../webview/extensions/indentedImageCodeBlock', () => ({
   IndentedImageCodeBlock: {},
 }));
@@ -242,3 +242,4 @@ describe('webview undo/redo guards', () => {
     expect(mockEditor.commands.setTextSelection).toHaveBeenCalledWith({ from: 2, to: 4 });
   });
 });
+

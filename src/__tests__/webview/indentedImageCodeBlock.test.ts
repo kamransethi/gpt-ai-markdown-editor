@@ -1,8 +1,8 @@
-﻿import { MarkdownManager } from '@tiptap/markdown';
+import { MarkdownManager } from '@tiptap/markdown';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import CodeBlock from '@tiptap/extension-code-block';
-import { MarkdownParagraph } from '../../webview/extensions/markdownParagraph';
+import Paragraph from '@tiptap/extension-paragraph';
 import { CustomImage } from '../../webview/extensions/customImage';
 import { IndentedImageCodeBlock } from '../../webview/extensions/indentedImageCodeBlock';
 
@@ -15,7 +15,7 @@ function createMarkdownManager() {
     extensions: [
       Document,
       // These match the real editor behavior closely enough for markdown parsing/serialization.
-      MarkdownParagraph,
+      Paragraph,
       HardBreak,
       CustomImage,
       // Must be before CodeBlock so it can intercept indented "code" tokens.
@@ -134,3 +134,4 @@ describe('IndentedImageCodeBlock', () => {
     expect(manager.serialize(doc)).toBe('    ![alt](./img.png)');
   });
 });
+

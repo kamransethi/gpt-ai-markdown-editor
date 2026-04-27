@@ -1,4 +1,4 @@
-﻿/** @jest-environment jsdom */
+/** @jest-environment jsdom */
 
 /**
  * Integration test for task list copy-paste round-trip.
@@ -15,7 +15,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { ListKit } from '@tiptap/extension-list';
 import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
-import { MarkdownParagraph } from '../../webview/extensions/markdownParagraph';
+import Paragraph from '@tiptap/extension-paragraph';
 import { OrderedListMarkdownFix } from '../../webview/extensions/orderedListMarkdownFix';
 import { TaskItemClipboardFix } from '../../webview/extensions/taskItemClipboardFix';
 
@@ -38,7 +38,7 @@ function createTestEditor(): Editor {
         listKeymap: false,
         undoRedo: { depth: 100 },
       } as any),
-      MarkdownParagraph,
+      Paragraph,
       Markdown.configure({
         markedOptions: { gfm: true, breaks: true },
       }),
@@ -240,3 +240,4 @@ describe('Task list copy-paste round-trip', () => {
     expect(jsonStr).toContain('Third task');
   });
 });
+

@@ -86,7 +86,6 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // If cursor is inside a code block, handle specially
     if (editor.isActive('codeBlock')) {
       event.preventDefault();
-      event.stopPropagation();
 
       const plainText = clipboardData.getData('text/plain') || '';
 
@@ -97,6 +96,30 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
       // Insert as plain text (TipTap will handle it correctly in code block)
       editor.commands.insertContent(codeToInsert);
       return;
+    }
+
+    const html = clipboardData.getData('text/html');
+    if (html) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const tables = tempDiv.querySelectorAll('table');
+      let hasNested = false;
+      for (let i = 0; i < tables.length; i++) {
+        if (tables[i].querySelector('table')) {
+          hasNested = true;
+          break;
+        }
+      }
+      if (hasNested) {
+        const vscode = (window as any).vscode;
+        if (vscode) {
+          vscode.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            style: 'warning',
+            message: 'Nested tables detected. They will be flattened as Markdown does not support nested tables.',
+          });
+        }
+      }
     }
 
     // ── PRIORITY 1: Rich HTML / Markdown / plain text ──
@@ -113,7 +136,6 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // If content is raw markdown, use TipTap's Markdown parser for accurate conversion
     if (result.wasConverted && result.content && result.isMarkdown) {
       event.preventDefault();
-      event.stopPropagation();
       editor.commands.insertContent(result.content, { contentType: 'markdown' });
       return;
     }
@@ -121,7 +143,6 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // If we need to convert content (rich HTML), intercept early
     if (result.wasConverted && result.content && result.isHtml) {
       event.preventDefault();
-      event.stopPropagation();
       // Insert HTML - TipTap parses it into proper nodes (tables, lists, etc.)
       editor.commands.insertContent(result.content);
     }

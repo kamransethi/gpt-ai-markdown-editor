@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -22,7 +22,6 @@ import type { Editor } from '@tiptap/core';
 import { modLabel as modKeyLabel } from './utils/platform';
 import { TIPTAP_ICONS, createSvgIcon } from './icons/tiptapIcons';
 import { buildSharedTableOps } from './utils/sharedTableOps';
-import { isTableBulletSelection, toggleTableBulletHack } from './utils/tableBulletUtils';
 import { ToolbarStateHandler } from './handlers/ToolbarStateHandler';
 import { ToolbarAuxControlsFactory } from './factories/ToolbarAuxControlsFactory';
 import { MessageType } from '../shared/messageTypes';
@@ -640,16 +639,8 @@ export function createFormattingToolbar(
         label: '',
         title: 'Bullet list',
         icon: { name: 'list-unordered', fallback: '•' },
-        action: () => {
-          if (editor.isActive('table')) {
-            toggleTableBulletHack(editor);
-          } else {
-            editor.chain().focus().toggleBulletList().run();
-          }
-        },
-        isActive: () =>
-          editor.isActive('bulletList') ||
-          (editor.isActive('table') && isTableBulletSelection(editor)),
+        action: () => editor.chain().focus().toggleBulletList().run(),
+        isActive: () => editor.isActive('bulletList'),
         requiresFocus: true,
       },
       {
