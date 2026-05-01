@@ -32,6 +32,29 @@
       },
       "registered_skills": [],
       "installed_at": "2026-04-22T00:58:02.178653+00:00"
+    },
+    "status": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:25d080d9f1a0ea2fc62de2464479143c7c008b9131d32755f351413605d7946f",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "agy": [
+          "speckit.status.show",
+          "speckit.status"
+        ],
+        "codex": [
+          "speckit.status.show",
+          "speckit.status"
+        ],
+        "copilot": [
+          "speckit.status.show",
+          "speckit.status"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-04-25T16:24:01.532565+00:00"
     }
   }
 }

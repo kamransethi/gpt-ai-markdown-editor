@@ -563,7 +563,7 @@ body[data-theme="dark"] {
   font-size: var(--md-base-size);
   margin: 0 auto;
   max-width: var(--md-editor-width, 1920px);
-  padding: 0 30px;
+  padding: 15px 30px;
 }
 
 /* ============================================
@@ -653,6 +653,7 @@ body[data-theme="dark"] {
 .markdown-editor :is(p, table, pre, blockquote) {
   margin-bottom: var(--content-spacing-block);
 }
+
 /* Class-based block elements — kept separate to avoid raising :is() specificity above li > p */
 .markdown-editor .code-block-ui,
 .markdown-editor .code-block-highlighted,
@@ -677,12 +678,12 @@ body[data-theme="dark"] {
 }
 
 /* Strip all p margin inside list items — they get spacing from `li { margin }` only */
-.markdown-editor li > p {
+.markdown-editor li>p {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-.markdown-editor li > :first-child {
+.markdown-editor li> :first-child {
   margin-top: 0;
 }
 
@@ -1015,11 +1016,11 @@ body[data-theme="dark"] {
   margin-bottom: 10px;
 }
 
-.markdown-editor blockquote > :first-child {
+.markdown-editor blockquote> :first-child {
   margin-top: 0;
 }
 
-.markdown-editor blockquote > :last-child {
+.markdown-editor blockquote> :last-child {
   margin-bottom: 0;
 }
 
@@ -1196,7 +1197,7 @@ body[data-theme="dark"] .github-alert {
   border-spacing: 0;
   width: auto;
   max-width: 100%;
-  margin-top: 0;
+  margin-top: 0.25em;
   margin-bottom: var(--content-spacing-block);
   overflow: hidden;
   border-radius: var(--ui-radius-md);
@@ -1217,8 +1218,8 @@ body[data-theme="dark"] .github-alert {
   position: relative;
 }
 
-.ProseMirror.markdown-editor tr:last-child > th,
-.ProseMirror.markdown-editor tr:last-child > td {
+.ProseMirror.markdown-editor tr:last-child>th,
+.ProseMirror.markdown-editor tr:last-child>td {
   border-bottom: none;
 }
 
@@ -1361,28 +1362,18 @@ body[data-theme="dark"] .github-alert {
 }
 
 .markdown-editor .ProseMirror-gapcursor {
-  position: relative;
-  width: 2px;
-  margin: 0 1px;
-  background: var(--md-focus);
+  display: none;
   pointer-events: none;
+  position: absolute;
+  background: var(--md-focus);
+  width: 1px;
+  height: 1.5em;
+  margin-top: -0.75em;
   animation: md-gapcursor-blink 1s steps(1, end) infinite;
 }
 
-.markdown-editor .ProseMirror-gapcursor:after {
-  content: '';
-  position: absolute;
-  top: -10px;
-  bottom: -10px;
-  left: -6px;
-  right: -6px;
-  border-radius: var(--ui-radius-md);
-  background: var(--md-selection);
-  opacity: 0.35;
-}
-
 .markdown-editor .ProseMirror-focused .ProseMirror-gapcursor {
-  animation-play-state: running;
+  display: block;
 }
 
 @keyframes md-gapcursor-blink {
@@ -1818,7 +1809,8 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
      ============================================ */
 
 .frontmatter-panel {
-  display: none; /* hidden by default, shown when frontmatter exists */
+  display: none;
+  /* hidden by default, shown when frontmatter exists */
   background-color: var(--md-subtle-bg);
   border-bottom: 1px solid var(--md-border);
   padding: 8px 30px;
@@ -1868,7 +1860,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   background-color: var(--md-selection);
 }
 
-.markdown-editor .ProseMirror.is-editor-empty > p.is-empty:first-child::before {
+.markdown-editor .ProseMirror.is-editor-empty>p.is-empty:first-child::before {
   content: 'Start writing...';
   color: var(--md-muted);
   pointer-events: none;
@@ -4329,7 +4321,7 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
     0 0 12px var(--ui-glow),
     0 0 24px var(--ui-glow-dim),
     /* Subtle purple tint commonly used for AI dialogs */
-    0 0 36px rgba(130,80,223,0.08);
+    0 0 36px rgba(130, 80, 223, 0.08);
   transition: box-shadow 0.18s ease, outline 0.18s ease;
   display: flex;
   flex-direction: column;
@@ -4610,6 +4602,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -4634,6 +4627,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -23,16 +23,6 @@ export const TableCellEnterHandler = Extension.create({
 
   addKeyboardShortcuts() {
     return {
-      Enter: ({ editor }) => {
-        // Only intercept when the cursor is inside a table cell
-        if (!editor.isActive('tableCell') && !editor.isActive('tableHeader')) {
-          return false; // Let the default handler run
-        }
-
-        // Insert a hard break (same as Shift+Enter) instead of a new paragraph
-        editor.commands.setHardBreak();
-        return true; // Prevent default paragraph creation
-      },
       Tab: ({ editor }) => {
         if (!editor.isActive('tableCell') && !editor.isActive('tableHeader')) {
           return false;
