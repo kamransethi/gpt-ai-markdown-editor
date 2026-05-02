@@ -69,6 +69,7 @@ import { createKeydownHandler } from './features/keyboardShortcuts';
 import { createLinkClickHandler } from './features/linkHandling';
 import { SearchAndReplace } from './extensions/searchAndReplace';
 import { CommandRegistry } from './extensions/CommandRegistry';
+import { TableBulletListSmart } from './extensions/tableBulletListSmart';
 import { fileCache } from './utils/fileCache';
 import { AiExplain, handleAiExplainResult, handleImageAskResult } from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
@@ -1128,6 +1129,7 @@ function initializeEditor(initialContent: string) {
       }),
       SearchAndReplace,
       CommandRegistry,
+      TableBulletListSmart,
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
       Gapcursor,

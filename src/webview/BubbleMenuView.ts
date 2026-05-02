@@ -639,7 +639,7 @@ export function createFormattingToolbar(
         label: '',
         title: 'Bullet list',
         icon: { name: 'list-unordered', fallback: '•' },
-        action: () => editor.chain().focus().toggleBulletList().run(),
+        action: () => editor.chain().focus().toggleBulletListSmart().run(),
         isActive: () => editor.isActive('bulletList'),
         requiresFocus: true,
       },

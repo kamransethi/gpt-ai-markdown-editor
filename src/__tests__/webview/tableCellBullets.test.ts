@@ -18,6 +18,7 @@ import Paragraph from '@tiptap/extension-paragraph';
 import { OrderedListMarkdownFix } from '../../webview/extensions/orderedListMarkdownFix';
 import { TaskItemClipboardFix } from '../../webview/extensions/taskItemClipboardFix';
 import { renderTableToMarkdownWithBreaks } from '../../webview/utils/tableMarkdownSerializer';
+import { TableBulletListSmart } from '../../webview/extensions/tableBulletListSmart';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -72,6 +73,7 @@ function makeEditor(): Editor {
       ListKit.configure({ taskItem: false, orderedList: false }),
       TaskItemClipboardFix.configure({ nested: true }),
       OrderedListMarkdownFix,
+      TableBulletListSmart,
     ],
     content: '',
   });
@@ -162,5 +164,119 @@ describe('SC-001 / SC-002: ordered list inside table cell serializes with <br>',
     expect(dataRow).toContain('|');
     expect(output).toContain('1.');
     expect(output).toContain('2.');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// toggleBulletListSmart: only selected lines become bullets, not the whole cell
+// ---------------------------------------------------------------------------
+
+describe('toggleBulletListSmart: selection-aware bullet toggle in table cells', () => {
+  let editor: Editor;
+  beforeEach(() => { editor = makeEditor(); });
+  afterEach(() => { editor.destroy(); });
+
+  it('converts only the selected lines to bullets, leaving pre-lines intact', () => {
+    // Load table with hardBreak-joined content
+    const input = `| Col 1 | Col 2 |
+| ----- | ----- |
+| Row 1<br>Row 2<br>Bullet 1<br>Bullet 2 | Test |`;
+
+    setMd(editor, input);
+
+    // Select "Bullet 1" and "Bullet 2" — find them in the doc
+    const state = editor.state;
+    let bulletStart = -1;
+    let bulletEnd = -1;
+    state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === 'Bullet 1') bulletStart = pos;
+      if (node.isText && node.text === 'Bullet 2') bulletEnd = pos + node.nodeSize;
+    });
+
+    expect(bulletStart).toBeGreaterThan(0);
+    expect(bulletEnd).toBeGreaterThan(bulletStart);
+
+    // Set selection over both bullet lines
+    editor.commands.setTextSelection({ from: bulletStart, to: bulletEnd });
+
+    // Toggle bullet list — should only affect the selected lines
+    editor.commands.toggleBulletListSmart();
+
+    const output = getMd(editor);
+
+    // Row 1 and Row 2 must still be in the cell (not bullets)
+    expect(output).toContain('Row 1');
+    expect(output).toContain('Row 2');
+
+    // Bullet items must appear
+    expect(output).toContain('- Bullet 1');
+    expect(output).toContain('- Bullet 2');
+
+    // The table structure must still be valid — data row has pipe chars
+    const dataRow = output.split('\n').find(l => l.includes('Row 1'));
+    expect(dataRow).toBeDefined();
+    expect(dataRow).toContain('|'); // still a table row
+
+    // The row must NOT have a raw newline embedded inside it
+    expect(dataRow).not.toMatch(/\n/);
+  });
+
+  it('does not wrap the entire cell when only part of the content is selected', () => {
+    const input = `| Col 1 | Col 2 |
+| ----- | ----- |
+| Keep<br>Also keep<br>Make bullet | Test |`;
+
+    setMd(editor, input);
+
+    // Select only "Make bullet"
+    const state = editor.state;
+    let lineStart = -1;
+    let lineEnd = -1;
+    state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === 'Make bullet') {
+        lineStart = pos;
+        lineEnd = pos + node.nodeSize;
+      }
+    });
+
+    expect(lineStart).toBeGreaterThan(0);
+    editor.commands.setTextSelection({ from: lineStart, to: lineEnd });
+    editor.commands.toggleBulletListSmart();
+
+    const output = getMd(editor);
+
+    // Non-selected lines should NOT become bullet items
+    expect(output).not.toMatch(/^.*-\s+Keep.*$/m);
+    expect(output).not.toMatch(/^.*-\s+Also keep.*$/m);
+
+    // The selected line should become a bullet item
+    expect(output).toContain('- Make bullet');
+
+    // Table row must remain valid
+    const dataRow = output.split('\n').find(l => l.includes('Keep'));
+    expect(dataRow).toBeDefined();
+    expect(dataRow).toContain('|');
+  });
+
+  it('falls back to standard toggle when not in a table cell', () => {
+    // Load plain paragraph content (no table)
+    setMd(editor, 'Hello world');
+
+    // Select the text
+    const state = editor.state;
+    let textStart = -1;
+    let textEnd = -1;
+    state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === 'Hello world') {
+        textStart = pos;
+        textEnd = pos + node.nodeSize;
+      }
+    });
+
+    editor.commands.setTextSelection({ from: textStart, to: textEnd });
+    editor.commands.toggleBulletListSmart();
+
+    const output = getMd(editor);
+    expect(output).toContain('- Hello world');
   });
 });
