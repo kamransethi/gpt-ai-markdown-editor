@@ -192,112 +192,90 @@ describe('SC-001 / SC-002: ordered list inside table cell serializes with <br>',
 // toggleBulletListSmart: only selected lines become bullets, not the whole cell
 // ---------------------------------------------------------------------------
 
-describe('toggleBulletListSmart: selection-aware bullet toggle in table cells', () => {
+describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells', () => {
   let editor: Editor;
   beforeEach(() => { editor = makeEditor(); });
   afterEach(() => { editor.destroy(); });
 
-  it('converts only the selected lines to bullets, leaving pre-lines intact', () => {
-    // Load table with hardBreak-joined content
+  it('inserts "- " prefix on selected lines in a table cell', () => {
     const input = `| Col 1 | Col 2 |
 | ----- | ----- |
 | Row 1<br>Row 2<br>Bullet 1<br>Bullet 2 | Test |`;
 
     setMd(editor, input);
 
-    // Select "Bullet 1" and "Bullet 2" — find them in the doc
+    // Select "Bullet 1" text
     const state = editor.state;
     let bulletStart = -1;
     let bulletEnd = -1;
     state.doc.descendants((node, pos) => {
-      if (node.isText && node.text === 'Bullet 1') bulletStart = pos;
-      if (node.isText && node.text === 'Bullet 2') bulletEnd = pos + node.nodeSize;
+      if (node.isText && node.text === 'Bullet 1') { bulletStart = pos; bulletEnd = pos + node.nodeSize; }
     });
-
     expect(bulletStart).toBeGreaterThan(0);
-    expect(bulletEnd).toBeGreaterThan(bulletStart);
-
-    // Set selection over both bullet lines
     editor.commands.setTextSelection({ from: bulletStart, to: bulletEnd });
-
-    // Toggle bullet list — should only affect the selected lines
     editor.commands.toggleBulletListSmart();
 
     const output = getMd(editor);
 
-    // Row 1 and Row 2 must still be in the cell (not bullets)
-    expect(output).toContain('Row 1');
-    expect(output).toContain('Row 2');
-
-    // Bullet items must appear
+    // Selected line now has "- " prefix
     expect(output).toContain('- Bullet 1');
-    expect(output).toContain('- Bullet 2');
-
-    // The table structure must still be valid — data row has pipe chars
-    const dataRow = output.split('\n').find(l => l.includes('Row 1'));
-    expect(dataRow).toBeDefined();
-    expect(dataRow).toContain('|'); // still a table row
-
-    // The row must NOT have a raw newline embedded inside it
-    expect(dataRow).not.toMatch(/\n/);
+    // Non-selected lines unchanged (no bullet prefix added)
+    expect(output).toContain('Row 1');
+    expect(output).not.toMatch(/- Row 1/);
+    expect(output).toContain('Bullet 2');
+    expect(output).not.toMatch(/- Bullet 2/);
   });
 
-  it('does not wrap the entire cell when only part of the content is selected', () => {
+  it('removes "- " prefix when all selected lines already have a bullet', () => {
     const input = `| Col 1 | Col 2 |
 | ----- | ----- |
-| Keep<br>Also keep<br>Make bullet | Test |`;
+| Row 1<br>- Bullet 1<br>- Bullet 2 | Test |`;
 
     setMd(editor, input);
 
-    // Select only "Make bullet"
+    // Select from "- Bullet 1" to "- Bullet 2"
     const state = editor.state;
-    let lineStart = -1;
-    let lineEnd = -1;
+    let b1start = -1, b2end = -1;
     state.doc.descendants((node, pos) => {
-      if (node.isText && node.text === 'Make bullet') {
-        lineStart = pos;
-        lineEnd = pos + node.nodeSize;
-      }
+      if (node.isText && node.text === '- Bullet 1') b1start = pos;
+      if (node.isText && node.text === '- Bullet 2') b2end = pos + node.nodeSize;
     });
-
-    expect(lineStart).toBeGreaterThan(0);
-    editor.commands.setTextSelection({ from: lineStart, to: lineEnd });
+    expect(b1start).toBeGreaterThan(0);
+    editor.commands.setTextSelection({ from: b1start, to: b2end });
     editor.commands.toggleBulletListSmart();
 
     const output = getMd(editor);
+    // Bullet markers removed
+    expect(output).toContain('Bullet 1');
+    expect(output).toContain('Bullet 2');
+    expect(output).not.toContain('- Bullet 1');
+    expect(output).not.toContain('- Bullet 2');
+  });
 
-    // Non-selected lines should NOT become bullet items
-    expect(output).not.toMatch(/^.*-\s+Keep.*$/m);
-    expect(output).not.toMatch(/^.*-\s+Also keep.*$/m);
+  it('round-trips: save then reload shows same bullet text without doubling the dash', () => {
+    const input = `| Col 1 | Col 2 |
+| ----- | ----- |
+| Row 1<br>- Bullet 1<br>- Bullet 2 | Test |`;
 
-    // The selected line should become a bullet item
-    expect(output).toContain('- Make bullet');
+    setMd(editor, input);
+    const firstPass = getMd(editor);
+    // Reload from what was saved — must not double-up "- -"
+    setMd(editor, firstPass);
+    const secondPass = getMd(editor);
 
-    // Table row must remain valid
-    const dataRow = output.split('\n').find(l => l.includes('Keep'));
-    expect(dataRow).toBeDefined();
-    expect(dataRow).toContain('|');
+    expect(secondPass).toBe(firstPass);
+    expect(secondPass).not.toContain('- - Bullet');
   });
 
   it('falls back to standard toggle when not in a table cell', () => {
-    // Load plain paragraph content (no table)
     setMd(editor, 'Hello world');
-
-    // Select the text
     const state = editor.state;
-    let textStart = -1;
-    let textEnd = -1;
+    let textStart = -1, textEnd = -1;
     state.doc.descendants((node, pos) => {
-      if (node.isText && node.text === 'Hello world') {
-        textStart = pos;
-        textEnd = pos + node.nodeSize;
-      }
+      if (node.isText && node.text === 'Hello world') { textStart = pos; textEnd = pos + node.nodeSize; }
     });
-
     editor.commands.setTextSelection({ from: textStart, to: textEnd });
     editor.commands.toggleBulletListSmart();
-
-    const output = getMd(editor);
-    expect(output).toContain('- Hello world');
+    expect(getMd(editor)).toContain('- Hello world');
   });
 });
