@@ -16,8 +16,14 @@
  * removed directly on the selected hard-break-separated "lines". This matches what the
  * document stores on disk (`- text<br>  + nested`) and survives round-trips perfectly.
  *
- * For all other contexts (not a table cell) it falls back to the standard
- * `toggleBulletList` command.
+ * Features:
+ * - `toggleBulletListSmart` — toggle `- ` prefix on selected lines in a table cell
+ * - `isTableBulletActive` — returns true when cursor line in a table cell has a bullet
+ * - TAB on a bullet line → increase indent + cycle marker (- → + → *)
+ * - SHIFT+TAB on a bullet line → decrease indent + cycle marker back (* → + → -)
+ *
+ * For all other contexts (not a table cell) toggleBulletListSmart falls back to
+ * the standard `toggleBulletList` command, and Tab/Shift+Tab are not consumed.
  */
 
 import { Extension } from '@tiptap/core';
@@ -27,11 +33,35 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     tableBulletListSmart: {
       toggleBulletListSmart: () => ReturnType;
+      /** Returns true when the cursor line in a table cell has a bullet marker */
+      isTableBulletActive: () => ReturnType;
     };
   }
 }
 
-const TABLE_BULLET_RE = /^[\t ]*([-+*])\s?/;
+/** Matches leading whitespace + bullet marker + optional space */
+const TABLE_BULLET_RE = /^([\t ]*)([-+*]) ?/;
+
+/** Bullet marker cycle order: depth 0=-, 1=+, 2=* */
+const MARKERS = ['-', '+', '*'] as const;
+
+/**
+ * Given current indentation level (in 2-space units), return the expected marker.
+ */
+function markerForDepth(depth: number): string {
+  return MARKERS[depth % MARKERS.length];
+}
+
+/**
+ * Parse a line's indentation depth (2 spaces per level) and marker.
+ * Returns null if the line has no bullet.
+ */
+function parseBulletLine(text: string): { indent: number; marker: string; rest: string } | null {
+  const m = TABLE_BULLET_RE.exec(text);
+  if (!m) return null;
+  const indent = Math.floor(m[1].length / 2);
+  return { indent, marker: m[2], rest: text.slice(m[0].length) };
+}
 
 // ---------------------------------------------------------------------------
 // TipTap Extension
@@ -67,9 +97,9 @@ export const TableBulletListSmart = Extension.create({
             for (let i = selectedLines.length - 1; i >= 0; i--) {
               const { start, end } = selectedLines[i];
               const text = state.doc.textBetween(start, end, '\n');
-              const match = TABLE_BULLET_RE.exec(text);
-              if (match) {
-                tr.delete(start, start + match[0].length);
+              const m = TABLE_BULLET_RE.exec(text);
+              if (m) {
+                tr.delete(start, start + m[0].length);
                 changed = true;
               }
             }
@@ -91,6 +121,81 @@ export const TableBulletListSmart = Extension.create({
           view.focus();
           return true;
         },
+
+      isTableBulletActive:
+        () =>
+        ({ state }) => {
+          const result = getSelectedTableLines(state, state.selection);
+          if (!result || result.selectedLines.length === 0) return false;
+          // Active if the cursor's line has a bullet marker
+          const { start, end } = result.selectedLines[0];
+          const text = state.doc.textBetween(start, end, '\n');
+          return TABLE_BULLET_RE.test(text);
+        },
+    };
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      Tab: () => {
+        const { state, view } = this.editor;
+        const result = getSelectedTableLines(state, state.selection);
+        if (!result) return false; // not in a table cell — let default Tab run
+
+        const { selectedLines, tr } = result;
+        let changed = false;
+
+        // Process in reverse to keep offsets valid
+        for (let i = selectedLines.length - 1; i >= 0; i--) {
+          const { start, end } = selectedLines[i];
+          const text = state.doc.textBetween(start, end, '\n');
+          const parsed = parseBulletLine(text);
+          if (!parsed) continue; // non-bullet line: skip (don't consume Tab for it)
+
+          const newDepth = parsed.indent + 1;
+          const newMarker = markerForDepth(newDepth);
+          const newIndent = '  '.repeat(newDepth);
+          const newPrefix = `${newIndent}${newMarker} `;
+          const oldPrefixLen = parsed.indent * 2 + parsed.marker.length + 1; // indent + marker + space
+          tr.delete(start, start + oldPrefixLen);
+          tr.insertText(newPrefix, start);
+          changed = true;
+        }
+
+        if (!changed) return false;
+        view.dispatch(tr);
+        return true;
+      },
+
+      'Shift-Tab': () => {
+        const { state, view } = this.editor;
+        const result = getSelectedTableLines(state, state.selection);
+        if (!result) return false;
+
+        const { selectedLines, tr } = result;
+        let changed = false;
+
+        for (let i = selectedLines.length - 1; i >= 0; i--) {
+          const { start, end } = selectedLines[i];
+          const text = state.doc.textBetween(start, end, '\n');
+          const parsed = parseBulletLine(text);
+          if (!parsed || parsed.indent === 0) continue; // already at top level or not a bullet
+
+          const newDepth = parsed.indent - 1;
+          const newMarker = markerForDepth(newDepth);
+          const newIndent = '  '.repeat(newDepth);
+          const newPrefix = `${newIndent}${newMarker} `;
+          const oldPrefixLen = parsed.indent * 2 + parsed.marker.length + 1;
+          tr.delete(start, start + oldPrefixLen);
+          tr.insertText(newPrefix, start);
+          changed = true;
+        }
+
+        if (!changed) return false;
+        view.dispatch(tr);
+        return true;
+      },
     };
   },
 });
+

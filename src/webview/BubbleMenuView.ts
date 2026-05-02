@@ -640,7 +640,7 @@ export function createFormattingToolbar(
         title: 'Bullet list',
         icon: { name: 'list-unordered', fallback: '•' },
         action: () => editor.chain().focus().toggleBulletListSmart().run(),
-        isActive: () => editor.isActive('bulletList'),
+        isActive: () => editor.isActive('bulletList') || (editor.commands as any)?.isTableBulletActive?.() === true,
         requiresFocus: true,
       },
       {

@@ -279,3 +279,101 @@ describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells'
     expect(getMd(editor)).toContain('- Hello world');
   });
 });
+
+// ---------------------------------------------------------------------------
+// isTableBulletActive: toolbar highlight when cursor is on a bullet line
+// ---------------------------------------------------------------------------
+
+describe('isTableBulletActive: toolbar state in table cells', () => {
+  let editor: Editor;
+  beforeEach(() => { editor = makeEditor(); });
+  afterEach(() => { editor.destroy(); });
+
+  it('returns true when cursor is on a bullet line in a table cell', () => {
+    setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);
+    let bulletPos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text?.startsWith('- Bullet')) bulletPos = pos;
+    });
+    expect(bulletPos).toBeGreaterThan(0);
+    editor.commands.setTextSelection(bulletPos + 2); // cursor inside "Bullet 1"
+    expect((editor.commands as any).isTableBulletActive()).toBe(true);
+  });
+
+  it('returns false when cursor is on a non-bullet line in a table cell', () => {
+    setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Plain row | ok |`);
+    let plainPos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === 'Plain row') plainPos = pos;
+    });
+    expect(plainPos).toBeGreaterThan(0);
+    editor.commands.setTextSelection(plainPos + 2);
+    expect((editor.commands as any).isTableBulletActive()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tab / Shift+Tab: indent / dedent bullet lines in table cells
+// ---------------------------------------------------------------------------
+
+describe('Tab/Shift+Tab: indent and dedent bullet lines in table cells', () => {
+  let editor: Editor;
+  beforeEach(() => { editor = makeEditor(); });
+  afterEach(() => { editor.destroy(); });
+
+  it('Tab increases indent depth and cycles marker: - → + ', () => {
+    setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);
+    let bulletPos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text?.startsWith('- Bullet')) bulletPos = pos;
+    });
+    editor.commands.setTextSelection(bulletPos + 2);
+    // Simulate Tab via keyboard shortcut handler
+    editor.commands.keyboardShortcut('Tab');
+    const output = getMd(editor);
+    expect(output).toContain('  + Bullet 1');
+  });
+
+  it('Tab again increases to level 2 with * marker', () => {
+    setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);
+    let bulletPos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text?.includes('Bullet 1')) bulletPos = pos;
+    });
+    editor.commands.setTextSelection(bulletPos + 2);
+    // Tab twice: - → + → *
+    editor.commands.keyboardShortcut('Tab');
+    editor.commands.keyboardShortcut('Tab');
+    const output = getMd(editor);
+    expect(output).toContain('    * Bullet 1');
+  });
+
+  it('Shift+Tab decreases indent depth and cycles marker: + → -', () => {
+    setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);
+    let bulletPos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text?.includes('Bullet 1')) bulletPos = pos;
+    });
+    editor.commands.setTextSelection(bulletPos + 2);
+    // Tab once to get to level 1 (  + Bullet 1), then Shift+Tab back to level 0
+    editor.commands.keyboardShortcut('Tab');
+    editor.commands.keyboardShortcut('Shift-Tab');
+    const output = getMd(editor);
+    expect(output).toContain('- Bullet 1');
+    expect(output).not.toContain('  + Bullet');
+  });
+
+  it('Shift+Tab at top level (depth 0) does not consume the event', () => {
+    setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);
+    let bulletPos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text?.startsWith('- Bullet')) bulletPos = pos;
+    });
+    editor.commands.setTextSelection(bulletPos + 2);
+    // At depth 0, Shift-Tab should not modify content
+    const before = getMd(editor);
+    editor.commands.keyboardShortcut('Shift-Tab');
+    const after = getMd(editor);
+    expect(after).toBe(before); // unchanged
+  });
+});
