@@ -1,7 +1,7 @@
-﻿import { MarkdownManager } from '@tiptap/markdown';
+import { MarkdownManager } from '@tiptap/markdown';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
-import { MarkdownParagraph } from '../../webview/extensions/markdownParagraph';
+import Paragraph from '@tiptap/extension-paragraph';
 import { CustomImage } from '../../webview/extensions/customImage';
 import { SpaceFriendlyImagePaths } from '../../webview/extensions/spaceFriendlyImagePaths';
 
@@ -11,7 +11,7 @@ function createMarkdownManager() {
       gfm: true,
       breaks: true,
     },
-    extensions: [Document, SpaceFriendlyImagePaths, MarkdownParagraph, HardBreak, CustomImage],
+    extensions: [Document, SpaceFriendlyImagePaths, Paragraph, HardBreak, CustomImage],
   });
 }
 
@@ -47,3 +47,4 @@ describe('SpaceFriendlyImagePaths', () => {
     expect(manager.serialize(doc)).toBe('![image in vs-code](<./image in vs-code.png>)');
   });
 });
+

@@ -1,11 +1,11 @@
-﻿/** @jest-environment jsdom */
+/** @jest-environment jsdom */
 
 import type { JSONContent } from '@tiptap/core';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { ListKit } from '@tiptap/extension-list';
-import { MarkdownParagraph } from '../../webview/extensions/markdownParagraph';
+import Paragraph from '@tiptap/extension-paragraph';
 import { OrderedListMarkdownFix } from '../../webview/extensions/orderedListMarkdownFix';
 import { TaskItemClipboardFix } from '../../webview/extensions/taskItemClipboardFix';
 
@@ -30,7 +30,7 @@ function createTestEditor(): Editor {
           depth: 100,
         },
       }),
-      MarkdownParagraph,
+      Paragraph,
       Markdown.configure({
         markedOptions: {
           gfm: true,
@@ -135,3 +135,4 @@ describe('Bold markdown rendering', () => {
     }
   });
 });
+

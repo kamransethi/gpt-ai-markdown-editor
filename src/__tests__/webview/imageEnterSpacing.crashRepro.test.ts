@@ -1,7 +1,7 @@
-﻿/** @jest-environment jsdom */
+/** @jest-environment jsdom */
 
 import { Schema } from '@tiptap/pm/model';
-import { ImageEnterSpacing } from '../../webview/extensions/imageEnterSpacing';
+
 
 describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
   const createPlugin = (editor: unknown) => {
@@ -38,7 +38,7 @@ describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
     }) as unknown as KeyboardEvent & { preventDefault: jest.Mock; stopPropagation: jest.Mock };
 
   it('does not intercept Enter when the computed gap-cursor position is not a valid block insertion boundary', () => {
-    const fixture = `# Repro — Enter at image gap cursor crash
+    const fixture = `# Repro � Enter at image gap cursor crash
 
 ## Markdown snippet (from crash report)
 
@@ -169,3 +169,4 @@ describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
+

@@ -1,4 +1,4 @@
-﻿/** @jest-environment jsdom */
+/** @jest-environment jsdom */
 
 /**
  * Failing tests for all known issues in the markdown editor.
@@ -14,7 +14,7 @@ import { ListKit } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
-import { MarkdownParagraph } from '../../webview/extensions/markdownParagraph';
+import Paragraph from '@tiptap/extension-paragraph';
 import { OrderedListMarkdownFix } from '../../webview/extensions/orderedListMarkdownFix';
 import { TaskItemClipboardFix } from '../../webview/extensions/taskItemClipboardFix';
 import { GenericHTMLInline, GenericHTMLBlock } from '../../webview/extensions/htmlPreservation';
@@ -26,7 +26,7 @@ import { SearchAndReplace } from '../../webview/extensions/searchAndReplace';
 import { showLinkDialog, hideLinkDialog } from '../../webview/features/linkDialog';
 import * as fileHandlers from '../../editor/handlers/fileHandlers';
 
-// ─── Shared Helpers ──────────────────────────────────────────────────────────
+// --- Shared Helpers ----------------------------------------------------------
 
 function createTableExtension() {
   return Table.extend({
@@ -74,7 +74,7 @@ function createEditorWithContent(_markdown?: string): Editor {
         listKeymap: false,
         link: false,
       }),
-      MarkdownParagraph,
+      Paragraph,
       Markdown.configure({
         markedOptions: { gfm: true, breaks: true },
       }),
@@ -118,7 +118,7 @@ function getEditorMarkdown(editor: Editor): string {
   return (editor as any).getMarkdown();
 }
 
-// ─── A. Ordered Lists ─────────────────────────────────────────────────────────
+// --- A. Ordered Lists ---------------------------------------------------------
 
 describe('BUG-A: Ordered lists with nested non-ordered bullets', () => {
   let editor: Editor;
@@ -198,7 +198,7 @@ describe('BUG-A: Ordered lists with nested non-ordered bullets', () => {
   });
 });
 
-// ─── B. Links ──────────────────────────────────────────────────────────────────
+// --- B. Links ------------------------------------------------------------------
 
 describe('BUG-B1: Link dialog should disable editor while open', () => {
   it('editor should be set non-editable when link dialog is shown', () => {
@@ -219,7 +219,7 @@ describe('BUG-B1: Link dialog should disable editor while open', () => {
           listKeymap: false,
           link: false,
         }),
-        MarkdownParagraph,
+        Paragraph,
         Link.configure({ openOnClick: false, HTMLAttributes: { class: 'markdown-link' } }),
       ],
       content: '<p>Hello world</p>',
@@ -260,7 +260,7 @@ describe('BUG-B2: File link insertion replaces selected text (data loss)', () =>
           listKeymap: false,
           link: false,
         }),
-        MarkdownParagraph,
+        Paragraph,
         Markdown.configure({ markedOptions: { gfm: true, breaks: true } }),
         Link.configure({ openOnClick: false }),
       ],
@@ -458,7 +458,7 @@ describe('BUG-B5: Links should open in WYSIWYG editor, not VS Code text editor',
   });
 });
 
-// ─── C. Tables ────────────────────────────────────────────────────────────────
+// --- C. Tables ----------------------------------------------------------------
 
 describe('BUG-C2: Table column copy-paste puts header in all cells', () => {
   let editor: Editor;
@@ -480,7 +480,7 @@ describe('BUG-C2: Table column copy-paste puts header in all cells', () => {
           listItem: false,
           listKeymap: false,
         }),
-        MarkdownParagraph,
+        Paragraph,
         createTableExtension(),
         TableKit.configure({ table: false }),
       ],
@@ -530,16 +530,16 @@ describe('BUG-C2: Table column copy-paste puts header in all cells', () => {
         if (newMatrix) {
           // BUG: Currently the header "Header A" gets pasted into ALL cells of column B
           // Expected: Row-by-row mapping
-          expect(newMatrix[0][1]).toBe('Header A'); // Header B → Header A ✓
-          expect(newMatrix[1][1]).toBe('Row1-A'); // Row1-B → Row1-A (BUG: may get "Header A")
-          expect(newMatrix[2][1]).toBe('Row2-A'); // Row2-B → Row2-A (BUG: may get "Header A")
+          expect(newMatrix[0][1]).toBe('Header A'); // Header B ? Header A ?
+          expect(newMatrix[1][1]).toBe('Row1-A'); // Row1-B ? Row1-A (BUG: may get "Header A")
+          expect(newMatrix[2][1]).toBe('Row2-A'); // Row2-B ? Row2-A (BUG: may get "Header A")
         }
       }
     }
   });
 });
 
-// ─── D. Empty Doc ─────────────────────────────────────────────────────────────
+// --- D. Empty Doc -------------------------------------------------------------
 
 describe('BUG-D: Empty doc should show placeholder on every empty line', () => {
   let editor: Editor;
@@ -577,7 +577,7 @@ describe('BUG-D: Empty doc should show placeholder on every empty line', () => {
   });
 });
 
-// ─── E. Insert Line Between Tables ───────────────────────────────────────────
+// --- E. Insert Line Between Tables -------------------------------------------
 
 describe('BUG-E: Insert new line between adjacent tables', () => {
   let editor: Editor;
@@ -651,7 +651,7 @@ describe('BUG-E: Insert new line between adjacent tables', () => {
   });
 });
 
-// ─── F. Obsidian Checkbox Paste ──────────────────────────────────────────────
+// --- F. Obsidian Checkbox Paste ----------------------------------------------
 
 describe('BUG-F: Obsidian checkbox paste not converted to task lists', () => {
   it('should convert Obsidian-style checkboxes to markdown task list syntax', () => {
@@ -690,7 +690,7 @@ describe('BUG-F: Obsidian checkbox paste not converted to task lists', () => {
   });
 });
 
-// ─── H. Search Next/Prev ─────────────────────────────────────────────────────
+// --- H. Search Next/Prev -----------------------------------------------------
 
 describe('BUG-H: Search next/prev buttons do not navigate to results', () => {
   let editor: Editor;
@@ -712,7 +712,7 @@ describe('BUG-H: Search next/prev buttons do not navigate to results', () => {
           listItem: false,
           listKeymap: false,
         }),
-        MarkdownParagraph,
+        Paragraph,
         SearchAndReplace,
       ],
       content: '<p>The cat sat on the mat. The cat ran. The cat slept.</p>',
@@ -759,7 +759,7 @@ describe('BUG-H: Search next/prev buttons do not navigate to results', () => {
           listItem: false,
           listKeymap: false,
         }),
-        MarkdownParagraph,
+        Paragraph,
         SearchAndReplace,
       ],
       content: '<p>foo bar foo baz foo qux</p>',
@@ -805,7 +805,7 @@ describe('BUG-H: Search next/prev buttons do not navigate to results', () => {
           listItem: false,
           listKeymap: false,
         }),
-        MarkdownParagraph,
+        Paragraph,
         SearchAndReplace,
       ],
       content: '<p>apple banana apple cherry apple</p>',
@@ -838,7 +838,7 @@ describe('BUG-H: Search next/prev buttons do not navigate to results', () => {
   });
 });
 
-// ─── C1. Indented table after numbered list (documented acceptable behavior) ─
+// --- C1. Indented table after numbered list (documented acceptable behavior) -
 
 describe('DOC-C1: Indented table after numbered list (acceptable extra line)', () => {
   let editor: Editor;
@@ -869,3 +869,4 @@ describe('DOC-C1: Indented table after numbered list (acceptable extra line)', (
     // This test just documents it.
   });
 });
+

@@ -12,7 +12,7 @@ import './codicon.css';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
-import { TableKit, Table } from '@tiptap/extension-table';
+import { TableKit, Table, TableCell } from '@tiptap/extension-table';
 import { CellSelection } from 'prosemirror-tables';
 import { TableOfContents, type TableOfContentData } from '@tiptap/extension-table-of-contents';
 import { BulletList, ListKit, TaskList } from '@tiptap/extension-list';
@@ -33,11 +33,9 @@ import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
 import { SpaceFriendlyImagePaths } from './extensions/spaceFriendlyImagePaths';
 import { TabIndentation } from './extensions/tabIndentation';
 import { GitHubAlerts } from './extensions/githubAlerts';
-import { ImageEnterSpacing } from './extensions/imageEnterSpacing';
-import { MarkdownParagraph } from './extensions/markdownParagraph';
+import { ImageBoundaryNav } from './extensions/imageBoundaryNav';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { TaskItemClipboardFix } from './extensions/taskItemClipboardFix';
-import { TableCellEnterHandler } from './extensions/tableCellEnterHandler';
 import { GenericHTMLInline, GenericHTMLBlock } from './extensions/htmlPreservation';
 import {
   HtmlCommentInline,
@@ -955,8 +953,9 @@ function initializeEditor(initialContent: string) {
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
-        paragraph: false, // Disable default paragraph, using MarkdownParagraph instead
+        paragraph: true,
         codeBlock: false, // Disable default CodeBlock, using CodeBlockWithUi instead
+        horizontalRule: false,
         // ListKit is registered separately to support task lists; disable StarterKit's list
         // extensions to avoid duplicate names (which can break markdown parsing, e.g. `1)` lists).
         bulletList: false,
@@ -972,7 +971,6 @@ function initializeEditor(initialContent: string) {
           depth: 100,
         },
       } as any),
-      MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
       CodeBlockWithUi.configure({
         lowlight: createLowlight(common),
         defaultLanguage: 'plaintext',
@@ -1032,10 +1030,14 @@ function initializeEditor(initialContent: string) {
           class: 'markdown-table',
         },
       }),
-      // Use TableKit only for row, cell, and header registration.
-      // We disable its 'table' node to avoid duplicate registration.
+      // Use TableKit only for row and header registration.
+      // We disable its 'table' and 'tableCell' node to avoid duplicate registration.
       TableKit.configure({
         table: false,
+        tableCell: false,
+      }),
+      TableCell.extend({
+        content: 'block+',
       }),
       BulletList.extend({
         addInputRules() {
@@ -1056,10 +1058,10 @@ function initializeEditor(initialContent: string) {
       TaskItemClipboardFix.configure({ nested: true }),
       OrderedListMarkdownFix,
       TabIndentation, // Enable Tab/Shift+Tab for list indentation
-      ImageEnterSpacing, // Handle Enter key around images and gap cursor
-      TableCellEnterHandler, // Make Enter in table cells insert <br> instead of new paragraph
+      ImageBoundaryNav, // Handle Enter key around images at boundaries
       Link.configure({
         openOnClick: false,
+        inclusive: false,
         HTMLAttributes: {
           class: 'markdown-link',
         },

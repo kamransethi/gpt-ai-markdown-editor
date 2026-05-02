@@ -1,4 +1,4 @@
-﻿/** @jest-environment jsdom */
+/** @jest-environment jsdom */
 /**
  * Tests for frontmatter extraction, restoration, parsing, and panel update logic.
  *
@@ -84,7 +84,7 @@ jest.mock('./../../webview/extensions/customImage', () => ({
 jest.mock('./../../webview/extensions/mermaid', () => ({ Mermaid: {} }));
 jest.mock('./../../webview/extensions/tabIndentation', () => ({ TabIndentation: {} }));
 jest.mock('./../../webview/extensions/imageEnterSpacing', () => ({ ImageEnterSpacing: {} }));
-jest.mock('./../../webview/extensions/markdownParagraph', () => ({ MarkdownParagraph: {} }));
+ => ({ MarkdownParagraph: {} }));
 jest.mock('./../../webview/extensions/indentedImageCodeBlock', () => ({
   IndentedImageCodeBlock: {},
 }));
@@ -264,7 +264,7 @@ describe('frontmatter extraction & restoration', () => {
       expect(result).toBe('---\nbaba: blacksheep\n---\n# Content');
     });
 
-    it('preserves spaces around colon exactly — does NOT normalize', () => {
+    it('preserves spaces around colon exactly � does NOT normalize', () => {
       const result = testing.restoreFrontmatterForTests('# Content', 'baba : blacksheep');
       expect(result).toBe('---\nbaba : blacksheep\n---\n# Content');
     });
@@ -399,3 +399,4 @@ describe('frontmatter extraction & restoration', () => {
     });
   });
 });
+

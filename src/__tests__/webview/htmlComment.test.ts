@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @jest-environment jsdom
  */
 
@@ -6,7 +6,7 @@ import { MarkdownManager } from '@tiptap/markdown';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import { Text } from '@tiptap/extension-text';
-import { MarkdownParagraph } from '../../webview/extensions/markdownParagraph';
+import Paragraph from '@tiptap/extension-paragraph';
 import { GenericHTMLBlock, GenericHTMLInline } from '../../webview/extensions/htmlPreservation';
 import {
   HtmlCommentInline,
@@ -19,7 +19,7 @@ function createManager() {
     markedOptions: { gfm: true, breaks: true },
     extensions: [
       Document,
-      MarkdownParagraph,
+      Paragraph,
       HardBreak,
       Text,
       // Comment extensions must come before generic HTML extensions
@@ -119,7 +119,7 @@ describe('HtmlCommentInline', () => {
     expect(out.trim()).toBe('hello <!-- note --> world');
   });
 
-  it('comment at line start is block HTML — not captured as inline', () => {
+  it('comment at line start is block HTML � not captured as inline', () => {
     // When a comment starts at the beginning of a line with trailing text,
     // marked treats the entire line as a block HTML token.  Our block handler
     // rejects it (doesn't end with -->), so the text survives but the comment
@@ -192,3 +192,4 @@ describe('renderMarkdown', () => {
     expect(out.trim()).toBe('<!-- block -->');
   });
 });
+
