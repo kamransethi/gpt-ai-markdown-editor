@@ -96,8 +96,7 @@ describe('SC-001 / SC-002: bullet list inside table cell serializes with <br>', 
   beforeEach(() => { editor = makeEditor(); });
   afterEach(() => { editor.destroy(); });
 
-  it('serializes bullet list items with <br> separator, not raw newlines', () => {
-    // Load a table where one cell contains a bullet list
+  it('serializes bullet list items with <br> separator, not raw newlines', () => {    // Load a table where one cell contains a bullet list
     const input = `| Col 1 | Col 2 |
 | ----- | ----- |
 | Row 1<br>- Bullet 1<br>- Bullet 2 | Test |`;
@@ -142,6 +141,28 @@ describe('SC-001 / SC-002: bullet list inside table cell serializes with <br>', 
     const secondPass = getMd(editor);
 
     expect(secondPass).toBe(firstPass); // stable round-trip
+  });
+
+  it('serializes nested bullet list with alternating markers and indentation', () => {
+    // L1: "- item", L2: "  + nested", L3: "    * deep"
+    const input = `| Steps | Col 2 |
+| ----- | ----- |
+| - L1<br>  + L2<br>    * L3 | ok |`;
+
+    setMd(editor, input);
+    const output = getMd(editor);
+
+    // L1 must use `-` (depth 0)
+    expect(output).toMatch(/- L1/);
+    // L2 must use `+` with 2-space indent (depth 1)
+    expect(output).toMatch(/  \+ L2/);
+    // L3 must use `*` with 4-space indent (depth 2)
+    expect(output).toMatch(/    \* L3/);
+
+    // All on one table row (no embedded newlines)
+    const dataRow = output.split('\n').find(l => l.includes('L1'));
+    expect(dataRow).toBeDefined();
+    expect(dataRow).toContain('|');
   });
 });
 

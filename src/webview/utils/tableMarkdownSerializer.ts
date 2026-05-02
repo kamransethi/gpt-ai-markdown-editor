@@ -20,7 +20,9 @@ import type { JSONContent, MarkdownRendererHelpers } from '@tiptap/core';
  * Recursively render a block node to HTML, allowing list items, headings, etc. inside tables.
  * Inline content converts hardBreak nodes to `<br>`.
  */
-function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string {
+const BULLET_MARKERS = ['-', '+', '*'] as const;
+
+function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers, depth = 0): string {
   if (!node) return '';
 
   // Helper to render inline content and preserve `<br>`
@@ -47,42 +49,61 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       return `<h${level}>${content}</h${level}>`;
     }
     case 'bulletList': {
-      // For standard markdown tables, native HTML lists aren't universally supported and
-      // can cause parsing issues. User preferred format: just separated text with "- " prefix.
-      // Items MUST be joined with <br> (not \n) — raw newlines break the GFM table structure.
-      const items = (node.content || []).map(n => {
-        return '- ' + renderBlockNode(n, h);
-      });
-      return items.join('<br>');
+      // Nested lists use alternating markers: -, +, * (per GFM convention).
+      // All items are joined with <br> — raw newlines break the GFM table structure.
+      const marker = BULLET_MARKERS[depth % BULLET_MARKERS.length];
+      const indent = '  '.repeat(depth);
+      const lines: string[] = [];
+      for (const item of (node.content || [])) {
+        // item is a listItem — separate its paragraph text from nested lists
+        let mainText = '';
+        const nested: string[] = [];
+        for (const child of (item.content || [])) {
+          if (child.type === 'bulletList' || child.type === 'orderedList') {
+            nested.push(renderBlockNode(child, h, depth + 1));
+          } else {
+            mainText = renderBlockNode(child, h, depth);
+          }
+        }
+        lines.push(`${indent}${marker} ${mainText}`);
+        for (const n of nested) lines.push(n);
+      }
+      return lines.join('<br>');
     }
     case 'orderedList': {
-      // Ordered list inside table cell -> plain text with "1. ", "2. " prefix
-      // Items MUST be joined with <br> (not \n) — raw newlines break the GFM table structure.
+      // Ordered list inside table cell — indented per depth, numbered.
+      // Items MUST be joined with <br> (not \n) — raw newlines break GFM table structure.
+      const indent = '  '.repeat(depth);
       let index = node.attrs?.start || 1;
-      const items = (node.content || []).map(n => {
-        const itemHtml = renderBlockNode(n, h);
-        const prefix = `${index}. `;
-        index++;
-        return prefix + itemHtml;
-      });
-      return items.join('<br>');
+      const lines: string[] = [];
+      for (const item of (node.content || [])) {
+        let mainText = '';
+        const nested: string[] = [];
+        for (const child of (item.content || [])) {
+          if (child.type === 'bulletList' || child.type === 'orderedList') {
+            nested.push(renderBlockNode(child, h, depth + 1));
+          } else {
+            mainText = renderBlockNode(child, h, depth);
+          }
+        }
+        lines.push(`${indent}${index++}. ${mainText}`);
+        for (const n of nested) lines.push(n);
+      }
+      return lines.join('<br>');
     }
     case 'listItem': {
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('');
-      // If parent is bulletList, we need "- " prefix. If orderedList, parent will prepend index.
-      // But we don't know the parent type here. A simple way:
-      // We can just return the content. The only issue is bulletList needs "- " and orderedList needs "1. "
-      // Let's refactor slightly to pass the prefix from the parent, or just check the parent somehow.
-      // Since renderBlockNode doesn't take context, let's just do it directly.
+      // listItem is only reached via the default fallback path (non-list parent).
+      // In normal flow, bulletList/orderedList handle listItem content directly above.
+      const content = (node.content || []).map(n => renderBlockNode(n, h, depth)).join('');
       return content;
     }
     case 'blockquote': {
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('<br>');
+      const content = (node.content || []).map(n => renderBlockNode(n, h, depth)).join('<br>');
       return `<blockquote>${content}</blockquote>`;
     }
     case 'githubAlert': {
       const alertType = node.attrs?.alertType || 'NOTE';
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('<br>');
+      const content = (node.content || []).map(n => renderBlockNode(n, h, depth)).join('<br>');
       return `<blockquote>[!${alertType}]<br>${content}</blockquote>`;
     }
     default: {
@@ -91,7 +112,7 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       }
       if (node.content) {
         // Fallback for unhandled blocks with content (like codeBlock inside a table, if allowed)
-        return node.content.map(n => renderBlockNode(n, h)).join('<br>');
+        return node.content.map(n => renderBlockNode(n, h, depth)).join('<br>');
       }
       // Truly unhandled node, let the default renderer try
       return h.renderChildren([node] as unknown as JSONContent[]);
