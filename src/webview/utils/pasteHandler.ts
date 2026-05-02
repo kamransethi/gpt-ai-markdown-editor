@@ -191,7 +191,7 @@ export function isRichHtml(html: string, plainText: string): boolean {
  * Check if clipboard data contains an image
  *
  * @param clipboardData - ClipboardEvent data
- * @returns true if image content is present
+ * @returns true if image content is present (even alongside text/html)
  */
 export function hasImageContent(clipboardData: DataTransfer | null): boolean {
   if (!clipboardData) return false;
@@ -202,6 +202,25 @@ export function hasImageContent(clipboardData: DataTransfer | null): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Check if clipboard data contains ONLY image content with no text/html present.
+ * Used to distinguish a pure image copy (screenshot, file copy) from a webpage
+ * copy that includes both HTML text and inline image data.
+ *
+ * @param clipboardData - ClipboardEvent data
+ * @returns true only when at least one image/* item exists AND no text/html is present
+ */
+export function hasOnlyImageContent(clipboardData: DataTransfer | null): boolean {
+  if (!clipboardData) return false;
+  const items = clipboardData.items;
+  let hasImage = false;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type === 'text/html') return false;
+    if (items[i].type.startsWith('image/')) hasImage = true;
+  }
+  return hasImage;
 }
 
 /**
@@ -280,8 +299,10 @@ export function processPasteContent(clipboardData: DataTransfer | null): {
     return { content: '', wasConverted: false, isImage: false, isHtml: false, isMarkdown: false };
   }
 
-  // Check for image first
-  if (hasImageContent(clipboardData)) {
+  // Only short-circuit for pure image clipboard (no text/html).
+  // When clipboard has both text/html and image/* (e.g. webpage copy), process
+  // the HTML so text content is not silently dropped (FR-006).
+  if (hasOnlyImageContent(clipboardData)) {
     return { content: '', wasConverted: false, isImage: true, isHtml: false, isMarkdown: false };
   }
 

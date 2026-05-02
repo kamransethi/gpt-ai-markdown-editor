@@ -57,7 +57,10 @@ import {
   setupImageDragDrop,
   hasPendingImageSaves,
   getPendingImageCount,
+  imageDragDropHandler,
+  imagePasteHandler,
 } from './features/imageDragDrop';
+import { ImageUploadPlugin } from './extensions/imageUploadPlugin';
 import { setupFileLinkDrop } from './features/fileLinkDrop';
 import { renderTableToMarkdownWithBreaks } from './utils/tableMarkdownSerializer';
 import { createTocPane, type TocPaneAnchor } from './features/tocPane';
@@ -1080,6 +1083,7 @@ function initializeEditor(initialContent: string) {
           class: 'markdown-image',
         },
       }),
+      ImageUploadPlugin,
       BubbleMenuExtension.configure({
         element: floatingFormattingBar as HTMLElement,
         shouldShow: ({ editor: currentEditor, state }) => {
@@ -1141,32 +1145,12 @@ function initializeEditor(initialContent: string) {
           class: 'markdown-editor',
           spellcheck: 'true',
         },
-        // Prevent default image drop handling - let our custom handler manage it
-        handleDrop: (_view, event, _slice, _moved) => {
-          const dt = event.dataTransfer;
-
-          if (!dt) return false;
-
-          // Case 1: Actual image files (from desktop/finder)
-          if (dt.files && dt.files.length > 0) {
-            return true; // Prevent default, our DOM handlers will manage file drops
-          }
-
-          // Case 2: VS Code file explorer drops (passes URI as text)
-          // Check for text/uri-list or text/plain containing image paths
-          const uriList = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
-          if (uriList) {
-            const isFilePath =
-              uriList.startsWith('file://') || /^(\.?\.\/|[A-Za-z]:\\|\/)/.test(uriList);
-            if (isFilePath) {
-              // This is a file path drop from VS Code - prevent TipTap's default
-              // Our DOM handlers will process it
-              return true;
-            }
-          }
-
-          return false; // Allow default for non-image drops
-        },
+        // Route file/image drops and pastes through the image drop handler (FR-004).
+        // Returns true when the handler owns the event (prevents ProseMirror default).
+        handleDrop: (view, event, slice, moved) =>
+          imageDragDropHandler(view, event, slice, moved),
+        handlePaste: (view, event, slice) =>
+          imagePasteHandler(view, event, slice),
       },
       onUpdate: ({ editor: _editor }) => {
         if (isUpdating) return;

@@ -7,6 +7,7 @@
 import { Editor } from '@tiptap/core';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { BaseOverlay } from '../overlays/BaseOverlay';
 
 /**
  * Search Overlay - In-document search for Markdown for Humans
@@ -23,7 +24,7 @@ const searchPluginKey = new PluginKey('search-highlight');
 
 // Search state
 let searchOverlayElement: HTMLElement | null = null;
-let isVisible = false;
+const searchBaseOverlay = new BaseOverlay();
 let savedSelection: { from: number; to: number } | null = null;
 let currentQuery = '';
 let currentMatches: Array<{ from: number; to: number }> = [];
@@ -152,7 +153,7 @@ function ensureSearchPlugin(editor: Editor) {
  * Scroll to a match position
  */
 function scrollToMatch(editor: Editor, match: { from: number; to: number }) {
-  const shouldRefocusInput = isVisible;
+  const shouldRefocusInput = searchBaseOverlay.isOpen;
 
   // Set selection to the match
   editor.commands.setTextSelection({ from: match.from, to: match.to });
@@ -441,9 +442,8 @@ export function showSearchOverlay(editor: Editor): void {
   // Get selected text as initial query
   const selectedText = editor.state.doc.textBetween(from, to, ' ');
 
-  // Show overlay
-  searchOverlayElement.classList.add('visible');
-  isVisible = true;
+  // Show overlay via BaseOverlay (handles DOM attach, visible class, Escape key, focus stack)
+  searchBaseOverlay.open(searchOverlayElement);
 
   // Focus input and set selected text
   const searchInput = searchOverlayElement.querySelector(
@@ -466,8 +466,8 @@ export function showSearchOverlay(editor: Editor): void {
 export function hideSearchOverlay(editor: Editor, restorePosition = true): void {
   if (!searchOverlayElement) return;
 
-  searchOverlayElement.classList.remove('visible');
-  isVisible = false;
+  // BaseOverlay handles removing 'visible' class + focus return
+  searchBaseOverlay.close();
 
   // Clear search state
   currentQuery = '';
@@ -512,7 +512,7 @@ export function hideSearchOverlay(editor: Editor, restorePosition = true): void 
  * Toggle the search overlay
  */
 export function toggleSearchOverlay(editor: Editor): void {
-  if (isVisible) {
+  if (searchBaseOverlay.isOpen) {
     hideSearchOverlay(editor);
   } else {
     showSearchOverlay(editor);
@@ -523,7 +523,7 @@ export function toggleSearchOverlay(editor: Editor): void {
  * Check if search overlay is visible
  */
 export function isSearchVisible(): boolean {
-  return isVisible;
+  return searchBaseOverlay.isOpen;
 }
 
 /**

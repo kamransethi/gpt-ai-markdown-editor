@@ -7,12 +7,13 @@
 import { Editor } from '@tiptap/core';
 import { buildOutlineFromEditor } from '../utils/outline';
 import { scrollToHeading } from '../utils/scrollToHeading';
+import { BaseOverlay } from '../overlays/BaseOverlay';
 
 /**
  * TOC Overlay state
  */
 let tocOverlayElement: HTMLElement | null = null;
-let isVisible = false;
+const tocBaseOverlay = new BaseOverlay();
 let savedSelection: { from: number; to: number } | null = null;
 let savedScrollTop = 0;
 
@@ -57,12 +58,9 @@ export function createTocOverlay(editor: Editor): HTMLElement {
   overlay.appendChild(backdrop);
   overlay.appendChild(panel);
 
-  // Handle keyboard navigation
-  overlay.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      hideTocOverlay(editor);
-    }
+  // Handle keyboard navigation (Escape handled by BaseOverlay at document level)
+  overlay.addEventListener('keydown', (_e: KeyboardEvent) => {
+    // Intentionally empty — BaseOverlay registers Escape on document
   });
 
   document.body.appendChild(overlay);
@@ -161,9 +159,8 @@ export function showTocOverlay(editor: Editor): void {
     renderTocList(editor, listContainer);
   }
 
-  // Show overlay
-  tocOverlayElement.classList.add('visible');
-  isVisible = true;
+  // Show overlay via BaseOverlay (handles DOM attach, visible class, Escape, focus stack)
+  tocBaseOverlay.open(tocOverlayElement);
 
   // Focus first item or close button
   requestAnimationFrame(() => {
@@ -183,8 +180,8 @@ export function showTocOverlay(editor: Editor): void {
 export function hideTocOverlay(editor: Editor, restorePosition = true): void {
   if (!tocOverlayElement) return;
 
-  tocOverlayElement.classList.remove('visible');
-  isVisible = false;
+  // BaseOverlay handles removing 'visible' class and focus return
+  tocBaseOverlay.close();
 
   // Restore previous position if requested
   if (restorePosition && savedSelection) {
@@ -204,7 +201,7 @@ export function hideTocOverlay(editor: Editor, restorePosition = true): void {
  * Toggle the TOC overlay
  */
 export function toggleTocOverlay(editor: Editor): void {
-  if (isVisible) {
+  if (tocBaseOverlay.isOpen) {
     hideTocOverlay(editor);
   } else {
     showTocOverlay(editor);
@@ -215,5 +212,5 @@ export function toggleTocOverlay(editor: Editor): void {
  * Check if TOC overlay is visible
  */
 export function isTocVisible(): boolean {
-  return isVisible;
+  return tocBaseOverlay.isOpen;
 }
