@@ -2,7 +2,7 @@
 
 **Folder**: `specs/033-table-cell-bullet-serialization/`
 **Created**: 2026-05-02
-**Status**: Draft
+**Status**: Completed
 
 ## User Scenarios & Testing *(mandatory)*
 
