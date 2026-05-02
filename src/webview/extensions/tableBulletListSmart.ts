@@ -53,14 +53,18 @@ function markerForDepth(depth: number): string {
 }
 
 /**
- * Parse a line's indentation depth (2 spaces per level) and marker.
+ * Parse a line's indentation depth (2 spaces per level), marker, and actual prefix length.
  * Returns null if the line has no bullet.
+ *
+ * `prefixLen` is the real character count of the matched prefix (m[0].length) — used for
+ * deletion in Tab/Shift-Tab.  Do NOT substitute `indent * 2 + marker.length + 1` here:
+ * the trailing space in the regex is optional, so the formula can be off by one.
  */
-function parseBulletLine(text: string): { indent: number; marker: string; rest: string } | null {
+function parseBulletLine(text: string): { indent: number; marker: string; prefixLen: number } | null {
   const m = TABLE_BULLET_RE.exec(text);
   if (!m) return null;
   const indent = Math.floor(m[1].length / 2);
-  return { indent, marker: m[2], rest: text.slice(m[0].length) };
+  return { indent, marker: m[2], prefixLen: m[0].length };
 }
 
 // ---------------------------------------------------------------------------
@@ -156,8 +160,7 @@ export const TableBulletListSmart = Extension.create({
           const newMarker = markerForDepth(newDepth);
           const newIndent = '  '.repeat(newDepth);
           const newPrefix = `${newIndent}${newMarker} `;
-          const oldPrefixLen = parsed.indent * 2 + parsed.marker.length + 1; // indent + marker + space
-          tr.delete(start, start + oldPrefixLen);
+          tr.delete(start, start + parsed.prefixLen);
           tr.insertText(newPrefix, start);
           changed = true;
         }
@@ -185,8 +188,7 @@ export const TableBulletListSmart = Extension.create({
           const newMarker = markerForDepth(newDepth);
           const newIndent = '  '.repeat(newDepth);
           const newPrefix = `${newIndent}${newMarker} `;
-          const oldPrefixLen = parsed.indent * 2 + parsed.marker.length + 1;
-          tr.delete(start, start + oldPrefixLen);
+          tr.delete(start, start + parsed.prefixLen);
           tr.insertText(newPrefix, start);
           changed = true;
         }
