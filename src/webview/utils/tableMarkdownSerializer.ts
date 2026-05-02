@@ -49,21 +49,23 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
     case 'bulletList': {
       // For standard markdown tables, native HTML lists aren't universally supported and
       // can cause parsing issues. User preferred format: just separated text with "- " prefix.
+      // Items MUST be joined with <br> (not \n) — raw newlines break the GFM table structure.
       const items = (node.content || []).map(n => {
         return '- ' + renderBlockNode(n, h);
       });
-      return items.join(' \n');
+      return items.join('<br>');
     }
     case 'orderedList': {
       // Ordered list inside table cell -> plain text with "1. ", "2. " prefix
+      // Items MUST be joined with <br> (not \n) — raw newlines break the GFM table structure.
       let index = node.attrs?.start || 1;
       const items = (node.content || []).map(n => {
         const itemHtml = renderBlockNode(n, h);
         const prefix = `${index}. `;
         index++;
-        return prefix + itemHtml; // We don't prepend here because listItem doesn't know its index easily unless we pass it, so let's let listItem just return text and we prepend here
+        return prefix + itemHtml;
       });
-      return items.join(' \n');
+      return items.join('<br>');
     }
     case 'listItem': {
       const content = (node.content || []).map(n => renderBlockNode(n, h)).join('');
