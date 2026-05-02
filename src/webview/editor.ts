@@ -50,6 +50,7 @@ import {
 } from './BubbleMenuView';
 import { createContextMenu } from './features/contextMenu';
 import { createTableContextMenu } from './features/tableContextMenu';
+import { createImageContextMenu, isExternalImage } from './features/imageContextMenu';
 import { handleAiRefineResult } from './features/aiRefine';
 import { TextColorMark, CustomTextStyle } from './extensions/textColor';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
@@ -361,6 +362,7 @@ let floatingFormattingBar: HTMLElement | null = null;
 let floatingBarController: ReturnType<typeof createFloatingFormattingBar> | null = null;
 let textContextMenuCtrl: ReturnType<typeof createContextMenu> | null = null;
 let tableContextMenuCtrl: ReturnType<typeof createTableContextMenu> | null = null;
+let imageContextMenuCtrl: ReturnType<typeof createImageContextMenu> | null = null;
 let tocPaneController: ReturnType<typeof createTocPane> | null = null;
 let tocAnchors: TocPaneAnchor[] = [];
 let tocMaxDepth = 3;
@@ -1385,6 +1387,7 @@ function initializeEditor(initialContent: string) {
     // Create context menus
     textContextMenuCtrl = createContextMenu(editorInstance);
     tableContextMenuCtrl = createTableContextMenu(editorInstance);
+    imageContextMenuCtrl = createImageContextMenu(editorInstance, vscode);
 
     // Setup image drag & drop handling
     setupImageDragDrop(editorInstance, vscode);
@@ -1403,13 +1406,27 @@ function initializeEditor(initialContent: string) {
     const contextMenuHandler = (e: MouseEvent) => {
       try {
         const target = e.target as HTMLElement;
+        const imageEl = target.closest('img.markdown-image') as HTMLImageElement | null;
         const tableCell = target.closest('td, th');
 
         // Hide both menus first
         textContextMenuCtrl?.hide();
         tableContextMenuCtrl?.hide();
+        imageContextMenuCtrl?.hide();
 
-        if (tableCell && editorInstance.isActive('table')) {
+        if (imageEl && target.closest('.ProseMirror')) {
+          e.preventDefault();
+          const pos = editorInstance.view.posAtDOM(imageEl, 0);
+          const imagePath =
+            imageEl.getAttribute('data-markdown-src') || imageEl.getAttribute('src') || '';
+          imageContextMenuCtrl?.show(
+            e.clientX,
+            e.clientY,
+            imageEl,
+            pos,
+            isExternalImage(imagePath)
+          );
+        } else if (tableCell && editorInstance.isActive('table')) {
           e.preventDefault();
           const hit = editorInstance.view.posAtCoords({ left: e.clientX, top: e.clientY });
           const pos = hit ? hit.pos : editorInstance.state.selection.from;
@@ -1426,6 +1443,7 @@ function initializeEditor(initialContent: string) {
     const documentClickHandler = () => {
       textContextMenuCtrl?.hide();
       tableContextMenuCtrl?.hide();
+      imageContextMenuCtrl?.hide();
     };
 
     // Handle keyboard shortcuts
@@ -1465,6 +1483,8 @@ function initializeEditor(initialContent: string) {
       textContextMenuCtrl = null;
       tableContextMenuCtrl?.destroy();
       tableContextMenuCtrl = null;
+      imageContextMenuCtrl?.destroy();
+      imageContextMenuCtrl = null;
       tocPaneController?.destroy();
       tocPaneController = null;
       // Clean up custom event listeners registered at module scope

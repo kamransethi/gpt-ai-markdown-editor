@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2025-2026 DK-AI
  *
  * Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -18,20 +18,16 @@
 import Image from '@tiptap/extension-image';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import type { JSONContent, MarkdownRendererHelpers, RenderContext } from '@tiptap/core';
-import {
-  createImageMenuButton,
-  createImageMenu,
-  showImageMenu,
-  hideImageMenu,
-  isExternalImage,
-} from '../features/imageMenu';
 import { createCustomImageMessagePlugin } from './customImageMessagePlugin';
-import { showImageMetadataFooter, hideImageMetadataFooter } from '../features/imageMetadata';
 import { MessageType } from '../../shared/messageTypes';
 
 const INDENT_PIXELS_PER_LEVEL = 30;
 const INDENT_SPACES_PER_LEVEL = 4;
 const MAX_INDENT_PIXELS = 240;
+
+function isExternalImage(src: string): boolean {
+  return src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:');
+}
 
 function getImageCacheBustTimestamp(markdownPath: string): number | null {
   const maybeMap = (window as any)?._imageCacheBust;
@@ -278,17 +274,9 @@ export const CustomImage = Image.extend({
         dom.style.height = `${node.attrs.height}px`;
       }
 
-      // Create three-dots menu button (shown on hover)
-      const menuButton = createImageMenuButton();
-      menuButton.setAttribute('title', 'Image options');
-
-      // Check if this is an external image (hide menu for external images)
+      // Check if this is an external image
       const imageSrc = node.attrs['markdown-src'] || node.attrs.src;
-      const isExternal = isExternalImage(imageSrc);
-      const isLocal = !isExternal;
-
-      // Create dropdown menu (pass isLocal to conditionally show file location options)
-      const menu = createImageMenu(isLocal);
+      isExternalImage(imageSrc);
 
       // Track if image is loaded
       let isImageLoaded = dom.complete;
@@ -315,60 +303,12 @@ export const CustomImage = Image.extend({
           wrapper.classList.add('image-missing');
           // Ensure screen readers get useful text
           dom.alt = node.attrs.alt || 'Image not found';
-          // Hide metadata footer if present
-          try {
-            hideImageMetadataFooter(wrapper);
-          } catch {
-            // ignore
-          }
         },
         { once: true }
       );
 
-      // Only show menu button on hover if image is loaded and not external
-      const handleMouseEnter = () => {
-        if (isImageLoaded && dom.complete && !isExternal) {
-          wrapper.classList.add('image-hover-active');
-          // Show metadata footer
-          const vscodeApi = (window as any).vscode;
-          if (vscodeApi) {
-            showImageMetadataFooter(dom, wrapper, vscodeApi);
-          }
-        }
-      };
-
-      const handleMouseLeave = (e: MouseEvent) => {
-        // Don't hide if menu is open
-        if (menu.style.display !== 'none') {
-          return;
-        }
-        // Don't hide if moving to another part of the wrapper
-        const relatedTarget = e.relatedTarget as HTMLElement;
-        if (relatedTarget && wrapper.contains(relatedTarget)) {
-          return;
-        }
-        wrapper.classList.remove('image-hover-active');
-        // Hide metadata footer
-        hideImageMetadataFooter(wrapper);
-      };
-
-      wrapper.addEventListener('mouseenter', handleMouseEnter);
-      wrapper.addEventListener('mouseleave', handleMouseLeave);
-
-      // Append menu as sibling of button (not child) for correct positioning
+      // Append image as node view content
       wrapper.appendChild(dom);
-
-      // Create three-dots menu button click handler
-      menuButton.addEventListener('click', (e: MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const vscodeApi = (window as any).vscode;
-        if (menu.style.display === 'none') {
-          showImageMenu(menu, menuButton, dom, editor, vscodeApi);
-        } else {
-          hideImageMenu(menu);
-        }
-      });
 
       // Double-click handler: open .drawio.svg files in the Draw.io extension
       wrapper.addEventListener('dblclick', (e: MouseEvent) => {
@@ -451,9 +391,6 @@ export const CustomImage = Image.extend({
       };
 
       resizeHandle.addEventListener('mousedown', onMouseDown);
-
-      wrapper.appendChild(menuButton);
-      wrapper.appendChild(menu);
 
       // No need to setup image click handler - only icon opens modal
       return {
