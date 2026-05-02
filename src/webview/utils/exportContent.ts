@@ -11,6 +11,7 @@
  */
 
 import { Editor } from '@tiptap/core';
+import { getMermaidPositions, serializeDocToHtml } from './docSerializer';
 
 /**
  * Export content data structure
@@ -33,112 +34,64 @@ export interface ExportContent {
  * @returns Export-ready content with HTML and Mermaid PNGs
  */
 export async function collectExportContent(editor: Editor): Promise<ExportContent> {
-  // Get HTML content from editor
-  const editorElement = editor.view.dom as HTMLElement;
-  const clonedContent = editorElement.cloneNode(true) as HTMLElement;
-
-  // Find all Mermaid diagrams - look for the split-view wrapper
-  const mermaidWrappers = clonedContent.querySelectorAll('.mermaid-split-wrapper');
   const mermaidImages: ExportContent['mermaidImages'] = [];
 
-  // Convert each Mermaid SVG to PNG
-  for (let i = 0; i < mermaidWrappers.length; i++) {
-    const wrapper = mermaidWrappers[i] as HTMLElement;
-    const renderBlock = wrapper.querySelector('.mermaid-render-block') as HTMLElement;
+  // FR-003: use AST serialization — no cloneNode, no CSS-class queries.
+  // serializeDocToHtml walks doc.descendants() and:
+  //   - emits <img data-mermaid-id="N"> placeholders for mermaid nodes
+  //   - reads node.attrs.rawHtml for raw-HTML inline/block nodes
+  //   - normalises image src from data-markdown-src attrs
+  const { html: serializedHtml, mermaidIds } = serializeDocToHtml(editor);
 
-    if (renderBlock) {
-      const svgElement = renderBlock.querySelector('svg') as unknown as SVGSVGElement | null;
+  // Convert mermaid diagrams to PNG.
+  // Use getMermaidPositions() + editor.view.nodeDOM(pos) to locate the live
+  // rendered SVG by document position — avoids CSS class coupling.
+  const mermaidPositions = getMermaidPositions(editor);
+  for (let i = 0; i < mermaidIds.length; i++) {
+    const id = mermaidIds[i];
+    const pos = mermaidPositions[i];
 
-      if (svgElement) {
-        try {
-          // Capture the rendered dimensions from the editor display
-          const renderBlockRect = renderBlock.getBoundingClientRect();
-          const renderedWidth =
-            renderBlockRect.width > 0 ? Math.round(renderBlockRect.width) : undefined;
-          const renderedHeight =
-            renderBlockRect.height > 0 ? Math.round(renderBlockRect.height) : undefined;
+    if (pos === undefined) continue;
 
-          // Convert SVG to PNG
-          const pngDataUrl = await svgToPng(svgElement);
-          const id = `mermaid-${i}`;
+    const domNode = editor.view.nodeDOM(pos);
+    const renderBlock = (domNode instanceof HTMLElement)
+      ? domNode.querySelector('.mermaid-render-block') as HTMLElement | null
+      : null;
 
-          mermaidImages.push({
-            id,
-            pngDataUrl,
-            originalSvg: svgElement.outerHTML,
-            width: renderedWidth,
-            height: renderedHeight,
-          });
+    if (!renderBlock) continue;
 
-          // Replace SVG with img tag in cloned content
-          const imgElement = document.createElement('img');
-          imgElement.src = pngDataUrl;
-          imgElement.alt = `Mermaid diagram ${i + 1}`;
-          imgElement.className = 'mermaid-export-image';
-          imgElement.setAttribute('data-mermaid-id', id);
+    const svgElement = renderBlock.querySelector('svg') as unknown as SVGSVGElement | null;
+    if (!svgElement) continue;
 
-          // Replace the mermaid-split-wrapper with the image
-          wrapper.parentNode?.replaceChild(imgElement, wrapper);
-        } catch (error) {
-          console.error('[DK-AI] Failed to convert Mermaid SVG to PNG:', error);
-          // Keep the SVG as fallback
-        }
-      }
-    }
-  }
-
-  // Restore raw HTML tags that were wrapped in spans/divs for the editor display.
-  // This ensures things like raw <img src="..."> tags become actual DOM nodes
-  // before we serialize to string, allowing PDF/DOCX exporters to process them.
-  const rawHtmlNodes = clonedContent.querySelectorAll('.raw-html-tag');
-  for (const el of Array.from(rawHtmlNodes)) {
-    const raw = el.getAttribute('data-raw');
-    if (raw) {
-      try {
-        el.outerHTML = raw;
-      } catch (e) {
-        console.warn('[DK-AI] collectExportContent: Failed to restore raw HTML', e);
-      }
-    }
-  }
-
-  // Normalize other images: prefer original markdown src for export so
-  // PDF export (via headless Chrome) can resolve relative paths using
-  // a <base> href set to the document directory. Many images in the
-  // editor are rendered via webview URIs; for exports we want the
-  // original markdown path (data-markdown-src) or a file:// URI.
-  const otherImgs = clonedContent.querySelectorAll('img');
-  for (const el of Array.from(otherImgs)) {
     try {
-      const img = el as HTMLImageElement;
-      const mdSrc = img.getAttribute('data-markdown-src');
-      if (!mdSrc) continue;
+      const renderBlockRect = renderBlock.getBoundingClientRect();
+      const renderedWidth =
+        renderBlockRect.width > 0 ? Math.round(renderBlockRect.width) : undefined;
+      const renderedHeight =
+        renderBlockRect.height > 0 ? Math.round(renderBlockRect.height) : undefined;
 
-      // Windows absolute path -> convert backslashes and use file:/// prefix
-      if (/^[A-Za-z]:[\\/]/.test(mdSrc)) {
-        const normalized = mdSrc.replace(/\\/g, '/');
-        img.setAttribute('src', `file:///${normalized}`);
-        continue;
-      }
+      const pngDataUrl = await svgToPng(svgElement);
 
-      // If the markdown src already includes a scheme (http(s)/data/file), use it as-is
-      if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(mdSrc) || mdSrc.startsWith('data:')) {
-        img.setAttribute('src', mdSrc);
-        continue;
-      }
-
-      // Otherwise treat as a relative path and set it directly so the
-      // exporter (which injects <base href="file://{docDir}/">) can
-      // resolve the resource correctly.
-      img.setAttribute('src', mdSrc);
-    } catch (e) {
-      // Non-fatal; continue processing other images
-
-      console.warn('[DK-AI] collectExportContent: Failed to normalize image src', e);
+      mermaidImages.push({
+        id,
+        pngDataUrl,
+        originalSvg: svgElement.outerHTML,
+        width: renderedWidth,
+        height: renderedHeight,
+      });
+    } catch (error) {
+      console.error('[DK-AI] Failed to convert Mermaid SVG to PNG:', error);
     }
   }
 
-  const finalHtml = clonedContent.innerHTML;
+  // Replace <img data-mermaid-id="N"> placeholders with PNG data URLs
+  let finalHtml = serializedHtml;
+  for (const entry of mermaidImages) {
+    finalHtml = finalHtml.replace(
+      new RegExp(`<img data-mermaid-id="${entry.id}"[^>]*>`, 'g'),
+      `<img src="${entry.pngDataUrl}" alt="Mermaid diagram" class="mermaid-export-image" data-mermaid-id="${entry.id}">`
+    );
+  }
 
   return {
     html: finalHtml,

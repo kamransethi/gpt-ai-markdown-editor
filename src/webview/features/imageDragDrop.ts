@@ -24,6 +24,11 @@ import { confirmFileDrop } from './fileDropConfirmation';
 import { showHugeImageDialog, isHugeImage } from './hugeImageDialog';
 import { devLog } from '../utils/devLog';
 import { MessageType } from '../../shared/messageTypes';
+import {
+  addUploadTracking,
+  getUploadPos,
+  removeUploadTracking,
+} from '../extensions/imageUploadPlugin';
 
 /**
  * Track images currently being saved to prevent document sync race conditions
@@ -35,6 +40,13 @@ const pendingImageSaves = new Set<string>();
  * Used to insert the bullet list at the original drop position after save completes.
  */
 const pendingFileDropPositions = new Map<string, number>();
+
+/**
+ * Module-level references stored by setupImageDragDrop so that
+ * queueImageFromUrl can trigger uploads without needing to re-acquire them.
+ */
+let _moduleVscodeApi: VsCodeApi | null = null;
+let _moduleEditor: Editor | null = null;
 
 /**
  * Check if any images are currently being saved
@@ -109,19 +121,21 @@ const IMAGE_PATH_REGEX = /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i;
  * Setup image drag & drop and paste handling for the editor
  */
 export function setupImageDragDrop(editor: Editor, vscodeApi: VsCodeApi): void {
+  _moduleVscodeApi = vscodeApi;
+  _moduleEditor = editor;
+
   const editorElement = document.querySelector('.ProseMirror');
   if (!editorElement) {
     console.warn('[DK-AI] Editor element not found for image drag-drop setup');
     return;
   }
 
-  // Drag over styling
+  // Drag over styling (keep as DOM listeners — purely cosmetic, no routing logic)
   editorElement.addEventListener('dragover', handleDragOver);
   editorElement.addEventListener('dragleave', handleDragLeave);
-  editorElement.addEventListener('drop', e => handleDrop(e as DragEvent, editor, vscodeApi));
 
-  // Paste handling
-  editorElement.addEventListener('paste', e => handlePaste(e as ClipboardEvent, editor, vscodeApi));
+  // Drop and paste are now routed through editorProps.handleDrop / editorProps.handlePaste
+  // (registered in editor.ts). No DOM listeners needed here for routing.
 
   // Listen for image save confirmations and file save confirmations from extension
   window.addEventListener('message', event => handleImageMessage(event, editor));
@@ -157,7 +171,117 @@ export function setupImageDragDrop(editor: Editor, vscodeApi: VsCodeApi): void {
 }
 
 /**
- * Extract an image path (text/uri-list or text/plain) from a DataTransfer
+ * Queue an image URL (from a web-pasted <img src>) for download and upload.
+ * Fetches the URL as a Blob, wraps it in a File, and routes it through insertImage
+ * so it is saved to the workspace like any other pasted/dropped image.
+ *
+ * Requires setupImageDragDrop() to have been called first.
+ *
+ * @param editor - TipTap editor instance
+ * @param url - Absolute image URL extracted from pasted HTML
+ * @param pos - Optional editor position to insert at (defaults to cursor)
+ */
+export async function queueImageFromUrl(editor: Editor, url: string, pos?: number): Promise<void> {
+  const vscodeApi = _moduleVscodeApi;
+  if (!vscodeApi) {
+    console.warn('[DK-AI] queueImageFromUrl called before setupImageDragDrop — skipping');
+    return;
+  }
+
+  let file: File;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`[DK-AI] Could not fetch image at ${url}: ${response.status}`);
+      return;
+    }
+    const blob = await response.blob();
+    const mimeType = blob.type || 'image/png';
+    if (!mimeType.startsWith('image/')) {
+      console.warn(`[DK-AI] URL did not return image MIME type: ${mimeType}`);
+      return;
+    }
+    const filename = url.split('/').pop()?.split('?')[0] || 'pasted-image.png';
+    file = new File([blob], filename, { type: mimeType });
+  } catch (err) {
+    console.warn('[DK-AI] Failed to fetch image from URL:', url, err);
+    return;
+  }
+
+  const targetFolder = getRememberedFolder() || '';
+  await insertImage(editor, file, vscodeApi, targetFolder, 'pasted', pos);
+}
+
+// ---------------------------------------------------------------------------
+// editorProps handlers — registered in editor.ts via editorProps.handleDrop
+// and editorProps.handlePaste. These replace the old DOM event listeners so
+// all image routing runs through TipTap's event pipeline (FR-004).
+// ---------------------------------------------------------------------------
+
+/**
+ * TipTap editorProps.handleDrop handler.
+ * Returns true (handled) for image/file drops; false to defer to ProseMirror default.
+ * Start the async drop logic as fire-and-forget and return synchronously.
+ */
+export function imageDragDropHandler(
+  _view: unknown,
+  event: Event,
+  _slice: unknown,
+  _moved: boolean
+): boolean {
+  const editor = _moduleEditor;
+  const vscodeApi = _moduleVscodeApi;
+  if (!editor || !vscodeApi) return false;
+
+  const dragEvent = event as DragEvent;
+  const dt = dragEvent.dataTransfer;
+  if (!dt) return false;
+
+  const allFiles = Array.from(dt.files);
+  const hasFiles = allFiles.length > 0;
+  const hasImagePath = !!extractImagePathFromDataTransfer(dt);
+
+  if (!hasFiles && !hasImagePath) return false; // let ProseMirror handle plain-text drops
+
+  // We own this drop — start async handler, return true immediately
+  void handleDrop(dragEvent, editor, vscodeApi);
+  return true;
+}
+
+/**
+ * TipTap editorProps.handlePaste handler.
+ * Returns true (handled) for image-only paste events; false to let
+ * clipboardHandling.ts and TipTap's native paste run for text/HTML.
+ * Start the async paste logic as fire-and-forget and return synchronously.
+ */
+export function imagePasteHandler(
+  _view: unknown,
+  event: Event,
+  _slice: unknown
+): boolean {
+  const editor = _moduleEditor;
+  const vscodeApi = _moduleVscodeApi;
+  if (!editor || !vscodeApi) return false;
+
+  const pasteEvent = event as ClipboardEvent;
+  const clipboardData = pasteEvent.clipboardData;
+  if (!clipboardData) return false;
+
+  // Only handle when there are image files or an image file path.
+  // Text/HTML content is handled by clipboardHandling.ts (capture-phase listener).
+  const imagePath = extractImagePathFromDataTransfer(clipboardData);
+  const imageFiles = getImageFiles(clipboardData);
+  const items = Array.from(clipboardData.items || []);
+  const hasBinaryImage = items.some(item => item.type.startsWith('image/'));
+
+  if (!imagePath && imageFiles.length === 0 && !hasBinaryImage) return false;
+
+  // We own this paste — start async handler, return true immediately
+  void handlePaste(pasteEvent, editor, vscodeApi);
+  return true;
+}
+
+/**
  */
 export function extractImagePathFromDataTransfer(dt: DataTransfer | null): string | null {
   if (!dt) return null;
@@ -809,6 +933,10 @@ export async function insertImage(
       })
       .run();
 
+    // Track insertion position via plugin state so concurrent edits don't
+    // invalidate the position (replaces DOM-scraping in updateImageSrc).
+    addUploadTracking(editor, placeholderId);
+
     // Add to pending saves to prevent document sync race condition
     pendingImageSaves.add(placeholderId);
     devLog(`[DK-AI] Added to pending saves. Total pending: ${pendingImageSaves.size}`);
@@ -836,75 +964,59 @@ export async function insertImage(
 }
 
 /**
- * Update image src after save (replace base64 with file path)
+ * Update image src after save (replace base64 with workspace-relative path).
+ * Uses plugin state to find the current position — handles concurrent edits
+ * correctly because the plugin maps positions on every transaction.
  */
 function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): void {
-  devLog(`[DK-AI] updateImageSrc called: looking for placeholder ${placeholderId}`);
+  devLog(`[DK-AI] updateImageSrc called: placeholder=${placeholderId}`);
 
-  const img = document.querySelector(
-    `img[data-placeholder-id="${placeholderId}"]`
-  ) as HTMLImageElement | null;
-
-  if (!img) {
-    console.warn(`[DK-AI] Image with placeholder ${placeholderId} not found in DOM`);
-    // Try to find any images and log their attributes for debugging
-    const allImages = document.querySelectorAll('.markdown-image');
-    devLog(`[DK-AI] Found ${allImages.length} images in document`);
-    allImages.forEach((imgEl, i) => {
-      devLog(
-        `[DK-AI] Image ${i}: data-placeholder-id="${imgEl.getAttribute('data-placeholder-id')}"`
-      );
-    });
+  const pos = getUploadPos(editor, placeholderId);
+  if (pos === undefined) {
+    console.warn(`[DK-AI] updateImageSrc: placeholder ${placeholderId} not in plugin state — may have been deleted`);
     return;
   }
 
-  devLog(`[DK-AI] Found image element, updating src...`);
+  const node = editor.state.doc.nodeAt(pos);
+  devLog(`[DK-AI] Node at position ${pos}: ${node?.type.name}`);
 
-  // Find the position of this image node in the editor
-  const pos = editor.view.posAtDOM(img, 0);
-  devLog(`[DK-AI] Image position in editor: ${pos}`);
-
-  if (pos !== undefined && pos !== null) {
-    // Update the TipTap node's src attribute
-    const node = editor.state.doc.nodeAt(pos);
-    devLog(`[DK-AI] Node at position: ${node?.type.name}`);
-
-    if (node && node.type.name === 'image') {
-      editor
-        .chain()
-        .setNodeSelection(pos)
-        .updateAttributes('image', {
-          src: newSrc, // Use relative path (markdown-friendly)
-          'data-placeholder-id': null, // Remove the placeholder attribute
-        })
-        .run();
-
-      devLog(`[DK-AI] Successfully updated image src to: ${newSrc}`);
-    } else {
-      console.warn(`[DK-AI] Node at position ${pos} is not an image: ${node?.type.name}`);
-    }
+  if (node && node.type.name === 'image') {
+    editor
+      .chain()
+      .setNodeSelection(pos)
+      .updateAttributes('image', {
+        src: newSrc,
+        'data-placeholder-id': null,
+      })
+      .run();
+    removeUploadTracking(editor, placeholderId);
+    devLog(`[DK-AI] Updated image src to: ${newSrc}`);
   } else {
-    console.warn(`[DK-AI] Could not find position for image in editor`);
+    console.warn(`[DK-AI] Node at position ${pos} is not an image: ${node?.type.name}`);
+    removeUploadTracking(editor, placeholderId);
   }
 }
 
 /**
- * Remove image placeholder on error
+ * Remove image placeholder on error.
+ * Uses plugin state position — safe even if the user has typed around the image.
  */
 function removeImagePlaceholder(placeholderId: string, editor: Editor): void {
-  const img = document.querySelector(`img[data-placeholder-id="${placeholderId}"]`);
-
-  if (img) {
-    // Find the node position and delete it
-    const pos = editor.view.posAtDOM(img, 0);
-    if (pos !== undefined) {
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from: pos, to: pos + 1 })
-        .run();
-    }
+  const pos = getUploadPos(editor, placeholderId);
+  if (pos === undefined) {
+    devLog(`[DK-AI] removeImagePlaceholder: placeholder ${placeholderId} already gone`);
+    return;
   }
+
+  const node = editor.state.doc.nodeAt(pos);
+  if (node && node.type.name === 'image') {
+    editor
+      .chain()
+      .focus()
+      .deleteRange({ from: pos, to: pos + node.nodeSize })
+      .run();
+  }
+  removeUploadTracking(editor, placeholderId);
 }
 
 /**

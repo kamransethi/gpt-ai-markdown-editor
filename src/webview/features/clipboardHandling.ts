@@ -8,8 +8,9 @@
  */
 
 import type { Editor } from '@tiptap/core';
-import { processPasteContent, parseFencedCode } from '../utils/pasteHandler';
+import { processPasteContent, parseFencedCode, hasOnlyImageContent } from '../utils/pasteHandler';
 import { copySelectionAsMarkdown } from '../utils/copyMarkdown';
+import { queueImageFromUrl } from './imageDragDrop';
 import {
   getCurrentTableMatrix,
   isTableSelection,
@@ -60,6 +61,29 @@ function insertTableMatrix(editor: Editor, matrix: string[][]): void {
     const html = renderTableMatrixAsHtml(matrix);
     editor.commands.insertContent(html);
   }
+}
+
+/**
+ * Extract all absolute http/https img src URLs from an HTML string.
+ * Used before stripping img tags so we can queue each for upload.
+ */
+function extractImgUrls(html: string): string[] {
+  const urls: string[] = [];
+  const pattern = /<img\b[^>]*\bsrc="(https?:\/\/[^"]+)"[^>]*>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    urls.push(match[1]);
+  }
+  return urls;
+}
+
+/**
+ * Remove all <img> elements from an HTML string.
+ * Called before inserting web-pasted HTML to prevent double-insert when
+ * the same images are queued for local upload via queueImageFromUrl.
+ */
+function stripImgTags(html: string): string {
+  return html.replace(/<img\b[^>]*>/gi, '');
 }
 
 /**
@@ -128,8 +152,9 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // for external content that TipTap doesn't recognize natively.
     const result = processPasteContent(clipboardData);
 
-    // Images handled by imageDragDrop - don't interfere
-    if (result.isImage) {
+    // Pure image clipboard (no text/html): let imageDragDrop handle it via its
+    // paste listener. Do not interfere.
+    if (result.isImage && hasOnlyImageContent(clipboardData)) {
       return;
     }
 
@@ -143,8 +168,19 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
     // If we need to convert content (rich HTML), intercept early
     if (result.wasConverted && result.content && result.isHtml) {
       event.preventDefault();
-      // Insert HTML - TipTap parses it into proper nodes (tables, lists, etc.)
-      editor.commands.insertContent(result.content);
+
+      // Extract <img src> URLs from the HTML so we can queue them for upload,
+      // then strip <img> tags before insertion to prevent double-insert.
+      const imgUrls = extractImgUrls(result.content);
+      const htmlWithoutImgs = imgUrls.length > 0 ? stripImgTags(result.content) : result.content;
+
+      // Insert the HTML content (images removed) — TipTap parses into proper nodes
+      editor.commands.insertContent(htmlWithoutImgs);
+
+      // Queue each extracted image URL for download + local upload (fire-and-forget)
+      for (const url of imgUrls) {
+        void queueImageFromUrl(editor, url);
+      }
     }
     // Otherwise: default paste behavior for plain text
   };
