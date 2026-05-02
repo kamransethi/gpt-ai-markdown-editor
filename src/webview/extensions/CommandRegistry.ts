@@ -28,11 +28,17 @@ export interface CommandProviderItem {
   [key: string]: any;
 }
 
-// ── Inline File Picker ───────────────────────────────────────────────────────
-// Opened when the user selects "File Link" from the block menu.
-// Positions itself at the cursor, searches fileCache, and inserts the link.
+// ── Inline Workspace Picker ──────────────────────────────────────────────────
+// Opened when the user selects "File Link" or "Image" from the block menu.
+// Positions itself at the cursor, searches fileCache, and inserts accordingly.
 
-function openFilePicker(editor: any, insertFrom: number): void {
+type WorkspacePickerMode = 'fileLink' | 'image';
+
+function isImagePath(path: string): boolean {
+  return /\.(png|jpe?g|gif|svg|webp|bmp|ico|tiff?)$/i.test(path);
+}
+
+function openWorkspacePicker(editor: any, insertFrom: number, mode: WorkspacePickerMode): void {
   // --- Container ---
   const container = document.createElement('div');
   container.className = 'slash-command-menu file-link-picker';
@@ -44,7 +50,7 @@ function openFilePicker(editor: any, insertFrom: number): void {
   // --- Input ---
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = 'Search files…';
+  input.placeholder = mode === 'image' ? 'Search images…' : 'Search files…';
   input.className = 'file-link-search-input';
   input.style.cssText = [
     'width:100%',
@@ -88,7 +94,7 @@ function openFilePicker(editor: any, insertFrom: number): void {
     if (files.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'slash-command-empty';
-      empty.textContent = 'No files found';
+      empty.textContent = mode === 'image' ? 'No images found' : 'No files found';
       resultEl.appendChild(empty);
       return;
     }
@@ -99,7 +105,7 @@ function openFilePicker(editor: any, insertFrom: number): void {
       btn.className = 'slash-command-item' + (i === 0 ? ' is-selected' : '');
       btn.setAttribute('role', 'option');
       btn.innerHTML = `
-        <span class="slash-command-icon">📄</span>
+          <span class="slash-command-icon">${mode === 'image' ? '🖼' : '📄'}</span>
         <span class="slash-command-text">
           <span class="slash-command-title">${formatLinkDisplay(file.filename)}</span>
           <span class="slash-command-desc">${file.path}</span>
@@ -112,7 +118,7 @@ function openFilePicker(editor: any, insertFrom: number): void {
         btn.classList.add('is-selected');
         selectedIdx = i;
       });
-      btn.addEventListener('click', () => insertLink(file));
+      btn.addEventListener('click', () => insertItem(file));
       resultEl.appendChild(btn);
     });
   }
@@ -125,7 +131,26 @@ function openFilePicker(editor: any, insertFrom: number): void {
     });
   }
 
-  function insertLink(file: { filename: string; path: string }) {
+  function insertItem(file: { filename: string; path: string }) {
+    if (mode === 'image') {
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(insertFrom, [
+          {
+            type: 'image',
+            attrs: {
+              src: file.path,
+              alt: formatLinkDisplay(file.filename),
+            },
+          },
+          { type: 'text', text: ' ' },
+        ])
+        .run();
+      cleanup();
+      return;
+    }
+
     editor
       .chain()
       .focus()
@@ -165,7 +190,7 @@ function openFilePicker(editor: any, insertFrom: number): void {
       e.preventDefault();
     } else if (e.key === 'Enter') {
       const file = currentFiles[selectedIdx];
-      if (file) insertLink(file);
+      if (file) insertItem(file);
       e.preventDefault();
     } else if (e.key === 'Escape') {
       cleanup();
@@ -175,7 +200,14 @@ function openFilePicker(editor: any, insertFrom: number): void {
   document.addEventListener('mousedown', outsideClick, true);
 
   // Seed with full list (or empty if cache not ready yet)
-  renderResults(fileCache.search('', 15));
+  const initialFiles =
+    mode === 'image'
+      ? fileCache
+          .search('', 200)
+          .filter(file => isImagePath(file.path))
+          .slice(0, 15)
+      : fileCache.search('', 15);
+  renderResults(initialFiles);
   input.focus();
 }
 
@@ -270,11 +302,12 @@ function makeBlockItems(): CommandProviderItem[] {
     },
     {
       title: 'Image',
-      description: 'Insert image from URL',
+      description: 'Search and insert a workspace image',
       icon: '🖼',
       command: ({ editor, range }) => {
+        const insertFrom = range.from;
         editor.chain().focus().deleteRange(range).run();
-        window.dispatchEvent(new CustomEvent('slashCommandInsertImage'));
+        openWorkspacePicker(editor, insertFrom, 'image');
       },
     },
     {
@@ -327,8 +360,8 @@ function makeBlockItems(): CommandProviderItem[] {
         // Capture insert position BEFORE deleting the slash range
         const insertFrom = range.from;
         editor.chain().focus().deleteRange(range).run();
-        // Open the inline file picker at the original position
-        openFilePicker(editor, insertFrom);
+        // Open the inline picker at the original position
+        openWorkspacePicker(editor, insertFrom, 'fileLink');
       },
     },
   ];
@@ -392,6 +425,37 @@ export const CommandRegistry = Extension.create({
         const fileLinkMatch = q.match(/^(link|file)\s(.*)/);
         if (fileLinkMatch) {
           return fileCache.search(fileLinkMatch[2].trim(), 15).map(makeFileItem);
+        }
+
+        // Image mode: activated by typing "/image <text>" or "/img <text>"
+        const imageMatch = q.match(/^(image|img)\s(.*)/);
+        if (imageMatch) {
+          return fileCache
+            .search(imageMatch[2].trim(), 200)
+            .filter(file => isImagePath(file.path))
+            .slice(0, 15)
+            .map(file => ({
+              title: formatLinkDisplay(file.filename),
+              description: file.path,
+              icon: '🖼',
+              command: ({ editor, range }: { editor: any; range: any }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .insertContentAt(range.from, [
+                    {
+                      type: 'image',
+                      attrs: {
+                        src: file.path,
+                        alt: formatLinkDisplay(file.filename),
+                      },
+                    },
+                    { type: 'text', text: ' ' },
+                  ])
+                  .run();
+              },
+            }));
         }
 
         // Default: block commands filtered by what the user has typed so far

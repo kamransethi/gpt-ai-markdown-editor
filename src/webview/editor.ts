@@ -129,6 +129,65 @@ const KNOWN_HTML_TAGS = new Set([
   'mark',
 ]);
 
+function isLocalFileHref(href: string): boolean {
+  return Boolean(href) && !/^(https?:|mailto:|#)/i.test(href);
+}
+
+function getLinkHrefAtCursor(editor: Editor): string | null {
+  const { state } = editor;
+  const { selection } = state;
+  if (!selection.empty) return null;
+
+  const docSize = state.doc.content.size;
+  const probePositions = [selection.from, Math.max(0, selection.from - 1)].filter(
+    (pos, idx, arr) => pos <= docSize && arr.indexOf(pos) === idx
+  );
+
+  for (const pos of probePositions) {
+    const marks = state.doc.resolve(pos).marks();
+    const linkMark = marks.find(mark => mark.type.name === 'link');
+    const href = linkMark?.attrs?.href;
+    if (typeof href === 'string' && href.length > 0) {
+      return href;
+    }
+  }
+
+  return null;
+}
+
+function updateActiveLinkPreview(editor: Editor): void {
+  const root = editor.view.dom as HTMLElement;
+
+  root.querySelectorAll('a.markdown-link.link-edit-preview').forEach(link => {
+    link.classList.remove('link-edit-preview');
+    link.removeAttribute('data-link-href');
+  });
+
+  const href = getLinkHrefAtCursor(editor);
+  if (!href || !isLocalFileHref(href)) return;
+
+  const { selection } = editor.state;
+  const probePositions = [selection.from, Math.max(0, selection.from - 1)].filter(
+    (pos, idx, arr) => arr.indexOf(pos) === idx
+  );
+
+  for (const pos of probePositions) {
+    try {
+      const domAtPos = editor.view.domAtPos(pos);
+      const node = domAtPos.node;
+      const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element);
+      const linkEl = element?.closest?.('a.markdown-link') as HTMLAnchorElement | null;
+      if (linkEl) {
+        linkEl.classList.add('link-edit-preview');
+        linkEl.setAttribute('data-link-href', href);
+        break;
+      }
+    } catch {
+      // Ignore transient DOM mapping errors while the view is updating.
+    }
+  }
+}
+
 /**
  * Strip unknown HTML tags from a string, keeping text content.
  * Converts `<mark>` → `==` for native Highlight support.
@@ -1190,6 +1249,7 @@ function initializeEditor(initialContent: string) {
             to,
             selectedText,
           });
+          updateActiveLinkPreview(editor);
         } catch (error) {
           console.warn('[DK-AI] Selection update failed:', error);
         }
