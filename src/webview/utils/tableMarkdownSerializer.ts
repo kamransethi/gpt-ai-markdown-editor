@@ -77,12 +77,12 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       return content;
     }
     case 'blockquote': {
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join(' \n');
+      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('<br>');
       return `<blockquote>${content}</blockquote>`;
     }
     case 'githubAlert': {
       const alertType = node.attrs?.alertType || 'NOTE';
-      const content = (node.content || []).map(n => renderBlockNode(n, h)).join(' \n');
+      const content = (node.content || []).map(n => renderBlockNode(n, h)).join('<br>');
       return `<blockquote>[!${alertType}]<br>${content}</blockquote>`;
     }
     default: {
@@ -91,7 +91,7 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers): string 
       }
       if (node.content) {
         // Fallback for unhandled blocks with content (like codeBlock inside a table, if allowed)
-        return node.content.map(n => renderBlockNode(n, h)).join(' \n');
+        return node.content.map(n => renderBlockNode(n, h)).join('<br>');
       }
       // Truly unhandled node, let the default renderer try
       return h.renderChildren([node] as unknown as JSONContent[]);
