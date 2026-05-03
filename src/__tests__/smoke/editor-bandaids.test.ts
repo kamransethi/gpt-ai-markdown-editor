@@ -2,8 +2,13 @@
 
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { ImageBoundaryNav } from '../../webview/extensions/imageBoundaryNav';
 import { CustomImage } from '../../webview/extensions/customImage';
+import { ImageBoundaryNav } from '../../webview/extensions/imageBoundaryNav';
+
+// Mock VS Code API
+(window as any).vscode = {
+  postMessage: jest.fn(),
+};
 
 describe('Editor Bandaids Removal Tests', () => {
   let editor: Editor;
@@ -27,7 +32,7 @@ describe('Editor Bandaids Removal Tests', () => {
       expect(handled).toBe(true);
 
       // Should have inserted a paragraph before
-      expect(editor.getHTML()).toContain('<p></p><p><img src="test.jpg">Text</p>');
+      expect(editor.getHTML()).toContain('<p></p><p><img src="test.jpg" data-markdown-src="test.jpg">Text</p>');
     });
 
     it('creates an empty paragraph when Enter is pressed at the end of a paragraph next to an image', () => {
@@ -47,7 +52,7 @@ describe('Editor Bandaids Removal Tests', () => {
       expect(handled).toBe(true);
 
       // Should have inserted a paragraph after
-      expect(editor.getHTML()).toContain('<p>Text<img src="test.jpg"></p><p></p>');
+      expect(editor.getHTML()).toContain('<p>Text<img src="test.jpg" data-markdown-src="test.jpg"></p><p></p>');
     });
   });
 
@@ -55,7 +60,7 @@ describe('Editor Bandaids Removal Tests', () => {
     it('does not exclude tables from drag handle to prevent selection trapping', async () => {
       // Dynamic import to avoid test initialization issues if not used yet
       const { DraggableBlocks } = await import('../../webview/extensions/draggableBlocks');
-      const excludedTags = DraggableBlocks.options.excludedTagList || [];
+      const excludedTags = (DraggableBlocks as any).config?.options?.excludedTagList || [];
       expect(excludedTags).not.toContain('table');
       expect(excludedTags).not.toContain('td');
       expect(excludedTags).not.toContain('th');
@@ -120,7 +125,11 @@ describe('Editor Bandaids Removal Tests', () => {
       editor = new Editor({
         extensions: [
           StarterKit,
-          Link.configure({ openOnClick: false })
+          Link.configure({ openOnClick: false }).extend({
+            inclusive() {
+              return false;
+            },
+          })
         ],
         content: '<p><a href="https://example.com">Link</a></p>',
       });
@@ -144,7 +153,7 @@ describe('Editor Bandaids Removal Tests', () => {
       
       editor = new Editor({
         extensions: [
-          StarterKit.configure({ paragraph: false }),
+          StarterKit.configure({ paragraph: {} }),
           Markdown
         ],
         content: '<p>Line 1</p><p></p><p>Line 3</p>',

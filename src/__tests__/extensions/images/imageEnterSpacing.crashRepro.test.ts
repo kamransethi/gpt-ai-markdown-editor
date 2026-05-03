@@ -12,26 +12,35 @@ beforeEach(async () => {
 });
 
 describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
-  const createPlugin = (editor: unknown) => {
-    type AddProseMirrorPlugins = (this: { editor: unknown }) => unknown[];
-
-    const addProseMirrorPlugins = (
+  const createPlugin = (editor: any) => {
+    const addKeyboardShortcuts = (
       ImageEnterSpacing as unknown as {
         config: {
-          addProseMirrorPlugins?: AddProseMirrorPlugins;
+          addKeyboardShortcuts?: (this: { editor: any }) => Record<string, () => boolean>;
         };
       }
-    ).config.addProseMirrorPlugins;
+    ).config.addKeyboardShortcuts;
 
-    if (typeof addProseMirrorPlugins !== 'function') {
-      throw new Error('ImageEnterSpacing.addProseMirrorPlugins is not available');
+    if (typeof addKeyboardShortcuts !== 'function') {
+      throw new Error('ImageEnterSpacing.addKeyboardShortcuts is not available');
     }
 
-    const plugins = addProseMirrorPlugins.call({ editor });
-    return plugins[0] as unknown as {
-      props?: {
-        handleKeyDown?: (view: unknown, event: KeyboardEvent) => boolean;
-      };
+    const shortcuts = addKeyboardShortcuts.call({ editor });
+    const enterHandler = shortcuts['Enter'];
+
+    if (typeof enterHandler !== 'function') {
+      throw new Error('Enter shortcut handler not found');
+    }
+
+    return {
+      props: {
+        handleKeyDown: (_view: unknown, event: KeyboardEvent) => {
+          if (event.key === 'Enter') {
+            return enterHandler();
+          }
+          return false;
+        },
+      },
     };
   };
 
@@ -166,7 +175,7 @@ describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
     };
 
     const dispatch = jest.fn();
-    const plugin = createPlugin({ commands: {} });
+    const plugin = createPlugin({ state, view: { dispatch } });
     const event = createEnterEvent();
 
     const handled = plugin.props?.handleKeyDown?.({ state, dispatch }, event);

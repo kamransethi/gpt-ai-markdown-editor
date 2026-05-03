@@ -37,6 +37,12 @@ const buildOptions = {
     '.css': 'css',
     '.ttf': 'file',
   },
+  // TipTap optional dependencies for features we don't use (collaboration, etc.)
+  external: [
+    '@tiptap/extension-collaboration',
+    '@tiptap/y-tiptap',
+    '@tiptap/extension-node-range',
+  ],
   // Use esbuild's built-in 'pure' option to remove console.log/debug/info
   // This properly handles parsing and removes the calls during minification
   // while keeping console.error and console.warn

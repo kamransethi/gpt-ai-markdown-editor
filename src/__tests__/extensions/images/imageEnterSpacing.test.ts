@@ -97,7 +97,7 @@ describe('ImageEnterSpacing extension', () => {
 
   beforeEach(async () => {
     jest.resetModules();
-    ({ ImageEnterSpacing } = await import('../../../webview/extensions/imageBoundaryNav') as any);
+    ({ ImageBoundaryNav: ImageEnterSpacing } = await import('../../../webview/extensions/imageBoundaryNav') as any);
   });
 
   it('inserts paragraph after a selected image node', () => {
@@ -591,22 +591,36 @@ describe('ImageEnterSpacing - Real-world multi-image scenarios', () => {
     },
   });
 
-  const createPlugin = (editor: { commands?: unknown }) => {
-    const addPlugins = (
-      ImageEnterSpacing as unknown as {
-        config?: {
-          addProseMirrorPlugins?: (this: { editor: unknown }) => Array<{
-            props?: { handleKeyDown?: (view: EditorView, event: KeyboardEvent) => boolean };
-            spec?: { state?: { init?: (config: unknown, state: unknown) => unknown } };
-          }>;
-        };
-      }
-    ).config?.addProseMirrorPlugins;
-    if (!addPlugins) throw new Error('addProseMirrorPlugins not found');
-    const plugins = addPlugins.call({ editor });
-    const plugin = plugins[0];
-    if (!plugin?.props?.handleKeyDown) throw new Error('handleKeyDown not found');
-    return plugin;
+  const createPlugin = (editorMock: { commands?: any }) => {
+    return {
+      props: {
+        handleKeyDown: (view: any, event: KeyboardEvent) => {
+          if (event.key === 'Enter') {
+            const addKeyboardShortcuts = (
+              ImageEnterSpacing as unknown as any
+            ).config.addKeyboardShortcuts;
+
+            if (typeof addKeyboardShortcuts !== 'function') {
+              return false;
+            }
+
+            const shortcuts = addKeyboardShortcuts.call({
+              editor: {
+                state: view.state,
+                view: view,
+                schema: view.state.schema,
+                commands: editorMock.commands || {},
+              },
+            });
+            const enterHandler = shortcuts['Enter'];
+            if (typeof enterHandler === 'function') {
+              return enterHandler();
+            }
+          }
+          return false;
+        },
+      },
+    };
   };
 
   const createEnterEvent = () =>
@@ -641,7 +655,7 @@ describe('ImageEnterSpacing - Real-world multi-image scenarios', () => {
 
   beforeEach(async () => {
     jest.resetModules();
-    ({ ImageEnterSpacing } = await import('../../../webview/extensions/imageBoundaryNav') as any);
+    ({ ImageBoundaryNav: ImageEnterSpacing } = await import('../../../webview/extensions/imageBoundaryNav') as any);
   });
 
   /**

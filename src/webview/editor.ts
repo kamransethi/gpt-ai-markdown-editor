@@ -1126,7 +1126,6 @@ function initializeEditor(initialContent: string) {
       ImageBoundaryNav, // Handle Enter key around images at boundaries
       Link.configure({
         openOnClick: false,
-        inclusive: false,
         HTMLAttributes: {
           class: 'markdown-link',
         },

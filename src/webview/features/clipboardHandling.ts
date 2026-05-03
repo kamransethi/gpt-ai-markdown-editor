@@ -11,17 +11,6 @@ import type { Editor } from '@tiptap/core';
 import { processPasteContent, parseFencedCode, hasOnlyImageContent } from '../utils/pasteHandler';
 import { copySelectionAsMarkdown } from '../utils/copyMarkdown';
 import { queueImageFromUrl } from './imageDragDrop';
-import {
-  getCurrentTableMatrix,
-  isTableSelection,
-  parseClipboardTable,
-  parseHtmlTable,
-  pasteIntoCells,
-  renderTableMatrixAsHtml,
-  serializeTableMatrix,
-  serializeTableMatrixAsMarkdown,
-} from '../utils/tableClipboard';
-import { findTable } from 'prosemirror-tables';
 
 /**
  * Check whether the event target is inside an embedded editor (e.g. mermaid source overlay)
@@ -32,36 +21,6 @@ function isEmbeddedEditorTarget(target: EventTarget | null): boolean {
   return !!target.closest('.mermaid-source-overlay, .code-block-editor');
 }
 
-/**
- * Check if HTML contains mixed content: either multiple tables or
- * significant non-table content alongside a table.
- */
-function isMixedTableContent(html: string): boolean {
-  const tableCount = (html.match(/<table[\s>]/gi) || []).length;
-  if (tableCount > 1) return true;
-
-  // Strip all table content to check if there's meaningful text outside
-  const withoutTables = html.replace(/<table[\s\S]*?<\/table>/gi, '');
-  const textContent = withoutTables.replace(/<[^>]*>/g, '').trim();
-  return textContent.length > 0;
-}
-
-/**
- * Insert a parsed table matrix into the editor — either into an existing table
- * (if cursor is inside one) or as a new standalone table.
- */
-function insertTableMatrix(editor: Editor, matrix: string[][]): void {
-  const activeTable = findTable(editor.state.selection.$from);
-  if (activeTable) {
-    const tr = pasteIntoCells(editor.state, matrix);
-    if (tr) {
-      editor.view.dispatch(tr);
-    }
-  } else {
-    const html = renderTableMatrixAsHtml(matrix);
-    editor.commands.insertContent(html);
-  }
-}
 
 /**
  * Extract all absolute http/https img src URLs from an HTML string.
