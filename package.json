@@ -443,6 +443,7 @@
     "postpackage:release": "node scripts/move-vsix-to-release.js",
     "vsix": "npm run build:release && npm run prepackage:release && npm run package:release",
     "publish:release": "vsce publish",
+    "publish:prerelease": "vsce publish --pre-release",
     "publish:ovsx:release": "npm run build:release && ovsx publish",
     "repackage": "node scripts/repackage.js",
     "install-hooks": "bash ./scripts/install-git-hooks.sh",
