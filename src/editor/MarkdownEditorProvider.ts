@@ -1083,19 +1083,34 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   }
 
   /**
-   * Check if source is within workspace/document directory (cross-platform)
+   * Check if source is within workspace/document directory (cross-platform).
+   * Thin wrapper over the exported `isPathContainedWithin` helper.
    */
   private isWithinWorkspace(sourcePath: string, basePath: string): boolean {
-    const normalizedSource = path.normalize(sourcePath);
-    const normalizedBase = path.normalize(basePath);
+    return isPathContainedWithin(sourcePath, basePath);
+  }
 
-    // On Windows, ensure case-insensitive comparison
-    // On Mac/Linux, case-sensitive comparison
-    const sourceLower =
-      process.platform === 'win32' ? normalizedSource.toLowerCase() : normalizedSource;
-    const baseLower = process.platform === 'win32' ? normalizedBase.toLowerCase() : normalizedBase;
-
-    return sourceLower.startsWith(baseLower + path.sep) || sourceLower === baseLower;
+  /**
+   * Build the list of allowed roots a file-mutating handler may write to,
+   * for the given document. Used by handleRenameImage / handleResizeImage
+   * to reject paths that escape via `../` from a hostile markdown image
+   * src (see SECURITY review §H1, §H2).
+   */
+  private getAllowedFileRoots(document: vscode.TextDocument): string[] {
+    const roots: string[] = [];
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+    if (workspaceFolder) {
+      roots.push(workspaceFolder.uri.fsPath);
+    }
+    if (document.uri.scheme === 'file') {
+      roots.push(path.dirname(document.uri.fsPath));
+    }
+    const imageBase = this.getImageBasePath(document);
+    if (imageBase) {
+      roots.push(imageBase);
+    }
+    // De-dupe
+    return Array.from(new Set(roots));
   }
 
   /**
@@ -1406,6 +1421,34 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         const normalizedPath = normalizeImagePath(imagePath);
         absolutePath = path.resolve(basePath, normalizedPath);
         imageUri = vscode.Uri.file(absolutePath);
+      }
+
+      // SECURITY: gate the write target.
+      // - "Normal" path (no absolutePathFromMessage): must stay inside the
+      //   document/workspace roots. Defends against `<img src="../../etc/x">`.
+      // - "Edit in place" path (absolutePathFromMessage): if the file is
+      //   outside every allowed root, require explicit user confirmation
+      //   showing the resolved path before we write. The webview is the
+      //   only legitimate source of this message, but any extension or
+      //   misbehaving page could send it; a one-click confirm makes the
+      //   destination visible.
+      // See SECURITY review §H2.
+      const allowedRoots = this.getAllowedFileRoots(document);
+      const insideAllowedRoot = allowedRoots.some(root =>
+        isPathContainedWithin(absolutePath, root)
+      );
+      if (!insideAllowedRoot) {
+        if (!absolutePathFromMessage) {
+          throw new Error(`Refusing to resize image outside the document/workspace: ${imagePath}`);
+        }
+        const choice = await vscode.window.showWarningMessage(
+          `Resize will overwrite a file outside this workspace:\n\n${absolutePath}\n\nProceed?`,
+          { modal: true },
+          'Overwrite'
+        );
+        if (choice !== 'Overwrite') {
+          throw new Error('Resize cancelled by user.');
+        }
       }
 
       // Check if image exists
@@ -1912,6 +1955,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const absoluteOldPath = path.resolve(basePath, normalizedOldPath);
       const oldUri = vscode.Uri.file(absoluteOldPath);
 
+      // SECURITY: reject paths that escape the document/workspace roots.
+      // Without this, a hostile markdown file could rename arbitrary files
+      // on disk (e.g. ![](../../../../etc/hosts)) on a single user click.
+      const allowedRoots = this.getAllowedFileRoots(document);
+      if (!allowedRoots.some(root => isPathContainedWithin(absoluteOldPath, root))) {
+        throw new Error(`Refusing to rename image outside the document/workspace: ${oldPath}`);
+      }
+
       // Check if old file exists
       try {
         await vscode.workspace.fs.stat(oldUri);
@@ -1930,6 +1981,15 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const oldDir = path.dirname(absoluteOldPath);
       const absoluteNewPath = path.join(oldDir, newFilename);
       const newUri = vscode.Uri.file(absoluteNewPath);
+
+      // SECURITY: also confirm the destination is contained. Defends against
+      // a maliciously crafted `newName` (e.g. `../../../etc/passwd`) that
+      // would otherwise escape via the dirname join above.
+      if (!allowedRoots.some(root => isPathContainedWithin(absoluteNewPath, root))) {
+        throw new Error(
+          `Refusing to rename image to a path outside the document/workspace: ${newFilename}`
+        );
+      }
 
       // Check if new file already exists
       let targetExists = false;
@@ -3064,4 +3124,42 @@ export function normalizeImagePath(imagePath: string): string {
       }
     })
     .join('/');
+}
+
+/**
+ * Path-traversal defense.
+ *
+ * Returns true iff `targetAbsolutePath` is `rootAbsolutePath` itself or a
+ * descendant of it. Used by the file-mutating message handlers (rename,
+ * resize) to reject attacker-supplied paths from a hostile markdown
+ * document — e.g. `<img src="../../../../etc/passwd">`.
+ *
+ * Both inputs MUST already be absolute. Caller is responsible for
+ * `path.resolve()` first.
+ *
+ * Notable defense: this is NOT a naive `target.startsWith(root)` check —
+ * that bug would mis-classify `/tmp/workspace-evil` as inside `/tmp/workspace`.
+ * We require either equality or `root + path.sep` as a prefix.
+ */
+export function isPathContainedWithin(
+  targetAbsolutePath: string,
+  rootAbsolutePath: string
+): boolean {
+  if (!targetAbsolutePath || !rootAbsolutePath) {
+    return false;
+  }
+  const normalizedTarget = path.normalize(targetAbsolutePath);
+  const normalizedRoot = path.normalize(rootAbsolutePath);
+
+  // Strip trailing separator from root (path.normalize keeps "/" for "/")
+  const rootNoSep =
+    normalizedRoot.length > 1 && normalizedRoot.endsWith(path.sep)
+      ? normalizedRoot.slice(0, -1)
+      : normalizedRoot;
+
+  // Case-insensitive on Windows; case-sensitive on macOS / Linux
+  const target = process.platform === 'win32' ? normalizedTarget.toLowerCase() : normalizedTarget;
+  const root = process.platform === 'win32' ? rootNoSep.toLowerCase() : rootNoSep;
+
+  return target === root || target.startsWith(root + path.sep);
 }
