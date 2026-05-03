@@ -36,7 +36,7 @@ const shimOptionalDependenciesPlugin = {
       '@tiptap/y-tiptap': `
         export const absolutePositionToRelativePosition = () => null;
         export const relativePositionToAbsolutePosition = () => null;
-        export const ySyncPluginKey = { key: 'ySync' };
+        export const ySyncPluginKey = { key: 'ySync', getState: () => null };
       `,
       '@tiptap/extension-node-range': `
         export const getSelectionRanges = () => [];

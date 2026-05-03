@@ -1,5 +1,7 @@
 ﻿# Spec 016: Show Image/Attachment Configuration During Paste & Insert
 
+**PRD Domains**: `images`, `configuration`
+
 ## Business Problem
 
 Users paste images and insert files via the "Insert Link" dialog without seeing which configuration settings control where these attachments will be saved. The system has two important configuration options already available:

@@ -1,6 +1,7 @@
 ﻿# Spec 020: File Drag & Drop into Editor
 
 **Status:** Implemented  
+**PRD Domains**: `editor-core`, `images`  
 **Version:** 2.0.37  
 **Date:** April 16, 2026
 

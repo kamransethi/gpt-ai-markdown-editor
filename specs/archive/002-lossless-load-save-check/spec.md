@@ -3,6 +3,7 @@
 **Feature Branch**: `002-lossless-load-save-check`  
 **Created**: 2026-04-06  
 **Status**: Draft  
+**PRD Domains**: `editor-core`
 **Input**: User description: "Automated roundtrip test at build/package time + optional runtime 'Check file compatibility' warning when opening files that may result in data loss"
 
 ## User Scenarios & Testing *(mandatory)*

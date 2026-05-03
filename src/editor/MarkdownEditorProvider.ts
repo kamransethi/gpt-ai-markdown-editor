@@ -534,6 +534,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         });
         break;
 
+      case MessageType.AI_EXPLAIN_STOP:
+        import('../features/aiExplain').then(m => m.stopAiExplainRequest());
+        break;
+
       case MessageType.GET_AI_PROMPTS:
         import('../features/aiPrompts').then(m =>
           m.getCustomPrompts().then(prompts => {

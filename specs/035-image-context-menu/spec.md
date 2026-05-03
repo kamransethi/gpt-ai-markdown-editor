@@ -3,6 +3,7 @@
 **Folder**: `specs/035-image-context-menu/`  
 **Created**: 2026-05-02  
 **Status**: Draft  
+**PRD Domains**: `images`, `editor-core`  
 **Input**: User description: "Images no longer need to have the [...] button on the upper right. Move that context menu to right click on images. Similar to the custom table context menu — same design language and philosophy."
 
 ---

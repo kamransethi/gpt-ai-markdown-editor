@@ -3,6 +3,7 @@
 **Folder**: `specs/013-pandoc-bullet-newlines/`  
 **Created**: April 12, 2026  
 **Status**: Draft  
+**PRD Domains**: `tables`, `export`  
 **Input**: Bug report: "Pandoc exports often do not have newline characters for bullets"
 
 ## User Scenarios & Testing

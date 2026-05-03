@@ -3,6 +3,7 @@
 **Folder**: `specs/014-navigation-panel/`  
 **Created**: 2026-04-12  
 **Status**: Draft  
+**PRD Domains**: `navigation`  
 **Input**: User description: "Add search for headings in the navigation panel via a small search textbox next to the word CONTENTS"
 
 ## User Scenarios & Testing

@@ -3,6 +3,7 @@
 **Folder**: `specs/033-table-cell-bullet-serialization/`
 **Created**: 2026-05-02
 **Status**: Completed
+**PRD Domains**: `tables`, `editor-core`
 **See also**: [plan.md](./plan.md) | [tasks.md](./tasks.md)
 
 ---

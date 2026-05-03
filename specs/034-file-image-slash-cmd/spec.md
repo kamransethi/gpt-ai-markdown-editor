@@ -3,6 +3,7 @@
 **Folder**: `specs/034-file-image-slash-cmd/`  
 **Created**: 2026-05-02  
 **Status**: Implemented ✅  
+**PRD Domains**: `slash-commands`, `images`  
 **Input**: Bug report — the `/image` slash command dispatched a dead `slashCommandInsertImage` CustomEvent with no listener, doing nothing. Required fix and UX parity with `/file` command. Also added Obsidian-style active link preview.
 
 ---
@@ -91,3 +92,50 @@ As a user, I want to see the file path of a link I am currently editing inline n
 - Image resizing or caption editing
 - Editing an existing link's href via the preview (read-only preview only)
 - Custom link picker styling beyond the shared picker UX
+
+---
+
+## Bug Fixes (May 2026)
+
+### Bug #1: Non-Image Formats Appearing in `/image` Slash Command
+**Issue**: When using `/image` slash command, the file picker was showing non-image files (e.g., `.txt`, `.md`, `.json`) along with actual image formats. Initial results correctly showed only images, but as soon as the user typed a search query, all matching files appeared regardless of extension.
+
+**Root Cause**: In `openWorkspacePicker()`, the input event listener was calling `fileCache.search(query, 15)` without applying the image format filter. The filter was only applied to initial results, not to search results.
+
+**Fix Applied**: 
+- Modified input event listener in `openWorkspacePicker()` to filter results by `isImagePath(file.path)` when `mode === 'image'`
+- Filter now consistently applies to both initial results and search results
+- Image format validation regex: `/\.(png|jpe?g|gif|svg|webp|bmp|ico|tiff?)$/i`
+
+**Location**: `src/webview/extensions/CommandRegistry.ts` (lines 177-185)
+
+### Bug #2: Stale File Cache - New Workspace Images Not Appearing
+**Issue**: When a user added new images to their workspace after opening the editor, the `/image` slash command would not show the newly added files. Users had to restart the editor for new files to appear in the picker.
+
+**Root Cause**: The workspace file cache (`fileCache`) was populated once during editor initialization via `GET_WORKSPACE_FILES` message. The cache was never refreshed, so new workspace files added after init were never discovered.
+
+**Fix Applied**:
+- Added `fileCache.requestRefresh()` method that dispatches a fresh `GET_WORKSPACE_FILES` message to the extension
+- Called `fileCache.requestRefresh()` whenever `openWorkspacePicker()` is invoked (before rendering initial results)
+- Fresh workspace file list is fetched from extension and populated via `WORKSPACE_FILES_RESULT` message
+- Users now see current workspace files every time they trigger `/image` or `/file` commands
+
+**Location**: 
+- `src/webview/utils/fileCache.ts` (lines 45-52): New `requestRefresh()` method
+- `src/webview/extensions/CommandRegistry.ts` (line 207): Call to `fileCache.requestRefresh()` before opening picker
+
+### Bug #3: Race Condition - Picker Shows Stale Cache (Renamed Files Not Appearing)
+**Issue**: When a file is renamed in the workspace, the slash command picker would not immediately show the new filename. Users had to type a search query or wait for initial results to update. The picker showed cached results before the fresh file list arrived from the extension.
+
+**Root Cause**: `requestRefresh()` is asynchronous — it sends a `GET_WORKSPACE_FILES` message but returns immediately. The picker then shows initial results using the old cache before the response arrives. The response eventually updates the cache, but by then the picker is already rendered with stale data.
+
+**Fix Applied**:
+- Made `fileCache.requestRefresh()` return a `Promise<void>` that resolves when fresh files arrive
+- Added internal `refreshPromise` tracking to handle concurrent refresh requests
+- Updated `setFiles()` to resolve pending refresh promises
+- Wrapped entire `openWorkspacePicker()` in an async IIFE that **awaits** the refresh before rendering picker
+- Picker now guaranteed to show current workspace files every time it opens (including renamed files)
+
+**Location**:
+- `src/webview/utils/fileCache.ts` (lines 13-14, 46-68): Promise-based refresh with resolution tracking
+- `src/webview/extensions/CommandRegistry.ts` (lines 35-208): Entire function wrapped in `async ()` that awaits refresh before UI render

@@ -1,6 +1,7 @@
 ﻿# Spec 022: Premium Editor Features &amp; AI Refinements
 
 **Status:** ✅ Implemented &amp; Shipped  
+**PRD Domains**: `ai-features`, `editor-core`  
 **Date:** April 18, 2026  
 **Version:** 2.0.30+  
 **Implementation Complexity:** Medium-High  

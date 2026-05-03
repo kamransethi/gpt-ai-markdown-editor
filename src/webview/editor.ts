@@ -72,7 +72,13 @@ import { SearchAndReplace } from './extensions/searchAndReplace';
 import { CommandRegistry } from './extensions/CommandRegistry';
 import { TableBulletListSmart } from './extensions/tableBulletListSmart';
 import { fileCache } from './utils/fileCache';
-import { AiExplain, handleAiExplainResult, handleImageAskResult } from './extensions/aiExplain';
+import {
+  AiExplain,
+  handleAiExplainResult,
+  handleAiExplainChunk,
+  handleAiExplainDone,
+  handleImageAskResult,
+} from './extensions/aiExplain';
 import { DraggableBlocks } from './extensions/draggableBlocks';
 
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
@@ -1733,6 +1739,12 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case MessageType.AI_EXPLAIN_RESULT:
         handleAiExplainResult(message as any);
+        break;
+      case MessageType.AI_EXPLAIN_CHUNK:
+        handleAiExplainChunk(message as any);
+        break;
+      case MessageType.AI_EXPLAIN_DONE:
+        handleAiExplainDone(message as any);
         break;
       case MessageType.AI_PROMPTS:
         (window as any).handleAiPromptsResult?.(message.prompts);

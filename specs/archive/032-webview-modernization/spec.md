@@ -3,6 +3,7 @@
 **Folder**: `specs/032-webview-modernization/`  
 **Created**: 2026-04-27  
 **Status**: Draft  
+**PRD Domains**: `editor-core`, `dev-tooling`  
 **Input**: User description: "Refactor webview bandaids based on analysis: Settings Panel (DOM spaghetti), Image Drag/Drop (DOM scraping), Export (DOM cloning), Global Events (bypassing framework), Overlays (raw HTML injection)."
 
 ## Clarifications

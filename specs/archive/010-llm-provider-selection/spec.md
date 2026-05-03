@@ -3,6 +3,7 @@
 **Folder**: `specs/010-llm-provider-selection/`  
 **Created**: April 11, 2026  
 **Status**: Draft  
+**PRD Domains**: `ai-features`, `configuration`  
 **Input**: User description: "The user should be able to choose the LLM of choice (default = github copilot) between github or a local ollama installation. If the LLM selected is Ollama, then the model should be changeable. It should default to llama3.2:latest"
 
 ---

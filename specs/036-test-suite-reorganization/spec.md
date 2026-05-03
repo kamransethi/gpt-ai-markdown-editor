@@ -3,6 +3,7 @@
 **Folder**: `specs/036-test-suite-reorganization/`  
 **Created**: 2026-05-02
 **Status**: Draft  
+**PRD Domains**: `dev-tooling`  
 **Input**: User description: "Validate the test suites. I need them to be more organized into groups. For example, smoke testing on each run Feature tests organized by all the custom extensions and code... There are some missing tests as well - specially those which will benefit from robot data entry and validation of the serialized markdown file... Tests such as highlihting text, and then making some of the text within bold..."
 
 ## User Scenarios & Testing *(mandatory)*

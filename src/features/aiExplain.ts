@@ -15,6 +15,19 @@ import type { LlmMessage } from './llm/types';
 import { getProviderAvailabilityCached } from './llm/providerAvailability';
 import { getPromptById } from './aiPrompts';
 
+/** Abort controller for the in-flight AI explain stream. Replaced on each new request. */
+let currentExplainAbort: AbortController | null = null;
+
+/**
+ * Abort any in-flight AI explain stream.
+ */
+export function stopAiExplainRequest(): void {
+  if (currentExplainAbort) {
+    currentExplainAbort.abort();
+    currentExplainAbort = null;
+  }
+}
+
 /**
  * Handle an AI explain request from the webview.
  */
@@ -72,21 +85,32 @@ export async function handleAiExplainRequest(
     const provider = createLlmProvider();
     const modelName = getModelDisplayName();
     const abortController = new AbortController();
+    currentExplainAbort = abortController;
 
     const messages: LlmMessage[] = [
       { role: 'system', content: sysPrompt },
       { role: 'user', content: `Document content:\n\n${text}\n\nTask: ${taskPrompt}` },
     ];
 
+    const MAX_RESPONSE_CHARS = 4000;
     let result = '';
     for await (const chunk of provider.generate(messages, abortController.signal)) {
+      if (abortController.signal.aborted) break;
       result += chunk;
+      webview.postMessage({
+        type: MessageType.AI_EXPLAIN_CHUNK,
+        text: chunk,
+        fullText: result,
+      });
+      if (result.length >= MAX_RESPONSE_CHARS) {
+        abortController.abort();
+        break;
+      }
     }
 
     webview.postMessage({
-      type: MessageType.AI_EXPLAIN_RESULT,
-      success: true,
-      explanation: result.trim(),
+      type: MessageType.AI_EXPLAIN_DONE,
+      fullText: result.trim(),
       modelName,
     });
   } catch (error: unknown) {

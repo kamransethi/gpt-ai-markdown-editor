@@ -1,6 +1,7 @@
 ﻿# Spec 019: HTML `<br>` Tag Optimization for Token Efficiency
 
 **Status:** Implemented  
+**PRD Domains**: `export`  
 **Version:** 2.0.37  
 **Date:** April 16, 2026
 
