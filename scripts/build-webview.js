@@ -21,6 +21,43 @@ const isProduction = args.includes('--prod') || process.env.NODE_ENV === 'produc
 const isWatch = args.includes('--watch');
 const noSourcemap = args.includes('--no-sourcemap');
 
+/**
+ * Plugin to provide shims for optional TipTap dependencies
+ * These are not used in the editor, but @tiptap/extension-drag-handle
+ * tries to import them. We provide empty shims to prevent runtime errors.
+ */
+const shimOptionalDependenciesPlugin = {
+  name: 'shim-optional-deps',
+  setup(build) {
+    const shims = {
+      '@tiptap/extension-collaboration': `
+        export const isChangeOrigin = () => false;
+      `,
+      '@tiptap/y-tiptap': `
+        export const absolutePositionToRelativePosition = () => null;
+        export const relativePositionToAbsolutePosition = () => null;
+        export const ySyncPluginKey = { key: 'ySync' };
+      `,
+      '@tiptap/extension-node-range': `
+        export const getSelectionRanges = () => [];
+        export class NodeRangeSelection {}
+      `,
+    };
+
+    for (const [module, content] of Object.entries(shims)) {
+      build.onResolve({ filter: new RegExp(`^${module.replace(/\//g, '\\/')}$`) }, () => ({
+        path: module,
+        namespace: 'optional-dep',
+      }));
+
+      build.onLoad({ filter: /.*/, namespace: 'optional-dep' }, (args) => ({
+        contents: shims[args.path],
+        loader: 'js',
+      }));
+    }
+  },
+};
+
 const buildOptions = {
   entryPoints: [
     { in: 'src/webview/editor.ts', out: 'webview' },
@@ -37,7 +74,7 @@ const buildOptions = {
     '.css': 'css',
     '.ttf': 'file',
   },
-  // TipTap optional dependencies for features we don't use (collaboration, etc.)
+  // TipTap optional dependencies (not used, but drag-handle imports them)
   external: [
     '@tiptap/extension-collaboration',
     '@tiptap/y-tiptap',
@@ -47,7 +84,7 @@ const buildOptions = {
   // This properly handles parsing and removes the calls during minification
   // while keeping console.error and console.warn
   pure: isProduction ? ['console.log', 'console.debug', 'console.info'] : [],
-  plugins: [],
+  plugins: [shimOptionalDependenciesPlugin],
 };
 
 async function build() {
@@ -56,7 +93,7 @@ async function build() {
     const context = await esbuild.context({
       ...buildOptions,
       minify: false, // Never minify in watch mode
-      plugins: [], // No console dropping in watch mode
+      plugins: [shimOptionalDependenciesPlugin],
     });
 
     await context.watch();
