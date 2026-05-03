@@ -1,5 +1,7 @@
 # Spec: Knowledge Graph & AI Settings Refinements (Bug Fixes)
 
+**PRD Domains**: `knowledge-graph`, `ai-features`
+
 ## Problem Description
 Following the implementation of the Knowledge Graph Phase 1 and AI Settings overhaul, several critical bugs and UX inconsistencies were identified:
 1. **Hardcoded LLM Backend**: Graph Chat was hardcoded to use Ollama for text generation, ignoring the user's selected LLM Provider (e.g., GitHub Copilot).

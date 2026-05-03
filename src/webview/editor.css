@@ -4343,6 +4343,78 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   background-color: var(--md-button-hover-bg);
 }
 
+/* Stop streaming button */
+.ai-explain-stop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--md-foreground);
+  opacity: 0.7;
+  padding: 2px 4px;
+  border-radius: var(--ui-radius-sm);
+  transition: opacity 0.12s ease;
+  font-size: 12px;
+}
+
+.ai-explain-stop:hover {
+  opacity: 1;
+  background-color: var(--md-hover-bg);
+}
+
+/* Markdown rendered content inside the panel */
+.ai-explain-body {
+  overflow-x: auto;
+}
+
+.ai-explain-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.ai-explain-markdown th,
+.ai-explain-markdown td {
+  border: 1px solid var(--md-border);
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-explain-markdown th {
+  background: var(--md-surface-raised, var(--md-hover-bg));
+  font-weight: 600;
+}
+
+.ai-explain-markdown tr:nth-child(even) td {
+  background: var(--md-surface-subtle, rgba(0, 0, 0, 0.03));
+}
+
+.ai-explain-markdown blockquote {
+  border-left: 3px solid var(--md-border);
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: var(--md-muted);
+}
+
+.ai-explain-markdown pre {
+  background: var(--md-code-bg);
+  border-radius: var(--ui-radius-sm);
+  padding: 10px 14px;
+  overflow-x: auto;
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.ai-explain-markdown pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
 /* ============================================
      Shiki Code Block Theme Toggle
      ============================================ */

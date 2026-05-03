@@ -3,6 +3,7 @@
 **Folder**: `specs/031-remove-editor-bandaids/`  
 **Created**: 2026-04-26  
 **Status**: Draft  
+**PRD Domains**: `editor-core`, `dev-tooling`  
 **Input**: User description: "OK, create a new 'feature' to deal with these bandaids one by one. Do a NEW deep code scan of the extension files focus starting with large files - looking for bandaids and non-standard code which should rather be handled via TipTap natively instead, or with simpler means instead. The feature should be written in a way that we can implement it in steps."
 
 ## User Scenarios & Testing *(mandatory)*

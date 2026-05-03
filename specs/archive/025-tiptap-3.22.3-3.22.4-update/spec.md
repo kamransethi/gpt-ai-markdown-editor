@@ -1,5 +1,7 @@
 ﻿# Spec 025: TipTap 3.22.3 to 3.22.4 Upgrade
 
+**PRD Domains**: `dev-tooling`, `editor-core`
+
 ## Context
 Maintain the project's dependency health by upgrading TipTap to the latest stable version (3.22.4). This update resolves upstream bugs but introduced serialization regressions in our strict roundtrip requirement, which required local mitigation.
 

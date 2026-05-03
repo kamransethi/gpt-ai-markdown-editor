@@ -3,6 +3,7 @@
 **Folder**: `specs/011-image-ai-ask/`  
 **Created**: 2026-04-11  
 **Status**: Draft  
+**PRD Domains**: `ai-features`, `images`  
 **Input**: User description: "Images have a '...' button in the top right which has categories for EDIT, REVEAL. Add another one for ASK with menu items 'Explain' and other relevant ones. This should send the image to the LLM and return text for the prompt sent with the image. If the selected LLM is not image enabled, then handle nicely asking the user to select a vision model."
 
 ## User Scenarios & Testing

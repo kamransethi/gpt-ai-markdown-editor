@@ -3,6 +3,7 @@
 **Folder**: `specs/009-versioned-releases/`  
 **Created**: April 11, 2026  
 **Status**: ✅ IMPLEMENTED  
+**PRD Domains**: `dev-tooling`  
 **Input**: User request: "I'd like a more mature release process where each of the releases is stored in a versioned folder in releases, along with release notes, which are then published as a release. I think only release notes are needed which I'll ask you to prep for the last release to github"
 
 ---

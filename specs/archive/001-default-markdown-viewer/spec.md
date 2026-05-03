@@ -3,6 +3,7 @@
 **Feature Branch**: `001-default-markdown-viewer`  
 **Created**: April 5, 2026  
 **Status**: Draft  
+**PRD Domains**: `configuration`, `editor-core`
 **Input**: User description: "After extension installation, prompt users to set Flux Flow Markdown Editor as the default markdown viewer. Change configuration to make that happen if the user wants it. Do not make any changes otherwise"
 
 ## User Scenarios & Testing *(mandatory)*

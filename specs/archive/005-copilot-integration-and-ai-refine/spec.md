@@ -2,6 +2,7 @@
 
 **Category**: Bug Fix + Feature Requests  
 **Status**: IMPLEMENTED ✅  
+**PRD Domains**: `ai-features`, `editor-core`  
 **Date Completed**: April 11, 2026
 
 ---

@@ -45,6 +45,31 @@ const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
  * Load image data as base64 from a workspace-relative path or absolute URI.
  */
 async function loadLocalImage(imagePath: string, document: vscode.TextDocument): Promise<string> {
+  // Handle webview URIs by attempting to fetch them directly
+  if (imagePath.startsWith('vscode-webview://')) {
+    try {
+      const response = await fetch(imagePath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch webview image (${response.status})`);
+      }
+      const buffer = await response.arrayBuffer();
+      if (buffer.byteLength > MAX_IMAGE_BYTES) {
+        throw new Error(
+          `Image is too large (${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB). ` +
+            'Please use an image under 4 MB.'
+        );
+      }
+      console.log('[DK-AI] Image Ask: Loaded webview image, size:', buffer.byteLength, 'bytes');
+      return Buffer.from(buffer).toString('base64');
+    } catch (err) {
+      console.error('[DK-AI] Image Ask: Failed to load webview image:', err);
+      throw new Error(
+        `Unable to load webview image. This can happen if the image is still being uploaded. ` +
+          `Please wait for the image to fully load before analyzing it.`
+      );
+    }
+  }
+
   const docDir = vscode.Uri.joinPath(document.uri, '..');
   // Try workspace-relative first, then absolute
   let imageUri: vscode.Uri;
@@ -54,6 +79,7 @@ async function loadLocalImage(imagePath: string, document: vscode.TextDocument):
     imageUri = vscode.Uri.joinPath(docDir, imagePath);
   }
 
+  console.log('[DK-AI] Image Ask: Loading local image from:', imageUri.toString());
   const data = await vscode.workspace.fs.readFile(imageUri);
   if (data.byteLength > MAX_IMAGE_BYTES) {
     throw new Error(
@@ -61,6 +87,7 @@ async function loadLocalImage(imagePath: string, document: vscode.TextDocument):
         'Please use an image under 4 MB.'
     );
   }
+  console.log('[DK-AI] Image Ask: Loaded local image, size:', data.byteLength, 'bytes');
   return Buffer.from(data).toString('base64');
 }
 
@@ -104,6 +131,15 @@ export async function handleImageAskRequest(
       .getConfiguration('gptAiMarkdownEditor')
       .get<string>('llmProvider', 'GitHub Copilot');
 
+    // Log current settings for diagnostics
+    const visionProvider = vscode.workspace
+      .getConfiguration('gptAiMarkdownEditor')
+      .get<string>('llmVisionProvider', 'Ollama');
+    const ollamaImageModel = vscode.workspace
+      .getConfiguration('gptAiMarkdownEditor')
+      .get<string>('ollamaImageModel', 'llama3.2-vision:latest');
+    console.log('[DK-AI] Image Ask: Vision settings - Provider:', visionProvider, 'Model:', ollamaImageModel);
+
     if (selectedProvider === 'GitHub Copilot' && !availability.copilotAvailable) {
       webview.postMessage({
         type: MessageType.IMAGE_ASK_RESULT,
@@ -132,6 +168,8 @@ export async function handleImageAskRequest(
     // Load image data
     let imageBase64: string;
     const src = data.imageSrc;
+    console.log('[DK-AI] Image Ask: Received imageSrc:', src);
+    console.log('[DK-AI] Image Ask: Action:', data.action);
 
     if (src.startsWith('data:')) {
       // Data URI — extract base64 portion
@@ -140,10 +178,23 @@ export async function handleImageAskRequest(
         throw new Error('Invalid data URI for image.');
       }
       imageBase64 = match[1];
+      console.log('[DK-AI] Image Ask: Extracted base64 from data URI, length:', imageBase64.length);
     } else if (src.startsWith('http://') || src.startsWith('https://')) {
       imageBase64 = await fetchExternalImage(src);
+      console.log('[DK-AI] Image Ask: Fetched external image, base64 length:', imageBase64.length);
     } else {
+      console.log('[DK-AI] Image Ask: Loading as local image');
       imageBase64 = await loadLocalImage(src, document);
+      console.log('[DK-AI] Image Ask: Converted to base64, length:', imageBase64.length);
+    }
+
+    // Sanity check: image data should not be empty
+    if (!imageBase64 || imageBase64.length === 0) {
+      throw new Error('Image data is empty. The image may not have loaded correctly.');
+    }
+
+    if (imageBase64.length < 100) {
+      console.warn('[DK-AI] Image Ask: Warning - Image data very small (', imageBase64.length, 'bytes). May be invalid.');
     }
 
     // Build prompt
@@ -161,6 +212,7 @@ export async function handleImageAskRequest(
     const provider = createImageLlmProvider();
     const modelName = getImageModelDisplayName();
     const abortController = new AbortController();
+    console.log('[DK-AI] Image Ask: Using provider:', modelName);
 
     const messages: LlmMessage[] = [
       { role: 'system', content: SYSTEM_PROMPT },
@@ -172,6 +224,7 @@ export async function handleImageAskRequest(
       throw new Error('The configured LLM provider does not support vision inputs.');
     }
 
+    console.log('[DK-AI] Image Ask: Starting vision generation with', imageBase64.length, 'char base64');
     let result = '';
     for await (const chunk of provider.generateWithVision(
       messages,
@@ -181,6 +234,7 @@ export async function handleImageAskRequest(
       result += chunk;
     }
 
+    console.log('[DK-AI] Image Ask: Vision generation complete, result length:', result.length);
     webview.postMessage({
       type: MessageType.IMAGE_ASK_RESULT,
       success: true,

@@ -7,26 +7,34 @@
  * current document similar to browser reading modes (Edge/Chrome).
  * Sends the document text to the extension host which calls the VS Code LM API.
  *
+ * Streaming results are received as AI_EXPLAIN_CHUNK messages and rendered
+ * incrementally via the unified aiExplain-unified component.
+ *
  * @module aiExplain
  */
 
 import { Extension } from '@tiptap/core';
 import { MessageType } from '../../shared/messageTypes';
+import {
+  createStreamingHandler,
+  getPanelEl,
+  setPanelEl,
+  setTitle,
+  setFooterModel,
+  showLoadingState,
+  showErrorState,
+  setStopButtonVisible,
+  setLastResponseText,
+  showActions,
+  removeActionsBar,
+  renderMarkdown,
+} from './aiExplain-unified';
 
-declare module '@tiptap/core' {
-  interface Commands<ReturnType> {
-    aiExplain: {
-      explainDocument: () => ReturnType;
-    };
-  }
-}
-
-let panelEl: HTMLElement | null = null;
 let isLoading = false;
-/** Stored raw response text for copy/insert operations. */
-let lastResponseText: string = '';
 /** Reference to the TipTap editor for document mutations (set by the extension). */
 let editorRef: any = null;
+/** Active streaming handler — replaced on each new request. */
+let activeStreamHandler: ReturnType<typeof createStreamingHandler> | null = null;
 
 function getVscodeApi(): any {
   return (window as any).vscode;
@@ -34,7 +42,6 @@ function getVscodeApi(): any {
 
 /**
  * Read the current model display name from the webview's config bridge.
- * Falls back to empty string if not available.
  */
 function getCurrentModelName(): string {
   return (window as any).__dkAiModelDisplayName ?? '';
@@ -46,18 +53,12 @@ function getCurrentImageModelName(): string {
 
 function showExplainPanel() {
   const modelName = getCurrentModelName();
+  let panelEl = getPanelEl();
 
   if (panelEl) {
     panelEl.style.display = 'flex';
-    // Reset body to loading state for new request
-    const body = panelEl.querySelector('.ai-explain-body');
-    if (body) {
-      body.innerHTML =
-        '<div class="ai-explain-loading"><div class="ai-explain-spinner"></div><span>Analyzing document\u2026</span></div>';
-    }
-    // Show model immediately, will be overwritten by result if different
-    const footer = panelEl.querySelector('.ai-explain-footer');
-    if (footer && modelName) footer.textContent = modelName;
+    showLoadingState('Analyzing document\u2026');
+    if (modelName) setFooterModel(modelName);
     return;
   }
 
@@ -67,64 +68,42 @@ function showExplainPanel() {
   panelEl.innerHTML = `
     <div class="ai-explain-header">
       <span class="ai-explain-title">AI Summary</span>
+      <button type="button" class="ai-explain-stop" title="Stop" style="display:none">&#x25A0;</button>
       <button type="button" class="ai-explain-close" title="Close">&times;</button>
     </div>
     <div class="ai-explain-body">
       <div class="ai-explain-loading">
         <div class="ai-explain-spinner"></div>
-        <span>Analyzing document…</span>
+        <span>Analyzing document\u2026</span>
       </div>
     </div>
     <div class="ai-explain-footer">${modelName}</div>
   `;
 
   document.body.appendChild(panelEl);
+  setPanelEl(panelEl);
 
   panelEl.querySelector('.ai-explain-close')?.addEventListener('click', () => {
     hideExplainPanel();
   });
+
+  panelEl.querySelector('.ai-explain-stop')?.addEventListener('click', () => {
+    // Abort in-flight stream
+    getVscodeApi()?.postMessage({ type: MessageType.AI_EXPLAIN_STOP });
+    if (activeStreamHandler) {
+      const currentText =
+        panelEl?.querySelector('.ai-explain-markdown')?.textContent ?? '';
+      activeStreamHandler.onDone(currentText);
+      activeStreamHandler = null;
+    }
+    setStopButtonVisible(false);
+    isLoading = false;
+  });
 }
 
 function hideExplainPanel() {
+  const panelEl = getPanelEl();
   if (panelEl) panelEl.style.display = 'none';
-}
-
-function setExplainContent(html: string) {
-  const body = panelEl?.querySelector('.ai-explain-body');
-  if (body) body.innerHTML = html;
-  isLoading = false;
-}
-
-function setModelName(modelName: string) {
-  const footer = panelEl?.querySelector('.ai-explain-footer');
-  if (footer) footer.textContent = modelName;
-}
-
-function setExplainError(message: string) {
-  setExplainContent(`<div class="ai-explain-error">${message}</div>`);
-}
-
-/**
- * Handle the explain result message from the extension host.
- */
-export function handleAiExplainResult(data: {
-  success: boolean;
-  explanation?: string;
-  error?: string;
-  modelName?: string;
-}): void {
-  if (data.modelName) {
-    setModelName(data.modelName);
-  }
-
-  if (!data.success || !data.explanation) {
-    setExplainError(data.error || 'Could not generate explanation.');
-    return;
-  }
-
-  // Render the explanation as structured HTML
-  const sections = parseExplanation(data.explanation);
-  setExplainContent(sections);
 }
 
 /** Action labels for the panel title. */
@@ -141,22 +120,15 @@ const IMAGE_ASK_TITLES: Record<string, string> = {
  */
 export function showImageAskLoading(action: string): void {
   showExplainPanel();
-
-  // Update title
-  const title = panelEl?.querySelector('.ai-explain-title');
-  if (title) title.textContent = IMAGE_ASK_TITLES[action] || 'Image Analysis';
-
-  // Show spinner
-  const body = panelEl?.querySelector('.ai-explain-body');
-  if (body) {
-    body.innerHTML =
-      '<div class="ai-explain-loading"><div class="ai-explain-spinner"></div><span>Analyzing image\u2026</span></div>';
-  }
-
-  // Show image model name immediately in footer
-  const footer = panelEl?.querySelector('.ai-explain-footer');
-  if (footer) footer.textContent = getCurrentImageModelName();
+  setTitle(IMAGE_ASK_TITLES[action] || 'Image Analysis');
+  showLoadingState('Analyzing image\u2026');
+  setFooterModel(getCurrentImageModelName());
   removeActionsBar();
+
+  // Prepare a streaming handler for the image result
+  activeStreamHandler = createStreamingHandler(() => {
+    isLoading = false;
+  });
 }
 
 /**
@@ -169,150 +141,70 @@ export function handleImageAskResult(data: {
   error?: string;
   modelName?: string;
 }): void {
-  if (data.modelName) {
-    setModelName(data.modelName);
-  }
+  if (data.modelName) setFooterModel(data.modelName);
 
   if (!data.success || !data.response) {
-    setExplainError(data.error || 'Could not analyze image.');
+    activeStreamHandler?.onError(data.error || 'Could not analyze image.');
+    activeStreamHandler = null;
     isLoading = false;
     return;
   }
 
-  lastResponseText = data.response;
+  setLastResponseText(data.response);
+  // Image results arrive as a single payload — render directly
+  activeStreamHandler?.onDone(data.response);
+  activeStreamHandler = null;
 
-  // Render response
-  const html = parseExplanation(data.response);
-  setExplainContent(html);
-
-  // Add action buttons based on the ask action type
-  addActionsBar(data.action);
-}
-
-/** Remove any existing actions bar. */
-function removeActionsBar(): void {
-  panelEl?.querySelector('.ai-explain-actions')?.remove();
-}
-
-/** Add context-specific action buttons below the body. */
-function addActionsBar(action: string): void {
-  removeActionsBar();
-  if (!panelEl) return;
-
-  const bar = document.createElement('div');
-  bar.className = 'ai-explain-actions';
-
-  // Copy button — always present
-  const copyBtn = document.createElement('button');
-  copyBtn.type = 'button';
-  copyBtn.className = 'ai-explain-action-btn';
-  copyBtn.textContent = 'Copy';
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(lastResponseText).then(() => {
-      copyBtn.textContent = 'Copied!';
-      setTimeout(() => {
-        copyBtn.textContent = 'Copy';
-      }, 1500);
-    });
-  });
-  bar.appendChild(copyBtn);
-
-  // Insert Below — for extractText and describe
-  if (action === 'extractText' || action === 'describe') {
-    const insertBtn = document.createElement('button');
-    insertBtn.type = 'button';
-    insertBtn.className = 'ai-explain-action-btn ai-explain-action-primary';
-    insertBtn.textContent = 'Insert Below';
-    insertBtn.addEventListener('click', () => {
-      if (editorRef) {
-        // Insert a new paragraph after the current selection/cursor position
-        editorRef
-          .chain()
-          .focus()
-          .insertContentAt(editorRef.state.selection.to, {
-            type: 'paragraph',
-            content: [{ type: 'text', text: lastResponseText }],
-          })
-          .run();
-        insertBtn.textContent = 'Inserted!';
-        setTimeout(() => {
-          insertBtn.textContent = 'Insert Below';
-        }, 1500);
-      }
-    });
-    bar.appendChild(insertBtn);
-  }
-
-  // Apply Alt Text — for altText action
-  if (action === 'altText') {
-    const applyBtn = document.createElement('button');
-    applyBtn.type = 'button';
-    applyBtn.className = 'ai-explain-action-btn ai-explain-action-primary';
-    applyBtn.textContent = 'Apply Alt Text';
-    applyBtn.addEventListener('click', () => {
-      if (editorRef) {
-        editorRef.commands.updateAttributes('image', { alt: lastResponseText.trim() });
-        applyBtn.textContent = 'Applied!';
-        setTimeout(() => {
-          applyBtn.textContent = 'Apply Alt Text';
-        }, 1500);
-      }
-    });
-    bar.appendChild(applyBtn);
-  }
-
-  // Insert before footer
-  const footer = panelEl.querySelector('.ai-explain-footer');
-  if (footer) {
-    panelEl.insertBefore(bar, footer);
-  } else {
-    panelEl.appendChild(bar);
-  }
+  showActions(data.action, editorRef);
 }
 
 /**
- * Parse the AI response into structured HTML sections.
- * Handles markdown-like formatting: ## headings, - bullets, **bold**.
+ * Handle the AI_EXPLAIN_CHUNK message — incremental text chunk from extension host.
  */
-function parseExplanation(text: string): string {
-  const lines = text.split('\n');
-  let html = '';
+export function handleAiExplainChunk(data: { text: string; fullText: string }): void {
+  if (!activeStreamHandler) return;
+  setStopButtonVisible(true);
+  activeStreamHandler.onChunk(data.fullText);
+}
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      html += '<br/>';
-      continue;
-    }
+/**
+ * Handle the AI_EXPLAIN_DONE message — stream complete.
+ */
+export function handleAiExplainDone(data: { fullText: string; modelName?: string }): void {
+  if (data.modelName) setFooterModel(data.modelName);
+  setLastResponseText(data.fullText);
+  activeStreamHandler?.onDone(data.fullText);
+  activeStreamHandler = null;
+  isLoading = false;
+  showActions('summary', editorRef);
+}
 
-    if (trimmed.startsWith('## ')) {
-      html += `<h3 class="ai-explain-section-title">${escapeHtml(trimmed.slice(3))}</h3>`;
-    } else if (trimmed.startsWith('# ')) {
-      html += `<h2 class="ai-explain-section-title">${escapeHtml(trimmed.slice(2))}</h2>`;
-    } else if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
-      const content = trimmed.slice(2);
-      html += `<div class="ai-explain-bullet">• ${formatInline(content)}</div>`;
-    } else {
-      html += `<p class="ai-explain-para">${formatInline(trimmed)}</p>`;
-    }
+/**
+ * Handle the legacy AI_EXPLAIN_RESULT message (error path only going forward).
+ */
+export function handleAiExplainResult(data: {
+  success: boolean;
+  explanation?: string;
+  error?: string;
+  modelName?: string;
+}): void {
+  if (data.modelName) setFooterModel(data.modelName);
+
+  if (!data.success || !data.explanation) {
+    activeStreamHandler?.onError(data.error || 'Could not generate explanation.');
+    if (!activeStreamHandler) showErrorState(data.error || 'Could not generate explanation.');
+    activeStreamHandler = null;
+    isLoading = false;
+    return;
   }
 
-  return html;
-}
-
-function formatInline(text: string): string {
-  let result = escapeHtml(text);
-  result = result.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  result = result.replace(/`(.+?)`/g, '<code>$1</code>');
-  return result;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  // Fallback: non-streaming result (render immediately)
+  setLastResponseText(data.explanation);
+  const html = `<div class="ai-explain-markdown">${renderMarkdown(data.explanation)}</div>`;
+  const body = getPanelEl()?.querySelector('.ai-explain-body');
+  if (body) body.innerHTML = html;
+  isLoading = false;
+  showActions('summary', editorRef);
 }
 
 export const AiExplain = Extension.create({
@@ -331,23 +223,28 @@ export const AiExplain = Extension.create({
           isLoading = true;
 
           showExplainPanel();
-
-          // Ensure title says "AI Summary" for document explain
-          const title = panelEl?.querySelector('.ai-explain-title');
-          if (title) title.textContent = 'AI Summary';
+          setTitle('AI Summary');
+          setStopButtonVisible(false);
           removeActionsBar();
 
           // Get full document text
           const docText = editor.state.doc.textContent;
           if (!docText.trim()) {
-            setExplainError('Document is empty.');
+            showErrorState('Document is empty.');
+            isLoading = false;
             return false;
           }
 
-          // Send to extension host
+          // Set up streaming handler before sending request
+          activeStreamHandler = createStreamingHandler(() => {
+            isLoading = false;
+          });
+
           const vscode = getVscodeApi();
           if (!vscode) {
-            setExplainError('VS Code API not available.');
+            activeStreamHandler.onError('VS Code API not available.');
+            activeStreamHandler = null;
+            isLoading = false;
             return false;
           }
 
@@ -363,3 +260,11 @@ export const AiExplain = Extension.create({
 });
 
 export default AiExplain;
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    aiExplain: {
+      explainDocument: () => ReturnType;
+    };
+  }
+}

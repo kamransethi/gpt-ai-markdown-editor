@@ -2,8 +2,7 @@
 
 **Folder**: `specs/029-minify-tables/`
 **Created**: 2026-04-25
-**Status**: Draft
-**Input**: User description: "Create a new feature specification for the Markdown editor called Minify Markdown. The feature should be default OFF in settings under Editor &gt; Behavior with a setting labeled Compress Content. When enabled, Markdown output should compress formatting to save LLM token usage by minimizing padding and avoiding aligned columns, while preserving the exact visual style and arrangement of the table content. Also include other token-saving techniques for LLM consumption without changing visual rendering. Ask any clarification questions if needed."
+**Status**: Draft**PRD Domains**: `tables`, `export`**Input**: User description: "Create a new feature specification for the Markdown editor called Minify Markdown. The feature should be default OFF in settings under Editor &gt; Behavior with a setting labeled Compress Content. When enabled, Markdown output should compress formatting to save LLM token usage by minimizing padding and avoiding aligned columns, while preserving the exact visual style and arrangement of the table content. Also include other token-saving techniques for LLM consumption without changing visual rendering. Ask any clarification questions if needed."
 ## Clarifications
 
 ### Session 2026-04-25

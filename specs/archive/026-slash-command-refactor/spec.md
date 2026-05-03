@@ -1,5 +1,7 @@
 # Spec: Slash Command Refactor & Performance Optimization
 
+**PRD Domains**: `slash-commands`, `editor-core`
+
 ## 1. Outcome
 Refactor the current slash command architecture to support multiple providers (blocks, file links, etc.) through a unified registry and shared UI components. Improve performance for file linking by implementing client-side caching and local fuzzy search within the webview.
 

@@ -26,11 +26,12 @@ export function createLlmProvider(): LlmProvider {
 
 /**
  * Create an LLM provider configured for image/vision analysis.
- * Uses `ollamaImageModel` instead of `ollamaModel` when provider is Ollama.
+ * Uses `llmVisionProvider` setting (separate from text `llmProvider`)
+ * and `ollamaImageModel` instead of `ollamaModel` when provider is Ollama.
  */
 export function createImageLlmProvider(): LlmProvider {
   const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
-  const provider = config.get<string>('llmProvider', 'GitHub Copilot');
+  const provider = config.get<string>('llmVisionProvider', 'Ollama');
 
   if (provider === 'Ollama') {
     const model = config.get<string>('ollamaImageModel', 'llama3.2-vision:latest');
@@ -38,6 +39,7 @@ export function createImageLlmProvider(): LlmProvider {
     return new OllamaProvider(endpoint, model);
   }
 
+  // Default fallback (llmVisionProvider == 'Disabled' or other)
   return new CopilotProvider();
 }
 
@@ -60,7 +62,7 @@ export function getModelDisplayName(): string {
  */
 export function getImageModelDisplayName(): string {
   const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
-  const provider = config.get<string>('llmProvider', 'GitHub Copilot');
+  const provider = config.get<string>('llmVisionProvider', 'Ollama');
 
   if (provider === 'Ollama') {
     return `Ollama / ${config.get<string>('ollamaImageModel', 'llama3.2-vision:latest')}`;
@@ -71,15 +73,18 @@ export function getImageModelDisplayName(): string {
 
 /**
  * Check if the currently configured image provider/model supports vision (image) inputs.
- * Returns true for both Copilot and Ollama, trusting the user's model choice.
- * Users are responsible for selecting actual vision-capable models for their Ollama instance.
+ * Returns true for Ollama or Copilot (trusting the user's model choice),
+ * and false if vision provider is disabled.
  */
 export function isVisionCapable(): boolean {
   const config = vscode.workspace.getConfiguration('gptAiMarkdownEditor');
-  const provider = config.get<string>('llmProvider', 'GitHub Copilot');
+  const provider = config.get<string>('llmVisionProvider', 'Ollama');
 
-  // User has selected either GitHub Copilot or Ollama as their provider.
-  // Trust their model choice — they are responsible for configuring a vision-capable model.
-  // If they misconfigure, they'll get an error from the model itself.
-  return provider === 'GitHub Copilot' || provider === 'Ollama';
+  // If user has explicitly disabled vision, return false
+  if (provider === 'Disabled') {
+    return false;
+  }
+
+  // Trust the user's model choice for Ollama or Copilot fallback
+  return provider === 'Ollama' || provider === 'GitHub Copilot';
 }

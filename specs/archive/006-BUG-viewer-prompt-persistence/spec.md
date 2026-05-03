@@ -3,6 +3,7 @@
 **Ticket**: 006-BUG-viewer-prompt-persistence  
 **Severity**: High  
 **Status**: Draft  
+**PRD Domains**: `configuration`, `editor-core`  
 **Created**: 2026-04-11
 
 ## Problem Statement

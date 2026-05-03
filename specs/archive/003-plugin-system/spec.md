@@ -6,6 +6,7 @@
 **Date:** April 10, 2026  
 **Author:** DK-AI  
 **Status:** Design Review Pending  
+**PRD Domains**: `plugin-system`  
 
 ---
 

@@ -3,6 +3,7 @@
 **Folder**: `specs/030-compression-enhancement/`
 **Created**: 2026-04-26
 **Status**: Draft
+**PRD Domains**: `tables`, `export`
 **Input**: User description: "Enhance the compression feature to allow choosing types of compression (Tables, Redundant blank lines) under a new COMPRESSION heading in settings. Ensure it preserves code fences, indented code, and literal text exactly."
 
 ## User Scenarios & Testing *(mandatory)*

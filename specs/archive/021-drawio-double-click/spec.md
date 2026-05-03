@@ -1,5 +1,7 @@
 ﻿# Spec 021 — Double-Click `.drawio.svg` Images to Open in Draw.io
 
+**PRD Domains**: `images`, `drawio`
+
 ## Problem
 
 Embedded `.drawio.svg` diagrams are displayed as images in the editor. There is no quick way to open one for editing; the user has to switch to the file explorer and double-click from there.

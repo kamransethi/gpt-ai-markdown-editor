@@ -3,6 +3,7 @@
 **Feature Branch**: `007-add-frontmatter-details`  
 **Created**: 2026-04-11  
 **Status**: Partially Implemented  
+**PRD Domains**: `frontmatter`, `editor-core`  
 **Input**: User description: "Show front matter in the heading in a collapsible TipTap details component. It should load and serialize properly, support complex frontmatter like MARP styling, display in a styled panel following code block design language with day/night themes (light gray/slightly lighter dark), have rounded borders, mono-spaced font, be default closed, and show 'FRONT MATTER' label using editor menu heading/code block design language."
 
 ---

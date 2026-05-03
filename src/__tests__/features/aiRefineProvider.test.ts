@@ -168,9 +168,8 @@ describe('aiExplain with provider abstraction', () => {
 
     expect(mockWebview.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'aiExplainResult',
-        success: true,
-        explanation: '# Summary\nThis is a summary.',
+        type: 'aiExplainDone',
+        fullText: '# Summary\nThis is a summary.',
       })
     );
   });
@@ -197,7 +196,7 @@ describe('aiExplain with provider abstraction', () => {
         success: false,
         error: expect.stringContaining('Ollama model "bad:model" is not available'),
       })
-    );
+    ); // error path still uses aiExplainResult
   });
 
   it('truncates documents over 15000 characters', async () => {

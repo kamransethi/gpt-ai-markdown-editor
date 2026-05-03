@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TipTap Test Harness</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 20px;
+      background: #fff;
+    }
+    #editor {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 12px;
+      min-height: 200px;
+      outline: none;
+    }
+    /* ProseMirror base styles */
+    .ProseMirror {
+      outline: none;
+      min-height: 180px;
+    }
+    .ProseMirror table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .ProseMirror td, .ProseMirror th {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      min-width: 40px;
+    }
+    #status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div id="editor"></div>
+  <div id="status">Loading...</div>
+  <script src="editor-harness.js"></script>
+  <script>
+    document.addEventListener('editor-ready', () => {
+      document.getElementById('status').textContent = 'Editor ready';
+    });
+  </script>
+</body>
+</html>

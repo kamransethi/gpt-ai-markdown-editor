@@ -3,6 +3,7 @@
 **Feature Branch**: `008-view-frontmatter-button`  
 **Created**: 2026-04-11  
 **Status**: ✅ Complete  
+**PRD Domains**: `frontmatter`, `editor-core`  
 **Input**: User request: "If the doc has YAML - then the editor should have a small piece of text on the upper right named 'VIEW FRONTMATTER' in tiny font, which should bring up the front matter editor."
 
 ---

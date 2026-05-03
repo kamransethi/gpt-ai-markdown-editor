@@ -1,6 +1,7 @@
 ﻿# Spec 024: FluxFlow Stable Config Folder (`~/.fluxflow`)
 
 **Status:** 🔲 Not Started  
+**PRD Domains**: `configuration`, `knowledge-graph`  
 **Date:** April 18, 2026  
 **Version:** 2.1.x  
 **Implementation Complexity:** Medium  

@@ -3,6 +3,7 @@
 **Folder**: `specs/012-about-editor/`  
 **Created**: April 11, 2026  
 **Status**: Draft  
+**PRD Domains**: `dev-tooling`  
 
 ## User Scenarios & Testing *(mandatory)*
 

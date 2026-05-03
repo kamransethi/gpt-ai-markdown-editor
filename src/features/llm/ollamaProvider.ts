@@ -44,6 +44,12 @@ export class OllamaProvider implements LlmProvider {
       const msg: Record<string, unknown> = { role: m.role, content: m.content };
       if (images.length > 0 && m.role === 'user' && i === messages.length - 1) {
         msg.images = images;
+        console.log(
+          '[DK-AI] Ollama: Attaching',
+          images.length,
+          'images to message, first image length:',
+          images[0]?.length || 'undefined'
+        );
       }
       return msg;
     });
@@ -53,6 +59,9 @@ export class OllamaProvider implements LlmProvider {
       messages: ollamaMessages,
       stream: true,
     });
+
+    console.log('[DK-AI] Ollama: Sending request to', url, 'with model', this.model);
+    console.log('[DK-AI] Ollama: Request body size:', body.length, 'bytes');
 
     let response: Response;
     try {
@@ -74,6 +83,7 @@ export class OllamaProvider implements LlmProvider {
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
+      console.error('[DK-AI] Ollama: Error response (status', response.status, '):', text);
       if (response.status === 404 && text.includes('not found')) {
         throw new Error(
           `Ollama model "${this.model}" is not available. Run \`ollama pull ${this.model}\` to download it.`

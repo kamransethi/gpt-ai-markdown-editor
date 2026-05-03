@@ -1,6 +1,7 @@
 ﻿# Spec 023: FluxFlow Knowledge Graph — Foundation & Semantic Search
 
 **Status:** ✅ Implemented  
+**PRD Domains**: `knowledge-graph`  
 **Date:** April 19, 2026  
 **Version:** 2.2.0  
 **Schema Version:** 2  

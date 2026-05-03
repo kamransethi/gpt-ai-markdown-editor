@@ -3,6 +3,7 @@
 **Folder**: `specs/015-graceful-copilot-fallback/`  
 **Created**: April 16, 2026  
 **Status**: Draft  
+**PRD Domains**: `ai-features`, `configuration`  
 **Input**: User description: "Lower minimum version to v1.90. Make Chat Participant fail with a message IF the selected model is GitHub Copilot and not available (either cause of VS version being too low, the user not signed up for GitHub Copilot, or the extension being used in Cursor or Windsurf). In the error, encourage the user to use Ollama configuration as an option or alternatively sign up for GitHub Copilot and use VS Code."
 
 ## User Scenarios & Testing *(mandatory)*

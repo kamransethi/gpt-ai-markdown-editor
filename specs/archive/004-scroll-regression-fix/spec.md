@@ -3,6 +3,7 @@
 **Ticket**: Scroll jiggle/snap-to-top regression with H1-H3 headings  
 **Severity**: Critical (user cannot scroll content)  
 **Status**: FIXED ✅  
+**PRD Domains**: `editor-core`  
 **Category**: Bug Report  
 **Date Reported**: April 11, 2026
 

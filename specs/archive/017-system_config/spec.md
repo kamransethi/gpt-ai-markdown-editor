@@ -1,6 +1,7 @@
 ﻿# 017 - Custom Configuration Panel for Flux Flow
 
 **Status:** Implemented ✅  
+**PRD Domains**: `configuration`
 **Date:** April 2026  
 **Version:** 2.0.37+
 

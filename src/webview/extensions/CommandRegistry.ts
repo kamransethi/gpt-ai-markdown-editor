@@ -39,176 +39,190 @@ function isImagePath(path: string): boolean {
 }
 
 function openWorkspacePicker(editor: any, insertFrom: number, mode: WorkspacePickerMode): void {
-  // --- Container ---
-  const container = document.createElement('div');
-  container.className = 'slash-command-menu file-link-picker';
-  container.style.position = 'fixed';
-  container.style.zIndex = '1100';
-  container.style.minWidth = '280px';
-  container.style.maxWidth = '380px';
+  (async () => {
+    try {
+      // Request fresh cache BEFORE showing picker
+      await fileCache.requestRefresh();
 
-  // --- Input ---
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = mode === 'image' ? 'Search images…' : 'Search files…';
-  input.className = 'file-link-search-input';
-  input.style.cssText = [
-    'width:100%',
-    'box-sizing:border-box',
-    'padding:6px 10px',
-    'border:none',
-    'border-bottom:1px solid var(--md-border)',
-    'background:transparent',
-    'color:var(--md-foreground)',
-    'font-family:var(--md-font-sans)',
-    'font-size:13px',
-    'outline:none',
-  ].join(';');
+      // --- Container ---
+      const container = document.createElement('div');
+      container.className = 'slash-command-menu file-link-picker';
+      container.style.position = 'fixed';
+      container.style.zIndex = '1100';
+      container.style.minWidth = '280px';
+      container.style.maxWidth = '380px';
 
-  // --- Results list ---
-  const resultEl = document.createElement('div');
+      // --- Input ---
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = mode === 'image' ? 'Search images…' : 'Search files…';
+      input.className = 'file-link-search-input';
+      input.style.cssText = [
+        'width:100%',
+        'box-sizing:border-box',
+        'padding:6px 10px',
+        'border:none',
+        'border-bottom:1px solid var(--md-border)',
+        'background:transparent',
+        'color:var(--md-foreground)',
+        'font-family:var(--md-font-sans)',
+        'font-size:13px',
+        'outline:none',
+      ].join(';');
 
-  container.appendChild(input);
-  container.appendChild(resultEl);
-  document.body.appendChild(container);
+      // --- Results list ---
+      const resultEl = document.createElement('div');
 
-  // --- Position near cursor ---
-  const coords = editor.view.coordsAtPos(Math.max(0, insertFrom - 1));
-  const { innerHeight, innerWidth } = window;
-  const popH = 300;
-  const popW = 320;
-  const top = coords.bottom + popH > innerHeight ? coords.top - popH : coords.bottom + 4;
-  const left = Math.min(coords.left, innerWidth - popW - 8);
-  container.style.top = `${top}px`;
-  container.style.left = `${left}px`;
+      container.appendChild(input);
+      container.appendChild(resultEl);
+      document.body.appendChild(container);
 
-  // --- Rendering results ---
-  let selectedIdx = 0;
-  let currentFiles: { filename: string; path: string }[] = [];
+      // --- Position near cursor ---
+      const coords = editor.view.coordsAtPos(Math.max(0, insertFrom - 1));
+      const { innerHeight, innerWidth } = window;
+      const popH = 300;
+      const popW = 320;
+      const top = coords.bottom + popH > innerHeight ? coords.top - popH : coords.bottom + 4;
+      const left = Math.min(coords.left, innerWidth - popW - 8);
+      container.style.top = `${top}px`;
+      container.style.left = `${left}px`;
 
-  function renderResults(files: { filename: string; path: string }[]) {
-    currentFiles = files;
-    selectedIdx = 0;
-    resultEl.innerHTML = '';
+      // --- Rendering results ---
+      let selectedIdx = 0;
+      let currentFiles: { filename: string; path: string }[] = [];
 
-    if (files.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'slash-command-empty';
-      empty.textContent = mode === 'image' ? 'No images found' : 'No files found';
-      resultEl.appendChild(empty);
-      return;
-    }
+      function renderResults(files: { filename: string; path: string }[]) {
+        currentFiles = files;
+        selectedIdx = 0;
+        resultEl.innerHTML = '';
 
-    files.forEach((file, i) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'slash-command-item' + (i === 0 ? ' is-selected' : '');
-      btn.setAttribute('role', 'option');
-      btn.innerHTML = `
-          <span class="slash-command-icon">${mode === 'image' ? '🖼' : '📄'}</span>
-        <span class="slash-command-text">
-          <span class="slash-command-title">${formatLinkDisplay(file.filename)}</span>
-          <span class="slash-command-desc">${file.path}</span>
-        </span>
-      `;
-      btn.addEventListener('mouseenter', () => {
-        resultEl
-          .querySelectorAll('.slash-command-item')
-          .forEach(el => el.classList.remove('is-selected'));
-        btn.classList.add('is-selected');
-        selectedIdx = i;
-      });
-      btn.addEventListener('click', () => insertItem(file));
-      resultEl.appendChild(btn);
-    });
-  }
+        if (files.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'slash-command-empty';
+          empty.textContent = mode === 'image' ? 'No images found' : 'No files found';
+          resultEl.appendChild(empty);
+          return;
+        }
 
-  function updateSelection() {
-    const btns = Array.from(resultEl.querySelectorAll('.slash-command-item'));
-    btns.forEach((el, i) => {
-      el.classList.toggle('is-selected', i === selectedIdx);
-      if (i === selectedIdx) (el as HTMLElement).scrollIntoView({ block: 'nearest' });
-    });
-  }
+        files.forEach((file, i) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'slash-command-item' + (i === 0 ? ' is-selected' : '');
+          btn.setAttribute('role', 'option');
+          btn.innerHTML = `
+            <span class="slash-command-icon">${mode === 'image' ? '🖼' : '📄'}</span>
+            <span class="slash-command-text">
+              <span class="slash-command-title">${formatLinkDisplay(file.filename)}</span>
+              <span class="slash-command-desc">${file.path}</span>
+            </span>
+          `;
+          btn.addEventListener('mouseenter', () => {
+            resultEl
+              .querySelectorAll('.slash-command-item')
+              .forEach(el => el.classList.remove('is-selected'));
+            btn.classList.add('is-selected');
+            selectedIdx = i;
+          });
+          btn.addEventListener('click', () => insertItem(file));
+          resultEl.appendChild(btn);
+        });
+      }
 
-  function insertItem(file: { filename: string; path: string }) {
-    if (mode === 'image') {
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(insertFrom, [
-          {
-            type: 'image',
-            attrs: {
-              src: file.path,
-              alt: formatLinkDisplay(file.filename),
+      function updateSelection() {
+        const btns = Array.from(resultEl.querySelectorAll('.slash-command-item'));
+        btns.forEach((el, i) => {
+          el.classList.toggle('is-selected', i === selectedIdx);
+          if (i === selectedIdx) (el as HTMLElement).scrollIntoView({ block: 'nearest' });
+        });
+      }
+
+      function insertItem(file: { filename: string; path: string }) {
+        if (mode === 'image') {
+          editor
+            .chain()
+            .focus()
+            .insertContentAt(insertFrom, [
+              {
+                type: 'image',
+                attrs: {
+                  src: file.path,
+                  alt: formatLinkDisplay(file.filename),
+                },
+              },
+              { type: 'text', text: ' ' },
+            ])
+            .run();
+          cleanup();
+          return;
+        }
+
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(insertFrom, [
+            {
+              type: 'text',
+              marks: [{ type: 'link', attrs: { href: file.path } }],
+              text: formatLinkDisplay(file.filename),
             },
-          },
-          { type: 'text', text: ' ' },
-        ])
-        .run();
-      cleanup();
-      return;
+            { type: 'text', text: ' ' },
+          ])
+          .run();
+        cleanup();
+      }
+
+      function cleanup() {
+        container.remove();
+        document.removeEventListener('mousedown', outsideClick, true);
+      }
+
+      function outsideClick(e: MouseEvent) {
+        if (!container.contains(e.target as Node)) cleanup();
+      }
+
+      input.addEventListener('input', () => {
+        let results = fileCache.search(input.value.trim(), 15);
+        // Filter to image formats only when in image mode
+        if (mode === 'image') {
+          results = results.filter(file => isImagePath(file.path));
+        }
+        renderResults(results);
+      });
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown') {
+          selectedIdx = Math.min(selectedIdx + 1, currentFiles.length - 1);
+          updateSelection();
+          e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+          selectedIdx = Math.max(selectedIdx - 1, 0);
+          updateSelection();
+          e.preventDefault();
+        } else if (e.key === 'Enter') {
+          const file = currentFiles[selectedIdx];
+          if (file) insertItem(file);
+          e.preventDefault();
+        } else if (e.key === 'Escape') {
+          cleanup();
+        }
+      });
+
+      document.addEventListener('mousedown', outsideClick, true);
+
+      // Seed with fresh file list (guaranteed to be current)
+      const initialFiles =
+        mode === 'image'
+          ? fileCache
+              .search('', 200)
+              .filter(file => isImagePath(file.path))
+              .slice(0, 15)
+          : fileCache.search('', 15);
+      renderResults(initialFiles);
+      input.focus();
+    } catch (error) {
+      console.error('[DK-AI] Error opening workspace picker:', error);
     }
-
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(insertFrom, [
-        {
-          type: 'text',
-          marks: [{ type: 'link', attrs: { href: file.path } }],
-          text: formatLinkDisplay(file.filename),
-        },
-        { type: 'text', text: ' ' },
-      ])
-      .run();
-    cleanup();
-  }
-
-  function cleanup() {
-    container.remove();
-    document.removeEventListener('mousedown', outsideClick, true);
-  }
-
-  function outsideClick(e: MouseEvent) {
-    if (!container.contains(e.target as Node)) cleanup();
-  }
-
-  input.addEventListener('input', () => {
-    renderResults(fileCache.search(input.value.trim(), 15));
-  });
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown') {
-      selectedIdx = Math.min(selectedIdx + 1, currentFiles.length - 1);
-      updateSelection();
-      e.preventDefault();
-    } else if (e.key === 'ArrowUp') {
-      selectedIdx = Math.max(selectedIdx - 1, 0);
-      updateSelection();
-      e.preventDefault();
-    } else if (e.key === 'Enter') {
-      const file = currentFiles[selectedIdx];
-      if (file) insertItem(file);
-      e.preventDefault();
-    } else if (e.key === 'Escape') {
-      cleanup();
-    }
-  });
-
-  document.addEventListener('mousedown', outsideClick, true);
-
-  // Seed with full list (or empty if cache not ready yet)
-  const initialFiles =
-    mode === 'image'
-      ? fileCache
-          .search('', 200)
-          .filter(file => isImagePath(file.path))
-          .slice(0, 15)
-      : fileCache.search('', 15);
-  renderResults(initialFiles);
-  input.focus();
+  })();
 }
 
 // ── Block command list ────────────────────────────────────────────────────────
