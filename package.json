@@ -107,6 +107,18 @@
         "command": "markdownForHumans.outline.clearFilter",
         "title": "Outline: Clear Filter",
         "icon": "$(close)"
+      },
+      {
+        "command": "markdownForHumans.copyAiContextRef",
+        "title": "Markdown for Humans: Copy AI Context Reference (@file#lines)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "markdownForHumans.copyAiContextRef",
+        "key": "alt+c",
+        "mac": "alt+c",
+        "when": "activeCustomEditorId == 'markdownForHumans.editor'"
       }
     ],
     "views": {
