@@ -24,11 +24,13 @@ import { TabIndentation } from './extensions/tabIndentation';
 import { GitHubAlerts } from './extensions/githubAlerts';
 import { ImageEnterSpacing } from './extensions/imageEnterSpacing';
 import { MarkdownParagraph } from './extensions/markdownParagraph';
+import { BlankLinePreservation } from './extensions/blankLinePreservation';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { HtmlPreservingTable } from './extensions/htmlPreservingTable';
 import { DocumentAuditExtension } from './features/auditDocument';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
+import { installBlankLineLexerNormalizer } from './utils/markedLexerNormalizer';
 import {
   setupImageDragDrop,
   hasPendingImageSaves,
@@ -461,6 +463,7 @@ function initializeEditor(initialContent: string) {
           },
         }),
         MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
+        BlankLinePreservation, // Converts extra blank lines (space tokens) to empty paragraphs on parse
         CodeBlockLowlight.configure({
           lowlight,
           HTMLAttributes: {
@@ -580,6 +583,24 @@ function initializeEditor(initialContent: string) {
     });
 
     editor = editorInstance;
+
+    // Patch the marked lexer used by @tiptap/markdown so blank lines that
+    // marked greedily absorbs into heading/table/code/hr tokens get split
+    // back out as "space" tokens. Without this, BlankLinePreservation only
+    // works for paragraph-followed-by-blank-lines cases.
+    try {
+      const markdownStorage = editorInstance as unknown as {
+        markdown?: { instance?: unknown };
+        storage?: { markdown?: { instance?: unknown } };
+      };
+      const markedInstance =
+        markdownStorage.markdown?.instance ?? markdownStorage.storage?.markdown?.instance;
+      if (markedInstance) {
+        installBlankLineLexerNormalizer(markedInstance);
+      }
+    } catch (error) {
+      console.warn('[MD4H] Failed to install blank-line lexer normalizer:', error);
+    }
 
     // Set initial content as markdown (Tiptap v3 requires explicit contentType)
     if (initialContent) {

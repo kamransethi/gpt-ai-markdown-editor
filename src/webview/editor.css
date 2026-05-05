@@ -103,13 +103,19 @@
   .markdown-editor p {
     margin: 0;
     line-height: 1.58;
-    font-size: calc(var(--md-base-size) * 1.2);
+    font-size: var(--md-base-size);
   }
-  
+
   .markdown-editor p:first-child {
     margin-top: 0;
   }
-  
+
+  /* Paragraph-to-paragraph spacing mirrors the blank line written to disk,
+     so the editor view stays visually consistent with a text editor. */
+  .markdown-editor p + p {
+    margin-top: 1em;
+  }
+
   /* Consistent spacing after headings */
   .markdown-editor :is(h1, h2, h3, h4, h5, h6) + p {
     margin-top: 0.5em;

@@ -32,6 +32,10 @@ function isEmptyParagraph(node: JSONContent): boolean {
   return !content.some(isMeaningfulInlineNode);
 }
 
+/**
+ * Strips all empty paragraphs from the doc's top-level content.
+ * Exported for backward-compat with existing tests.
+ */
 export function stripEmptyDocParagraphsFromJson(doc: JSONContent): JSONContent {
   if (doc.type !== 'doc' || !Array.isArray(doc.content)) {
     return doc;
@@ -43,6 +47,14 @@ export function stripEmptyDocParagraphsFromJson(doc: JSONContent): JSONContent {
     ...doc,
     content: nextContent,
   };
+}
+
+function serializeSingleNode(node: JSONContent, serialize: (json: JSONContent) => string): string {
+  try {
+    return serialize({ type: 'doc', content: [node] }).trim();
+  } catch {
+    return '';
+  }
 }
 
 export function getEditorMarkdownForSync(editor: Editor): string {
@@ -68,9 +80,61 @@ export function getEditorMarkdownForSync(editor: Editor): string {
     return getFallbackMarkdown();
   }
 
+  const serialize = markdownManager.serialize.bind(markdownManager);
+
   try {
-    const normalizedJson = stripEmptyDocParagraphsFromJson(editor.getJSON());
-    return markdownManager.serialize(normalizedJson);
+    const json = editor.getJSON();
+    const children = json.content;
+
+    if (!Array.isArray(children) || children.length === 0) {
+      return '';
+    }
+
+    // Strip trailing empty paragraphs (Tiptap always appends one for cursor positioning)
+    let endIdx = children.length;
+    while (endIdx > 0 && isEmptyParagraph(children[endIdx - 1])) {
+      endIdx--;
+    }
+
+    // Strip leading empty paragraphs
+    let startIdx = 0;
+    while (startIdx < endIdx && isEmptyParagraph(children[startIdx])) {
+      startIdx++;
+    }
+
+    if (startIdx >= endIdx) {
+      return '';
+    }
+
+    const trimmed = children.slice(startIdx, endIdx);
+
+    // Serialize each content node individually and rejoin, inserting one extra
+    // "\n" per intentional blank line (empty paragraph) between content blocks.
+    // The standard paragraph separator is "\n\n" (one blank line); each empty
+    // paragraph beyond that adds one more "\n" to the output.
+    let result = '';
+    let pendingBlanks = 0;
+
+    for (const node of trimmed) {
+      if (isEmptyParagraph(node)) {
+        pendingBlanks++;
+      } else {
+        const nodeMarkdown = serializeSingleNode(node, serialize);
+        if (nodeMarkdown === '') {
+          // Node serialized to nothing (unrecognised type, etc.) – treat it
+          // as if it were an empty paragraph so blank-line intent is kept.
+          pendingBlanks++;
+          continue;
+        }
+        if (result !== '') {
+          result += '\n\n' + '\n'.repeat(pendingBlanks);
+        }
+        result += nodeMarkdown;
+        pendingBlanks = 0;
+      }
+    }
+
+    return result;
   } catch {
     return getFallbackMarkdown();
   }
