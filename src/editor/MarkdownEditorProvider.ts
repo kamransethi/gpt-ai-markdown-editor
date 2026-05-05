@@ -639,6 +639,63 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'auditPickFile':
         void this.handleAuditPickFile(message, document, webview);
         break;
+      case 'getAiContextRef':
+        void this.handleGetAiContextRef(message, document, webview);
+        break;
+    }
+  }
+
+  /**
+   * Build a Claude-Code-style `@file#startLine-endLine` reference for the active
+   * document. Saves the document first so the line numbers the webview just
+   * computed match the bytes on disk that an AI tool will read.
+   *
+   * Path is workspace-relative (POSIX separators) when the file is inside an
+   * open workspace folder. Files outside any workspace fall back to the absolute
+   * fsPath, also normalized to forward slashes.
+   */
+  private async handleGetAiContextRef(
+    message: { type: string; [key: string]: unknown },
+    document: vscode.TextDocument,
+    webview: vscode.Webview
+  ): Promise<void> {
+    const requestId = message.requestId as string;
+    const startLine = message.startLine as number;
+    const endLine = message.endLine as number;
+
+    const reply = (payload: { ref?: string; relPath?: string; error?: string }) => {
+      webview.postMessage({
+        type: 'aiContextRefResponse',
+        requestId,
+        ...payload,
+      });
+    };
+
+    if (typeof requestId !== 'string') return;
+    if (typeof startLine !== 'number' || typeof endLine !== 'number') {
+      reply({ error: 'Invalid line range' });
+      return;
+    }
+
+    try {
+      if (document.isDirty) {
+        const saved = await document.save();
+        if (!saved) {
+          reply({ error: 'Could not save document before copying reference' });
+          return;
+        }
+      }
+
+      const filePath = document.uri.fsPath;
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+      const relRaw = workspaceFolder
+        ? path.relative(workspaceFolder.uri.fsPath, filePath)
+        : filePath;
+      const relPath = relRaw.replace(/\\/g, '/');
+      const suffix = startLine === endLine ? `#${startLine}` : `#${startLine}-${endLine}`;
+      reply({ ref: `@${relPath}${suffix}`, relPath });
+    } catch (error) {
+      reply({ error: error instanceof Error ? error.message : String(error) });
     }
   }
 
