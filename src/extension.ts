@@ -130,6 +130,18 @@ export function activate(context: vscode.ExtensionContext) {
       outlineViewProvider.clearFilter();
     })
   );
+
+  // Forward the keybinding to the active webview, which runs the same code path
+  // as the toolbar button. The webview owns the selection state, so the host
+  // command stays a thin trigger.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('markdownForHumans.copyAiContextRef', () => {
+      const panel = getActiveWebviewPanel();
+      if (panel) {
+        panel.webview.postMessage({ type: 'triggerCopyAiContextRef' });
+      }
+    })
+  );
 }
 
 export function deactivate() {
