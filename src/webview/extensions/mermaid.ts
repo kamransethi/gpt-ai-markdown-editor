@@ -241,9 +241,37 @@ export const Mermaid = Node.create({
         }
       };
 
-      // Single-click: Highlight + show tooltip (only in preview mode)
+      // Helper: select this mermaid node in ProseMirror so copy / cut /
+      // backspace / delete behave correctly. Without a NodeSelection on the
+      // node, the editor's selection is empty when the user clicks the
+      // diagram, which is why Cmd+C / Cmd+X / Delete were all no-ops.
+      const selectNodeInEditor = () => {
+        if (typeof getPos !== 'function') return;
+        const pos = getPos();
+        if (typeof pos !== 'number') return;
+        try {
+          editor.chain().setNodeSelection(pos).run();
+        } catch (err) {
+          console.warn('[MD4H] Failed to set mermaid node selection:', err);
+        }
+      };
+
+      // Use mousedown — ProseMirror itself dispatches selections on
+      // mousedown, so we want to run before any default click handling.
+      // We do NOT preventDefault: let ProseMirror manage focus / caret as
+      // usual, we just ensure the node is the active selection afterwards.
+      container.addEventListener('mousedown', event => {
+        // Don't hijack interaction with anchor links inside the rendered
+        // SVG (mermaid click events on nodes/links).
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('a[href]')) return;
+        selectNodeInEditor();
+      });
+
+      // Single-click: visual highlight + tooltip. Selection has already
+      // been set by mousedown above, so copy/cut/delete now work.
       container.addEventListener('click', () => {
-        // Don't highlight if clicking inside diagram
+        selectNodeInEditor();
         if (!isHighlighted) {
           container.classList.add('highlighted');
           tooltip.style.display = 'block';
