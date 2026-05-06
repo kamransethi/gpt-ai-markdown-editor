@@ -6,6 +6,7 @@ describe('CustomImage indentation', () => {
   beforeEach(() => {
     delete (window as unknown as { resolveImagePath?: unknown }).resolveImagePath;
     delete (window as unknown as { _imageCacheBust?: unknown })._imageCacheBust;
+    delete (window as unknown as { showImageHoverOverlay?: unknown }).showImageHoverOverlay;
   });
 
   it('applies indentation styles based on indent-prefix attr', () => {
@@ -27,9 +28,12 @@ describe('CustomImage indentation', () => {
     ).config?.addNodeView?.();
     expect(typeof nodeViewFactoryRaw).toBe('function');
     if (!nodeViewFactoryRaw) throw new Error('nodeViewFactory is undefined');
-    const nodeViewFactory: (args: { node: unknown; HTMLAttributes: unknown; editor: unknown }) => {
-      dom: HTMLElement;
-    } = nodeViewFactoryRaw;
+    const nodeViewFactory: (args: {
+      node: unknown;
+      HTMLAttributes: unknown;
+      editor: unknown;
+      extension?: unknown;
+    }) => { dom: HTMLElement } = nodeViewFactoryRaw;
 
     const node = {
       attrs: {
@@ -43,6 +47,11 @@ describe('CustomImage indentation', () => {
       node,
       HTMLAttributes: { class: 'markdown-image' },
       editor: {},
+      extension: {
+        options: {
+          getShowImageHoverOverlay: () => false,
+        },
+      },
     });
 
     const wrapper = nodeView.dom;
@@ -142,5 +151,61 @@ describe('CustomImage indentation', () => {
     await Promise.resolve();
 
     expect(img!.src).toContain('t=123');
+  });
+
+  it('keeps image menu hover class active when overlay is disabled', () => {
+    (window as unknown as { showImageHoverOverlay?: boolean }).showImageHoverOverlay = false;
+
+    const extension = CustomImage.configure({
+      allowBase64: true,
+      HTMLAttributes: { class: 'markdown-image' },
+      getShowImageHoverOverlay: () =>
+        (window as unknown as { showImageHoverOverlay?: boolean }).showImageHoverOverlay ?? true,
+    } as any);
+
+    const nodeViewFactoryRaw = (
+      extension as unknown as {
+        config?: {
+          addNodeView?: () => (args: {
+            node: unknown;
+            HTMLAttributes: unknown;
+            editor: unknown;
+          }) => { dom: HTMLElement };
+        };
+      }
+    ).config?.addNodeView?.();
+    expect(typeof nodeViewFactoryRaw).toBe('function');
+    if (!nodeViewFactoryRaw) throw new Error('nodeViewFactory is undefined');
+    const nodeViewFactory: (args: { node: unknown; HTMLAttributes: unknown; editor: unknown }) => {
+      dom: HTMLElement;
+    } = nodeViewFactoryRaw;
+
+    const node = {
+      attrs: {
+        src: './img.png',
+        alt: 'alt',
+      },
+    };
+
+    const nodeView = nodeViewFactory({
+      node,
+      HTMLAttributes: { class: 'markdown-image' },
+      editor: {},
+    });
+
+    const wrapper = nodeView.dom;
+    const image = wrapper.querySelector('.markdown-image') as HTMLImageElement | null;
+    expect(image).not.toBeNull();
+    if (!image) {
+      throw new Error('image element is missing');
+    }
+
+    // Simulate loaded image to satisfy hover-activation guard.
+    Object.defineProperty(image, 'complete', { value: true, configurable: true });
+    image.dispatchEvent(new Event('load'));
+
+    wrapper.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+
+    expect(wrapper.classList.contains('image-menu-active')).toBe(true);
   });
 });

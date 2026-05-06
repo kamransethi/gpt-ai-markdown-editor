@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.1.7] - 2026-04-21
+
+### Fixed
+
+- Image context menu (resize, align, copy) is now accessible even when the image hover overlay is disabled via settings. Previously, turning off `markdownForHumans.imagePreview.hover.enabled` also hid the menu button, making images uneditable.
+
+---
+
 ## [0.1.6] - 2026-04-20
 
 ### Changed

@@ -25,12 +25,14 @@ import { TabIndentation } from './extensions/tabIndentation';
 import { GitHubAlerts } from './extensions/githubAlerts';
 import { ImageEnterSpacing } from './extensions/imageEnterSpacing';
 import { MarkdownParagraph } from './extensions/markdownParagraph';
+import { BlankLinePreservation } from './extensions/blankLinePreservation';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { HtmlPreservingTable } from './extensions/htmlPreservingTable';
 import { DraggableBlocks } from './extensions/draggableBlocks';
 import { DocumentAuditExtension } from './features/auditDocument';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
+import { installBlankLineLexerNormalizer } from './utils/markedLexerNormalizer';
 import {
   setupImageDragDrop,
   hasPendingImageSaves,
@@ -41,6 +43,7 @@ import { toggleSearchOverlay } from './features/searchOverlay';
 import { showLinkDialog } from './features/linkDialog';
 import { processPasteContent, parseFencedCode } from './utils/pasteHandler';
 import { copySelectionAsMarkdown } from './utils/copyMarkdown';
+import { copyAiContextReference, type SelectionBlockRange } from './utils/aiContextReference';
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
@@ -211,6 +214,35 @@ const scheduleOutlineUpdate = () => {
     outlineUpdateTimeout = null;
   }, OUTLINE_UPDATE_DEBOUNCE_MS);
 };
+
+// Pending AI context reference requests, keyed by requestId. The host saves the
+// document and replies with `aiContextRefResponse`; we look up the resolver here.
+const aiContextRefCallbacks = new Map<
+  string,
+  (response: { ref?: string; relPath?: string; error?: string }) => void
+>();
+
+async function runCopyAiContextRef(): Promise<void> {
+  if (!editor) return;
+  const { showToast } = await import('./features/auditOverlay');
+  const result = await copyAiContextReference(editor, (range: SelectionBlockRange) => {
+    return new Promise(resolve => {
+      const requestId = `ai-ref-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      aiContextRefCallbacks.set(requestId, resolve);
+      vscode.postMessage({
+        type: 'getAiContextRef',
+        requestId,
+        startLine: range.startLine,
+        endLine: range.endLine,
+      });
+    });
+  });
+  if (result.success) {
+    showToast(`Copied AI reference: ${result.ref}`, 'success');
+  } else {
+    showToast(result.error || 'Could not copy AI reference', 'info');
+  }
+}
 
 // Global function for resolving image paths (used by CustomImage extension)
 const uriResolveCallbacks = new Map<string, (uri: string) => void>();
@@ -453,6 +485,8 @@ function initializeEditor(initialContent: string) {
           parseMarkdown: parsePreservedCodeBlock,
           renderMarkdown: renderPreservedCodeBlock,
         }).configure({
+        BlankLinePreservation, // Converts extra blank lines (space tokens) to empty paragraphs on parse
+        CodeBlockLowlight.configure({
           lowlight,
           HTMLAttributes: {
             class: 'code-block-highlighted',
@@ -572,6 +606,24 @@ function initializeEditor(initialContent: string) {
     });
 
     editor = editorInstance;
+
+    // Patch the marked lexer used by @tiptap/markdown so blank lines that
+    // marked greedily absorbs into heading/table/code/hr tokens get split
+    // back out as "space" tokens. Without this, BlankLinePreservation only
+    // works for paragraph-followed-by-blank-lines cases.
+    try {
+      const markdownStorage = editorInstance as unknown as {
+        markdown?: { instance?: unknown };
+        storage?: { markdown?: { instance?: unknown } };
+      };
+      const markedInstance =
+        markdownStorage.markdown?.instance ?? markdownStorage.storage?.markdown?.instance;
+      if (markedInstance) {
+        installBlankLineLexerNormalizer(markedInstance);
+      }
+    } catch (error) {
+      console.warn('[MD4H] Failed to install blank-line lexer normalizer:', error);
+    }
 
     // Set initial content as markdown (Tiptap v3 requires explicit contentType)
     if (initialContent) {
@@ -737,6 +789,18 @@ function initializeEditor(initialContent: string) {
         if (editor) {
           toggleSearchOverlay(editor);
         }
+        return;
+      }
+
+      // Cmd/Ctrl+Alt+C — Copy current selection as @file#lines AI context reference.
+      // VS Code keybindings declared in package.json don't fire while focus is
+      // inside a webview iframe, so we have to detect the chord here ourselves.
+      // Match e.code instead of e.key because Ctrl+Alt on Windows is the AltGr
+      // modifier on some layouts and can rewrite e.key to a non-letter glyph.
+      if (isMod && e.altKey && (e.code === 'KeyC' || e.key.toLowerCase() === 'c')) {
+        e.preventDefault();
+        e.stopPropagation();
+        void runCopyAiContextRef();
         return;
       }
     };
@@ -1318,6 +1382,23 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
         break;
       }
+      case 'aiContextRefResponse': {
+        const requestId = message.requestId as string;
+        const callback = aiContextRefCallbacks.get(requestId);
+        if (callback) {
+          callback({
+            ref: message.ref as string | undefined,
+            relPath: message.relPath as string | undefined,
+            error: message.error as string | undefined,
+          });
+          aiContextRefCallbacks.delete(requestId);
+        }
+        break;
+      }
+      case 'triggerCopyAiContextRef': {
+        void runCopyAiContextRef();
+        break;
+      }
       case 'navigateToHeading': {
         if (!editor) return;
         const pos = message.pos as number;
@@ -1530,6 +1611,11 @@ window.addEventListener('auditDocument', async () => {
 window.addEventListener('copyAsMarkdown', () => {
   if (!editor) return;
   copySelectionAsMarkdown(editor);
+});
+
+// Handle copy AI context reference from toolbar button
+window.addEventListener('copyAiContextRef', () => {
+  void runCopyAiContextRef();
 });
 
 // Handle open source view from toolbar button

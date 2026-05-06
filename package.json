@@ -2,7 +2,7 @@
   "name": "markdown-for-humans",
   "displayName": "Markdown for Humans: WYSIWYG Editor",
   "description": "A full-featured WYSIWYG Markdown editor with visual table editing, drag-and-drop images, Mermaid diagrams, and distraction-free writing—all inside VS Code.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "concretio",
   "author": {
     "name": "Abhinav",
@@ -107,6 +107,18 @@
         "command": "markdownForHumans.outline.clearFilter",
         "title": "Outline: Clear Filter",
         "icon": "$(close)"
+      },
+      {
+        "command": "markdownForHumans.copyAiContextRef",
+        "title": "Markdown for Humans: Copy AI Context Reference (@file#lines)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "markdownForHumans.copyAiContextRef",
+        "key": "alt+c",
+        "mac": "alt+c",
+        "when": "activeCustomEditorId == 'markdownForHumans.editor'"
       }
     ],
     "views": {
@@ -123,6 +135,13 @@
         {
           "command": "markdownForHumans.openFile",
           "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "markdownForHumans.openFile",
+          "when": "resourceExtname == .md && activeCustomEditorId != 'markdownForHumans.editor'",
           "group": "navigation"
         }
       ],
