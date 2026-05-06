@@ -1331,13 +1331,14 @@
     opacity: 0.35;
     transition: opacity 0.12s ease, background-color 0.12s ease;
     z-index: 50;
-    /* Prevent text selection while dragging */
+    /* Prevent text selection and touch-scroll hijacking while pressed. */
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
   }
 
   .drag-block-handle:hover {
-    opacity: 0.7;
+    opacity: 0.85;
     background-color: var(--vscode-list-hoverBackground, rgba(128,128,128,0.12));
   }
 
@@ -1358,39 +1359,154 @@
 
   .drag-block-indicator {
     position: fixed;
-    height: 3px;
+    height: 2px;
     border-radius: 2px;
     background-color: var(--vscode-focusBorder, #0969da);
     display: none; /* shown by JS while dragging */
     pointer-events: none;
     z-index: 60;
-    /* Smooth slide animation */
-    transition: top 0.08s ease;
-    /* Small circular knob at the start of the line */
-    box-shadow: -4px 0 0 4px var(--vscode-focusBorder, #0969da);
+    opacity: 0.9;
+    transition: top 0.08s ease, left 0.08s ease, width 0.08s ease;
+  }
+  .drag-block-indicator::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: -2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: inherit;
   }
 
-  .drag-block-indicator--invalid {
-    background-color: var(--vscode-errorForeground, #cf222e);
-    box-shadow: -4px 0 0 4px var(--vscode-errorForeground, #cf222e);
-  }
-
-  /* ── Dragged block dimming ───────────────── */
+  /* ── Source block while being dragged ────── */
 
   .drag-block-dragging {
-    opacity: 0.5;
+    opacity: 0.35;
     pointer-events: none;
+    transition: opacity 0.12s ease;
   }
 
-  /* Fade-in handle (reduced-motion safe) */
+  /* ── Floating ghost clone that trails the indicator ── */
+
+  .drag-block-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 70;
+    pointer-events: none;
+    background-color: var(--vscode-editor-background, #ffffff);
+    border: 1px solid var(--vscode-widget-border, var(--vscode-editorWidget-border, rgba(128,128,128,0.25)));
+    border-radius: 6px;
+    padding: 6px 12px;
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.28),
+      0 4px 10px rgba(0, 0, 0, 0.16);
+    transform-origin: top left;
+    will-change: transform;
+    cursor: grabbing;
+    --gx: 0px;
+    --gy: 0px;
+    /* Balanced preview sizing — tall content (checklists, tables, long
+     * lists) is clipped so the ghost never dominates the layout. */
+    max-width: 420px;
+    max-height: 320px;
+    overflow: hidden;
+    transform: translate(var(--gx), var(--gy));
+    opacity: 0.96;
+  }
+
+  /* Keep nested headings, paragraphs, and list items at controlled sizes
+   * inside the ghost so a single big <h1> can't blow up the preview. */
+  .drag-block-ghost h1,
+  .drag-block-ghost h2,
+  .drag-block-ghost h3,
+  .drag-block-ghost h4 {
+    font-size: 0.85em;
+    margin: 0;
+  }
+  .drag-block-ghost p,
+  .drag-block-ghost li {
+    margin: 0;
+  }
+
+  /* Give bulleted/numbered lists enough left padding inside the ghost that
+   * outside-positioned markers (•, 1.) aren't clipped by overflow:hidden.
+   * The cloned block element IS the ghost (ul.drag-block-ghost /
+   * ol.drag-block-ghost), so we have to self-target alongside descendants. */
+  ul.drag-block-ghost,
+  ol.drag-block-ghost,
+  .drag-block-ghost ul,
+  .drag-block-ghost ol {
+    margin: 0;
+    padding-left: 1.4em;
+  }
+
+  /* Task lists use checkboxes as their marker — hide the default list
+   * bullet so we don't render two markers per item. Same self-targeting
+   * pattern as above. */
+  ul.drag-block-ghost[data-type="taskList"],
+  .drag-block-ghost ul[data-type="taskList"],
+  .drag-block-ghost ul[data-type="taskList"] ul[data-type="taskList"],
+  .drag-block-ghost li[data-type="taskItem"] {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  /* ── Drop confirmation glow on the just-landed block ── */
+
+  .drag-block-just-dropped {
+    border-radius: 4px;
+  }
+
+  /* ── Globally suppress text selection while dragging ── */
+
+  body.is-dragging-block,
+  body.is-dragging-block * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    cursor: grabbing !important;
+  }
+
+  /* Reduced-motion-safe animations */
   @media (prefers-reduced-motion: no-preference) {
     .drag-block-handle {
       animation: drag-handle-fadein 0.1s ease both;
+      transition: opacity 0.12s ease, background-color 0.12s ease, transform 0.12s ease;
     }
-
+    .drag-block-handle:hover {
+      transform: scale(1.06);
+    }
     @keyframes drag-handle-fadein {
       from { opacity: 0; transform: translateX(4px); }
       to   { opacity: 0.35; transform: translateX(0); }
+    }
+
+    /* Subtle "lifted" scale while dragging — relaxes back to natural size
+     * (scale 1) as the ghost fades into the landed block on drop. */
+    .drag-block-ghost {
+      transform: translate(var(--gx), var(--gy)) scale(1.02);
+    }
+    .drag-block-ghost.is-dropping {
+      transition:
+        transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.18s ease;
+      transform: translate(var(--gx), var(--gy)) scale(1);
+      opacity: 0;
+    }
+
+    .drag-block-just-dropped {
+      animation: drag-block-thunk 420ms ease-out both;
+    }
+    @keyframes drag-block-thunk {
+      0%   {
+        box-shadow:
+          0 0 0 2px var(--vscode-focusBorder, #0969da),
+          0 0 0 6px rgba(9, 105, 218, 0.18);
+      }
+      100% {
+        box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent;
+      }
     }
   }
 

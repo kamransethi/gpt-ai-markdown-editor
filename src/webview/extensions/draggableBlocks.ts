@@ -23,9 +23,15 @@ declare module '@tiptap/core' {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const draggableBlocksPluginKey = new PluginKey<null>('draggableBlocks');
-const BLOCK_DRAG_MIME = 'application/md4h-block-drag';
 const AUTO_SCROLL_THRESHOLD = 80;
 const AUTO_SCROLL_MAX_SPEED = 14;
+const DRAG_START_DISTANCE = 4;
+const GHOST_DROP_DURATION_MS = 260;
+// Ghost is anchored to the drop indicator, not the cursor — so it can't
+// follow the pointer off-screen. These are the offsets from the indicator's
+// left/top edge (right + below the blue line).
+const GHOST_INDICATOR_OFFSET_X = 16;
+const GHOST_INDICATOR_OFFSET_Y = 12;
 
 const BLOCK_TYPES = new Set([
   'paragraph',
@@ -163,27 +169,36 @@ class DragHandleController {
   private _handleBlock: { node: ProsemirrorNode; pos: number; index: number } | null = null;
   private _hideTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  // Pointer-drag state — pendingDrag is "armed but not yet past threshold".
+  private pendingDrag: {
+    block: { node: ProsemirrorNode; pos: number; index: number };
+    pointerX: number;
+    pointerY: number;
+    pointerId: number;
+  } | null = null;
+
   private isDragging = false;
   private draggedPos = -1;
   private dropInsertPos = -1;
+  private ghost: HTMLElement | null = null;
   private scrollRafId: number | null = null;
   private _autoScrollSpeed = 0;
 
   private readonly _onMouseMove: (e: MouseEvent) => void;
   private readonly _onMouseLeave: (e: MouseEvent) => void;
-  private readonly _onDragStart: (e: DragEvent) => void;
-  private readonly _onDragOver: (e: DragEvent) => void;
-  private readonly _onDrop: (e: DragEvent) => void;
-  private readonly _onDragEnd: (e: DragEvent) => void;
   private readonly _onHandleMouseEnter: (e: MouseEvent) => void;
   private readonly _onHandleMouseLeave: (e: MouseEvent) => void;
+  private readonly _onPointerDown: (e: PointerEvent) => void;
+  private readonly _onPointerMove: (e: PointerEvent) => void;
+  private readonly _onPointerUp: (e: PointerEvent) => void;
+  private readonly _onPointerCancel: (e: PointerEvent) => void;
+  private readonly _onKeyDown: (e: KeyboardEvent) => void;
 
   constructor(_editor: Editor, view: EditorView) {
     this.view = view;
 
     this.handle = document.createElement('div');
     this.handle.className = 'drag-block-handle';
-    this.handle.setAttribute('draggable', 'true');
     this.handle.setAttribute('role', 'button');
     this.handle.setAttribute('aria-label', 'Drag to move block');
     this.handle.setAttribute('title', 'Drag to move block');
@@ -196,25 +211,27 @@ class DragHandleController {
 
     this._onMouseMove = this.onMouseMove.bind(this);
     this._onMouseLeave = this.onMouseLeave.bind(this);
-    this._onDragStart = this.onDragStart.bind(this);
-    this._onDragOver = this.onDragOver.bind(this);
-    this._onDrop = this.onDrop.bind(this);
-    this._onDragEnd = this.onDragEnd.bind(this);
     this._onHandleMouseEnter = this.onHandleMouseEnter.bind(this);
     this._onHandleMouseLeave = this.onHandleMouseLeave.bind(this);
+    this._onPointerDown = this.onPointerDown.bind(this);
+    this._onPointerMove = this.onPointerMove.bind(this);
+    this._onPointerUp = this.onPointerUp.bind(this);
+    this._onPointerCancel = this.onPointerCancel.bind(this);
+    this._onKeyDown = this.onKeyDown.bind(this);
 
     view.dom.addEventListener('mousemove', this._onMouseMove);
     view.dom.addEventListener('mouseleave', this._onMouseLeave);
     this.handle.addEventListener('mouseenter', this._onHandleMouseEnter);
     this.handle.addEventListener('mouseleave', this._onHandleMouseLeave);
-    this.handle.addEventListener('dragstart', this._onDragStart);
-    document.addEventListener('dragover', this._onDragOver, { capture: true, passive: false });
-    document.addEventListener('drop', this._onDrop, { capture: true });
-    document.addEventListener('dragend', this._onDragEnd, { capture: true });
+    this.handle.addEventListener('pointerdown', this._onPointerDown);
+    this.handle.addEventListener('pointermove', this._onPointerMove);
+    this.handle.addEventListener('pointerup', this._onPointerUp);
+    this.handle.addEventListener('pointercancel', this._onPointerCancel);
+    window.addEventListener('keydown', this._onKeyDown);
   }
 
   private onMouseMove(e: MouseEvent): void {
-    if (this.isDragging) return;
+    if (this.isDragging || this.pendingDrag) return;
     if (this._hideTimeoutId !== null) {
       clearTimeout(this._hideTimeoutId);
       this._hideTimeoutId = null;
@@ -244,12 +261,12 @@ class DragHandleController {
   }
 
   private onMouseLeave(e: MouseEvent): void {
-    if (this.isDragging) return;
+    if (this.isDragging || this.pendingDrag) return;
     if (e.relatedTarget instanceof Node && this.handle.contains(e.relatedTarget)) return;
     if (this._hideTimeoutId !== null) clearTimeout(this._hideTimeoutId);
     this._hideTimeoutId = setTimeout(() => {
       this._hideTimeoutId = null;
-      if (!this.isDragging) this.hideHandle();
+      if (!this.isDragging && !this.pendingDrag) this.hideHandle();
     }, 150);
   }
 
@@ -264,7 +281,7 @@ class DragHandleController {
   }
 
   private onHandleMouseLeave(e: MouseEvent): void {
-    if (this.isDragging || e.buttons !== 0) return;
+    if (this.isDragging || this.pendingDrag || e.buttons !== 0) return;
     if (e.relatedTarget instanceof Node && this.view.dom.contains(e.relatedTarget)) return;
     this.hideHandle();
   }
@@ -293,43 +310,144 @@ class DragHandleController {
     this.hoveredBlock = null;
   }
 
-  private onDragStart(e: DragEvent): void {
+  /**
+   * Lower bound (in viewport coordinates) for the ghost and drop indicator —
+   * the bottom edge of the sticky formatting toolbar. Without this, dragging
+   * upward lets both elements slip behind the toolbar (which sits at z-index
+   * 100, above them).
+   */
+  private getViewportClampTop(): number {
+    const toolbar = document.querySelector('.formatting-toolbar') as HTMLElement | null;
+    if (toolbar) {
+      const rect = toolbar.getBoundingClientRect();
+      if (rect.bottom > 0) return rect.bottom;
+    }
+    return 0;
+  }
+
+  // ── Pointer drag lifecycle ─────────────────────────────────────────────────
+
+  private onPointerDown(e: PointerEvent): void {
+    if (e.button !== 0) return;
     const block = this.hoveredBlock ?? this._handleBlock;
-    if (!block) {
-      e.preventDefault();
-      return;
-    }
-    this.isDragging = true;
-    this.draggedPos = block.pos;
-    const ghost = document.createElement('div');
-    ghost.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
-    document.body.appendChild(ghost);
-    if (e.dataTransfer) {
-      e.dataTransfer.setDragImage(ghost, 0, 0);
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.clearData();
-      e.dataTransfer.setData(BLOCK_DRAG_MIME, String(this.draggedPos));
-    }
-    setTimeout(() => ghost.remove(), 0);
-    const blockDom = this.view.nodeDOM(this.draggedPos) as HTMLElement | null;
-    if (blockDom) blockDom.classList.add('drag-block-dragging');
+    if (!block) return;
+    const blockDom = this.view.nodeDOM(block.pos) as HTMLElement | null;
+    if (!blockDom) return;
+    e.preventDefault();
+    this.pendingDrag = {
+      block,
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      pointerId: e.pointerId,
+    };
+    this.handle.setPointerCapture(e.pointerId);
     this.handle.classList.add('drag-block-handle--active');
   }
 
-  private onDragOver(e: DragEvent): void {
-    if (!this.isDragging) return;
-    e.preventDefault();
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-    const { insertPos } = computeDropTarget(this.view, e.clientX, e.clientY, this.draggedPos);
-    this.dropInsertPos = insertPos;
-    this.positionIndicator(e.clientY, insertPos);
-    this.maybeAutoScroll(e.clientY);
+  private onPointerMove(e: PointerEvent): void {
+    if (this.pendingDrag && !this.isDragging) {
+      const dx = e.clientX - this.pendingDrag.pointerX;
+      const dy = e.clientY - this.pendingDrag.pointerY;
+      if (dx * dx + dy * dy >= DRAG_START_DISTANCE * DRAG_START_DISTANCE) {
+        this.startDrag();
+      }
+    }
+    if (this.isDragging) {
+      this.updateDrag(e.clientX, e.clientY);
+    }
   }
 
-  private positionIndicator(clientY: number, insertPos: number): void {
+  private onPointerUp(e: PointerEvent): void {
+    if (this.handle.hasPointerCapture(e.pointerId)) {
+      this.handle.releasePointerCapture(e.pointerId);
+    }
+    if (this.isDragging) {
+      this.finishDrag();
+    } else if (this.pendingDrag) {
+      this.pendingDrag = null;
+      this.handle.classList.remove('drag-block-handle--active');
+    }
+  }
+
+  private onPointerCancel(e: PointerEvent): void {
+    if (this.handle.hasPointerCapture(e.pointerId)) {
+      this.handle.releasePointerCapture(e.pointerId);
+    }
+    if (this.isDragging) {
+      this.cancelDrag();
+    } else {
+      this.pendingDrag = null;
+      this.handle.classList.remove('drag-block-handle--active');
+    }
+  }
+
+  private onKeyDown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this.isDragging) {
+      this.cancelDrag();
+    }
+  }
+
+  private startDrag(): void {
+    if (!this.pendingDrag) return;
+    const { block } = this.pendingDrag;
+    const blockDom = this.view.nodeDOM(block.pos) as HTMLElement | null;
+    if (!blockDom) {
+      this.pendingDrag = null;
+      this.handle.classList.remove('drag-block-handle--active');
+      return;
+    }
+
+    this.isDragging = true;
+    this.draggedPos = block.pos;
+    this.pendingDrag = null;
+
+    const rect = blockDom.getBoundingClientRect();
+    const ghost = blockDom.cloneNode(true) as HTMLElement;
+    ghost.classList.add('drag-block-ghost');
+    // Strip stray drag classes so the ghost looks like the live block.
+    ghost.classList.remove('drag-block-dragging', 'drag-block-just-dropped');
+    ghost.style.width = `${rect.width}px`;
+    document.body.appendChild(ghost);
+    this.ghost = ghost;
+
+    blockDom.classList.add('drag-block-dragging');
+    document.body.classList.add('is-dragging-block');
+    this.hideHandle();
+  }
+
+  private updateDrag(clientX: number, clientY: number): void {
+    const { insertPos } = computeDropTarget(this.view, clientX, clientY, this.draggedPos);
+    this.dropInsertPos = insertPos;
+    const indicatorPos = this.positionIndicator(clientY, insertPos);
+    // Recompute auto-scroll first so its direction is current when we decide
+    // which side of the indicator to render the ghost on.
+    this.maybeAutoScroll(clientY);
+    if (this.ghost && indicatorPos) {
+      // Ghost is pinned to the blue indicator (not the cursor) — so the
+      // cursor leaving the window can't drag the ghost off-screen with it.
+      // When auto-scroll is pulling the page DOWN (cursor near the bottom
+      // of the viewport), flip the ghost above the indicator so it stays
+      // visible. Otherwise sit below, the default.
+      const x = indicatorPos.left + GHOST_INDICATOR_OFFSET_X;
+      let y: number;
+      if (this._autoScrollSpeed > 0) {
+        const ghostHeight = this.ghost.getBoundingClientRect().height;
+        y = indicatorPos.top - GHOST_INDICATOR_OFFSET_Y - ghostHeight;
+      } else {
+        y = indicatorPos.top + GHOST_INDICATOR_OFFSET_Y;
+      }
+      this.ghost.style.setProperty('--gx', `${x}px`);
+      this.ghost.style.setProperty('--gy', `${y}px`);
+    }
+  }
+
+  private positionIndicator(
+    clientY: number,
+    insertPos: number
+  ): { left: number; top: number } | null {
     if (insertPos === -1) {
       this.indicator.style.display = 'none';
-      return;
+      return null;
     }
     const editorRect = this.view.dom.getBoundingClientRect();
     let indicatorY = clientY;
@@ -341,10 +459,13 @@ class DragHandleController {
         indicatorY = insertPos <= block.pos + 1 ? rect.top : rect.bottom;
       }
     }
-    this.indicator.style.left = `${editorRect.left}px`;
+    indicatorY = Math.max(this.getViewportClampTop(), indicatorY);
+    const left = editorRect.left;
+    this.indicator.style.left = `${left}px`;
     this.indicator.style.width = `${editorRect.width}px`;
     this.indicator.style.top = `${indicatorY}px`;
     this.indicator.style.display = 'block';
+    return { left, top: indicatorY };
   }
 
   private maybeAutoScroll(clientY: number): void {
@@ -378,16 +499,21 @@ class DragHandleController {
       cancelAnimationFrame(this.scrollRafId);
       this.scrollRafId = null;
     }
+    this._autoScrollSpeed = 0;
   }
 
-  private onDrop(e: DragEvent): void {
-    if (!this.isDragging || !e.dataTransfer?.types.includes(BLOCK_DRAG_MIME)) return;
-    e.preventDefault();
-    e.stopPropagation();
+  /**
+   * Apply the ProseMirror reorder transaction, then animate the floating ghost
+   * into the landed block's position and clean up.
+   */
+  private finishDrag(): void {
     this.stopAutoScroll();
+    this.indicator.style.display = 'none';
+    this.handle.classList.remove('drag-block-handle--active');
 
     const { state } = this.view;
     const draggedNode = state.doc.resolve(this.draggedPos).nodeAfter;
+    let landedAtPos: number | null = null;
     if (draggedNode && this.dropInsertPos !== -1) {
       const draggedSize = draggedNode.nodeSize;
       if (
@@ -399,32 +525,93 @@ class DragHandleController {
         tr.insert(this.dropInsertPos, content.content);
         const mappedDragPos = tr.mapping.map(this.draggedPos);
         tr.delete(mappedDragPos, mappedDragPos + draggedSize);
+        // Final resting position of the dropped block, after the delete maps it.
+        landedAtPos =
+          this.dropInsertPos > this.draggedPos
+            ? this.dropInsertPos - draggedSize
+            : this.dropInsertPos;
         this.view.dispatch(tr);
       }
     }
+
+    // After dispatch, the dragged block's DOM at `restingPos` is the freshly
+    // mounted version (or the unchanged original if the drop was a no-op).
+    const restingPos = landedAtPos !== null ? landedAtPos : this.draggedPos;
+    const restingDom = this.view.nodeDOM(restingPos) as HTMLElement | null;
+    const ghost = this.ghost;
+    this.ghost = null;
+
+    const finalize = (): void => {
+      if (ghost && ghost.parentNode) ghost.remove();
+      if (restingDom) restingDom.classList.remove('drag-block-dragging');
+      this.endDrag();
+      if (landedAtPos !== null) this.flashDropConfirmation(landedAtPos);
+    };
+
+    if (ghost && restingDom) {
+      const targetRect = restingDom.getBoundingClientRect();
+      ghost.classList.add('is-dropping');
+      ghost.style.setProperty('--gx', `${targetRect.left}px`);
+      ghost.style.setProperty('--gy', `${targetRect.top}px`);
+      let done = false;
+      const onEnd = (): void => {
+        if (done) return;
+        done = true;
+        ghost.removeEventListener('transitionend', onEnd);
+        finalize();
+      };
+      ghost.addEventListener('transitionend', onEnd);
+      // Fallback for reduced-motion or when transitions are otherwise skipped.
+      setTimeout(onEnd, GHOST_DROP_DURATION_MS + 80);
+    } else {
+      finalize();
+    }
+  }
+
+  private cancelDrag(): void {
+    this.stopAutoScroll();
+    this.indicator.style.display = 'none';
+    this.handle.classList.remove('drag-block-handle--active');
+    if (this.ghost && this.ghost.parentNode) this.ghost.remove();
+    this.ghost = null;
+    const blockDom = this.view.nodeDOM(this.draggedPos) as HTMLElement | null;
+    if (blockDom) blockDom.classList.remove('drag-block-dragging');
     this.endDrag();
   }
 
-  private onDragEnd(): void {
-    this.stopAutoScroll();
-    this.endDrag();
+  /**
+   * Briefly outlines the just-dropped block so the user sees where it landed.
+   * Pure visual confirmation — uses the .drag-block-just-dropped CSS class,
+   * which fades itself out via animation. Skipped if the DOM node can't be
+   * resolved (e.g. NodeView not yet mounted).
+   */
+  private flashDropConfirmation(blockPos: number): void {
+    requestAnimationFrame(() => {
+      const dom = this.view.nodeDOM(blockPos) as HTMLElement | null;
+      if (!dom || typeof dom.classList === 'undefined') return;
+      dom.classList.add('drag-block-just-dropped');
+      const cleanup = (): void => {
+        dom.classList.remove('drag-block-just-dropped');
+        dom.removeEventListener('animationend', cleanup);
+      };
+      dom.addEventListener('animationend', cleanup);
+      // Fallback in case animation never fires (reduced-motion users).
+      setTimeout(cleanup, 600);
+    });
   }
 
   private endDrag(): void {
-    if (!this.isDragging) return;
     this.isDragging = false;
     if (this._hideTimeoutId !== null) {
       clearTimeout(this._hideTimeoutId);
       this._hideTimeoutId = null;
     }
-    const blockDom = this.view.nodeDOM(this.draggedPos) as HTMLElement | null;
-    if (blockDom) blockDom.classList.remove('drag-block-dragging');
     this.draggedPos = -1;
     this.dropInsertPos = -1;
     this._handleBlock = null;
     this.hoveredBlock = null;
-    this.indicator.style.display = 'none';
-    this.handle.classList.remove('drag-block-handle--active');
+    this.pendingDrag = null;
+    document.body.classList.remove('is-dragging-block');
   }
 
   destroy(): void {
@@ -432,11 +619,11 @@ class DragHandleController {
     if (this._hideTimeoutId !== null) clearTimeout(this._hideTimeoutId);
     this.view.dom.removeEventListener('mousemove', this._onMouseMove);
     this.view.dom.removeEventListener('mouseleave', this._onMouseLeave);
-    document.removeEventListener('dragover', this._onDragOver, { capture: true });
-    document.removeEventListener('drop', this._onDrop, { capture: true });
-    document.removeEventListener('dragend', this._onDragEnd, { capture: true });
+    window.removeEventListener('keydown', this._onKeyDown);
+    if (this.ghost && this.ghost.parentNode) this.ghost.remove();
     this.handle.remove();
     this.indicator.remove();
+    document.body.classList.remove('is-dragging-block');
   }
 }
 
@@ -556,11 +743,6 @@ export const DraggableBlocks = Extension.create({
     return [
       new Plugin({
         key: draggableBlocksPluginKey,
-        props: {
-          handleDrop(_view, event): boolean {
-            return !!event.dataTransfer?.types.includes(BLOCK_DRAG_MIME);
-          },
-        },
         view(editorView) {
           const controller = new DragHandleController(editorRef, editorView);
           return {

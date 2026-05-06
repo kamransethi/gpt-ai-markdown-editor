@@ -164,7 +164,8 @@ describe('DraggableBlocks Extension', () => {
       editor = createEditor('<p>Block 1</p>');
       const handle = document.querySelector('.drag-block-handle');
       expect(handle).not.toBeNull();
-      expect(handle?.getAttribute('draggable')).toBe('true');
+      // Pointer-event drag — no native HTML5 draggable attribute.
+      expect(handle?.hasAttribute('draggable')).toBe(false);
       expect(handle?.getAttribute('aria-label')).toBe('Drag to move block');
     });
   });
