@@ -485,8 +485,6 @@ function initializeEditor(initialContent: string) {
           parseMarkdown: parsePreservedCodeBlock,
           renderMarkdown: renderPreservedCodeBlock,
         }).configure({
-        BlankLinePreservation, // Converts extra blank lines (space tokens) to empty paragraphs on parse
-        CodeBlockLowlight.configure({
           lowlight,
           HTMLAttributes: {
             class: 'code-block-highlighted',
@@ -495,6 +493,7 @@ function initializeEditor(initialContent: string) {
           enableTabIndentation: true, // Enable Tab key for indentation
           tabSize: 2, // 2 spaces per tab (cleaner for markdown code blocks)
         }),
+        BlankLinePreservation, // Converts extra blank lines (space tokens) to empty paragraphs on parse
         Markdown.configure({
           markedOptions: {
             gfm: true, // GitHub Flavored Markdown for tables, task lists
