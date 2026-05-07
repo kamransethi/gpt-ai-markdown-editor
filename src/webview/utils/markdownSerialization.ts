@@ -57,6 +57,37 @@ function serializeSingleNode(node: JSONContent, serialize: (json: JSONContent) =
   }
 }
 
+/**
+ * Serialize one top-level block to markdown, falling back to a structural
+ * placeholder when the markdown serializer produces nothing for a block whose
+ * structural identity should still occupy a line on disk.
+ *
+ * Concretely: an empty heading node (`{type:'heading', attrs:{level:N}}` with
+ * no inline content — produced when a user deletes a heading's text) serializes
+ * to `''` via the standard pipeline, which causes the saver to drop the row
+ * entirely and shifts every following line up by one. Round-tripping it as
+ * `'#'.repeat(level)` keeps the row alive on disk and keeps `Copy as AI
+ * Context` line numbers aligned with what the user sees in the file.
+ *
+ * Empty paragraphs are intentionally NOT placeholdered here — they are how the
+ * saver represents intentional blank lines, and the inline information needed
+ * to recover constructs like `[]()` is already lost in the parser, so any
+ * placeholder would corrupt every legitimate blank line in the document.
+ */
+export function serializeBlockMarkdown(
+  node: JSONContent,
+  serialize: (json: JSONContent) => string
+): string {
+  const md = serializeSingleNode(node, serialize);
+  if (md !== '') return md;
+  if (node && node.type === 'heading') {
+    const rawLevel = node.attrs?.level;
+    const level = typeof rawLevel === 'number' && rawLevel >= 1 && rawLevel <= 6 ? rawLevel : 1;
+    return '#'.repeat(level);
+  }
+  return '';
+}
+
 export function getEditorMarkdownForSync(editor: Editor): string {
   const editorUnknown = editor as unknown as {
     markdown?: MarkdownManager;
@@ -119,7 +150,7 @@ export function getEditorMarkdownForSync(editor: Editor): string {
       if (isEmptyParagraph(node)) {
         pendingBlanks++;
       } else {
-        const nodeMarkdown = serializeSingleNode(node, serialize);
+        const nodeMarkdown = serializeBlockMarkdown(node, serialize);
         if (nodeMarkdown === '') {
           // Node serialized to nothing (unrecognised type, etc.) – treat it
           // as if it were an empty paragraph so blank-line intent is kept.

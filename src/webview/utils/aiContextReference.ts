@@ -15,8 +15,8 @@
  */
 
 import type { Editor, JSONContent } from '@tiptap/core';
-import { stripEmptyDocParagraphsFromJson } from './markdownSerialization';
 import { copyToClipboard } from './copyMarkdown';
+import { serializeBlockMarkdown } from './markdownSerialization';
 
 export interface AiContextRefResult {
   success: boolean;
@@ -78,25 +78,110 @@ export function findContainingBlockIndex(blocks: BlockPos[], pos: number): numbe
   return blocks.length - 1;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isEmptyParagraphNode(node: any): boolean {
-  if (!node || !node.type || node.type.name !== 'paragraph') return false;
+function isEmptyParagraphJsonNode(node: JSONContent | undefined): boolean {
+  if (!node || node.type !== 'paragraph') return false;
   const content = node.content;
-  if (!content || content.size === 0) return true;
-  let hasMeaningful = false;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content.forEach((child: any) => {
-    if (!child || !child.type) return;
-    const name = child.type.name;
-    if (name === 'hardBreak' || name === 'hard_break') return;
-    if (name === 'text') {
+  if (!Array.isArray(content) || content.length === 0) return true;
+  return !content.some(child => {
+    if (!child || typeof child.type !== 'string') return false;
+    if (child.type === 'hardBreak' || child.type === 'hard_break') return false;
+    if (child.type === 'text') {
       const text = typeof child.text === 'string' ? child.text : '';
-      if (text.trim().length > 0) hasMeaningful = true;
-      return;
+      return text.trim().length > 0;
     }
-    hasMeaningful = true;
+    return true;
   });
-  return !hasMeaningful;
+}
+
+interface BlockLineRange {
+  jsonIdx: number;
+  startLine: number;
+  endLine: number;
+}
+
+/**
+ * Walks the live JSON content and returns the saved-file line range for each
+ * non-empty top-level block, mirroring `getEditorMarkdownForSync`:
+ *   - leading and trailing empty paragraphs are dropped,
+ *   - each empty paragraph between content blocks contributes one extra blank line
+ *     beyond the standard `\n\n` block separator.
+ *
+ * The math: between two consecutive content blocks separated by N empty
+ * paragraphs, the next block's first line is `prevLastLine + 2 + N`
+ * (one separator newline, N extra blank-line newlines, then the block's text).
+ */
+function computeBlockLineRanges(
+  content: JSONContent[],
+  serialize: (json: JSONContent) => string
+): BlockLineRange[] {
+  let firstIdx = 0;
+  while (firstIdx < content.length && isEmptyParagraphJsonNode(content[firstIdx])) firstIdx++;
+  let lastIdxExclusive = content.length;
+  while (lastIdxExclusive > firstIdx && isEmptyParagraphJsonNode(content[lastIdxExclusive - 1])) {
+    lastIdxExclusive--;
+  }
+
+  const ranges: BlockLineRange[] = [];
+  let cursorLine = 0;
+  let pendingBlanks = 0;
+  let seenContent = false;
+
+  for (let i = firstIdx; i < lastIdxExclusive; i++) {
+    const node = content[i];
+    if (isEmptyParagraphJsonNode(node)) {
+      pendingBlanks++;
+      continue;
+    }
+
+    // Route through the same per-block serializer the saver uses so empty
+    // structural blocks (e.g. an empty heading) get the same `#` placeholder
+    // here that they get on disk — otherwise the saved file would have one
+    // more line than we counted, shifting every following line range.
+    const nodeMarkdown = serializeBlockMarkdown(node, serialize);
+    if (nodeMarkdown === '') {
+      // A node that serialises to nothing (and has no structural placeholder)
+      // is treated like an empty paragraph, matching the saver's fallback.
+      pendingBlanks++;
+      continue;
+    }
+
+    const blockLines = countLines(nodeMarkdown);
+    if (!seenContent) {
+      cursorLine = 1;
+      seenContent = true;
+    } else {
+      cursorLine += 2 + pendingBlanks;
+    }
+    const startLine = cursorLine;
+    const endLine = startLine + blockLines - 1;
+    ranges.push({ jsonIdx: i, startLine, endLine });
+    cursorLine = endLine;
+    pendingBlanks = 0;
+  }
+
+  return ranges;
+}
+
+function findRangeForJsonIdx(
+  ranges: BlockLineRange[],
+  jsonIdx: number,
+  snap: 'forward' | 'backward'
+): BlockLineRange | null {
+  if (ranges.length === 0) return null;
+  for (const r of ranges) {
+    if (r.jsonIdx === jsonIdx) return r;
+  }
+  if (snap === 'forward') {
+    for (const r of ranges) {
+      if (r.jsonIdx > jsonIdx) return r;
+    }
+    return ranges[ranges.length - 1];
+  }
+  let last: BlockLineRange | null = null;
+  for (const r of ranges) {
+    if (r.jsonIdx <= jsonIdx) last = r;
+  }
+  return last ?? ranges[0];
 }
 
 /**
@@ -109,8 +194,10 @@ function isEmptyParagraphNode(node: any): boolean {
  *   - the selection cannot be mapped to any non-empty block.
  *
  * The caller is expected to have just auto-saved the document, so the file on
- * disk is exactly `serialize(stripEmptyDocParagraphsFromJson(getJSON()))`. The
- * returned line numbers reference that file.
+ * disk is exactly what `getEditorMarkdownForSync` produces. We mirror that
+ * pipeline (drop leading/trailing empty paragraphs; preserve middle empty
+ * paragraphs as one extra blank line each) so the returned line numbers point
+ * at the same content the user will see in the saved file.
  */
 export type SelectionBlockRangeFailure =
   | 'no-serializer'
@@ -148,67 +235,36 @@ export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeR
     return { ok: false, reason: 'no-getJSON' };
   }
 
-  const docJson = stripEmptyDocParagraphsFromJson(editor.getJSON());
-  if (!Array.isArray(docJson.content) || docJson.content.length === 0) {
+  const liveJson = editor.getJSON();
+  if (!Array.isArray(liveJson.content) || liveJson.content.length === 0) {
     return { ok: false, reason: 'empty-doc-json' };
   }
 
   // Walk the live editor doc to learn each top-level block's PM position range.
-  // Skip blocks that the save pipeline strips (empty paragraphs) so the indices
-  // we compute line up with `docJson.content`.
-  const blocks: BlockPos[] = [];
-  let blockCount = 0;
-  // ProseMirror's doc-level fragment offsets are 0-based within the fragment.
-  // Top-level child positions in the doc are `offset + 1` because the doc node
-  // itself contributes a leading position.
+  // Include empty paragraphs here so a selection inside one still has somewhere
+  // to land — we'll snap to the nearest content block when computing lines.
+  const allBlocks: BlockPos[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   editor.state.doc.content.forEach((node: any, offset: number) => {
-    blockCount++;
-    if (isEmptyParagraphNode(node)) return;
-    blocks.push({
-      from: offset + 1,
-      to: offset + 1 + node.nodeSize,
-    });
+    allBlocks.push({ from: offset + 1, to: offset + 1 + node.nodeSize });
   });
-  if (blockCount === 0 || blocks.length === 0) {
-    return {
-      ok: false,
-      reason: 'no-blocks',
-      detail: `blockCount=${blockCount} blocks.length=${blocks.length}`,
-    };
+  if (allBlocks.length === 0) {
+    return { ok: false, reason: 'no-blocks', detail: 'blockCount=0' };
   }
 
-  const startIdx = findContainingBlockIndex(blocks, from);
-  const endIdx = empty ? startIdx : findContainingBlockIndex(blocks, to);
-  if (startIdx < 0 || endIdx < 0) {
-    return {
-      ok: false,
-      reason: 'selection-out-of-range',
-      detail: `from=${from} to=${to} blocks=${blocks.length}`,
-    };
-  }
-  if (startIdx >= docJson.content.length || endIdx >= docJson.content.length) {
+  // The live JSON children should align 1:1 with the live doc's top-level
+  // blocks. If they don't (extension shape mismatch), bail rather than guess.
+  if (allBlocks.length !== liveJson.content.length) {
     return {
       ok: false,
       reason: 'index-mismatch',
-      detail: `startIdx=${startIdx} endIdx=${endIdx} jsonLen=${docJson.content.length} blocks=${blocks.length}`,
+      detail: `blocks=${allBlocks.length} jsonLen=${liveJson.content.length}`,
     };
   }
 
-  const prefix: JSONContent = {
-    type: 'doc',
-    content: docJson.content.slice(0, startIdx),
-  };
-  const through: JSONContent = {
-    type: 'doc',
-    content: docJson.content.slice(0, endIdx + 1),
-  };
-
-  let prefixSerialized = '';
-  let throughSerialized = '';
+  let ranges: BlockLineRange[];
   try {
-    prefixSerialized = serialize(prefix);
-    throughSerialized = serialize(through);
+    ranges = computeBlockLineRanges(liveJson.content, serialize);
   } catch (err) {
     return {
       ok: false,
@@ -216,15 +272,32 @@ export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeR
       detail: err instanceof Error ? err.message : String(err),
     };
   }
+  if (ranges.length === 0) {
+    return { ok: false, reason: 'no-blocks', detail: 'no content blocks survived save trim' };
+  }
 
-  // Standard markdown serialization separates top-level blocks with a single
-  // blank line and ends with a trailing newline. So the block following a
-  // non-empty prefix begins exactly two lines after the prefix's last line:
-  // one blank-line separator, plus the block's first textual line.
-  // When startIdx === 0, there is no prefix and the first block starts at line 1.
-  const startLine = startIdx === 0 ? 1 : countLines(prefixSerialized) + 2;
-  const endLine = Math.max(startLine, countLines(throughSerialized));
+  const fromBlockIdx = findContainingBlockIndex(allBlocks, from);
+  const toBlockIdx = empty ? fromBlockIdx : findContainingBlockIndex(allBlocks, to);
+  if (fromBlockIdx < 0 || toBlockIdx < 0) {
+    return {
+      ok: false,
+      reason: 'selection-out-of-range',
+      detail: `from=${from} to=${to} blocks=${allBlocks.length}`,
+    };
+  }
 
+  const startRange = findRangeForJsonIdx(ranges, fromBlockIdx, 'forward');
+  const endRange = findRangeForJsonIdx(ranges, toBlockIdx, 'backward');
+  if (!startRange || !endRange) {
+    return {
+      ok: false,
+      reason: 'selection-out-of-range',
+      detail: `fromIdx=${fromBlockIdx} toIdx=${toBlockIdx} ranges=${ranges.length}`,
+    };
+  }
+
+  const startLine = startRange.startLine;
+  const endLine = Math.max(startLine, endRange.endLine);
   return { ok: true, range: { startLine, endLine } };
 }
 

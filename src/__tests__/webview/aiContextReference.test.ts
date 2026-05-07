@@ -260,6 +260,59 @@ describe('getSelectionBlockRange', () => {
     expect(getSelectionBlockRange(editor as any)).toEqual({ startLine: 1, endLine: 4 });
   });
 
+  it('counts empty paragraphs between content blocks as blank lines', () => {
+    // Reproduces the "Copy as AI Context" off-by-N bug: with two empty
+    // paragraphs sitting between paragraphs A and B, the saved file has
+    //   line 1: "A"
+    //   line 2: ""
+    //   line 3: ""
+    //   line 4: ""
+    //   line 5: "B"
+    // because getEditorMarkdownForSync turns each middle empty paragraph
+    // into one extra `\n` on top of the standard `\n\n` block separator.
+    // Cursor inside B should report line 5, not line 3.
+    const blocks = [
+      { typeName: 'paragraph', text: 'A', nodeSize: 3 }, // PM positions 1..4
+      { typeName: 'paragraph', text: '', nodeSize: 2 }, // 4..6
+      { typeName: 'paragraph', text: '', nodeSize: 2 }, // 6..8
+      { typeName: 'paragraph', text: 'B', nodeSize: 3 }, // 8..11
+    ];
+    // Mimic getEditorMarkdownForSync: drop leading/trailing empty paragraphs,
+    // keep middle ones as one extra `\n` per empty paragraph.
+    const serialize = (json: { type: string; content: unknown[] }) => {
+      const items = json.content as Array<{ type: string; content?: Array<{ text: string }> }>;
+      const isEmpty = (n: { type: string; content?: Array<{ text: string }> }) =>
+        n.type === 'paragraph' &&
+        (!n.content || n.content.length === 0 || (n.content[0]?.text ?? '').trim() === '');
+      let s = 0;
+      while (s < items.length && isEmpty(items[s])) s++;
+      let e = items.length;
+      while (e > s && isEmpty(items[e - 1])) e--;
+      if (s >= e) return '';
+      let result = '';
+      let pendingBlanks = 0;
+      for (let i = s; i < e; i++) {
+        const n = items[i];
+        if (isEmpty(n)) {
+          pendingBlanks++;
+          continue;
+        }
+        const text = n.content?.[0]?.text ?? '';
+        if (result !== '') result += '\n\n' + '\n'.repeat(pendingBlanks);
+        result += text;
+        pendingBlanks = 0;
+      }
+      return result + '\n';
+    };
+    const editor = buildStubEditor({
+      blocks,
+      selection: { from: 9, to: 9, empty: true }, // inside block 3 ("B")
+      serialize,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getSelectionBlockRange(editor as any)).toEqual({ startLine: 5, endLine: 5 });
+  });
+
   it('skips empty leading paragraphs when computing the start line', () => {
     // The editor has an empty paragraph at the top that the save pipeline will strip
     // (stripEmptyDocParagraphsFromJson). The serialized file therefore starts at the
