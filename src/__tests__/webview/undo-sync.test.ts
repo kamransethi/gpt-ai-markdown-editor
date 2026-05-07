@@ -48,6 +48,9 @@ jest.mock('./../../webview/extensions/mermaid', () => ({ Mermaid: {} }));
 jest.mock('./../../webview/extensions/tabIndentation', () => ({ TabIndentation: {} }));
 jest.mock('./../../webview/extensions/imageEnterSpacing', () => ({ ImageEnterSpacing: {} }));
 jest.mock('./../../webview/extensions/markdownParagraph', () => ({ MarkdownParagraph: {} }));
+jest.mock('./../../webview/extensions/blankLinePreservation', () => ({
+  BlankLinePreservation: {},
+}));
 jest.mock('./../../webview/extensions/githubAlerts', () => ({ GitHubAlerts: {} }));
 jest.mock('./../../webview/BubbleMenuView', () => ({
   createFormattingToolbar: () => ({}),
