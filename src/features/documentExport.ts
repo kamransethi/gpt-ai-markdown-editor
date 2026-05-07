@@ -15,7 +15,91 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { spawn } from 'child_process';
+import * as cheerio from 'cheerio';
 import { imageSize } from 'image-size';
+
+/**
+ * Strip active content from HTML before passing it to Chrome for PDF rendering.
+ *
+ * The PDF export pipeline takes the editor's HTML and renders it via headless
+ * Chrome with no Content-Security-Policy. Combined with markdown's
+ * permissive `html: true` parser, ANY active content authored in a markdown
+ * file would otherwise execute during export — script tags, event handlers,
+ * iframes pointing at file:// URIs, javascript: hrefs.
+ *
+ * Removing the Chrome flag `--allow-file-access-from-files` (done in this
+ * change) blocks file:// fetches from the rendered page, but defense in
+ * depth still requires us to strip active content so a malicious markdown
+ * file cannot embed credential prompts, fetch external resources, or run
+ * Chrome zero-days against the user during export.
+ *
+ * Implementation uses `cheerio` (already a runtime dep) for parser-level
+ * sanitization. We allow nothing implicitly; instead we deny-list the
+ * specific dangerous tags / attributes / URI schemes. Benign markup
+ * (paragraphs, tables, code, images with relative or data: src, anchors,
+ * style/class) passes through untouched.
+ *
+ * See SECURITY review §H3.
+ */
+export function sanitizeExportHtml(html: string): string {
+  if (!html) {
+    return '';
+  }
+  // Wrap in a sentinel so we can extract just the body fragment back out
+  // without cheerio injecting <html><head><body> wrappers.
+  const $ = cheerio.load(`<div data-md4h-sanitize-root>${html}</div>`);
+
+  // 1) Remove dangerous tags entirely (including their contents).
+  $(
+    'script, iframe, object, embed, link, meta, base, form, input, button, ' +
+      'textarea, frame, frameset, applet, audio, video, source, track, portal'
+  ).remove();
+
+  // 2) Strip every on* event handler and any URL-bearing attribute whose
+  //    value uses a script-bearing scheme.
+  const URL_LIKE_ATTRS = new Set([
+    'href',
+    'src',
+    'srcset',
+    'action',
+    'formaction',
+    'background',
+    'poster',
+    'data',
+    'cite',
+    'longdesc',
+    'usemap',
+    'profile',
+    'manifest',
+    'codebase',
+    'classid',
+    'icon',
+    'xlink:href',
+  ]);
+  const DANGEROUS_SCHEME = /^\s*(javascript|file|vbscript|data:text\/html)\s*:/i;
+
+  $('*').each((_, el) => {
+    const tagEl = el as { attribs?: Record<string, string> };
+    if (!tagEl.attribs) {
+      return;
+    }
+    for (const attrName of Object.keys(tagEl.attribs)) {
+      const lower = attrName.toLowerCase();
+      if (lower.startsWith('on')) {
+        $(el).removeAttr(attrName);
+        continue;
+      }
+      if (URL_LIKE_ATTRS.has(lower)) {
+        const value = tagEl.attribs[attrName];
+        if (typeof value === 'string' && DANGEROUS_SCHEME.test(value)) {
+          $(el).removeAttr(attrName);
+        }
+      }
+    }
+  });
+
+  return $('[data-md4h-sanitize-root]').html() || '';
+}
 
 /**
  * Mermaid image data
@@ -471,6 +555,13 @@ async function exportToPDF(
   try {
     progress.report({ message: 'Launching Chrome...', increment: 20 });
 
+    // SECURITY: `--allow-file-access-from-files` was REMOVED here. Chromium
+    // documents that flag as "intended for testing only — do not use it on
+    // builds distributed to end users." Combined with markdown's `html: true`
+    // parser, it allowed a hostile .md file to embed
+    //   <script>fetch('file:///Users/<u>/.ssh/id_ed25519').then(...)</script>
+    // and exfiltrate the contents into the PDF the user just saved.
+    // See SECURITY review §H3.
     const chromeArgs = [
       '--headless=chrome',
       '--disable-gpu',
@@ -479,7 +570,6 @@ async function exportToPDF(
       '--disable-extensions',
       '--disable-software-rasterizer',
       '--disable-dev-shm-usage',
-      '--allow-file-access-from-files',
       '--print-to-pdf=' + outputPath,
       `file://${tempHtmlPath}`,
     ];
@@ -684,6 +774,10 @@ async function exportToWord(
  */
 function buildExportHTML(contentHtml: string, theme: string, _format: 'pdf' | 'html'): string {
   const styles = getExportStyles(theme);
+  // SECURITY: strip script tags, on* handlers, and javascript:/file: URIs
+  // before rendering with Chrome. See sanitizeExportHtml() docstring above
+  // and SECURITY review §H3.
+  const safeContent = sanitizeExportHtml(contentHtml);
 
   return `
     <!DOCTYPE html>
@@ -696,7 +790,7 @@ function buildExportHTML(contentHtml: string, theme: string, _format: 'pdf' | 'h
     </head>
     <body>
       <div class="content">
-        ${contentHtml}
+        ${safeContent}
       </div>
     </body>
     </html>
