@@ -1,24 +1,38 @@
 name: CI
 
+# All third-party actions are pinned to commit SHAs (not tags) to defend
+# against tag-hijack supply-chain attacks. When bumping versions, resolve
+# the new SHA via:
+#   gh api repos/<owner>/<repo>/git/refs/tags/<tag> --jq .object.sha
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+# Default to no permissions; each job opts in to exactly what it needs.
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     strategy:
       matrix:
         node-version: [18.x, 20.x]
 
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        # actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -33,7 +47,8 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        # codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457
         if: matrix.node-version == '20.x'
         with:
           files: ./coverage/lcov.info
@@ -46,12 +61,18 @@ jobs:
   package:
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
 
       - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
+        # actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 20.x
           cache: 'npm'
@@ -63,7 +84,8 @@ jobs:
         run: npm run package:release
 
       - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v4
+        # actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: vsix-package
           path: '*.vsix'
