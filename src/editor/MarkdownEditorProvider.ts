@@ -3205,8 +3205,11 @@ export function isPathContainedWithin(
   if (!targetAbsolutePath || !rootAbsolutePath) {
     return false;
   }
-  const normalizedTarget = path.normalize(targetAbsolutePath);
-  const normalizedRoot = path.normalize(rootAbsolutePath);
+  // path.resolve canonicalizes drive letters on Windows (e.g. turns the
+  // drive-relative "/workspace/docs" into "C:\workspace\docs"), so both
+  // target and root end up on the same drive before comparison.
+  const normalizedTarget = path.resolve(targetAbsolutePath);
+  const normalizedRoot = path.resolve(rootAbsolutePath);
 
   // Strip trailing separator from root (path.normalize keeps "/" for "/")
   const rootNoSep =

@@ -24,6 +24,99 @@
 
 type RawToken = { type?: string; raw?: string } & Record<string, unknown>;
 
+/**
+ * Detect link/image inline tokens whose VISIBLE text is empty.
+ *
+ * A `link` or `image` with empty visible content (no inner tokens, or all
+ * inner tokens render to nothing) parses through the @tiptap/markdown
+ * pipeline as an empty inline node; ProseMirror schema validation then drops
+ * it, silently erasing the original markdown source from the document. This
+ * happens regardless of where the empty inline sits — alone in a paragraph
+ * (`[]()`), next to a soft break (`Even deeper.\n[]()`), in the middle of
+ * other text (`foo []() bar`), or inside a list item / blockquote.
+ *
+ * We catch each empty link/image at the lexer layer and rewrite it to a
+ * literal-text token carrying its own raw markdown. The text node round-trips
+ * losslessly: on save it serialises back to its original raw form and
+ * re-lexing routes through this same normaliser to keep the cycle stable.
+ */
+function isInlineRenderEmpty(tok: RawToken | undefined): boolean {
+  if (!tok || typeof tok.type !== 'string') return true;
+  if (tok.type === 'text' || tok.type === 'escape') {
+    const text = typeof tok.text === 'string' ? tok.text : '';
+    return text.trim().length === 0;
+  }
+  if (tok.type === 'link' || tok.type === 'image') {
+    const text =
+      typeof (tok as { text?: string }).text === 'string'
+        ? ((tok as { text?: string }).text as string)
+        : '';
+    if (text.trim().length > 0) return false;
+    const inner = Array.isArray((tok as { tokens?: RawToken[] }).tokens)
+      ? ((tok as { tokens?: RawToken[] }).tokens as RawToken[])
+      : [];
+    return inner.every(isInlineRenderEmpty);
+  }
+  return false;
+}
+
+function isEmptyLinkLike(tok: RawToken): boolean {
+  if (!tok || (tok.type !== 'link' && tok.type !== 'image')) return false;
+  return isInlineRenderEmpty(tok);
+}
+
+/**
+ * Walk a paragraph's inline-token array and replace every empty link/image
+ * with a literal-text token carrying that link's raw markdown. Mutates the
+ * array in place. Returns whether any rewrite happened.
+ */
+function rewriteEmptyInlines(inlines: RawToken[]): boolean {
+  let changed = false;
+  for (let i = 0; i < inlines.length; i++) {
+    const tok = inlines[i];
+    if (!tok) continue;
+    if (isEmptyLinkLike(tok)) {
+      const raw = typeof tok.raw === 'string' ? tok.raw : '';
+      if (raw.length > 0) {
+        inlines[i] = { type: 'text', raw, text: raw } as RawToken;
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
+/**
+ * Recursively walk the token tree, applying inline rewriting to every
+ * paragraph node we find — including paragraphs nested inside list items
+ * and blockquotes. Marked's tree shape:
+ *   - `paragraph`: inline tokens in `tokens`
+ *   - `blockquote`: child blocks in `tokens`
+ *   - `list`: child items in `items`
+ *   - `list_item`: child blocks in `tokens`
+ */
+function normalizeEmptyInlinesDeep(tokens: RawToken[] | undefined): void {
+  if (!Array.isArray(tokens)) return;
+  for (const token of tokens) {
+    if (!token || typeof token.type !== 'string') continue;
+    // `paragraph` (block-level) and `text` (the block-level text token marked
+    // emits for tight list items) both carry their inline tokens in `.tokens`.
+    if (token.type === 'paragraph' || token.type === 'text') {
+      const inlines = (token as { tokens?: RawToken[] }).tokens;
+      if (Array.isArray(inlines)) rewriteEmptyInlines(inlines);
+      continue;
+    }
+    if (token.type === 'list') {
+      normalizeEmptyInlinesDeep((token as { items?: RawToken[] }).items);
+      continue;
+    }
+    if (token.type === 'list_item' || token.type === 'blockquote' || token.type === 'table') {
+      normalizeEmptyInlinesDeep((token as { tokens?: RawToken[] }).tokens);
+      continue;
+    }
+  }
+}
+
 const GREEDY_BLOCK_TYPES = new Set([
   'heading',
   'table',
@@ -60,6 +153,11 @@ function splitTrailingNewlines(token: RawToken): RawToken[] {
  * link definitions to the tokens array as a non-index property).
  */
 export function normalizeBlankLineGreedyTokens<T extends RawToken[]>(tokens: T): T {
+  // Rewrite empty link/image inlines at every depth before the greedy-newline
+  // split runs — that way both whole-empty paragraphs (`[]()`) and mixed
+  // paragraphs (`Even deeper.\n[]()`) carry the original markdown forward as
+  // literal text instead of letting the inline get stripped on parse.
+  normalizeEmptyInlinesDeep(tokens);
   const out: RawToken[] = [];
   for (const token of tokens) {
     if (token && typeof token.type === 'string' && GREEDY_BLOCK_TYPES.has(token.type)) {

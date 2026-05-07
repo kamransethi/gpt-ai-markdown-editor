@@ -1188,8 +1188,9 @@
     font-family: 'SF Mono', Monaco, Consolas, monospace;
   }
   
-  /* Highlighted state (single-click) */
-  .mermaid-wrapper.highlighted {
+  /* Highlighted state (single-click) and ProseMirror NodeSelection state */
+  .mermaid-wrapper.highlighted,
+  .mermaid-wrapper.ProseMirror-selectednode {
     border: 2px solid var(--vscode-focusBorder);
     background-color: var(--md-hover-bg);
     box-shadow: 0 0 0 3px var(--vscode-focusBorder, rgba(0, 122, 204, 0.15));
