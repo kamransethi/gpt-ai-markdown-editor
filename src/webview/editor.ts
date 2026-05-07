@@ -19,6 +19,7 @@ import { CustomImage } from './extensions/customImage';
 import { lowlight } from 'lowlight';
 import { Mermaid } from './extensions/mermaid';
 import { IndentedImageCodeBlock } from './extensions/indentedImageCodeBlock';
+import { parsePreservedCodeBlock, renderPreservedCodeBlock } from './extensions/preservedCodeBlock';
 import { SpaceFriendlyImagePaths } from './extensions/spaceFriendlyImagePaths';
 import { TabIndentation } from './extensions/tabIndentation';
 import { GitHubAlerts } from './extensions/githubAlerts';
@@ -27,6 +28,7 @@ import { MarkdownParagraph } from './extensions/markdownParagraph';
 import { BlankLinePreservation } from './extensions/blankLinePreservation';
 import { OrderedListMarkdownFix } from './extensions/orderedListMarkdownFix';
 import { HtmlPreservingTable } from './extensions/htmlPreservingTable';
+import { DraggableBlocks } from './extensions/draggableBlocks';
 import { DocumentAuditExtension } from './features/auditDocument';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
@@ -463,8 +465,26 @@ function initializeEditor(initialContent: string) {
           },
         }),
         MarkdownParagraph, // Custom paragraph with empty-paragraph filtering in renderMarkdown
-        BlankLinePreservation, // Converts extra blank lines (space tokens) to empty paragraphs on parse
-        CodeBlockLowlight.configure({
+        CodeBlockLowlight.extend({
+          addAttributes() {
+            return {
+              ...this.parent?.(),
+              'indent-prefix': {
+                default: null,
+                parseHTML: element => element.getAttribute('data-indent-prefix'),
+                renderHTML: attributes => {
+                  const prefix = attributes['indent-prefix'];
+                  if (typeof prefix !== 'string' || prefix.length === 0) {
+                    return {};
+                  }
+                  return { 'data-indent-prefix': prefix };
+                },
+              },
+            };
+          },
+          parseMarkdown: parsePreservedCodeBlock,
+          renderMarkdown: renderPreservedCodeBlock,
+        }).configure({
           lowlight,
           HTMLAttributes: {
             class: 'code-block-highlighted',
@@ -473,6 +493,7 @@ function initializeEditor(initialContent: string) {
           enableTabIndentation: true, // Enable Tab key for indentation
           tabSize: 2, // 2 spaces per tab (cleaner for markdown code blocks)
         }),
+        BlankLinePreservation, // Converts extra blank lines (space tokens) to empty paragraphs on parse
         Markdown.configure({
           markedOptions: {
             gfm: true, // GitHub Flavored Markdown for tables, task lists
@@ -516,6 +537,7 @@ function initializeEditor(initialContent: string) {
           getShowImageHoverOverlay: () => (window as any).showImageHoverOverlay,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any),
+        DraggableBlocks,
         DocumentAuditExtension,
       ],
       // Don't pass content here - we'll set it after init with contentType: 'markdown'

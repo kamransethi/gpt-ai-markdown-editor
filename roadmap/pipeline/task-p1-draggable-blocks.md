@@ -4,9 +4,9 @@
 
 - **Task name:** Draggable Blocks
 - **Slug:** draggable-blocks
-- **Status:** planned
+- **Status:** in-progress
 - **Created:** 2025-11-29
-- **Last updated:** 2025-12-01 (post-discovery/refine)
+- **Last updated:** 2026-04-15
 - **Shipped:** _(pending)_
 
 ---
@@ -249,16 +249,14 @@
 
 ## 6. Work Breakdown
 
-| Status | Task | Notes / How to Verify |
-|--------|------|-----------------------|
-| pending | Implement draggableBlocks extension | New `src/webview/extensions/draggableBlocks.ts`; block boundary detection; handle/drop indicator decorations; drag move logic. |
-| pending | Keyboard move commands | `Alt+Up/Down` moves current block via command; single undoable step; cursor stays in block. |
-| pending | Auto-scroll + drop validation | Scroll when near edges; prevent invalid drops (e.g., inside code blocks); show red indicator on invalid. |
-| pending | Integrate + shortcuts | Register extension in `editor.ts`; bind shortcuts; ensure no conflicts with existing bindings. |
-| pending | Styling | Add handle/drop-indicator CSS (theme-aware, hover/active, invalid state). |
-| pending | Tests (webview) | Unit tests for block detection, move transactions, keyboard moves, invalid drop rejection, selection preservation. |
+| ✅ done | Implement draggableBlocks extension | New `src/webview/extensions/draggableBlocks.ts`; block boundary detection; DOM overlay handle/drop indicator; drag move logic. |
+| ✅ done | Keyboard move commands | `Alt+Up/Down` moves current block via command; single undoable step; cursor stays in block. |
+| ✅ done | Auto-scroll + drop validation | Scroll when near edges; prevent invalid drops (e.g., inside code blocks); show red indicator on invalid. |
+| ✅ done | Integrate + shortcuts | Registered extension in `editor.ts`; keyboard shortcuts via `addKeyboardShortcuts()`. |
+| ✅ done | Styling | CSS for handle/drop-indicator (theme-aware, hover/active, invalid state, reduced-motion). |
+| ✅ done | Tests (webview) | Unit tests: block detection, move up/down, boundary conditions, extension registration. |
 | pending | Manual verification | Scenarios: drag paragraphs/headers/lists/tables/code/images; auto-scroll long doc; invalid drop shows red and cancels; undo/redo works; handles visible on hover; drop indicator follows cursor. |
-| pending | Ship | Update task status, changelog/feature inventory when done. |
+| pending | Ship | Update task status, move to `roadmap/shipped/` when done. |
 
 ---
 
@@ -308,7 +306,23 @@ _(To be filled during task refinement)_
 
 ## 7. Implementation Log
 
-_(To be filled during implementation)_
+### 2026-04-15 — Implementation
+
+- Created `src/webview/extensions/draggableBlocks.ts` (TipTap Extension).
+- **Architecture choice:** DOM overlay (not ProseMirror decorations) for the handle and drop indicator — avoids decoration churn on every `mousemove`, stays within 16ms typing budget.
+- `DragHandleController` class manages the six-dot handle element and drop-indicator line:
+  - Attached to `view.dom.parentElement` (scrolls with content, positioned absolutely).
+  - `mousemove` over the editor: resolves the top-level block at cursor, positions handle vertically centred.
+  - Handle is `draggable=true`; on `dragstart` stores `draggedPos`, sets blank ghost image, dims the dragged block.
+  - `dragover` recomputes best-fit insert position, snaps indicator to block boundaries, validates drop target.
+  - Auto-scroll using `requestAnimationFrame` when cursor is within 60px of viewport edge (up to 16px/frame).
+  - Invalid drops (inside `codeBlock` or `mathBlock`) turn the indicator red and abort the move on `drop`.
+  - `moveBlockUp` / `moveBlockDown` commands swap current top-level block with its sibling via a single ProseMirror transaction (single undo step).
+- Registered `DraggableBlocks` in `src/webview/editor.ts` extensions list.
+- Added keyboard shortcuts: `Alt+↑` / `Alt+↓` via `addKeyboardShortcuts()`.
+- Added CSS in `src/webview/editor.css`: handle styling (grab cursor, six-dot SVG, fade-in animation), drop indicator (blue/red 3px line with knob), dragged block dimming, `prefers-reduced-motion` safe.
+- Added `overflow-x: visible` to `.markdown-editor` so handles in the 28px left gutter are never clipped.
+- Tests: 5 passing in `src/__tests__/webview/draggableBlocks.test.ts`; full suite 659 pass / 0 fail.
 
 ---
 
