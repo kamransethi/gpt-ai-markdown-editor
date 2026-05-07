@@ -1384,6 +1384,9 @@
     border-radius: 50%;
     background-color: inherit;
   }
+  .drag-block-indicator--invalid {
+    background-color: var(--vscode-errorForeground, #f14c4c);
+  }
 
   /* ── Source block while being dragged ────── */
 

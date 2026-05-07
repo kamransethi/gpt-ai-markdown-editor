@@ -120,13 +120,34 @@ function findBlockByClientY(
   return closest ? { ...closest, hit: false } : null;
 }
 
+/**
+ * Decide where the dragged block would land. `valid` is false when the
+ * insertion point would land inside an opaque block (codeBlock, mathBlock)
+ * instead of between top-level blocks, or when the drop is a self-drop
+ * no-op — callers use this to render the indicator red and abort on release.
+ */
 function computeDropTarget(
   view: EditorView,
   clientX: number,
   clientY: number,
   draggedPos: number
-): { insertPos: number } {
+): { insertPos: number; valid: boolean } {
   const editorRect = view.dom.getBoundingClientRect();
+  const doc = view.state.doc;
+
+  const validate = (insertPos: number): { insertPos: number; valid: boolean } => {
+    const clamped = Math.max(0, Math.min(insertPos, doc.content.size));
+    const $insert = doc.resolve(clamped);
+    // Top-level insertion only — parent must be the doc node. Guards against
+    // accidentally landing inside a codeBlock/mathBlock.
+    const atDocLevel = $insert.parent.type.name === 'doc';
+    // No-op self-drop: dropping on a block's own boundary leaves it in place.
+    const draggedNode = draggedPos >= 0 ? doc.resolve(draggedPos).nodeAfter : null;
+    const draggedSize = draggedNode ? draggedNode.nodeSize : 0;
+    const isSelfDrop =
+      draggedPos >= 0 && (clamped === draggedPos || clamped === draggedPos + draggedSize);
+    return { insertPos: clamped, valid: atDocLevel && !isSelfDrop };
+  };
 
   // Primary path: posAtCoords → top-level block. Works reliably for regular
   // text/heading/list content.
@@ -139,7 +160,7 @@ function computeDropTarget(
         const rect = domNode.getBoundingClientRect();
         const insertPos =
           clientY < rect.top + rect.height / 2 ? block.pos : block.pos + block.node.nodeSize;
-        return { insertPos };
+        return validate(insertPos);
       }
     }
   }
@@ -150,16 +171,25 @@ function computeDropTarget(
   if (hit) {
     const rect = hit.dom.getBoundingClientRect();
     const insertPos = clientY < rect.top + rect.height / 2 ? hit.pos : hit.pos + hit.node.nodeSize;
-    return { insertPos };
+    return validate(insertPos);
   }
 
-  if (clientY <= editorRect.top) return { insertPos: 0 };
-  if (clientY >= editorRect.bottom) return { insertPos: view.state.doc.content.size };
-  return { insertPos: draggedPos };
+  if (clientY <= editorRect.top) return validate(0);
+  if (clientY >= editorRect.bottom) return validate(doc.content.size);
+  return { insertPos: draggedPos, valid: false };
 }
 
 // ─── Drag-handle overlay controller ──────────────────────────────────────────
 
+/**
+ * Manages the floating drag handle, drop indicator, and ghost-clone overlay
+ * elements for block reordering, plus all pointer-event lifecycle for the
+ * drag itself (arm → start → update → finish/cancel).
+ *
+ * The overlays live in `document.body` rather than inside ProseMirror's DOM
+ * so they don't interact with editor decorations or interfere with NodeView
+ * mounting; positions are computed from `view.nodeDOM` bounding rects.
+ */
 class DragHandleController {
   private readonly view: EditorView;
   private readonly handle: HTMLElement;
@@ -180,6 +210,7 @@ class DragHandleController {
   private isDragging = false;
   private draggedPos = -1;
   private dropInsertPos = -1;
+  private dropValid = false;
   private ghost: HTMLElement | null = null;
   private scrollRafId: number | null = null;
   private _autoScrollSpeed = 0;
@@ -416,9 +447,10 @@ class DragHandleController {
   }
 
   private updateDrag(clientX: number, clientY: number): void {
-    const { insertPos } = computeDropTarget(this.view, clientX, clientY, this.draggedPos);
+    const { insertPos, valid } = computeDropTarget(this.view, clientX, clientY, this.draggedPos);
     this.dropInsertPos = insertPos;
-    const indicatorPos = this.positionIndicator(clientY, insertPos);
+    this.dropValid = valid;
+    const indicatorPos = this.positionIndicator(clientY, insertPos, valid);
     // Recompute auto-scroll first so its direction is current when we decide
     // which side of the indicator to render the ghost on.
     this.maybeAutoScroll(clientY);
@@ -443,7 +475,8 @@ class DragHandleController {
 
   private positionIndicator(
     clientY: number,
-    insertPos: number
+    insertPos: number,
+    valid: boolean
   ): { left: number; top: number } | null {
     if (insertPos === -1) {
       this.indicator.style.display = 'none';
@@ -465,6 +498,7 @@ class DragHandleController {
     this.indicator.style.width = `${editorRect.width}px`;
     this.indicator.style.top = `${indicatorY}px`;
     this.indicator.style.display = 'block';
+    this.indicator.classList.toggle('drag-block-indicator--invalid', !valid);
     return { left, top: indicatorY };
   }
 
@@ -509,12 +543,13 @@ class DragHandleController {
   private finishDrag(): void {
     this.stopAutoScroll();
     this.indicator.style.display = 'none';
+    this.indicator.classList.remove('drag-block-indicator--invalid');
     this.handle.classList.remove('drag-block-handle--active');
 
     const { state } = this.view;
     const draggedNode = state.doc.resolve(this.draggedPos).nodeAfter;
     let landedAtPos: number | null = null;
-    if (draggedNode && this.dropInsertPos !== -1) {
+    if (draggedNode && this.dropInsertPos !== -1 && this.dropValid) {
       const draggedSize = draggedNode.nodeSize;
       if (
         this.dropInsertPos !== this.draggedPos &&
@@ -571,6 +606,7 @@ class DragHandleController {
   private cancelDrag(): void {
     this.stopAutoScroll();
     this.indicator.style.display = 'none';
+    this.indicator.classList.remove('drag-block-indicator--invalid');
     this.handle.classList.remove('drag-block-handle--active');
     if (this.ghost && this.ghost.parentNode) this.ghost.remove();
     this.ghost = null;
@@ -608,6 +644,7 @@ class DragHandleController {
     }
     this.draggedPos = -1;
     this.dropInsertPos = -1;
+    this.dropValid = false;
     this._handleBlock = null;
     this.hoveredBlock = null;
     this.pendingDrag = null;
@@ -668,7 +705,10 @@ export const DraggableBlocks = Extension.create({
             tr.delete(startPos, startPos + startNode.nodeSize);
             tr.insert(prevPos, content.content);
 
-            // FIX: Removed 'any' cast by defining constructor shape
+            // Use the runtime constructor (TextSelection / NodeSelection) instead
+            // of the imported Selection class — `instanceof` against the imported
+            // symbol can fail in tests where TipTap loads a separate ProseMirror
+            // copy. See vibe-coding-rules/image-and-dom-handling.md.
             const SelectionClass = state.selection.constructor as typeof Selection & {
               create: (doc: ProsemirrorNode, from: number, to: number) => Selection;
             };
@@ -716,7 +756,10 @@ export const DraggableBlocks = Extension.create({
             const insertPos = startPos + nextNode.nodeSize;
             tr.insert(insertPos, content.content);
 
-            // FIX: Removed 'any' cast by defining constructor shape
+            // Use the runtime constructor (TextSelection / NodeSelection) instead
+            // of the imported Selection class — `instanceof` against the imported
+            // symbol can fail in tests where TipTap loads a separate ProseMirror
+            // copy. See vibe-coding-rules/image-and-dom-handling.md.
             const SelectionClass = state.selection.constructor as typeof Selection & {
               create: (doc: ProsemirrorNode, from: number, to: number) => Selection;
             };
