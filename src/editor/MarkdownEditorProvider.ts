@@ -15,6 +15,17 @@ import { isIP } from 'net';
 import { outlineViewProvider, type OutlineEntry } from '../features/outlineView';
 import { setActiveWebviewPanel, getActiveWebviewPanel } from '../activeWebview';
 import { buildResizeBackupLocation, resolveBackupPathWithCollisionDetection } from './imageBackups';
+import { isMarkdownStructurallyEquivalent } from './markdownAstEquivalence';
+
+/**
+ * Coerce text to end with exactly one `\n` (markdownlint MD047). An empty
+ * string stays empty — we don't want to materialize a single-newline file from
+ * an empty webview state.
+ */
+export function ensureSingleTrailingNewline(text: string): string {
+  if (text === '') return text;
+  return text.replace(/\n*$/, '\n');
+}
 
 /**
  * Parse an image filename to extract source prefix
@@ -2992,14 +3003,33 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   private async applyEdit(content: string, document: vscode.TextDocument): Promise<boolean> {
     // Skip if content unchanged (avoid redundant edits)
     const unwrappedContent = this.unwrapFrontmatterFromWebview(content);
-    if (unwrappedContent === document.getText()) {
+    // Normalize the inbound text to exactly one trailing newline (markdownlint
+    // MD047). Done up-front so the equality and AST checks below compare the
+    // form we'd actually write — a doc on disk that already ends with `\n`
+    // matches a no-newline serialization and is short-circuited as a no-op.
+    const normalizedContent = ensureSingleTrailingNewline(unwrappedContent);
+    const currentText = document.getText();
+    if (normalizedContent === currentText) {
+      return true;
+    }
+
+    // Suppress writes whose only difference is the WYSIWYG serializer's house
+    // style — bullet marker swaps, ordered-list renumbering, blank-line
+    // collapsing, soft-wrap reflow, etc. When the inbound text renders to the
+    // same document as what's already on disk, leave the original bytes alone
+    // so files authored against `markdownlint` stay lint-clean across opens.
+    // Real edits (any change to rendered content) are detected and fall through.
+    if (isMarkdownStructurallyEquivalent(normalizedContent, currentText)) {
+      // Update the cache so updateWebview() doesn't loop the canonical form
+      // back to the webview as if it were an external change.
+      this.lastWebviewContent.set(document.uri.toString(), currentText);
       return true;
     }
 
     // Mark this edit to prevent feedback loop
     const docUri = document.uri.toString();
     this.pendingEdits.set(docUri, Date.now());
-    this.lastWebviewContent.set(docUri, unwrappedContent);
+    this.lastWebviewContent.set(docUri, normalizedContent);
 
     const edit = new vscode.WorkspaceEdit();
 
@@ -3009,7 +3039,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       document.positionAt(document.getText().length)
     );
 
-    edit.replace(document.uri, fullRange, unwrappedContent);
+    edit.replace(document.uri, fullRange, normalizedContent);
 
     try {
       const success = await vscode.workspace.applyEdit(edit);
