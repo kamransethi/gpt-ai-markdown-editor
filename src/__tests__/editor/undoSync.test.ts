@@ -198,6 +198,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: true,
+      paragraphSpacingBefore: 0,
+      paragraphSpacingAfter: 0,
+      zoom: 100,
     });
   });
 
@@ -236,6 +239,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: false,
+      paragraphSpacingBefore: 0,
+      paragraphSpacingAfter: 0,
+      zoom: 100,
     });
 
     getConfigurationSpy.mockRestore();

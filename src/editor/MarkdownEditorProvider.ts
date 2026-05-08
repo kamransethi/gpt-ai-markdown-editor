@@ -403,7 +403,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('markdownForHumans.imageResize.skipWarning') ||
         e.affectsConfiguration('markdownForHumans.imagePath') ||
         e.affectsConfiguration('markdownForHumans.imagePathBase') ||
-        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled')
+        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled') ||
+        e.affectsConfiguration('markdownForHumans.paragraph.spacingBefore') ||
+        e.affectsConfiguration('markdownForHumans.paragraph.spacingAfter') ||
+        e.affectsConfiguration('markdownForHumans.zoom')
       ) {
         const config = vscode.workspace.getConfiguration();
         const skipWarning = config.get<boolean>('markdownForHumans.imageResize.skipWarning', false);
@@ -416,12 +419,24 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePreview.hover.enabled',
           true
         );
+        const paragraphSpacingBefore = config.get<number>(
+          'markdownForHumans.paragraph.spacingBefore',
+          0
+        );
+        const paragraphSpacingAfter = config.get<number>(
+          'markdownForHumans.paragraph.spacingAfter',
+          0
+        );
+        const zoom = config.get<number>('markdownForHumans.zoom', 100);
         webviewPanel.webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
           showImageHoverOverlay: showImageHoverOverlay,
+          paragraphSpacingBefore: paragraphSpacingBefore,
+          paragraphSpacingAfter: paragraphSpacingAfter,
+          zoom: zoom,
         });
       }
     });
@@ -487,6 +502,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       'markdownForHumans.imagePreview.hover.enabled',
       true
     );
+    const paragraphSpacingBefore = config.get<number>(
+      'markdownForHumans.paragraph.spacingBefore',
+      0
+    );
+    const paragraphSpacingAfter = config.get<number>('markdownForHumans.paragraph.spacingAfter', 0);
+    const zoom = config.get<number>('markdownForHumans.zoom', 100);
 
     webview.postMessage({
       type: 'update',
@@ -495,6 +516,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       imagePath: imagePath,
       imagePathBase: imagePathBase,
       showImageHoverOverlay: showImageHoverOverlay,
+      paragraphSpacingBefore: paragraphSpacingBefore,
+      paragraphSpacingAfter: paragraphSpacingAfter,
+      zoom: zoom,
     });
   }
 
@@ -530,12 +554,24 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePreview.hover.enabled',
           true
         );
+        const paragraphSpacingBefore = config.get<number>(
+          'markdownForHumans.paragraph.spacingBefore',
+          0
+        );
+        const paragraphSpacingAfter = config.get<number>(
+          'markdownForHumans.paragraph.spacingAfter',
+          0
+        );
+        const zoom = config.get<number>('markdownForHumans.zoom', 100);
         webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
           showImageHoverOverlay: showImageHoverOverlay,
+          paragraphSpacingBefore: paragraphSpacingBefore,
+          paragraphSpacingAfter: paragraphSpacingAfter,
+          zoom: zoom,
         });
         break;
       }
@@ -1358,6 +1394,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       return;
     }
     const imagesDir = path.join(saveBasePath, imageFolderName);
+    if (!isPathContainedWithin(imagesDir, saveBasePath)) {
+      const errorMessage = `Refusing to save image outside the base directory: ${imageFolderName}`;
+      vscode.window.showErrorMessage(errorMessage);
+      webview.postMessage({ type: 'imageError', placeholderId, error: errorMessage });
+      return;
+    }
 
     console.warn(`[MD4H] Saving image "${name}" to folder: ${imagesDir}`);
 
@@ -1366,11 +1408,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       await vscode.workspace.fs.createDirectory(vscode.Uri.file(imagesDir));
 
       // Save image (collision-safe: never overwrite silently)
-      const parsedName = path.parse(name);
+      const safeName = path.basename(name) || 'image';
+      const parsedName = path.parse(safeName);
       const baseFilename = parsedName.name || 'image';
       const extension = parsedName.ext || '';
 
-      let finalFilename = name;
+      let finalFilename = safeName;
       let imagePath = path.join(imagesDir, finalFilename);
       let imageUri = vscode.Uri.file(imagePath);
 
@@ -1603,6 +1646,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const absoluteImagePath = path.resolve(basePath, normalizedImagePath);
       const absoluteBackupPath = path.resolve(basePath, normalizedBackupPath);
 
+      const allowedRoots = this.getAllowedFileRoots(document);
+      if (!allowedRoots.some(root => isPathContainedWithin(absoluteImagePath, root))) {
+        throw new Error(
+          `Refusing to undo resize for image outside the document/workspace: ${imagePath}`
+        );
+      }
+
       const imageUri = vscode.Uri.file(absoluteImagePath);
       const backupUri = vscode.Uri.file(absoluteBackupPath);
 
@@ -1659,6 +1709,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
       const normalizedPath = normalizeImagePath(imagePath);
       const absolutePath = path.resolve(basePath, normalizedPath);
+
+      const allowedRoots = this.getAllowedFileRoots(document);
+      if (!allowedRoots.some(root => isPathContainedWithin(absolutePath, root))) {
+        throw new Error(
+          `Refusing to redo resize for image outside the document/workspace: ${imagePath}`
+        );
+      }
+
       const imageUri = vscode.Uri.file(absolutePath);
 
       // Convert base64 to buffer
@@ -2869,6 +2927,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         return;
       }
       const imagesDir = path.join(saveBasePath, targetFolder);
+      if (!isPathContainedWithin(imagesDir, saveBasePath)) {
+        const errorMessage = `Refusing to copy image outside the base directory: ${targetFolder}`;
+        vscode.window.showErrorMessage(errorMessage);
+        webview.postMessage({ type: 'localImageCopyError', placeholderId, error: errorMessage });
+        return;
+      }
 
       // Create folder if needed
       await vscode.workspace.fs.createDirectory(vscode.Uri.file(imagesDir));
