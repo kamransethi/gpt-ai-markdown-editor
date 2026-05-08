@@ -968,6 +968,27 @@ window.addEventListener('message', (event: MessageEvent) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).imagePathBase = message.imagePathBase;
         }
+        if (typeof message.showImageHoverOverlay === 'boolean') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window as any).showImageHoverOverlay = message.showImageHoverOverlay;
+        }
+        // Apply paragraph spacing settings
+        if (typeof message.paragraphSpacingBefore === 'number') {
+          document.documentElement.style.setProperty(
+            '--md-paragraph-spacing-before',
+            `${message.paragraphSpacingBefore}pt`
+          );
+        }
+        if (typeof message.paragraphSpacingAfter === 'number') {
+          document.documentElement.style.setProperty(
+            '--md-paragraph-spacing-after',
+            `${message.paragraphSpacingAfter}pt`
+          );
+        }
+        // Apply zoom level setting
+        if (typeof message.zoom === 'number') {
+          applyZoomLevel(message.zoom);
+        }
         // Initialize editor with first payload to seed undo history correctly
         if (!editor) {
           if (isDomReady) {
@@ -998,6 +1019,23 @@ window.addEventListener('message', (event: MessageEvent) => {
         if (typeof message.showImageHoverOverlay === 'boolean') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).showImageHoverOverlay = message.showImageHoverOverlay;
+        }
+        // Update paragraph spacing settings
+        if (typeof message.paragraphSpacingBefore === 'number') {
+          document.documentElement.style.setProperty(
+            '--md-paragraph-spacing-before',
+            `${message.paragraphSpacingBefore}pt`
+          );
+        }
+        if (typeof message.paragraphSpacingAfter === 'number') {
+          document.documentElement.style.setProperty(
+            '--md-paragraph-spacing-after',
+            `${message.paragraphSpacingAfter}pt`
+          );
+        }
+        // Apply zoom level setting
+        if (typeof message.zoom === 'number') {
+          applyZoomLevel(message.zoom);
         }
         break;
       case 'imageResized': {
@@ -1627,6 +1665,22 @@ window.addEventListener('openSourceView', () => {
 window.addEventListener('openExtensionSettings', () => {
   vscode.postMessage({ type: 'openExtensionSettings' });
 });
+
+// Zoom: applies zoom level from markdownForHumans.zoom setting (percentage, 100 = default).
+// We use a CSS calc() expression so the override stays live — if the user later changes
+// their VS Code editor font size, --md-base-size-override recomputes automatically
+// instead of being locked to the pixel value captured at call time.
+function applyZoomLevel(percent: number) {
+  const clamped = Math.max(50, Math.min(200, percent));
+  if (clamped === 100) {
+    document.documentElement.style.removeProperty('--md-base-size-override');
+  } else {
+    document.documentElement.style.setProperty(
+      '--md-base-size-override',
+      `calc(var(--vscode-editor-font-size, 14px) * ${clamped / 100})`
+    );
+  }
+}
 
 // Handle export document from toolbar button
 window.addEventListener('exportDocument', async (event: Event) => {
