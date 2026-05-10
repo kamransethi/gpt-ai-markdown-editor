@@ -1,5 +1,7 @@
 # Knowledge Graph
 
+<!-- prd-last-spec: 027 -->
+
 ## Overview
 
 The knowledge graph domain describes Flux Flow’s semantic workspace search and graph capabilities. It covers how markdown content is indexed, how semantic search is performed, and how graph and chat flows use that metadata to help users find and reuse information.

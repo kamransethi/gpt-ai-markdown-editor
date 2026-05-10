@@ -1,5 +1,7 @@
 # Navigation
 
+<!-- prd-last-spec: 014 -->
+
 ## Overview
 
 The navigation domain describes how users discover and move through headings in their document. It covers the table of contents and heading search capability, helping users find sections quickly in larger markdown files.

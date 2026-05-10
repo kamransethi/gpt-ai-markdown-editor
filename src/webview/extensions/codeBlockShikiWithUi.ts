@@ -19,6 +19,7 @@
  */
 
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+import type { MarkdownParseHelpers, MarkdownToken } from '@tiptap/core';
 
 const CODE_BLOCK_LANGUAGES = [
   { value: 'plaintext', label: 'Plain Text' },
@@ -55,6 +56,31 @@ async function copyTextToClipboard(text: string): Promise<void> {
 }
 
 export const CodeBlockWithUi = CodeBlockLowlight.extend({
+  /**
+   * Override parseMarkdown to accept fenced code blocks whose `raw` has leading whitespace.
+   *
+   * marked.js v13+ (CommonMark-compliant) requires continuation content in ordered lists
+   * to be indented by the full marker width (e.g. 3 spaces for "2. "). A fenced code block
+   * indented with only 2 spaces is parsed as a top-level block, but marked preserves the
+   * indentation in `token.raw` (e.g. "  ```bash\n..."). The inherited @tiptap/extension-code-block
+   * parseMarkdown checks `raw.startsWith("```")`, which fails for indented raw, silently
+   * dropping the code block. Trimming before the check fixes this.
+   */
+  parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => {
+    if (token.type !== 'code') return [];
+    const raw = (token.raw as string) ?? '';
+    const trimmed = raw.trimStart();
+    if (!trimmed.startsWith('```') && !trimmed.startsWith('~~~') && token.codeBlockStyle !== 'indented') {
+      return [];
+    }
+    const text = (token.text as string) ?? '';
+    return helpers.createNode(
+      'codeBlock',
+      { language: (token.lang as string) || null },
+      text ? [helpers.createTextNode(text)] : []
+    );
+  },
+
   addNodeView() {
     return ({ node, getPos, editor }: any) => {
       let currentNode = node;

@@ -1,5 +1,7 @@
 # Configuration
 
+<!-- prd-last-spec: 024 -->
+
 ## Overview
 
 The configuration domain captures how users view and change Flux Flow settings. It includes default markdown viewer preferences, AI provider setup, media path management, and environment configuration that affects the editor experience.

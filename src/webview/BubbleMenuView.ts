@@ -515,6 +515,62 @@ export function createFloatingFormattingBar(getEditor: () => Editor | null): {
 }
 
 /**
+ * Create the floating empty-line menu (shows when cursor is on an empty paragraph).
+ * Provides quick-insert actions: heading, horizontal rule, table, image.
+ */
+export function createEmptyLineMenu(getEditor: () => Editor | null): HTMLElement {
+  const bar = document.createElement('div');
+  bar.className = 'floating-empty-line-menu';
+  bar.setAttribute('role', 'toolbar');
+  bar.setAttribute('aria-label', 'Insert block');
+
+  const actions: Array<{ icon: string; title: string; run: (ed: Editor) => void }> = [
+    {
+      icon: 'codicon-text-size',
+      title: 'Heading',
+      run: ed => ed.chain().focus().toggleHeading({ level: 2 }).run(),
+    },
+    {
+      icon: 'codicon-list-unordered',
+      title: 'Bullet list',
+      run: ed => ed.chain().focus().toggleBulletList().run(),
+    },
+    {
+      icon: 'codicon-horizontal-rule',
+      title: 'Horizontal rule',
+      run: ed => ed.chain().focus().setHorizontalRule().run(),
+    },
+    {
+      icon: 'codicon-table',
+      title: 'Table',
+      run: ed =>
+        ed.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+    },
+  ];
+
+  for (const action of actions) {
+    const btn = document.createElement('button');
+    btn.className = 'floating-empty-line-btn';
+    btn.title = action.title;
+    btn.setAttribute('aria-label', action.title);
+
+    const icon = document.createElement('i');
+    icon.className = `codicon ${action.icon}`;
+    btn.appendChild(icon);
+
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault(); // Keep editor focus
+      const ed = getEditor();
+      if (ed) action.run(ed);
+    });
+
+    bar.appendChild(btn);
+  }
+
+  return bar;
+}
+
+/**
  * Create compact formatting toolbar with clean, minimal design.
  *
  * @param editor - TipTap editor instance
@@ -1481,6 +1537,14 @@ export function createFormattingToolbar(
     button.className = 'toolbar-button' + (btn.className ? ` ${btn.className}` : '');
     button.setAttribute('data-tooltip', btn.title || btn.label);
     button.setAttribute('aria-label', btn.title || btn.label);
+    // Stable test ID derived from button title for Playwright/Robot Framework targeting
+    const testIdSlug = (btn.title || btn.label)
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+    if (testIdSlug) {
+      button.setAttribute('data-testid', `toolbar-btn-${testIdSlug}`);
+    }
     button.onmousedown = e => {
       // Prevent focus steal to preserve current text selection.
       e.preventDefault();

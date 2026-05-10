@@ -1,5 +1,7 @@
 # Tables
 
+<!-- prd-last-spec: 038 -->
+
 ## Overview
 
 The tables domain covers how users create, edit, and export markdown tables with reliable behavior. It focuses on authoring experience, compatibility with GitHub-flavored markdown, and table-specific content transformations such as bullets inside cells and compression for LLM efficiency.

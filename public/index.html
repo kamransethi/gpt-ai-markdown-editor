@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flux Flow Markdown Editor — Standalone</title>
+  <link rel="stylesheet" href="dist/standalone.css" />
+  <style>
+    /* Minimal host-page reset — the editor's own CSS handles everything else */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow-x: hidden;
+    }
+  </style>
+</head>
+<body
+  data-theme="light"
+  data-vscode-theme-kind="vscode-light"
+  data-extension-version="standalone"
+>
+  <div id="frontmatter-panel" class="frontmatter-panel">
+    <div class="frontmatter-panel-inner"></div>
+  </div>
+  <div id="editor" data-testid="tiptap-editor"></div>
+  <script src="dist/standalone.js"></script>
+</body>
+</html>

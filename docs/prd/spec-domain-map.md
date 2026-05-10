@@ -40,6 +40,9 @@ This file provides a legacy mapping from existing spec folders to PRD domains. I
 | `specs/034-file-image-slash-cmd/` | `slash-commands`, `images` |
 | `specs/035-image-context-menu/` | `images`, `editor-core` |
 | `specs/036-test-suite-reorganization/` | `dev-tooling` |
+| `specs/038-unified-ai-webview-markdown/` | `ai-features`, `images`, `tables` |
+| `specs/039-tiptap-visual-diff/` | `editor-core` |
+| `specs/040-standalone-editor-bridge/` | `dev-tooling`, `editor-core` |
 
 ## Notes
 

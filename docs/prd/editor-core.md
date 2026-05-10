@@ -1,7 +1,8 @@
 # Editor Core
 
-## Overview
+<!-- prd-last-spec: 040 -->
 
+## Overview
 The editor core domain describes the primary authoring experience in Flux Flow. It covers how users create, edit, and preserve markdown content in a reliable, responsive editor environment, including document lifecycle behaviors, drag-and-drop media handling, and the visible workspace experience.
 
 ## User Scenarios
@@ -50,12 +51,15 @@ The editor core domain describes the primary authoring experience in Flux Flow. 
 | [025-tiptap-3.22.3-3.22.4-update](../../specs/archive/025-tiptap-3.22.3-3.22.4-update/) | Upgrade editor framework dependencies and stabilize core editing behavior | — |
 | [031-remove-editor-bandaids](../../specs/archive/031-remove-editor-bandaids/) | Remove workarounds in favor of native editor behavior for tables, images, and links | — |
 | [032-webview-modernization](../../specs/archive/032-webview-modernization/) | Modernize the webview model while preserving the visible editor experience | — |
+| [006-BUG-viewer-prompt-persistence](../../specs/archive/006-BUG-viewer-prompt-persistence/) | Fix persistence bug where viewer prompt reappeared after dismissal | 2026-04-11 |
+| [026-slash-command-refactor](../../specs/archive/026-slash-command-refactor/) | Refactor slash command registry for extensibility and performance | — |
+| [033-table-cell-bullet-serialization](../../specs/archive/033-table-cell-bullet-serialization/) | Implement bullets in table cells as text prefixes to preserve GFM compatibility | 2026-05-02 |
+| [035-image-context-menu](../../specs/035-image-context-menu/) | Move image actions from hover overlay to right-click context menu | 2026-05-02 |
+| [039-tiptap-visual-diff](../../specs/039-tiptap-visual-diff/) | Add visual markdown diff view for comparing editor content changes using prosemirror-changeset | 2026-05-03 |
+| [040-standalone-editor-bridge](../../specs/040-standalone-editor-bridge/) | Decouple editor from VS Code API to enable standalone browser dev mode and Playwright testing | 2026-05-09 |
 
-| [035-image-context-menu](../../specs/035-image-context-menu/) | Feature Specification: Image Context Menu | 2026-05-02 |
-| [006-BUG-viewer-prompt-persistence](../../specs/archive/006-BUG-viewer-prompt-persistence/) | 006-BUG-viewer-prompt-persistence | 2026-04-11 |
-| [026-slash-command-refactor](../../specs/archive/026-slash-command-refactor/) | Spec: Slash Command Refactor & Performance Optimization | â€” |
-| [033-table-cell-bullet-serialization](../../specs/archive/033-table-cell-bullet-serialization/) | Spec 033: Table Cell Bullets — Design, Constraints & Implementation | 2026-05-02 |
 ## Pending Review
 
 <!-- Items here need a human to update prose sections above -->
-- [ ] Verify if spec 005’s AI refine behavior also requires updates to EC-005 or user scenario wording.
+- [ ] Verify if spec 005's AI refine behavior also requires updates to EC-005 or user scenario wording.
+- [ ] Spec 040 (Standalone Editor Bridge) changes editor initialization via bridge abstraction — verify EC-005 and EC-006 still accurately describe the document lifecycle behavior.

@@ -18,6 +18,9 @@ import { TableOfContents, type TableOfContentData } from '@tiptap/extension-tabl
 import { BulletList, ListKit, TaskList } from '@tiptap/extension-list';
 import Link from '@tiptap/extension-link';
 import { BubbleMenu as BubbleMenuExtension } from '@tiptap/extension-bubble-menu';
+import { FloatingMenu as FloatingMenuExtension } from '@tiptap/extension-floating-menu';
+import Focus from '@tiptap/extension-focus';
+import FileHandler from '@tiptap/extension-file-handler';
 import CharacterCount from '@tiptap/extension-character-count';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
@@ -44,6 +47,7 @@ import {
 } from './extensions/htmlComment';
 import {
   createFloatingFormattingBar,
+  createEmptyLineMenu,
   createFormattingToolbar,
   setEditorZoom,
   updateToolbarStates,
@@ -307,11 +311,13 @@ declare global {
 }
 
 import { initAiPrompts } from './features/aiPromptsLoader';
+import { getActiveBridge } from './hostBridge';
 
-const vscode = acquireVsCodeApi();
-
-// Make vscode API available globally for toolbar buttons
-window.vscode = vscode;
+// Initialize bridge lazily — getActiveBridge() is called inside event handlers
+// and functions, never at module scope, so standalone.ts can call setBridge()
+// before any bridge method is first invoked.
+// window.vscode is set by the active bridge's factory for backward-compat with
+// BubbleMenuView.ts and frontmatterUI.ts which use getActiveBridge().postMessage().
 initAiPrompts();
 
 /**
@@ -319,7 +325,7 @@ initAiPrompts();
  */
 function reportWebviewIssue(level: 'error' | 'warn' | 'info', message: string, details?: unknown) {
   try {
-    vscode.postMessage({
+    getActiveBridge().postMessage({
       type: MessageType.WEBVIEW_LOG,
       level,
       message,
@@ -354,7 +360,7 @@ function showRuntimeErrorToUser(code: string, baseMessage: string, error?: unkno
   const message =
     isDeveloperModeEnabled() && errorText ? `${baseMessage} (${errorText})` : baseMessage;
 
-  vscode.postMessage({
+  getActiveBridge().postMessage({
     type: MessageType.SHOW_ERROR,
     message,
   });
@@ -366,6 +372,7 @@ let formattingToolbar: HTMLElement;
 let editorMetaBar: HTMLElement | null = null;
 let floatingFormattingBar: HTMLElement | null = null;
 let floatingBarController: ReturnType<typeof createFloatingFormattingBar> | null = null;
+let floatingMenuElement: HTMLElement | null = null;
 let textContextMenuCtrl: ReturnType<typeof createContextMenu> | null = null;
 let tableContextMenuCtrl: ReturnType<typeof createTableContextMenu> | null = null;
 let imageContextMenuCtrl: ReturnType<typeof createImageContextMenu> | null = null;
@@ -653,7 +660,7 @@ function createRequestId(prefix: string): string {
 
 const signalReady = () => {
   if (hasSentReadySignal) return;
-  vscode.postMessage({ type: MessageType.READY });
+  getActiveBridge().postMessage({ type: MessageType.READY });
   hasSentReadySignal = true;
 };
 
@@ -663,7 +670,7 @@ const signalReady = () => {
  */
 function requestHostResync(reason: string) {
   console.warn('[DK-AI][RECOVERY] Requesting host resync:', reason);
-  vscode.postMessage({ type: MessageType.READY });
+  getActiveBridge().postMessage({ type: MessageType.READY });
 }
 
 function isEditorDomBlank(): boolean {
@@ -697,7 +704,7 @@ const pushOutlineUpdate = () => {
   if (!editor) return;
   try {
     const outline = buildOutlineFromEditor(editor);
-    vscode.postMessage({ type: MessageType.OUTLINE_UPDATED, outline });
+    getActiveBridge().postMessage({ type: MessageType.OUTLINE_UPDATED, outline });
   } catch (error) {
     console.warn('[DK-AI] Failed to build outline:', error);
   }
@@ -761,7 +768,7 @@ function saveDocument() {
     );
 
     // Send combined edit and save to avoid race conditions
-    vscode.postMessage({
+    getActiveBridge().postMessage({
       type: MessageType.SAVE_AND_EDIT,
       content: restoreFrontmatter(markdown, currentFrontmatter),
       requestId: saveRequestId,
@@ -805,7 +812,7 @@ async function openFrontmatterEditor(): Promise<void> {
         const withFrontmatter = restoreFrontmatter(markdown, currentFrontmatter);
 
         // Send the update to VS Code
-        vscode.postMessage({
+        getActiveBridge().postMessage({
           type: MessageType.EDIT,
           content: withFrontmatter,
         });
@@ -874,7 +881,7 @@ function debouncedUpdate(markdown: string) {
         return;
       }
 
-      vscode.postMessage({
+      getActiveBridge().postMessage({
         type: MessageType.EDIT,
         content: restoreFrontmatter(markdown, currentFrontmatter),
       });
@@ -944,6 +951,11 @@ function initializeEditor(initialContent: string) {
       floatingFormattingBar.style.visibility = 'hidden';
       floatingFormattingBar.style.opacity = '0';
       document.body.appendChild(floatingFormattingBar);
+    }
+
+    if (!floatingMenuElement) {
+      floatingMenuElement = createEmptyLineMenu(() => editor);
+      document.body.appendChild(floatingMenuElement);
     }
 
     devLog('[DK-AI] Initializing editor...');
@@ -1026,7 +1038,6 @@ function initializeEditor(initialContent: string) {
         },
         paragraph: true,
         codeBlock: false, // Disable default CodeBlock, using CodeBlockWithUi instead
-        horizontalRule: false,
         // ListKit is registered separately to support task lists; disable StarterKit's list
         // extensions to avoid duplicate names (which can break markdown parsing, e.g. `1)` lists).
         bulletList: false,
@@ -1199,6 +1210,34 @@ function initializeEditor(initialContent: string) {
       AiExplain,
       DraggableBlocks, // Custom extension for block drag handles and highlighting
       Gapcursor,
+      // Focus — adds .has-focus CSS class to the shallowest focused block node
+      Focus.configure({ className: 'has-focus', mode: 'shallowest' }),
+      // FloatingMenu — shows an action bar on empty lines
+      FloatingMenuExtension.configure({
+        element: floatingMenuElement as HTMLElement,
+        shouldShow: ({ editor: currentEditor, state }) => {
+          const { $from, empty } = state.selection;
+          if (!empty || !currentEditor.isEditable) return false;
+          const parent = $from.parent;
+          return parent.type.name === 'paragraph' && parent.content.size === 0;
+        },
+      }),
+      // FileHandler — intercepts dropped .md files and inserts their content
+      FileHandler.configure({
+        allowedMimeTypes: ['text/plain', 'text/markdown'],
+        onDrop: (currentEditor, files, pos) => {
+          for (const file of files) {
+            const name = file.name.toLowerCase();
+            if (!name.endsWith('.md') && !name.endsWith('.markdown')) continue;
+            const reader = new FileReader();
+            reader.onload = () => {
+              const content = reader.result as string;
+              currentEditor.chain().focus().insertContentAt(pos, content).run();
+            };
+            reader.readAsText(file);
+          }
+        },
+      }),
       // Front matter support with collapsible details panel
     ];
 
@@ -1249,7 +1288,7 @@ function initializeEditor(initialContent: string) {
           const { from, to, empty } = editor.state.selection;
           // Send position for outline tracking + selected text for Copilot/external access
           const selectedText = empty ? '' : editor.state.doc.textBetween(from, to, '\n\n', '\n');
-          vscode.postMessage({
+          getActiveBridge().postMessage({
             type: MessageType.SELECTION_CHANGE,
             pos: from,
             from,
@@ -1392,17 +1431,17 @@ function initializeEditor(initialContent: string) {
     // Create context menus
     textContextMenuCtrl = createContextMenu(editorInstance);
     tableContextMenuCtrl = createTableContextMenu(editorInstance);
-    imageContextMenuCtrl = createImageContextMenu(editorInstance, vscode);
+    imageContextMenuCtrl = createImageContextMenu(editorInstance, (window as any).vscode);
 
     // Setup image drag & drop handling
-    setupImageDragDrop(editorInstance, vscode);
-    setupFileLinkDrop(editorInstance, vscode);
+    setupImageDragDrop(editorInstance, (window as any).vscode);
+    setupFileLinkDrop(editorInstance, (window as any).vscode);
 
     // Initial outline push
     pushOutlineUpdate();
     try {
       const { from } = editorInstance.state.selection;
-      vscode.postMessage({ type: MessageType.SELECTION_CHANGE, pos: from });
+      getActiveBridge().postMessage({ type: MessageType.SELECTION_CHANGE, pos: from });
     } catch (error) {
       console.warn('[DK-AI] Initial selection sync failed:', error);
     }
@@ -1463,7 +1502,7 @@ function initializeEditor(initialContent: string) {
     document.addEventListener('keydown', keydownHandler);
 
     // Add link click handler: click = edit dialog, Ctrl/Cmd+click = navigate
-    const handleLinkClick = createLinkClickHandler(() => editorInstance, vscode);
+    const handleLinkClick = createLinkClickHandler(() => editorInstance, (window as any).vscode);
 
     // Add click handler to editor DOM
     editorInstance.view.dom.addEventListener('click', handleLinkClick);
@@ -1504,7 +1543,7 @@ function initializeEditor(initialContent: string) {
     setTimeout(() => {
       editorFullyInitialized = true;
       // Request bulk file list for slash command cache
-      vscode.postMessage({ type: MessageType.GET_WORKSPACE_FILES });
+      getActiveBridge().postMessage({ type: MessageType.GET_WORKSPACE_FILES });
     }, 400);
   } catch (error) {
     console.error('[DK-AI] Fatal error initializing editor:', error);
@@ -1698,7 +1737,7 @@ window.addEventListener('message', (event: MessageEvent) => {
               fileItem.onclick = e => {
                 e.preventDefault();
                 e.stopPropagation();
-                vscode.postMessage({
+                getActiveBridge().postMessage({
                   type: MessageType.SAVE_AND_OPEN_FILE,
                   filePath: file.path,
                 });
@@ -1713,12 +1752,12 @@ window.addEventListener('message', (event: MessageEvent) => {
       }
       case MessageType.EXPORT_RESULT:
         if (message.success) {
-          vscode.postMessage({
+          getActiveBridge().postMessage({
             type: MessageType.SHOW_INFO,
             message: 'Document exported successfully!',
           });
         } else {
-          vscode.postMessage({
+          getActiveBridge().postMessage({
             type: MessageType.SHOW_ERROR,
             message: `Export failed: ${message.error}`,
           });
@@ -1781,7 +1820,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         try {
           const yaml = message.yaml || '';
           const parsed = YAML.load(yaml);
-          window.vscode?.postMessage({
+          getActiveBridge().postMessage({
             type: MessageType.FRONTMATTER_VALIDATION_RESULT,
             success: true,
             yaml,
@@ -1790,7 +1829,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           });
         } catch (error) {
           const err = error as Error;
-          window.vscode?.postMessage({
+          getActiveBridge().postMessage({
             type: MessageType.FRONTMATTER_VALIDATION_RESULT,
             success: false,
             yaml: message.yaml || '',
@@ -1806,7 +1845,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           // Proceed with save despite validation error
           if (editor) {
             const markdown = getEditorMarkdownForSync(editor, { compressTables, trimBlankLines });
-            window.vscode?.postMessage({
+            getActiveBridge().postMessage({
               type: MessageType.UPDATE,
               content: markdown,
               override: true,
@@ -1814,7 +1853,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           }
         } else if (message.override === 'return-to-fix') {
           // User wants to return to editor (no action needed)
-          window.vscode?.postMessage({
+          getActiveBridge().postMessage({
             type: MessageType.READY,
           });
         }
@@ -1980,14 +2019,14 @@ const handleExportTableCsv = () => {
 
   const matrix = getCurrentTableMatrix(editor.state);
   if (!matrix) {
-    vscode.postMessage({
+    getActiveBridge().postMessage({
       type: MessageType.SHOW_ERROR,
       message: 'Place the cursor inside a table before exporting CSV.',
     });
     return;
   }
 
-  vscode.postMessage({
+  getActiveBridge().postMessage({
     type: MessageType.EXPORT_TABLE_CSV,
     csv: serializeTableMatrix(matrix, ','),
   });
@@ -1997,13 +2036,13 @@ window.addEventListener('exportTableCsv', handleExportTableCsv);
 // Handle open source view from toolbar button
 const handleOpenSourceView = () => {
   devLog('[DK-AI] Opening source view...');
-  vscode.postMessage({ type: MessageType.OPEN_SOURCE_VIEW });
+  getActiveBridge().postMessage({ type: MessageType.OPEN_SOURCE_VIEW });
 };
 window.addEventListener('openSourceView', handleOpenSourceView);
 
 // Handle settings button from toolbar -> open VS Code settings UI
 const handleOpenExtensionSettings = () => {
-  vscode.postMessage({ type: MessageType.OPEN_EXTENSION_SETTINGS });
+  getActiveBridge().postMessage({ type: MessageType.OPEN_EXTENSION_SETTINGS });
 };
 window.addEventListener('openExtensionSettings', handleOpenExtensionSettings);
 
@@ -2011,14 +2050,14 @@ window.addEventListener('openExtensionSettings', handleOpenExtensionSettings);
 const handleUpdateSetting = (event: Event) => {
   const detail = (event as CustomEvent).detail;
   if (detail?.key && detail?.value !== undefined) {
-    vscode.postMessage({ type: MessageType.UPDATE_SETTING, key: detail.key, value: detail.value });
+    getActiveBridge().postMessage({ type: MessageType.UPDATE_SETTING, key: detail.key, value: detail.value });
   }
 };
 window.addEventListener('updateSetting', handleUpdateSetting);
 
 // Handle attachments button from toolbar -> open attachments folder in OS explorer
 const handleOpenAttachmentsFolder = () => {
-  vscode.postMessage({ type: MessageType.OPEN_ATTACHMENTS_FOLDER });
+  getActiveBridge().postMessage({ type: MessageType.OPEN_ATTACHMENTS_FOLDER });
 };
 window.addEventListener('openAttachmentsFolder', handleOpenAttachmentsFolder);
 
@@ -2037,7 +2076,7 @@ const handleExportDocument = async (event: Event) => {
     const title = getDocumentTitle(editor);
 
     // Send to extension for export
-    vscode.postMessage({
+    getActiveBridge().postMessage({
       type: MessageType.EXPORT_DOCUMENT,
       format,
       html: exportData.html,
@@ -2046,7 +2085,7 @@ const handleExportDocument = async (event: Event) => {
     });
   } catch (error) {
     console.error('[DK-AI] Export failed:', error);
-    vscode.postMessage({
+    getActiveBridge().postMessage({
       type: MessageType.SHOW_ERROR,
       message: 'Failed to prepare document for export. See console for details.',
     });

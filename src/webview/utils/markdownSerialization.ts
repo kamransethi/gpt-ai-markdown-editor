@@ -47,7 +47,10 @@ function isEmptyParagraph(node: JSONContent): boolean {
  * Collapse redundant newlines in the regions outside fenced code blocks.
  */
 function normalizeBlankLines(markdown: string, aggressive: boolean = false): string {
-  const segments = markdown.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g);
+  // Include leading whitespace ([ \t]*) in the captured group so that fence indentation
+  // (e.g. the 2 spaces in "  ```bash" inside a list item) remains part of the preserved
+  // odd segment and is never modified by the even-segment processing below.
+  const segments = markdown.split(/([ \t]*```[\s\S]*?```|[ \t]*~~~[\s\S]*?~~~)/g);
   const normalized = segments
     .map((seg, i) => {
       // Odd-indexed segments are fenced code blocks — leave untouched
@@ -76,7 +79,10 @@ function compressTableLine(line: string): string {
 }
 
 function compressMarkdown(markdown: string, options: CompressionOptions): string {
-  const segments = markdown.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g);
+  // Include leading whitespace ([ \t]*) in the captured group so that fence indentation
+  // (e.g. the 2 spaces before "  ```bash" inside a list item) is captured as part of
+  // the code-block (odd) segment and is never stripped as a whitespace-only line.
+  const segments = markdown.split(/([ \t]*```[\s\S]*?```|[ \t]*~~~[\s\S]*?~~~)/g);
   let inIndentedCode = false;
 
   return segments

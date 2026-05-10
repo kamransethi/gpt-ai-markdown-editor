@@ -23,9 +23,20 @@ if ($Help) {
 # Get all paths and variables from common functions
 $paths = Get-FeaturePathsEnv
 
-# Check if we're on a proper feature branch (only for git repos)
-if (-not (Test-FeatureBranch -Branch $paths.CURRENT_BRANCH -HasGit $paths.HAS_GIT)) { 
-    exit 1 
+# Check if we're on a proper feature branch — skip when feature.json provides
+# the active feature directory (single-dev main-branch workflow).
+$featureJson = Join-Path $paths.REPO_ROOT '.specify/feature.json'
+$featureJsonResolved = $false
+if (Test-Path $featureJson) {
+    try {
+        $fj = (Get-Content -LiteralPath $featureJson -Raw | ConvertFrom-Json)
+        if ($fj.feature_directory) { $featureJsonResolved = $true }
+    } catch {}
+}
+if (-not $featureJsonResolved) {
+    if (-not (Test-FeatureBranch -Branch $paths.CURRENT_BRANCH -HasGit $paths.HAS_GIT)) { 
+        exit 1 
+    }
 }
 
 # Ensure the feature directory exists

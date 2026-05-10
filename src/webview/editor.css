@@ -4816,3 +4816,46 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
 .frontmatter-error-actions .btn-secondary:hover {
   background: var(--md-hover-bg);
 }
+/* ============================================
+   Focus Extension — .has-focus block highlight
+   ============================================ */
+.markdown-editor .has-focus {
+  border-radius: 4px;
+  outline: 1px solid var(--md-border);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Floating Empty-Line Menu
+   ============================================ */
+.floating-empty-line-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 1px solid var(--md-border);
+  border-radius: 6px;
+  background: var(--md-background);
+  box-shadow: 0 2px 8px var(--md-shadow-color);
+  z-index: 1200;
+}
+
+.floating-empty-line-btn {
+  border: none;
+  background: transparent;
+  color: var(--md-muted);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.floating-empty-line-btn:hover {
+  background: var(--md-hover-bg);
+  color: var(--md-foreground);
+}

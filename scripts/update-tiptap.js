@@ -39,6 +39,9 @@ const TIPTAP_PACKAGES = [
   '@tiptap/extension-image',
   '@tiptap/extension-link',
   '@tiptap/extension-list',
+  '@tiptap/extension-file-handler',
+  '@tiptap/extension-floating-menu',
+  '@tiptap/extension-focus',
   '@tiptap/extension-placeholder',
   '@tiptap/extension-table',
   '@tiptap/extension-table-cell',
@@ -178,7 +181,7 @@ log('');
 log('  Running npm install…');
 log('');
 
-const install = spawnSync('npm', ['install'], {
+const install = spawnSync('npm', ['install', '--legacy-peer-deps'], {
   cwd: ROOT,
   stdio: 'inherit',
   shell: process.platform === 'win32',

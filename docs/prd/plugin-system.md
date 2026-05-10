@@ -1,5 +1,7 @@
 # Plugin System
 
+<!-- prd-last-spec: 003 -->
+
 ## Overview
 
 The plugin system domain captures the extension architecture that enables third-party integrations. It covers how plugins can add toolbar buttons, context menu items, and custom editor extensions without changing Flux Flow’s core product behavior.

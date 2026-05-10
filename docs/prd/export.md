@@ -1,5 +1,7 @@
 # Export
 
+<!-- prd-last-spec: 030 -->
+
 ## Overview
 
 The export domain describes the quality and compatibility expectations for Markdown output. It covers how tables, line breaks, and special formatting should be represented when the document is exported, especially for external tools and AI consumption.

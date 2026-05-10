@@ -1,5 +1,7 @@
 # Images
 
+<!-- prd-last-spec: 038 -->
+
 ## Overview
 
 The images domain covers how users add, manage, and interact with images in Flux Flow documents. It includes image insertion, paste behavior, drag-and-drop handling, AI-assisted image queries, context menu actions, and diagram image workflows.

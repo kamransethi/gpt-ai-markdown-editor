@@ -627,7 +627,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         <div id="frontmatter-panel" class="frontmatter-panel">
           <div class="frontmatter-panel-inner"></div>
         </div>
-        <div id="editor"></div>
+        <div id="editor" data-testid="tiptap-editor"></div>
         <script nonce="${nonce}" src="${scriptUriWithVersion}"></script>
       </body>
       </html>

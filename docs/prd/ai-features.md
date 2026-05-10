@@ -1,5 +1,7 @@
 # AI Features
 
+<!-- prd-last-spec: 038 -->
+
 ## Overview
 
 The AI features domain describes how Flux Flow integrates with language models to support writing assistance, image understanding, and prompt-driven document refinement. It captures the product-facing behavior of choosing providers, handling fallbacks, and exposing AI workflows without locking users into a single service.

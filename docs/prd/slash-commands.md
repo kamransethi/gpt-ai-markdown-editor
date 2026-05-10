@@ -1,5 +1,7 @@
 # Slash Commands
 
+<!-- prd-last-spec: 034 -->
+
 ## Overview
 
 The slash commands domain captures the command palette-like entry experience for inserting content while typing. It covers how users discover and activate slash commands, how the editor presents file and image pickers, and the performance expectations of this inline command system.

@@ -1,5 +1,7 @@
 # Frontmatter
 
+<!-- prd-last-spec: 008 -->
+
 ## Overview
 
 The frontmatter domain describes how YAML metadata is surfaced and edited inside Flux Flow documents. It focuses on making frontmatter visible, easy to inspect, and safe to modify without disrupting the rest of the markdown content.
