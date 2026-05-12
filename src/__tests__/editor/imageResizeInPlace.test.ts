@@ -5,6 +5,7 @@ jest.mock('vscode', () => ({
   window: {
     showErrorMessage: jest.fn(),
     showInformationMessage: jest.fn(),
+    showWarningMessage: jest.fn(),
   },
   workspace: {
     getWorkspaceFolder: jest.fn(),
@@ -244,7 +245,7 @@ describe('MarkdownEditorProvider - Resize (in-place + workspace backups)', () =>
     );
   });
 
-  it('creates backup for external image with _external suffix', async () => {
+  it('creates backup for external image with _external suffix (after user confirms)', async () => {
     const document = createMockTextDocument('# test');
 
     (vscode.workspace.fs.stat as jest.Mock).mockImplementation((uri: vscode.Uri) => {
@@ -259,6 +260,9 @@ describe('MarkdownEditorProvider - Resize (in-place + workspace backups)', () =>
     (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(new Uint8Array([9, 9, 9]));
     (vscode.workspace.fs.createDirectory as jest.Mock).mockResolvedValue(undefined);
     (vscode.workspace.fs.writeFile as jest.Mock).mockResolvedValue(undefined);
+    // SECURITY contract: writes outside the workspace are gated by a modal
+    // confirm. Simulate the user clicking "Overwrite".
+    (vscode.window.showWarningMessage as jest.Mock).mockResolvedValue('Overwrite');
 
     const message = {
       type: 'resizeImage',
@@ -281,7 +285,14 @@ describe('MarkdownEditorProvider - Resize (in-place + workspace backups)', () =>
       }
     ).handleResizeImage(message, document, mockWebview);
 
-    // Should create backup in workspace with _external suffix
+    // The user must have been shown the resolved external path before write.
+    expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+      expect.stringContaining('/Users/external/image.png'),
+      expect.objectContaining({ modal: true }),
+      'Overwrite'
+    );
+
+    // After confirmation, backup is created in workspace with _external suffix.
     expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(
       expect.objectContaining({
         fsPath: expect.stringMatching(
@@ -290,6 +301,45 @@ describe('MarkdownEditorProvider - Resize (in-place + workspace backups)', () =>
       }),
       new Uint8Array([9, 9, 9])
     );
+  });
+
+  it('does NOT write when user cancels the external-resize confirm prompt (security)', async () => {
+    const document = createMockTextDocument('# test');
+
+    (vscode.workspace.fs.stat as jest.Mock).mockImplementation((uri: vscode.Uri) => {
+      if (uri.fsPath === '/etc/passwd') {
+        return Promise.resolve({} as vscode.FileStat);
+      }
+      return Promise.reject(new Error('File not found'));
+    });
+    (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(new Uint8Array([1, 2, 3]));
+    (vscode.workspace.fs.writeFile as jest.Mock).mockResolvedValue(undefined);
+    // User dismisses the dialog (returns undefined).
+    (vscode.window.showWarningMessage as jest.Mock).mockResolvedValue(undefined);
+
+    const message = {
+      type: 'resizeImage',
+      imagePath: '/etc/passwd',
+      absolutePath: '/etc/passwd',
+      newWidth: 1,
+      newHeight: 1,
+      imageData: 'data:image/png;base64,AAAA',
+    };
+
+    await (
+      provider as unknown as {
+        handleResizeImage: (
+          message: unknown,
+          doc: vscode.TextDocument,
+          webview: { postMessage: jest.Mock }
+        ) => Promise<void>;
+      }
+    ).handleResizeImage(message, document, mockWebview);
+
+    // The prompt MUST have been shown (defense-in-depth UX).
+    expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+    // No write to /etc/passwd or anywhere else.
+    expect(vscode.workspace.fs.writeFile).not.toHaveBeenCalled();
   });
 
   it('handles multiple rapid resizes with collision detection', async () => {
