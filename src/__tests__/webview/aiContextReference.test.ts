@@ -313,6 +313,42 @@ describe('getSelectionBlockRange', () => {
     expect(getSelectionBlockRange(editor as any)).toEqual({ startLine: 5, endLine: 5 });
   });
 
+  it('ignores extra blank paragraphs in strip mode', () => {
+    const blocks = [
+      { typeName: 'paragraph', text: 'A', nodeSize: 3 },
+      { typeName: 'paragraph', text: '', nodeSize: 2 },
+      { typeName: 'paragraph', text: '', nodeSize: 2 },
+      { typeName: 'paragraph', text: 'B', nodeSize: 3 },
+    ];
+    const serialize = (json: { type: string; content: unknown[] }) => {
+      const items = json.content as Array<{ type: string; content?: Array<{ text: string }> }>;
+      const isEmpty = (n: { type: string; content?: Array<{ text: string }> }) =>
+        n.type === 'paragraph' &&
+        (!n.content || n.content.length === 0 || (n.content[0]?.text ?? '').trim() === '');
+      let s = 0;
+      while (s < items.length && isEmpty(items[s])) s++;
+      let e = items.length;
+      while (e > s && isEmpty(items[e - 1])) e--;
+      if (s >= e) return '';
+      let result = '';
+      for (let i = s; i < e; i++) {
+        const n = items[i];
+        if (isEmpty(n)) continue;
+        const text = n.content?.[0]?.text ?? '';
+        if (result !== '') result += '\n\n';
+        result += text;
+      }
+      return result + '\n';
+    };
+    const editor = buildStubEditor({
+      blocks,
+      selection: { from: 9, to: 9, empty: true },
+      serialize,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getSelectionBlockRange(editor as any, 'strip')).toEqual({ startLine: 3, endLine: 3 });
+  });
+
   it('skips empty leading paragraphs when computing the start line', () => {
     // The editor has an empty paragraph at the top that the save pipeline will strip
     // (stripEmptyDocParagraphsFromJson). The serialized file therefore starts at the

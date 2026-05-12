@@ -291,4 +291,23 @@ describe('getEditorMarkdownForSync – blank line preservation across block type
     // unknownNode serialized to '' → treated as blank → extra \n
     expect(md).toBe('## A\n\n\nC');
   });
+
+  it('strips extra blank lines in strip mode', () => {
+    const serialize = makeSerialize({
+      heading: '## A',
+      paragraph: 'B',
+    });
+    const editor = mockEditor(
+      [
+        { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'A' }] },
+        { type: 'paragraph', content: [] },
+        { type: 'paragraph', content: [] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'B' }] },
+      ],
+      serialize
+    );
+
+    const md = getEditorMarkdownForSync(editor, 'strip');
+    expect(md).toBe('## A\n\nB');
+  });
 });

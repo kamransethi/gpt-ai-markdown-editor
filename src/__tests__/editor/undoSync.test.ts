@@ -201,10 +201,15 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
+      blankLineMode: 'strip',
       skipResizeWarning: false,
+      skipAiContextSaveWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: true,
+      paragraphSpacingBefore: 0,
+      paragraphSpacingAfter: 0,
+      zoom: 100,
     });
   });
 
@@ -239,10 +244,15 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
+      blankLineMode: 'strip',
       skipResizeWarning: false,
+      skipAiContextSaveWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: false,
+      paragraphSpacingBefore: 0,
+      paragraphSpacingAfter: 0,
+      zoom: 100,
     });
 
     getConfigurationSpy.mockRestore();

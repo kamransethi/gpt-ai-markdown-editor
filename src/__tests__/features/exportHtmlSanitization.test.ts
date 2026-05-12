@@ -112,6 +112,16 @@ describe('sanitizeExportHtml', () => {
       expect(out).toContain('data:image/png;base64,iVBORw0KGgo=');
     });
 
+    it('strips data:text/javascript from <img src>', () => {
+      const out = sanitizeExportHtml('<img src="data:text/javascript,alert(1)">');
+      expect(out).not.toMatch(/data:text\/javascript/i);
+    });
+
+    it('strips data:application/javascript from <a href>', () => {
+      const out = sanitizeExportHtml('<a href="data:application/javascript,alert(1)">x</a>');
+      expect(out).not.toMatch(/data:application\/javascript/i);
+    });
+
     it('strips data:text/html (active content disguised as data URI)', () => {
       const out = sanitizeExportHtml(
         '<iframe src="data:text/html,<script>alert(1)</script>"></iframe>'

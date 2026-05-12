@@ -76,7 +76,11 @@ export function sanitizeExportHtml(html: string): string {
     'icon',
     'xlink:href',
   ]);
-  const DANGEROUS_SCHEME = /^\s*(javascript|file|vbscript|data:text\/html)\s*:/i;
+  // Match javascript:/file:/vbscript: (with optional whitespace before the colon,
+  // since HTML parsers tolerate it) OR any data: URI that isn't an image.
+  // Note: data: URIs don't have a second colon, so they must be handled as a
+  // separate branch rather than grouped with the scheme-colon pattern.
+  const DANGEROUS_SCHEME = /^\s*(?:(?:javascript|file|vbscript)\s*:|data:(?!image\/))/i;
 
   $('*').each((_, el) => {
     const tagEl = el as { attribs?: Record<string, string> };
