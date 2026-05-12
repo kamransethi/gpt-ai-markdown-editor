@@ -126,7 +126,7 @@
 
   /* Consistent spacing after headings */
   .markdown-editor :is(h1, h2, h3, h4, h5, h6) + p {
-    margin-top: 0.5em;
+    margin-top: var(--md-paragraph-spacing-before, 0.5em);
   }
   
   /* ============================================
