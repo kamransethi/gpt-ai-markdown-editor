@@ -91,6 +91,11 @@ type ToolbarActionButton = {
   className?: string;
   icon: ToolbarIcon;
   requiresFocus?: boolean; // Whether this button requires editor focus to be enabled
+  // Whether clicking this button must not blur the editor. The default browser
+  // behaviour blurs the contenteditable on `mousedown`, which means `action()`
+  // runs against an unfocused editor. Buttons that read live editor state
+  // (selection, focus) at click time should set this to true.
+  preserveEditorFocus?: boolean;
 };
 
 type ToolbarDropdownItem = {
@@ -604,6 +609,10 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
       },
       isActive: () => false,
       className: 'copy-ai-ref-button',
+      // The handler reads `editor.isFocused` synchronously to decide whether to
+      // include a line range. Without this, clicking the button blurs the
+      // editor first and we'd always emit a filename-only ref.
+      preserveEditorFocus: true,
     },
     {
       type: 'dropdown',
@@ -809,6 +818,14 @@ export function createFormattingToolbar(editor: Editor): HTMLElement {
     const icon = createIconElement(btn.icon, 'toolbar-icon');
 
     button.append(icon);
+
+    if (btn.preserveEditorFocus) {
+      // Suppress the default mousedown blur so the editor stays focused while
+      // the click handler reads its state.
+      button.addEventListener('mousedown', e => {
+        e.preventDefault();
+      });
+    }
 
     button.onclick = e => {
       e.preventDefault();

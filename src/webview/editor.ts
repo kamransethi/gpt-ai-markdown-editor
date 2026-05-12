@@ -254,6 +254,16 @@ function queryDocumentDirty(): Promise<boolean> {
 
 async function runCopyAiContextRef(): Promise<void> {
   if (!editor) return;
+
+  // Snapshot focus synchronously, before any await. ProseMirror keeps a stale
+  // selection in place after the editor blurs, so if the user clicked outside
+  // the editor (another panel, the toolbar) we'd otherwise copy `#N` pointing
+  // at whatever line was last touched. The toolbar's AI-Ref button uses
+  // `mousedown` preventDefault so clicking it doesn't blur the editor — meaning
+  // `isFocused` here accurately answers "is the user currently engaged with
+  // the document?". When false, we copy `@file` without a line range.
+  const selectionIsActive = editor.isFocused;
+
   const { showToast } = await import('./features/auditOverlay');
 
   // The reference encodes line numbers from the on-disk file, so a dirty buffer
@@ -278,18 +288,22 @@ async function runCopyAiContextRef(): Promise<void> {
   const result = await copyAiContextReference(
     editor,
     blankLineMode,
-    (range: SelectionBlockRange) => {
+    (range: SelectionBlockRange | null) => {
       return new Promise(resolve => {
         const requestId = `ai-ref-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
         aiContextRefCallbacks.set(requestId, resolve);
+        // A null range means we couldn't map the cursor to any block; the host
+        // replies with the bare workspace-relative path and we paste `@path`
+        // (no `#N`).
         vscode.postMessage({
           type: 'getAiContextRef',
           requestId,
-          startLine: range.startLine,
-          endLine: range.endLine,
+          startLine: range?.startLine,
+          endLine: range?.endLine,
         });
       });
-    }
+    },
+    { selectionIsActive }
   );
   if (result.success) {
     showToast(`Copied AI reference: ${result.ref}`, 'success');

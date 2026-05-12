@@ -46,7 +46,28 @@ function isInlineRenderEmpty(tok: RawToken | undefined): boolean {
     const text = typeof tok.text === 'string' ? tok.text : '';
     return text.trim().length === 0;
   }
-  if (tok.type === 'link' || tok.type === 'image') {
+  if (tok.type === 'image') {
+    // An image with a valid src/href is visible regardless of alt text — `<img>`
+    // does not need an alt to render. Only treat the token as render-empty when
+    // BOTH alt and href are missing, so `![](url)` survives as a real image
+    // node (and gets URL-checked by the audit) instead of being demoted to
+    // literal text.
+    const href =
+      typeof (tok as { href?: string }).href === 'string'
+        ? ((tok as { href?: string }).href as string)
+        : '';
+    if (href.trim().length > 0) return false;
+    const text =
+      typeof (tok as { text?: string }).text === 'string'
+        ? ((tok as { text?: string }).text as string)
+        : '';
+    if (text.trim().length > 0) return false;
+    const inner = Array.isArray((tok as { tokens?: RawToken[] }).tokens)
+      ? ((tok as { tokens?: RawToken[] }).tokens as RawToken[])
+      : [];
+    return inner.every(isInlineRenderEmpty);
+  }
+  if (tok.type === 'link') {
     const text =
       typeof (tok as { text?: string }).text === 'string'
         ? ((tok as { text?: string }).text as string)

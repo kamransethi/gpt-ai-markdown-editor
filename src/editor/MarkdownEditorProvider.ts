@@ -897,8 +897,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webview: vscode.Webview
   ): Promise<void> {
     const requestId = message.requestId as string;
-    const startLine = message.startLine as number;
-    const endLine = message.endLine as number;
+    const rawStart = message.startLine;
+    const rawEnd = message.endLine;
+    // Both line numbers are optional: when the webview couldn't map the
+    // selection to any block (empty doc, all-blank paragraphs, out-of-range
+    // cursor) it omits them and we return the bare `@path`.
+    const hasRange = typeof rawStart === 'number' && typeof rawEnd === 'number';
 
     const reply = (payload: { ref?: string; relPath?: string; error?: string }) => {
       webview.postMessage({
@@ -909,7 +913,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     };
 
     if (typeof requestId !== 'string') return;
-    if (typeof startLine !== 'number' || typeof endLine !== 'number') {
+    if (!hasRange && (rawStart !== undefined || rawEnd !== undefined)) {
+      // Partial line info is always a webview bug — fail loudly rather than
+      // silently dropping it.
       reply({ error: 'Invalid line range' });
       return;
     }
@@ -929,6 +935,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         ? path.relative(workspaceFolder.uri.fsPath, filePath)
         : filePath;
       const relPath = relRaw.replace(/\\/g, '/');
+      if (!hasRange) {
+        reply({ ref: `@${relPath}`, relPath });
+        return;
+      }
+      const startLine = rawStart as number;
+      const endLine = rawEnd as number;
       const suffix = startLine === endLine ? `#${startLine}` : `#${startLine}-${endLine}`;
       reply({ ref: `@${relPath}${suffix}`, relPath });
     } catch (error) {
