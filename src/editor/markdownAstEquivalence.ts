@@ -71,3 +71,27 @@ export function isMarkdownStructurallyEquivalent(a: string, b: string): boolean 
     return false;
   }
 }
+
+/**
+ * Signature of a markdown source's blank-line layout: the sequence of
+ * newline-run lengths in document order, joined as `"len1,len2,..."`. Two
+ * strings with the same signature have identical blank-line spacing.
+ *
+ * In preserve mode the user explicitly opted in to keeping blank-line counts,
+ * so `isMarkdownStructurallyEquivalent` alone is too loose — it renders both
+ * sides through markdown-it and HTML doesn't encode blank-line counts. Pair it
+ * with this signature comparison to detect blank-line-only edits as real
+ * changes (so they hit disk) without losing the "ignore bullet-marker swaps"
+ * behaviour for cosmetic round-trips.
+ */
+export function blankLineLayoutSignature(source: string): string {
+  return (source.match(/\n+/g) ?? []).map(run => run.length).join(',');
+}
+
+/**
+ * True when two markdown strings have the same blank-line layout. Strip-mode
+ * callers don't need this — policy normalization makes layouts converge.
+ */
+export function hasSameBlankLineLayout(a: string, b: string): boolean {
+  return blankLineLayoutSignature(a) === blankLineLayoutSignature(b);
+}

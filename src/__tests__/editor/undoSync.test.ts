@@ -201,7 +201,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
+      blankLineMode: 'strip',
       skipResizeWarning: false,
+      skipAiContextSaveWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: true,
@@ -242,7 +244,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
+      blankLineMode: 'strip',
       skipResizeWarning: false,
+      skipAiContextSaveWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: false,

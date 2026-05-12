@@ -17,6 +17,7 @@
 import type { Editor, JSONContent } from '@tiptap/core';
 import { copyToClipboard } from './copyMarkdown';
 import { serializeBlockMarkdown } from './markdownSerialization';
+import type { BlankLineMode } from '../../shared/blankLinePolicy';
 
 export interface AiContextRefResult {
   success: boolean;
@@ -112,7 +113,8 @@ interface BlockLineRange {
  */
 function computeBlockLineRanges(
   content: JSONContent[],
-  serialize: (json: JSONContent) => string
+  serialize: (json: JSONContent) => string,
+  blankLineMode: BlankLineMode
 ): BlockLineRange[] {
   let firstIdx = 0;
   while (firstIdx < content.length && isEmptyParagraphJsonNode(content[firstIdx])) firstIdx++;
@@ -129,7 +131,9 @@ function computeBlockLineRanges(
   for (let i = firstIdx; i < lastIdxExclusive; i++) {
     const node = content[i];
     if (isEmptyParagraphJsonNode(node)) {
-      pendingBlanks++;
+      if (blankLineMode === 'preserve') {
+        pendingBlanks++;
+      }
       continue;
     }
 
@@ -141,7 +145,9 @@ function computeBlockLineRanges(
     if (nodeMarkdown === '') {
       // A node that serialises to nothing (and has no structural placeholder)
       // is treated like an empty paragraph, matching the saver's fallback.
-      pendingBlanks++;
+      if (blankLineMode === 'preserve') {
+        pendingBlanks++;
+      }
       continue;
     }
 
@@ -150,7 +156,7 @@ function computeBlockLineRanges(
       cursorLine = 1;
       seenContent = true;
     } else {
-      cursorLine += 2 + pendingBlanks;
+      cursorLine += 2 + (blankLineMode === 'preserve' ? pendingBlanks : 0);
     }
     const startLine = cursorLine;
     const endLine = startLine + blockLines - 1;
@@ -217,7 +223,10 @@ export type SelectionBlockRangeResult =
  * actionable error messages and console diagnostics; the public wrapper below
  * reduces this to `SelectionBlockRange | null` for backwards-compat with tests.
  */
-export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeResult {
+export function computeSelectionBlockRange(
+  editor: Editor,
+  blankLineMode: BlankLineMode = 'preserve'
+): SelectionBlockRangeResult {
   const { from, to, empty } = editor.state.selection;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -264,7 +273,7 @@ export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeR
 
   let ranges: BlockLineRange[];
   try {
-    ranges = computeBlockLineRanges(liveJson.content, serialize);
+    ranges = computeBlockLineRanges(liveJson.content, serialize, blankLineMode);
   } catch (err) {
     return {
       ok: false,
@@ -301,8 +310,11 @@ export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeR
   return { ok: true, range: { startLine, endLine } };
 }
 
-export function getSelectionBlockRange(editor: Editor): SelectionBlockRange | null {
-  const result = computeSelectionBlockRange(editor);
+export function getSelectionBlockRange(
+  editor: Editor,
+  blankLineMode: BlankLineMode = 'preserve'
+): SelectionBlockRange | null {
+  const result = computeSelectionBlockRange(editor, blankLineMode);
   return result.ok ? result.range : null;
 }
 
@@ -318,11 +330,12 @@ export function getSelectionBlockRange(editor: Editor): SelectionBlockRange | nu
  */
 export async function copyAiContextReference(
   editor: Editor,
+  blankLineMode: BlankLineMode,
   requestPathFromHost: (
     range: SelectionBlockRange
   ) => Promise<{ ref?: string; relPath?: string; error?: string }>
 ): Promise<AiContextRefResult> {
-  const result = computeSelectionBlockRange(editor);
+  const result = computeSelectionBlockRange(editor, blankLineMode);
   if (!result.ok) {
     const message = result.detail
       ? `AI ref unavailable (${result.reason}: ${result.detail})`

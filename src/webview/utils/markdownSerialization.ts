@@ -5,6 +5,7 @@
  */
 
 import type { Editor, JSONContent } from '@tiptap/core';
+import type { BlankLineMode } from '../../shared/blankLinePolicy';
 
 type MarkdownManager = {
   serialize?: (json: JSONContent) => string;
@@ -88,7 +89,10 @@ export function serializeBlockMarkdown(
   return '';
 }
 
-export function getEditorMarkdownForSync(editor: Editor): string {
+export function getEditorMarkdownForSync(
+  editor: Editor,
+  blankLineMode: BlankLineMode = 'preserve'
+): string {
   const editorUnknown = editor as unknown as {
     markdown?: MarkdownManager;
     storage?: {
@@ -148,17 +152,24 @@ export function getEditorMarkdownForSync(editor: Editor): string {
 
     for (const node of trimmed) {
       if (isEmptyParagraph(node)) {
-        pendingBlanks++;
+        if (blankLineMode === 'preserve') {
+          pendingBlanks++;
+        }
       } else {
         const nodeMarkdown = serializeBlockMarkdown(node, serialize);
         if (nodeMarkdown === '') {
           // Node serialized to nothing (unrecognised type, etc.) – treat it
           // as if it were an empty paragraph so blank-line intent is kept.
-          pendingBlanks++;
+          if (blankLineMode === 'preserve') {
+            pendingBlanks++;
+          }
           continue;
         }
         if (result !== '') {
-          result += '\n\n' + '\n'.repeat(pendingBlanks);
+          result += '\n\n';
+          if (blankLineMode === 'preserve') {
+            result += '\n'.repeat(pendingBlanks);
+          }
         }
         result += nodeMarkdown;
         pendingBlanks = 0;

@@ -32,6 +32,7 @@ import { DraggableBlocks } from './extensions/draggableBlocks';
 import { DocumentAuditExtension } from './features/auditDocument';
 import { createFormattingToolbar, createTableMenu, updateToolbarStates } from './BubbleMenuView';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
+import type { BlankLineMode } from '../shared/blankLinePolicy';
 import { installBlankLineLexerNormalizer } from './utils/markedLexerNormalizer';
 import {
   setupImageDragDrop,
@@ -162,6 +163,8 @@ let pendingInitialContent: string | null = null; // Content from host before edi
 let hasSentReadySignal = false;
 let isDomReady = document.readyState !== 'loading';
 let outlineUpdateTimeout: number | null = null;
+let allowNextHostSyncDespiteRecentEdit = false;
+let allowNextHostSyncDespiteEchoHash = false;
 
 // Hash-based sync deduplication (replaces unreliable ignoreNextUpdate boolean)
 let lastSentContentHash: string | null = null;
@@ -222,21 +225,72 @@ const aiContextRefCallbacks = new Map<
   (response: { ref?: string; relPath?: string; error?: string }) => void
 >();
 
+// Webview-only "remember choice for this session" preference for the
+// copy-AI-context save dialog. Cleared whenever the webview is reloaded.
+let aiContextSessionSkipSave = false;
+// Mirrors the user setting `markdownForHumans.copyAiContextRef.skipSaveWarning`,
+// kept in sync via `update` and `settingsUpdate` messages from the host.
+let aiContextSkipSaveWarningSetting = false;
+let blankLineMode: BlankLineMode = 'strip';
+
+// Pending document-dirty queries, keyed by requestId. The host replies with
+// `documentDirtyResponse`; we look up the resolver here.
+const documentDirtyCallbacks = new Map<string, (isDirty: boolean) => void>();
+
+function queryDocumentDirty(): Promise<boolean> {
+  return new Promise(resolve => {
+    const requestId = `is-dirty-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    documentDirtyCallbacks.set(requestId, resolve);
+    vscode.postMessage({ type: 'queryDocumentDirty', requestId });
+    // Defensive timeout so a missing host reply can't wedge the toolbar.
+    setTimeout(() => {
+      if (documentDirtyCallbacks.delete(requestId)) {
+        // Treat unknown state as "needs confirmation" — safer than silently saving.
+        resolve(true);
+      }
+    }, 2000);
+  });
+}
+
 async function runCopyAiContextRef(): Promise<void> {
   if (!editor) return;
   const { showToast } = await import('./features/auditOverlay');
-  const result = await copyAiContextReference(editor, (range: SelectionBlockRange) => {
-    return new Promise(resolve => {
-      const requestId = `ai-ref-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      aiContextRefCallbacks.set(requestId, resolve);
-      vscode.postMessage({
-        type: 'getAiContextRef',
-        requestId,
-        startLine: range.startLine,
-        endLine: range.endLine,
+
+  // The reference encodes line numbers from the on-disk file, so a dirty buffer
+  // forces a save before the copy. Ask the user before saving on their behalf —
+  // unless they've already opted out for this session or via the setting.
+  const isDirty = await queryDocumentDirty();
+  const needsConfirmation =
+    isDirty && !aiContextSessionSkipSave && !aiContextSkipSaveWarningSetting;
+
+  if (needsConfirmation) {
+    const { showAiContextSaveWarning } = await import('./features/aiContextSaveWarning');
+    const choice = await showAiContextSaveWarning();
+    if (!choice.confirmed) {
+      showToast('AI reference copy cancelled — file not saved', 'info');
+      return;
+    }
+    if (choice.rememberForSession) {
+      aiContextSessionSkipSave = true;
+    }
+  }
+
+  const result = await copyAiContextReference(
+    editor,
+    blankLineMode,
+    (range: SelectionBlockRange) => {
+      return new Promise(resolve => {
+        const requestId = `ai-ref-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        aiContextRefCallbacks.set(requestId, resolve);
+        vscode.postMessage({
+          type: 'getAiContextRef',
+          requestId,
+          startLine: range.startLine,
+          endLine: range.endLine,
+        });
       });
-    });
-  });
+    }
+  );
   if (result.success) {
     showToast(`Copied AI reference: ${result.ref}`, 'success');
   } else {
@@ -337,8 +391,12 @@ function immediateUpdate() {
       updateTimeout = null;
     }
 
-    const markdown = getEditorMarkdownForSync(editor);
+    const markdown = getEditorMarkdownForSync(editor, blankLineMode);
     trackSentContent(markdown);
+    // Save-time policy enforcement (e.g. strip blank lines) should be reflected
+    // immediately in the editor UI even if the user just typed.
+    allowNextHostSyncDespiteRecentEdit = true;
+    allowNextHostSyncDespiteEchoHash = true;
 
     console.log('[MD4H] Immediate save triggered');
 
@@ -346,6 +404,7 @@ function immediateUpdate() {
     vscode.postMessage({
       type: 'edit',
       content: markdown,
+      editReason: 'save-policy-enforce',
     });
 
     // Then tell VS Code to save the file
@@ -382,6 +441,7 @@ function debouncedUpdate(markdown: string) {
       vscode.postMessage({
         type: 'edit',
         content: markdown,
+        editReason: 'typing',
       });
     } catch (error) {
       console.error('[MD4H] Error sending update:', error);
@@ -581,7 +641,7 @@ function initializeEditor(initialContent: string) {
           // Track when user last edited
           lastUserEditTime = Date.now();
 
-          const markdown = getEditorMarkdownForSync(editor);
+          const markdown = getEditorMarkdownForSync(editor, blankLineMode);
           debouncedUpdate(markdown);
           scheduleOutlineUpdate();
         } catch (error) {
@@ -959,6 +1019,12 @@ window.addEventListener('message', (event: MessageEvent) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).skipResizeWarning = message.skipResizeWarning;
         }
+        if (typeof message.skipAiContextSaveWarning === 'boolean') {
+          aiContextSkipSaveWarningSetting = message.skipAiContextSaveWarning;
+        }
+        if (message.blankLineMode === 'preserve' || message.blankLineMode === 'strip') {
+          blankLineMode = message.blankLineMode;
+        }
         // Store imagePath setting if present
         if (typeof message.imagePath === 'string') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1005,6 +1071,12 @@ window.addEventListener('message', (event: MessageEvent) => {
         if (typeof message.skipResizeWarning === 'boolean') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).skipResizeWarning = message.skipResizeWarning;
+        }
+        if (typeof message.skipAiContextSaveWarning === 'boolean') {
+          aiContextSkipSaveWarningSetting = message.skipAiContextSaveWarning;
+        }
+        if (message.blankLineMode === 'preserve' || message.blankLineMode === 'strip') {
+          blankLineMode = message.blankLineMode;
         }
         // Update imagePath setting
         if (typeof message.imagePath === 'string') {
@@ -1432,6 +1504,39 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
         break;
       }
+      case 'documentDirtyResponse': {
+        const requestId = message.requestId as string;
+        const callback = documentDirtyCallbacks.get(requestId);
+        if (callback) {
+          callback(message.isDirty === true);
+          documentDirtyCallbacks.delete(requestId);
+        }
+        break;
+      }
+      case 'flushPendingEdit': {
+        // Host needs the latest content NOW (autosave on focus/window change).
+        // If a debounced edit is queued, fire it synchronously so the `edit`
+        // message arrives at the host before the ack we send immediately
+        // after — guaranteeing the host can rely on the buffer being current.
+        const requestId = message.requestId as string;
+        try {
+          if (editor && updateTimeout !== null) {
+            window.clearTimeout(updateTimeout);
+            updateTimeout = null;
+            const markdown = getEditorMarkdownForSync(editor, blankLineMode);
+            trackSentContent(markdown);
+            vscode.postMessage({
+              type: 'edit',
+              content: markdown,
+              editReason: 'typing',
+            });
+          }
+        } catch (error) {
+          console.error('[MD4H] flushPendingEdit failed:', error);
+        }
+        vscode.postMessage({ type: 'flushPendingEditAck', requestId });
+        break;
+      }
       case 'triggerCopyAiContextRef': {
         void runCopyAiContextRef();
         break;
@@ -1470,7 +1575,7 @@ function updateEditorContent(markdown: string) {
   try {
     // Hash-based deduplication: skip if this is content we just sent
     const incomingHash = hashString(markdown);
-    if (incomingHash === lastSentContentHash) {
+    if (incomingHash === lastSentContentHash && !allowNextHostSyncDespiteEchoHash) {
       // Also check timestamp to allow legitimate identical content after a delay
       const timeSinceLastSend = Date.now() - lastSentTimestamp;
       if (timeSinceLastSend < SYNC_ECHO_TIMEOUT_MS) {
@@ -1478,13 +1583,15 @@ function updateEditorContent(markdown: string) {
         return;
       }
     }
+    allowNextHostSyncDespiteEchoHash = false;
 
     // Don't update if user edited recently to prevent cursor jumping (m3)
     const timeSinceLastEdit = Date.now() - lastUserEditTime;
-    if (timeSinceLastEdit < RECENT_EDIT_THRESHOLD_MS) {
+    if (timeSinceLastEdit < RECENT_EDIT_THRESHOLD_MS && !allowNextHostSyncDespiteRecentEdit) {
       console.log(`[MD4H] Skipping update - user recently edited (${timeSinceLastEdit}ms ago)`);
       return;
     }
+    allowNextHostSyncDespiteRecentEdit = false;
 
     isUpdating = true;
 
@@ -1494,7 +1601,7 @@ function updateEditorContent(markdown: string) {
     console.log(`[MD4H] Updating content (${docSize} chars)...`);
 
     // Skip if content is already in sync
-    const currentMarkdown = getEditorMarkdownForSync(editor);
+    const currentMarkdown = getEditorMarkdownForSync(editor, blankLineMode);
     if (currentMarkdown === markdown) {
       console.log('[MD4H] Update skipped (content unchanged)');
       return;

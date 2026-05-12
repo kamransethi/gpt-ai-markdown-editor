@@ -190,6 +190,20 @@
           "default": false,
           "description": "Skip the warning dialog when resizing images. When enabled, images will be resized immediately without confirmation."
         },
+        "markdownForHumans.copyAiContextRef.skipSaveWarning": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip the warning dialog when 'Copy AI Context Reference' needs to save the file first. When enabled, the document is saved silently before copying the reference."
+        },
+        "markdownForHumans.blankLines.mode": {
+          "type": "string",
+          "enum": [
+            "preserve",
+            "strip"
+          ],
+          "default": "strip",
+          "description": "Controls whether extra blank lines are preserved or removed in the editor and saved file."
+        },
         "markdownForHumans.imagePreview.hover.enabled": {
           "type": "boolean",
           "default": true,
