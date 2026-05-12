@@ -201,21 +201,24 @@
           "default": 0,
           "minimum": 0,
           "maximum": 72,
-          "description": "Space before paragraphs in points (margin-top). Default: 0pt"
+          "description": "Space before paragraphs in points (margin-top). Default: 0pt",
+          "scope": "application"
         },
         "markdownForHumans.paragraph.spacingAfter": {
           "type": "number",
           "default": 0,
           "minimum": 0,
           "maximum": 72,
-          "description": "Space after paragraphs in points (margin-bottom). Default: 0pt"
+          "description": "Space after paragraphs in points (margin-bottom). Default: 0pt",
+          "scope": "application"
         },
         "markdownForHumans.zoom": {
           "type": "number",
           "default": 100,
           "minimum": 50,
           "maximum": 200,
-          "description": "Zoom level for the editor as a percentage. 100 = default size, 150 = 50% larger, etc."
+          "description": "Zoom level for the editor as a percentage. 100 = default size, 150 = 50% larger, etc.",
+          "scope": "application"
         }
       }
     }

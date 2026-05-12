@@ -968,23 +968,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).imagePathBase = message.imagePathBase;
         }
-        // Apply paragraph spacing settings
-        if (typeof message.paragraphSpacingBefore === 'number') {
-          document.documentElement.style.setProperty(
-            '--md-paragraph-spacing-before',
-            `${message.paragraphSpacingBefore}pt`
-          );
-        }
-        if (typeof message.paragraphSpacingAfter === 'number') {
-          document.documentElement.style.setProperty(
-            '--md-paragraph-spacing-after',
-            `${message.paragraphSpacingAfter}pt`
-          );
-        }
-        // Apply zoom level setting
-        if (typeof message.zoom === 'number') {
-          applyZoomLevel(message.zoom);
-        }
+        applyEditorSettings(message);
         // Initialize editor with first payload to seed undo history correctly
         if (!editor) {
           if (isDomReady) {
@@ -1016,23 +1000,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).showImageHoverOverlay = message.showImageHoverOverlay;
         }
-        // Update paragraph spacing settings
-        if (typeof message.paragraphSpacingBefore === 'number') {
-          document.documentElement.style.setProperty(
-            '--md-paragraph-spacing-before',
-            `${message.paragraphSpacingBefore}pt`
-          );
-        }
-        if (typeof message.paragraphSpacingAfter === 'number') {
-          document.documentElement.style.setProperty(
-            '--md-paragraph-spacing-after',
-            `${message.paragraphSpacingAfter}pt`
-          );
-        }
-        // Apply zoom level setting
-        if (typeof message.zoom === 'number') {
-          applyZoomLevel(message.zoom);
-        }
+        applyEditorSettings(message);
         break;
       case 'imageResized': {
         // Handle image resize completion
@@ -1661,6 +1629,29 @@ window.addEventListener('openSourceView', () => {
 window.addEventListener('openExtensionSettings', () => {
   vscode.postMessage({ type: 'openExtensionSettings' });
 });
+
+/**
+ * Applies paragraph spacing and zoom settings from an incoming message.
+ * Called from both the `update` and `settingsUpdate` handlers.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyEditorSettings(message: Record<string, any>) {
+  if (typeof message.paragraphSpacingBefore === 'number') {
+    document.documentElement.style.setProperty(
+      '--md-paragraph-spacing-before',
+      `${message.paragraphSpacingBefore}pt`
+    );
+  }
+  if (typeof message.paragraphSpacingAfter === 'number') {
+    document.documentElement.style.setProperty(
+      '--md-paragraph-spacing-after',
+      `${message.paragraphSpacingAfter}pt`
+    );
+  }
+  if (typeof message.zoom === 'number') {
+    applyZoomLevel(message.zoom);
+  }
+}
 
 /**
  * Applies the editor zoom level by scaling the base font size.
