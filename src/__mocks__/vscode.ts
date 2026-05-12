@@ -87,6 +87,22 @@ export const workspace = {
     update: jest.fn(),
   })),
   applyEdit: jest.fn(async (_edit?: unknown) => true),
+  fs: {
+    readFile: jest.fn().mockResolvedValue(Buffer.from('', 'utf8')),
+    writeFile: jest.fn().mockResolvedValue(undefined),
+    createDirectory: jest.fn().mockResolvedValue(undefined),
+    stat: jest.fn().mockResolvedValue({}),
+    delete: jest.fn().mockResolvedValue(undefined),
+    rename: jest.fn().mockResolvedValue(undefined),
+    readDirectory: jest.fn().mockResolvedValue([]),
+    copy: jest.fn().mockResolvedValue(undefined),
+  },
+  createFileSystemWatcher: jest.fn(() => ({
+    onDidChange: jest.fn(),
+    onDidCreate: jest.fn(),
+    onDidDelete: jest.fn(),
+    dispose: jest.fn(),
+  })),
 };
 
 // Mock commands API
@@ -105,7 +121,21 @@ export const Uri = {
     scheme: 'file',
     toString: () => uri,
   })),
+  joinPath: jest.fn((_base: unknown, ...parts: string[]) => ({
+    fsPath: parts.join('/'),
+    path: parts.join('/'),
+    scheme: 'file',
+    toString: () => parts.join('/'),
+  })),
 };
+
+// Mock RelativePattern
+export class RelativePattern {
+  constructor(
+    public base: unknown,
+    public pattern: string
+  ) {}
+}
 
 // Mock env API
 export const env = {

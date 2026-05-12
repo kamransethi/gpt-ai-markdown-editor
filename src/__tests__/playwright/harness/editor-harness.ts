@@ -136,6 +136,7 @@ interface EditorAPI {
         found = true;
         return false;
       }
+      return true;
     });
     return found;
   },

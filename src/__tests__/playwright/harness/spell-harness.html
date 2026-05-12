@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spell Check Test Harness</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; background: #fff; }
+    #editor {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 12px;
+      min-height: 200px;
+    }
+    .ProseMirror { outline: none; min-height: 180px; }
+    /* Mirror production spell-error style so Playwright can query it */
+    .spell-error {
+      text-decoration: underline wavy red;
+    }
+    #status { margin-top: 8px; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div id="editor"></div>
+  <div id="status">Loading...</div>
+
+  <!--
+    Inject the worker URL and dictionary URLs before the harness script runs.
+    The webserver serves from the project root, so /dist/ and /resources/ are reachable.
+  -->
+  <script>
+    window.SPELLCHECK_WORKER_URL = '/dist/spellcheck-worker.js';
+    window.SPELL_AFF_URL = '/resources/dictionaries/en-US.aff';
+    window.SPELL_DIC_URL = '/resources/dictionaries/en-US.dic';
+  </script>
+
+  <script src="spell-harness.js"></script>
+  <script>
+    document.addEventListener('spell-harness-ready', () => {
+      document.getElementById('status').textContent = 'Editor ready';
+    });
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flux Flow Markdown Editor — Standalone</title>
-  <link rel="stylesheet" href="dist/standalone.css" />
+  <link rel="stylesheet" href="/dist/webview.css" />
   <style>
     /* Minimal host-page reset — the editor's own CSS handles everything else */
     *, *::before, *::after { box-sizing: border-box; }
@@ -25,6 +25,12 @@
     <div class="frontmatter-panel-inner"></div>
   </div>
   <div id="editor" data-testid="tiptap-editor"></div>
-  <script src="dist/standalone.js"></script>
+  
+  <!-- Inject spell checker worker URL before the main bundle loads -->
+  <script>
+    window.SPELLCHECK_WORKER_URL = '/dist/spellcheck-worker.js';
+  </script>
+  
+  <script src="/public/dist/standalone.js"></script>
 </body>
 </html>

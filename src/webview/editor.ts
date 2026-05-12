@@ -25,8 +25,6 @@ import CharacterCount from '@tiptap/extension-character-count';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
 import Typography from '@tiptap/extension-typography';
-import DragHandle from '@tiptap/extension-drag-handle';
-import Gapcursor from '@tiptap/extension-gapcursor';
 import { marked as markedInstance, Marked } from 'marked';
 import { CustomImage } from './extensions/customImage';
 import { CodeBlockWithUi } from './extensions/codeBlockShikiWithUi';
@@ -55,6 +53,7 @@ import {
 import { createContextMenu } from './features/contextMenu';
 import { createTableContextMenu } from './features/tableContextMenu';
 import { createImageContextMenu, isExternalImage } from './features/imageContextMenu';
+import { tryShowSpellMenu } from './features/spellCheckMenu';
 import { handleAiRefineResult } from './features/aiRefine';
 import { TextColorMark, CustomTextStyle } from './extensions/textColor';
 import { getEditorMarkdownForSync } from './utils/markdownSerialization';
@@ -83,9 +82,7 @@ import {
   handleAiExplainDone,
   handleImageAskResult,
 } from './extensions/aiExplain';
-import { DraggableBlocks } from './extensions/draggableBlocks';
-
-import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
+import { SpellCheck, initSpellCheck, reloadUserWords } from './extensions/spellCheck';
 import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipboard';
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
@@ -1018,18 +1015,6 @@ function initializeEditor(initialContent: string) {
       GenericHTMLBlock,
       HtmlCommentInline,
       HtmlCommentBlock,
-      DragHandle.configure({
-        render() {
-          const element = document.createElement('div');
-          element.classList.add('custom-drag-handle');
-          element.innerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
-          return element;
-        },
-      }),
-      GlobalDragHandle.configure({
-        dragHandleWidth: 20,
-      }),
       CustomTextStyle,
       TextColorMark,
       StarterKit.configure({
@@ -1208,8 +1193,7 @@ function initializeEditor(initialContent: string) {
       CommandRegistry,
       TableBulletListSmart,
       AiExplain,
-      DraggableBlocks, // Custom extension for block drag handles and highlighting
-      Gapcursor,
+      SpellCheck,
       // Focus — adds .has-focus CSS class to the shallowest focused block node
       Focus.configure({ className: 'has-focus', mode: 'shallowest' }),
       // FloatingMenu — shows an action bar on empty lines
@@ -1476,6 +1460,10 @@ function initializeEditor(initialContent: string) {
           const pos = hit ? hit.pos : editorInstance.state.selection.from;
           tableContextMenuCtrl?.show(e.clientX, e.clientY, pos);
         } else if (target.closest('.ProseMirror')) {
+          // Check for spell-error decoration first
+          if (tryShowSpellMenu(e, editorInstance, (window as any).vscode)) {
+            return; // Spell menu shown — skip generic context menu
+          }
           e.preventDefault();
           textContextMenuCtrl?.show(e.clientX, e.clientY);
         }
@@ -1861,6 +1849,12 @@ window.addEventListener('message', (event: MessageEvent) => {
       case MessageType.FRONTMATTER_ERROR:
         // Display front matter validation error dialog
         devLog('[DK-AI] Front matter error:', message.error);
+        break;
+      case MessageType.SPELL_INIT:
+        void initSpellCheck(message as unknown as { affUrl: string; dicUrl: string; userWords: string[] });
+        break;
+      case MessageType.SPELL_RELOAD:
+        reloadUserWords((message.userWords as string[]) ?? []);
         break;
       default:
         console.warn('[DK-AI] Unknown message type:', message.type);

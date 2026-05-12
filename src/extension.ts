@@ -243,6 +243,21 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // Open user spell check dictionary
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gptAiMarkdownEditor.openUserDictionary', async () => {
+      const dicPath = vscode.Uri.joinPath(context.globalStorageUri, 'user_dictionary.dic');
+      // Create the file if it doesn't exist yet
+      try {
+        await vscode.workspace.fs.stat(dicPath);
+      } catch {
+        await vscode.workspace.fs.createDirectory(context.globalStorageUri);
+        await vscode.workspace.fs.writeFile(dicPath, new TextEncoder().encode(''));
+      }
+      await vscode.window.showTextDocument(dicPath, { preview: false });
+    })
+  );
+
   // Register Copilot Chat Participant — makes the current document available to Copilot
   try {
     if (typeof vscode.chat?.createChatParticipant === 'function') {

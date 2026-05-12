@@ -14946,6 +14946,7 @@
       });
       extension.name = this.name;
       extension.parent = this.parent;
+      this.child = null;
       return extension;
     }
     extend(extendedConfig = {}) {
@@ -15474,6 +15475,36 @@
       );
     }
     /**
+     * Destroy the extension manager and clean up all extension references
+     * to prevent memory leaks through parent/child extension chains.
+     *
+     * Walks each extension's full parent chain and nulls every forward
+     * `parent.child → current` link where the parent still points to the
+     * current node. This breaks the retention path from module-scope
+     * singleton roots through deep extend() chains.
+     *
+     * Only ancestor `.child` links matching the current chain are cleared.
+     * The `.parent` pointer on ancestors is never touched — extensions
+     * may be shared across live editors, so their own backward references
+     * and non-matching forward links must remain intact.
+     */
+    destroy() {
+      this.extensions.forEach((extension) => {
+        let current = extension;
+        while (current.parent) {
+          const parent = current.parent;
+          if (parent.child === current) {
+            parent.child = null;
+          }
+          current = parent;
+        }
+      });
+      this.extensions = [];
+      this.baseExtensions = [];
+      this.schema = null;
+      this.editor = null;
+    }
+    /**
      * Go through all extensions, create extension storages & setup marks
      * & bind editor event listener.
      */
@@ -15878,12 +15909,23 @@
   });
   var Tabindex = Extension.create({
     name: "tabindex",
+    addOptions() {
+      return {
+        value: void 0
+      };
+    },
     addProseMirrorPlugins() {
       return [
         new Plugin({
           key: new PluginKey("tabindex"),
           props: {
-            attributes: () => this.editor.isEditable ? { tabindex: "0" } : {}
+            attributes: () => {
+              var _a;
+              if (!this.editor.isEditable && this.options.value === void 0) {
+                return {};
+              }
+              return { tabindex: (_a = this.options.value) != null ? _a : "0" };
+            }
           }
         })
       ];
@@ -16214,6 +16256,7 @@ img.ProseMirror-separator {
       this.className = "tiptap";
       this.editorView = null;
       this.isFocused = false;
+      this.destroyed = false;
       this.isInitialized = false;
       this.extensionStorage = {};
       this.instanceId = Math.random().toString(36).slice(2, 9);
@@ -16496,7 +16539,7 @@ img.ProseMirror-separator {
      * Creates an extension manager.
      */
     createExtensionManager() {
-      var _a, _b;
+      var _a, _b, _c, _d;
       const coreExtensions = this.options.enableCoreExtensions ? [
         Editable,
         ClipboardTextSerializer.configure({
@@ -16505,7 +16548,9 @@ img.ProseMirror-separator {
         Commands,
         FocusEvents,
         Keymap,
-        Tabindex,
+        Tabindex.configure({
+          value: (_d = (_c = this.options.coreExtensionOptions) == null ? void 0 : _c.tabindex) == null ? void 0 : _d.value
+        }),
         Drop,
         Paste,
         Delete,
@@ -16743,9 +16788,18 @@ img.ProseMirror-separator {
      * Destroy the editor.
      */
     destroy() {
+      if (this.destroyed) {
+        return;
+      }
+      this.destroyed = true;
       this.emit("destroy");
       this.unmount();
       this.removeAllListeners();
+      this.extensionManager.destroy();
+      this.extensionManager = null;
+      this.schema = null;
+      this.commandManager = null;
+      this.extensionStorage = {};
     }
     /**
      * Check if the editor is already destroyed.
@@ -20014,6 +20068,25 @@ ${prefix}
       return [inputRule];
     }
   });
+  function isSameLineOrderedListToken(token) {
+    var _a, _b;
+    const nestedToken = (_a = token.tokens) == null ? void 0 : _a[0];
+    return Boolean(
+      token.text && ((_b = token.tokens) == null ? void 0 : _b.length) === 1 && (nestedToken == null ? void 0 : nestedToken.type) === "list" && nestedToken.ordered && nestedToken.raw === token.text
+    );
+  }
+  function parseSameLineOrderedListText(text, helpers) {
+    if (helpers.tokenizeInline) {
+      return helpers.parseInline(helpers.tokenizeInline(text));
+    }
+    return helpers.parseInline([
+      {
+        type: "text",
+        raw: text,
+        text
+      }
+    ]);
+  }
   var ListItem = Node3.create({
     name: "listItem",
     addOptions() {
@@ -20044,6 +20117,17 @@ ${prefix}
       const parseBlockChildren = (_a = helpers.parseBlockChildren) != null ? _a : helpers.parseChildren;
       let content = [];
       if (token.tokens && token.tokens.length > 0) {
+        if (isSameLineOrderedListToken(token)) {
+          return {
+            type: "listItem",
+            content: [
+              {
+                type: "paragraph",
+                content: parseSameLineOrderedListText(token.text || "", helpers)
+              }
+            ]
+          };
+        }
         const hasParagraphTokens = token.tokens.some((t) => t.type === "paragraph");
         if (hasParagraphTokens) {
           content = parseBlockChildren(token.tokens);
@@ -23831,6 +23915,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
      */
     constructor(options) {
       this.activeParseLexer = null;
+      this.extensionRanks = /* @__PURE__ */ new Map();
       this.baseExtensions = [];
       this.extensions = [];
       this.codeTypes = /* @__PURE__ */ new Set();
@@ -23847,7 +23932,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       this.nodeTypeRegistry = /* @__PURE__ */ new Map();
       if (options == null ? void 0 : options.extensions) {
         this.baseExtensions = options.extensions;
-        const flattened = flattenExtensions(options.extensions);
+        const flattened = sortExtensions(flattenExtensions(options.extensions));
         flattened.forEach((ext) => this.registerExtension(ext));
       }
     }
@@ -23879,6 +23964,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       const name = extension.name;
       if (isCode) {
         this.codeTypes.add(name);
+      }
+      if (!this.extensionRanks.has(name)) {
+        this.extensionRanks.set(name, this.extensionRanks.size);
       }
       const tokenName = getExtensionField(extension, "markdownTokenName") || name;
       const parseMarkdown = getExtensionField(extension, "parseMarkdown");
@@ -24235,6 +24323,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     createParseHelpers() {
       return {
         parseInline: (tokens) => this.parseInlineTokens(tokens),
+        tokenizeInline: (src) => this.tokenizeInline(src),
         parseChildren: (tokens) => this.parseTokens(tokens),
         parseBlockChildren: (tokens) => this.parseTokens(tokens, true),
         createTextNode: (text, marks) => {
@@ -24547,7 +24636,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         if (node.type === "text") {
           let textContent = this.encodeTextForMarkdown(node.text || "", node, parentNode2);
           const currentMarks = new Map((node.marks || []).map((mark) => [mark.type, mark]));
-          const marksToOpen = findMarksToOpen(activeMarks, currentMarks);
+          const marksToOpen = this.getMarksToOpenForSerialization(activeMarks, currentMarks, nextNode);
           const marksToClose = findMarksToClose(currentMarks, nextNode);
           const activeMarksClosingHere = marksToClose.filter((markType) => activeMarks.has(markType));
           const hasCrossedBoundary = activeMarksClosingHere.length > 0 && marksToOpen.length > 0;
@@ -24560,7 +24649,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
             }
           }
           if (!hasCrossedBoundary) {
-            marksToClose.forEach((markType) => {
+            marksToClose.slice().reverse().forEach((markType) => {
               if (!activeMarks.has(markType)) {
                 return;
               }
@@ -24606,11 +24695,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
                 reopenWithHtmlOnNextOpen.add(type);
               }
             });
+            const activeMarkKeys = Array.from(activeMarks.keys());
+            const activeMarksClosingHereLifo = activeMarksClosingHere.slice().sort((a, b2) => activeMarkKeys.indexOf(b2) - activeMarkKeys.indexOf(a));
             marksToCloseAtEnd = [
               ...marksToOpen.map((m2) => m2.type),
               // inner (opened here) — close first
-              ...activeMarksClosingHere
-              // outer (were active before) — close last
+              ...activeMarksClosingHereLifo
+              // outer (were active before) — close last, LIFO
             ];
           } else {
             marksToCloseAtEnd = findMarksToCloseAtEnd(activeMarks, currentMarks, nextNode, this.markSetsEqual.bind(this));
@@ -24746,6 +24837,43 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
       return Array.from(marks1.keys()).every((type) => marks2.has(type));
     }
+    /**
+     * Decide the order in which marks open on the current text node.
+     *
+     * The returned array is iterated head-first when prepending opening
+     * delimiters, so the first entry becomes the innermost mark in the emitted
+     * markdown and the last becomes the outermost. Two stable signals drive
+     * the order — neither one inspects any rendered markdown:
+     *
+     *   1. Marks that end on this node must be inner relative to marks that
+     *      continue into the next node, otherwise the delimiters interleave
+     *      instead of nesting.
+     *   2. Within each lifetime group, marks are sorted so that lower
+     *      registration ranks (i.e. higher Tiptap extension priorities) end up
+     *      outermost. ProseMirror assigns mark ranks in the same priority-aware
+     *      order Tiptap uses when building the schema, so link (priority 1000)
+     *      naturally wraps bold/italic without the serializer needing to peek
+     *      at how any particular mark renders.
+     */
+    getMarksToOpenForSerialization(activeMarks, currentMarks, nextNode) {
+      const marksToOpen = findMarksToOpen(activeMarks, currentMarks);
+      if (marksToOpen.length <= 1) {
+        return marksToOpen;
+      }
+      const nextMarkTypes = new Set(((nextNode == null ? void 0 : nextNode.marks) || []).map((mark) => mark.type));
+      const byRankInnerFirst = (a, b2) => {
+        var _a, _b;
+        const rankA = (_a = this.extensionRanks.get(a.type)) != null ? _a : Number.MAX_SAFE_INTEGER;
+        const rankB = (_b = this.extensionRanks.get(b2.type)) != null ? _b : Number.MAX_SAFE_INTEGER;
+        if (rankA !== rankB) {
+          return rankB - rankA;
+        }
+        return a.type.localeCompare(b2.type);
+      };
+      const endingHere = marksToOpen.filter((mark) => !nextMarkTypes.has(mark.type)).sort(byRankInnerFirst);
+      const continuing = marksToOpen.filter((mark) => nextMarkTypes.has(mark.type)).sort(byRankInnerFirst);
+      return [...endingHere, ...continuing];
+    }
   };
   var MarkdownManager_default = MarkdownManager;
   var Markdown = Extension.create({
@@ -24805,6 +24933,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       };
     },
     onBeforeCreate() {
+      var _a;
       if (this.editor.markdown) {
         console.error(
           "[tiptap][markdown]: There is already a `markdown` property on the editor instance. This might lead to unexpected behavior."
@@ -24839,7 +24968,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         );
       }
       const json = this.editor.markdown.parse(this.editor.options.content);
-      this.editor.options.content = json;
+      if ((_a = json.content) == null ? void 0 : _a.length) {
+        this.editor.options.content = json;
+      }
     }
   });
 
@@ -27145,6 +27276,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         })
       ];
     },
+    addNodeView() {
+      const isResizable = this.options.resizable && this.editor.isEditable;
+      const View = this.options.View;
+      if (isResizable || !View) {
+        return null;
+      }
+      return ({ node, view }) => new View(node, this.options.cellMinWidth, view);
+    },
     extendNodeSchema(extension) {
       const context = {
         name: extension.name,
@@ -27595,6 +27734,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           found2 = true;
           return false;
         }
+        return true;
       });
       return found2;
     },

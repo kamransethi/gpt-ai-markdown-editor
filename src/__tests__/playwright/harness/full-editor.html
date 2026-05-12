@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Full Editor Test Harness</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #fff; }
+
+    /* Formatting toolbar */
+    #toolbar {
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      padding: 6px 8px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+      z-index: 100;
+    }
+    #toolbar button {
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: #fff;
+    }
+    #toolbar button:hover { background: #e8e8e8; }
+    #toolbar .sep { width: 1px; background: #ccc; margin: 2px 4px; align-self: stretch; }
+    #toolbar .group { display: flex; gap: 2px; }
+
+    /* Bubble menu (floating bar — shown by TipTap BubbleMenuExtension on selection) */
+    #bubble-menu {
+      display: none;
+      position: absolute;
+      z-index: 200;
+      background: #222;
+      border-radius: 4px;
+      padding: 4px;
+      gap: 2px;
+      flex-wrap: wrap;
+    }
+    #bubble-menu button {
+      color: #fff;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      padding: 3px 7px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    #bubble-menu button:hover { background: rgba(255,255,255,0.15); }
+
+    /* Editor container */
+    #editor-wrap {
+      padding: 16px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    #editor {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 12px;
+      min-height: 300px;
+      outline: none;
+    }
+    .ProseMirror { outline: none; min-height: 280px; }
+    .ProseMirror p { margin: 0 0 0.5em; }
+    .ProseMirror table { border-collapse: collapse; width: 100%; }
+    .ProseMirror td, .ProseMirror th {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      min-width: 40px;
+      vertical-align: top;
+    }
+    .ProseMirror code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
+    .ProseMirror pre { background: #f0f0f0; padding: 12px; border-radius: 4px; overflow-x: auto; }
+    .ProseMirror blockquote { border-left: 3px solid #ccc; margin-left: 0; padding-left: 12px; color: #666; }
+    .ProseMirror hr { border: none; border-top: 1px solid #ccc; margin: 1em 0; }
+    .ProseMirror ul, .ProseMirror ol { padding-left: 1.5em; }
+    .ProseMirror ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+    .ProseMirror ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 6px; }
+    .ProseMirror ul[data-type="taskList"] li label { display: flex; align-items: center; }
+    .ProseMirror a { color: #0366d6; text-decoration: underline; }
+    .ProseMirror mark.highlight { background: #ff0; }
+    .ProseMirror .search-result { background: rgba(255, 220, 0, 0.4); }
+    .ProseMirror .search-result-current { background: rgba(255, 140, 0, 0.5); }
+    .ProseMirror .mermaid-diagram { background: #f8f8f8; border: 1px dashed #ccc; padding: 8px; }
+
+    /* Meta bar */
+    #editor-meta {
+      font-size: 11px;
+      color: #888;
+      padding: 4px 24px;
+      border-top: 1px solid #eee;
+    }
+    #status { font-size: 12px; color: #666; padding: 4px 24px; }
+  </style>
+</head>
+<body>
+
+  <!-- Formatting toolbar: all buttons call editorAPI.runCommand() via onclick -->
+  <div id="toolbar">
+    <div class="group">
+      <button data-testid="toolbar-bold" title="Bold (Ctrl+B)"
+        onclick="window.editorAPI.runCommand('toggleBold')"><b>B</b></button>
+      <button data-testid="toolbar-italic" title="Italic (Ctrl+I)"
+        onclick="window.editorAPI.runCommand('toggleItalic')"><i>I</i></button>
+      <button data-testid="toolbar-underline" title="Underline (Ctrl+U)"
+        onclick="window.editorAPI.runCommand('toggleUnderline')">U</button>
+      <button data-testid="toolbar-strike" title="Strikethrough"
+        onclick="window.editorAPI.runCommand('toggleStrike')"><s>S</s></button>
+      <button data-testid="toolbar-code" title="Inline code"
+        onclick="window.editorAPI.runCommand('toggleCode')">&#96;&#96;</button>
+      <button data-testid="toolbar-highlight" title="Highlight"
+        onclick="window.editorAPI.runCommand('toggleHighlight')">H</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button data-testid="toolbar-h1" onclick="window.editorAPI.runCommand('toggleHeading', {level:1})">H1</button>
+      <button data-testid="toolbar-h2" onclick="window.editorAPI.runCommand('toggleHeading', {level:2})">H2</button>
+      <button data-testid="toolbar-h3" onclick="window.editorAPI.runCommand('toggleHeading', {level:3})">H3</button>
+      <button data-testid="toolbar-h4" onclick="window.editorAPI.runCommand('toggleHeading', {level:4})">H4</button>
+      <button data-testid="toolbar-h5" onclick="window.editorAPI.runCommand('toggleHeading', {level:5})">H5</button>
+      <button data-testid="toolbar-h6" onclick="window.editorAPI.runCommand('toggleHeading', {level:6})">H6</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button data-testid="toolbar-blockquote" title="Blockquote"
+        onclick="window.editorAPI.runCommand('toggleBlockquote')">&quot;&quot;</button>
+      <button data-testid="toolbar-hr" title="Horizontal rule"
+        onclick="window.editorAPI.runCommand('setHorizontalRule')">—</button>
+      <button data-testid="toolbar-bullet-list" title="Bullet list"
+        onclick="window.editorAPI.runCommand('toggleBulletList')">&#x2022;</button>
+      <button data-testid="toolbar-ordered-list" title="Ordered list"
+        onclick="window.editorAPI.runCommand('toggleOrderedList')">1.</button>
+      <button data-testid="toolbar-task-list" title="Task list"
+        onclick="window.editorAPI.runCommand('toggleTaskList')">☐</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button data-testid="toolbar-insert-table" title="Insert table"
+        onclick="window.editorAPI.runCommand('insertTable', {rows:3,cols:3,withHeaderRow:true})">⊞</button>
+      <button data-testid="toolbar-add-row-before" title="Add row above"
+        onclick="window.editorAPI.runCommand('addRowBefore')">+↑</button>
+      <button data-testid="toolbar-add-row-after" title="Add row below"
+        onclick="window.editorAPI.runCommand('addRowAfter')">+↓</button>
+      <button data-testid="toolbar-delete-row" title="Remove row"
+        onclick="window.editorAPI.runCommand('deleteRow')">✕↑</button>
+      <button data-testid="toolbar-add-col-before" title="Add column left"
+        onclick="window.editorAPI.runCommand('addColumnBefore')">+←</button>
+      <button data-testid="toolbar-add-col-after" title="Add column right"
+        onclick="window.editorAPI.runCommand('addColumnAfter')">+→</button>
+      <button data-testid="toolbar-delete-col" title="Remove column"
+        onclick="window.editorAPI.runCommand('deleteColumn')">✕←</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button data-testid="toolbar-search" title="Search &amp; Replace"
+        onclick="window.editorAPI.runCommand('openSearchAndReplace')">🔍</button>
+      <button data-testid="toolbar-link" title="Insert link"
+        onclick="window.editorAPI.openLinkDialog?.()">🔗</button>
+      <button data-testid="toolbar-undo" title="Undo"
+        onclick="window.editorAPI.runCommand('undo')">↩</button>
+      <button data-testid="toolbar-redo" title="Redo"
+        onclick="window.editorAPI.runCommand('redo')">↪</button>
+    </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button data-testid="toolbar-ai-refine" title="AI Refine selection">✨ AI Refine</button>
+      <button data-testid="toolbar-ai-explain" title="AI Explain document">💡 AI Explain</button>
+    </div>
+  </div>
+
+  <!-- Bubble menu (floating over selection — controlled by TipTap BubbleMenuExtension) -->
+  <div id="bubble-menu" role="toolbar" aria-label="Formatting">
+    <button data-testid="bubble-bold" title="Bold" onclick="window.editorAPI.runCommand('toggleBold')"><b>B</b></button>
+    <button data-testid="bubble-italic" title="Italic" onclick="window.editorAPI.runCommand('toggleItalic')"><i>I</i></button>
+    <button data-testid="bubble-underline" title="Underline" onclick="window.editorAPI.runCommand('toggleUnderline')">U</button>
+    <button data-testid="bubble-strike" title="Strikethrough" onclick="window.editorAPI.runCommand('toggleStrike')"><s>S</s></button>
+    <button data-testid="bubble-code" title="Inline Code" onclick="window.editorAPI.runCommand('toggleCode')">`</button>
+    <button data-testid="bubble-highlight" title="Highlight" onclick="window.editorAPI.runCommand('toggleHighlight')">H</button>
+    <button data-testid="bubble-link" title="Link" onclick="window.editorAPI.openLinkDialog?.()">🔗</button>
+    <button data-testid="bubble-h1" onclick="window.editorAPI.runCommand('toggleHeading',{level:1})">H1</button>
+    <button data-testid="bubble-h2" onclick="window.editorAPI.runCommand('toggleHeading',{level:2})">H2</button>
+    <button data-testid="bubble-h3" onclick="window.editorAPI.runCommand('toggleHeading',{level:3})">H3</button>
+    <button data-testid="bubble-align-left" onclick="window.editorAPI.runCommand('setTextAlign','left')">⬜L</button>
+    <button data-testid="bubble-align-center" onclick="window.editorAPI.runCommand('setTextAlign','center')">⬜C</button>
+    <button data-testid="bubble-align-right" onclick="window.editorAPI.runCommand('setTextAlign','right')">⬜R</button>
+    <button data-testid="bubble-bullet-list" onclick="window.editorAPI.runCommand('toggleBulletList')">•</button>
+    <button data-testid="bubble-ordered-list" onclick="window.editorAPI.runCommand('toggleOrderedList')">1.</button>
+    <button data-testid="bubble-task-list" onclick="window.editorAPI.runCommand('toggleTaskList')">☐</button>
+    <!-- Table-specific buttons (only relevant when inside a table) -->
+    <button data-testid="bubble-add-row-before" class="table-only" onclick="window.editorAPI.runCommand('addRowBefore')">+↑</button>
+    <button data-testid="bubble-add-row-after" class="table-only" onclick="window.editorAPI.runCommand('addRowAfter')">+↓</button>
+    <button data-testid="bubble-delete-row" class="table-only" onclick="window.editorAPI.runCommand('deleteRow')">✕Row</button>
+    <button data-testid="bubble-add-col-before" class="table-only" onclick="window.editorAPI.runCommand('addColumnBefore')">+←</button>
+    <button data-testid="bubble-add-col-after" class="table-only" onclick="window.editorAPI.runCommand('addColumnAfter')">+→</button>
+    <button data-testid="bubble-delete-col" class="table-only" onclick="window.editorAPI.runCommand('deleteColumn')">✕Col</button>
+    <button data-testid="bubble-ai-refine" title="AI Refine">✨</button>
+  </div>
+
+  <!-- Search overlay is created and managed by the SearchAndReplace extension (Mod-f to open) -->
+
+  <div id="editor-wrap">
+    <div id="editor-meta"></div>
+    <div id="editor"></div>
+  </div>
+
+  <div id="status">Loading editor…</div>
+
+  <!-- No-op vscode bridge — must be set before full-editor.js loads -->
+  <script>
+    window.acquireVsCodeApi = undefined;
+    window.vscode = {
+      postMessage: function(msg) { window.__lastMessage = msg; },
+      getState: function() { return {}; },
+      setState: function() {}
+    };
+    // Make captured messages queryable by tests
+    window.__lastMessage = null;
+    window.__messages = [];
+    window.vscode.postMessage = function(msg) {
+      window.__lastMessage = msg;
+      window.__messages.push(msg);
+    };
+  </script>
+
+  <script src="full-editor.js"></script>
+
+  <script>
+    document.addEventListener('editor-ready', function() {
+      document.getElementById('status').textContent = 'Editor ready';
+    });
+  </script>
+</body>
+</html>

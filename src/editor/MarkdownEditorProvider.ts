@@ -30,6 +30,13 @@ import { DocumentSync } from './handlers/documentSync';
 import { getImageBasePath } from './utils/pathUtils';
 import { openSettingsPanel } from './SettingsPanel';
 import { getGraphCallbacks } from '../features/fluxflow/index';
+import {
+  registerSpellHandlers,
+  createDictionaryWatcher,
+  sendSpellInit,
+  registerSpellWebview,
+  unregisterSpellWebview,
+} from './handlers/spellHandlers';
 
 /**
  * Parse an image filename to extract source prefix
@@ -214,6 +221,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     registerImageHandlers(this.router);
     registerFileHandlers(this.router);
     registerUiHandlers(this.router);
+    registerSpellHandlers(this.router, this.context);
+    // Watch user_dictionary.dic for external edits
+    this.context.subscriptions.push(createDictionaryWatcher(this.context));
   }
 
   /**
@@ -306,6 +316,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     });
 
     // Handle messages from webview
+    // Register webview for SPELL_RELOAD fan-out
+    registerSpellWebview(webviewPanel.webview);
+
     webviewPanel.webview.onDidReceiveMessage(
       e => this.handleWebviewMessage(e, document, webviewPanel.webview),
       null,
@@ -357,6 +370,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Cleanup
     webviewPanel.onDidDispose(() => {
+      unregisterSpellWebview(webviewPanel.webview);
       changeDocumentSubscription.dispose();
       saveDocumentSubscription.dispose();
       configChangeSubscription.dispose();
@@ -465,6 +479,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           type: MessageType.SETTINGS_UPDATE,
           ...settings,
         });
+
+        // Kick off spell check init
+        void sendSpellInit(webview, this.context);
         break;
       }
       case MessageType.OUTLINE_UPDATED: {
@@ -578,6 +595,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const scriptUriWithVersion = `${scriptUri}${scriptUri.includes('?') ? '&' : '?'}v=${cacheBustToken}`;
     const styleUriWithVersion = `${styleUri}${styleUri.includes('?') ? '&' : '?'}v=${cacheBustToken}`;
 
+    const workerUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'spellcheck-worker.js'))
+      .toString();
+
     // Read the current theme from config
     const themeOverride = this.getConfig<string>('themeOverride', 'light');
 
@@ -593,14 +614,17 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         <meta http-equiv="Content-Security-Policy"
               content="default-src 'none';
                        style-src ${webview.cspSource} 'unsafe-inline';
-                 script-src 'nonce-${nonce}' 'wasm-unsafe-eval' 'unsafe-eval';
-                 connect-src ${webview.cspSource} https://cdn.jsdelivr.net;
+                       script-src 'nonce-${nonce}' 'wasm-unsafe-eval' 'unsafe-eval';
+                       worker-src ${webview.cspSource} blob:;
+                       connect-src ${webview.cspSource} https://cdn.jsdelivr.net;
                        font-src ${webview.cspSource};
                        img-src ${webview.cspSource} https: data: blob:;">
         
         <link href="${styleUriWithVersion}" rel="stylesheet">
         
         <script nonce="${nonce}">
+          window.SPELLCHECK_WORKER_URL = '${workerUri}';
+          console.log('[DK-AI] Spell check worker URL set to:', window.SPELLCHECK_WORKER_URL);
           window.gptAiApplyTheme = function(theme) {
             try {
               const body = document.body || document.documentElement;

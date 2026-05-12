@@ -18,9 +18,13 @@ const path = require('path');
 const isWatch = process.argv.includes('--watch');
 
 const buildOptions = {
-  entryPoints: [path.resolve(__dirname, '../src/__tests__/playwright/harness/editor-harness.ts')],
+  entryPoints: [
+    { in: path.resolve(__dirname, '../src/__tests__/playwright/harness/editor-harness.ts'), out: 'editor-harness' },
+    { in: path.resolve(__dirname, '../src/__tests__/playwright/harness/spell-harness.ts'), out: 'spell-harness' },
+    { in: path.resolve(__dirname, '../src/__tests__/playwright/harness/full-editor.ts'), out: 'full-editor' },
+  ],
   bundle: true,
-  outfile: path.resolve(__dirname, '../src/__tests__/playwright/harness/editor-harness.js'),
+  outdir: path.resolve(__dirname, '../src/__tests__/playwright/harness'),
   format: 'iife',
   platform: 'browser',
   sourcemap: true,

@@ -84,7 +84,7 @@ async function run() {
     });
 
     const { host, port } = await context.serve({
-      servedir: path.resolve(__dirname, '../public'),
+      servedir: path.resolve(__dirname, '..'),
       port: PORT,
     });
 

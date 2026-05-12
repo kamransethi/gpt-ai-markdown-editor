@@ -70,6 +70,12 @@ This document lists the third-party open source software components used in Flux
 - **Repository:** https://github.com/markdown-it/markdown-it
 - **License URL:** https://github.com/markdown-it/markdown-it/blob/master/LICENSE
 
+### nspell
+- **License:** MIT
+- **Copyright:** © 2016-2024 Titus Wormer
+- **Repository:** https://github.com/wooorm/nspell
+- **License URL:** https://github.com/wooorm/nspell/blob/main/license
+
 ### mermaid
 - **License:** MIT
 - **Copyright:** © 2024 Mermaid contributors

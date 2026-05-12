@@ -99,7 +99,7 @@ const FIXTURE_PATH = path.join(
 // ---------------------------------------------------------------------------
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/src/__tests__/playwright/harness/');
   await waitForEditor(page);
 });
 

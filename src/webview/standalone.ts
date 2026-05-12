@@ -20,6 +20,8 @@
  * the VS Code bridge automatically.
  */
 
+// Must be imported first — registers window message listener and initialises TipTap
+import './editor';
 import { setBridge, createWebMockAdapter } from './hostBridge';
 import { MessageType } from '../shared/messageTypes';
 
@@ -54,6 +56,20 @@ adapter.requestInitialContent().then(content => {
         showCharacterCount: false,
         defaultZoomLevel: 100,
         themeOverride: 'light',
+      },
+    })
+  );
+
+  // Also send SPELL_INIT to initialize the spell checker.
+  // In VS Code, this is sent by the host in response to a READY message.
+  // In standalone mode, we dispatch it manually after the editor is initialized.
+  window.dispatchEvent(
+    new MessageEvent('message', {
+      data: {
+        type: MessageType.SPELL_INIT,
+        affUrl: '/resources/dictionaries/en-US.aff',
+        dicUrl: '/resources/dictionaries/en-US.dic',
+        userWords: [],
       },
     })
   );

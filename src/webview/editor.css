@@ -3931,29 +3931,6 @@ body[data-theme="dark"] .mermaid-split-wrapper.highlighted {
   opacity: var(--md-disabled-opacity);
 }
 
-/* Custom Drag Handle styling */
-.custom-drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--md-foreground);
-  opacity: 0.3;
-  cursor: grab;
-  border-radius: var(--ui-radius-sm);
-  transition: background-color 0.2s, opacity 0.2s;
-}
-
-.custom-drag-handle:hover {
-  background-color: var(--md-hover-bg);
-  opacity: 0.8;
-}
-
-.custom-drag-handle:active {
-  cursor: grabbing;
-}
-
 /* ── HTML Comment preservation ───────────────────────────────────────── */
 
 .html-comment-node {
@@ -4817,7 +4794,7 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
   background: var(--md-hover-bg);
 }
 /* ============================================
-   Focus Extension � .has-focus block highlight
+   Focus Extension � .has-focus block highlight
    ============================================ */
 .markdown-editor .has-focus {
   border-radius: 4px;
@@ -4858,4 +4835,29 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
 .floating-empty-line-btn:hover {
   background: var(--md-hover-bg);
   color: var(--md-foreground);
+}
+
+/* ============================================
+   Spell Check — wavy underline decoration
+   ============================================ */
+
+/* Inline span injected by the ProseMirror decoration. */
+.spell-error {
+  text-decoration: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='M0 2.5 Q1.5 0 3 2.5 Q4.5 5 6 2.5' stroke='%23e55353' stroke-width='0.9' fill='none'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 6px 3px;
+  cursor: default;
+  /* Don't add padding — keeps flow unchanged */
+}
+
+/* Don't underline when cursor is inside the misspelled word */
+.ProseMirror .spell-error:has(.ProseMirror-cursor) {
+  background-image: none;
+}
+
+/* Dark theme — slightly brighter red */
+body[data-theme="dark"] .spell-error {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='M0 2.5 Q1.5 0 3 2.5 Q4.5 5 6 2.5' stroke='%23f07070' stroke-width='0.9' fill='none'/%3E%3C/svg%3E");
 }

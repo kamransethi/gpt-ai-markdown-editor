@@ -62,7 +62,8 @@ const buildOptions = {
   entryPoints: [
     { in: 'src/webview/editor.ts', out: 'webview' },
     { in: 'src/webview/settings/settingsPanel.ts', out: 'settings' },
-    { in: 'src/webview/chat/chatWebview.ts', out: 'chat' }
+    { in: 'src/webview/chat/chatWebview.ts', out: 'chat' },
+    { in: 'src/webview/spellchecker.worker.ts', out: 'spellcheck-worker' },
   ],
   bundle: true,
   outdir: 'dist',
