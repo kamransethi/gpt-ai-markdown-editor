@@ -1662,7 +1662,14 @@ window.addEventListener('openExtensionSettings', () => {
   vscode.postMessage({ type: 'openExtensionSettings' });
 });
 
-// Zoom: applies zoom level from markdownForHumans.zoom setting (percentage, 100 = default)
+/**
+ * Applies the editor zoom level by scaling the base font size.
+ * Sets the `--md-base-size-override` CSS custom property on the document root,
+ * which takes priority over the default VS Code editor font size.
+ * At 100% the override is removed so the default size applies.
+ *
+ * @param percent - Zoom level as a percentage (50–200). 100 = default size.
+ */
 function applyZoomLevel(percent: number) {
   if (percent === 100) {
     document.documentElement.style.removeProperty('--md-base-size-override');
