@@ -403,7 +403,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         e.affectsConfiguration('markdownForHumans.imageResize.skipWarning') ||
         e.affectsConfiguration('markdownForHumans.imagePath') ||
         e.affectsConfiguration('markdownForHumans.imagePathBase') ||
-        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled')
+        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled') ||
+        e.affectsConfiguration('markdownForHumans.paragraph.spacingBefore') ||
+        e.affectsConfiguration('markdownForHumans.paragraph.spacingAfter') ||
+        e.affectsConfiguration('markdownForHumans.zoom')
       ) {
         const config = vscode.workspace.getConfiguration();
         const skipWarning = config.get<boolean>('markdownForHumans.imageResize.skipWarning', false);
@@ -416,12 +419,24 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePreview.hover.enabled',
           true
         );
+        const paragraphSpacingBefore = config.get<number>(
+          'markdownForHumans.paragraph.spacingBefore',
+          0
+        );
+        const paragraphSpacingAfter = config.get<number>(
+          'markdownForHumans.paragraph.spacingAfter',
+          0
+        );
+        const zoom = config.get<number>('markdownForHumans.zoom', 100);
         webviewPanel.webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
           showImageHoverOverlay: showImageHoverOverlay,
+          paragraphSpacingBefore: paragraphSpacingBefore,
+          paragraphSpacingAfter: paragraphSpacingAfter,
+          zoom: zoom,
         });
       }
     });
@@ -487,6 +502,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       'markdownForHumans.imagePreview.hover.enabled',
       true
     );
+    const paragraphSpacingBefore = config.get<number>(
+      'markdownForHumans.paragraph.spacingBefore',
+      0
+    );
+    const paragraphSpacingAfter = config.get<number>('markdownForHumans.paragraph.spacingAfter', 0);
+    const zoom = config.get<number>('markdownForHumans.zoom', 100);
 
     webview.postMessage({
       type: 'update',
@@ -495,6 +516,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       imagePath: imagePath,
       imagePathBase: imagePathBase,
       showImageHoverOverlay: showImageHoverOverlay,
+      paragraphSpacingBefore: paragraphSpacingBefore,
+      paragraphSpacingAfter: paragraphSpacingAfter,
+      zoom: zoom,
     });
   }
 
@@ -530,12 +554,24 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePreview.hover.enabled',
           true
         );
+        const paragraphSpacingBefore = config.get<number>(
+          'markdownForHumans.paragraph.spacingBefore',
+          0
+        );
+        const paragraphSpacingAfter = config.get<number>(
+          'markdownForHumans.paragraph.spacingAfter',
+          0
+        );
+        const zoom = config.get<number>('markdownForHumans.zoom', 100);
         webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
           showImageHoverOverlay: showImageHoverOverlay,
+          paragraphSpacingBefore: paragraphSpacingBefore,
+          paragraphSpacingAfter: paragraphSpacingAfter,
+          zoom: zoom,
         });
         break;
       }

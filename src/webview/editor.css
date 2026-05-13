@@ -26,8 +26,8 @@
     --md-focus: var(--vscode-focusBorder);
     --md-selection: var(--vscode-editor-selectionBackground);
   
-    /* Typography and layout */
-    --md-base-size: var(--vscode-editor-font-size, 14px);
+    /* Typography and layout — zoom override takes priority if set by JS */
+    --md-base-size: var(--md-base-size-override, var(--vscode-editor-font-size, 14px));
   
     line-height: 1.58;
     letter-spacing: -0.003em;
@@ -108,6 +108,8 @@
   
   .markdown-editor p {
     margin: 0;
+    margin-top: var(--md-paragraph-spacing-before, 0pt);
+    margin-bottom: var(--md-paragraph-spacing-after, 0pt);
     line-height: 1.58;
     font-size: var(--md-base-size);
   }
@@ -124,7 +126,7 @@
 
   /* Consistent spacing after headings */
   .markdown-editor :is(h1, h2, h3, h4, h5, h6) + p {
-    margin-top: 0.5em;
+    margin-top: var(--md-paragraph-spacing-before, 0.5em);
   }
   
   /* ============================================

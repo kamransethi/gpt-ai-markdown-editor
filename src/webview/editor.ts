@@ -968,6 +968,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).imagePathBase = message.imagePathBase;
         }
+        applyEditorSettings(message);
         // Initialize editor with first payload to seed undo history correctly
         if (!editor) {
           if (isDomReady) {
@@ -999,6 +1000,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).showImageHoverOverlay = message.showImageHoverOverlay;
         }
+        applyEditorSettings(message);
         break;
       case 'imageResized': {
         // Handle image resize completion
@@ -1627,6 +1629,52 @@ window.addEventListener('openSourceView', () => {
 window.addEventListener('openExtensionSettings', () => {
   vscode.postMessage({ type: 'openExtensionSettings' });
 });
+
+/**
+ * Applies paragraph spacing and zoom settings from an incoming message.
+ * Called from both the `update` and `settingsUpdate` handlers.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyEditorSettings(message: Record<string, any>) {
+  if (typeof message.paragraphSpacingBefore === 'number') {
+    document.documentElement.style.setProperty(
+      '--md-paragraph-spacing-before',
+      `${message.paragraphSpacingBefore}pt`
+    );
+  }
+  if (typeof message.paragraphSpacingAfter === 'number') {
+    document.documentElement.style.setProperty(
+      '--md-paragraph-spacing-after',
+      `${message.paragraphSpacingAfter}pt`
+    );
+  }
+  if (typeof message.zoom === 'number') {
+    applyZoomLevel(message.zoom);
+  }
+}
+
+/**
+ * Applies the editor zoom level by scaling the base font size.
+ * Sets the `--md-base-size-override` CSS custom property on the document root,
+ * which takes priority over the default VS Code editor font size.
+ * At 100% the override is removed so the default size applies.
+ *
+ * @param percent - Zoom level as a percentage (50–200). 100 = default size.
+ */
+function applyZoomLevel(percent: number) {
+  if (percent === 100) {
+    document.documentElement.style.removeProperty('--md-base-size-override');
+  } else {
+    const rawSize = getComputedStyle(document.documentElement)
+      .getPropertyValue('--vscode-editor-font-size')
+      .trim();
+    const basePx = parseFloat(rawSize) || 14;
+    document.documentElement.style.setProperty(
+      '--md-base-size-override',
+      `${basePx * (percent / 100)}px`
+    );
+  }
+}
 
 // Handle export document from toolbar button
 window.addEventListener('exportDocument', async (event: Event) => {
