@@ -11,6 +11,8 @@ tsconfig.tsbuildinfo
 # Test outputs
 .vscode-test/
 coverage/
+test-results/
+playwright-report/
 
 # Environment
 .env
