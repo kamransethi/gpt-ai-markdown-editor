@@ -4,6 +4,7 @@
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
 
+import { renderNestedMarkdownContent } from '@tiptap/core';
 import { TaskItem } from '@tiptap/extension-list';
 
 /**
@@ -47,6 +48,7 @@ export const TaskItemClipboardFix = TaskItem.extend({
 
   renderMarkdown(node, h) {
     const checked = node.attrs?.checked;
-    return `- [${checked ? 'x' : ' '}] ${h.renderChildren(node)}`;
+    const prefix = `- [${checked ? 'x' : ' '}] `;
+    return renderNestedMarkdownContent(node, h, prefix);
   },
 });

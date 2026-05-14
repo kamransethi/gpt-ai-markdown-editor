@@ -23,12 +23,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  getContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, getContent } from './helpers/index';
 
 // ---------------------------------------------------------------------------
 // Construct-type classifier
@@ -111,8 +106,12 @@ function classifyLines(lines: string[]): ConstructType[] {
       labels.push('[BLOCKQUOTE]');
     } else if (/^- \[[ x]\]/.test(trimmed) || /^\s+- \[[ x]\]/.test(trimmed)) {
       labels.push('[TASK-LIST]');
-    } else if (/^[-*+] /.test(trimmed) || /^\d+[.)]\s/.test(trimmed) ||
-               /^\s+[-*+] /.test(trimmed) || /^\s+\d+[.)]\s/.test(trimmed)) {
+    } else if (
+      /^[-*+] /.test(trimmed) ||
+      /^\d+[.)]\s/.test(trimmed) ||
+      /^\s+[-*+] /.test(trimmed) ||
+      /^\s+\d+[.)]\s/.test(trimmed)
+    ) {
       labels.push('[LIST]');
     } else if (trimmed.includes('![') || trimmed.includes('<img')) {
       labels.push('[IMAGE]');
@@ -134,14 +133,14 @@ function classifyLines(lines: string[]): ConstructType[] {
 
 interface DiffMissing {
   type: 'missing';
-  origLine: number;   // 1-based
+  origLine: number; // 1-based
   content: string;
   label: ConstructType;
 }
 
 interface DiffAdded {
   type: 'added';
-  outLine: number;    // 1-based
+  outLine: number; // 1-based
   content: string;
   label: ConstructType;
 }
@@ -176,10 +175,7 @@ interface TaggedDiffEntry extends DiffEntry {
   stage: PipelineStage;
 }
 
-function tagDiffsWithStage(
-  diffs1: DiffEntry[],
-  diffs2: DiffEntry[],
-): TaggedDiffEntry[] {
+function tagDiffsWithStage(diffs1: DiffEntry[], diffs2: DiffEntry[]): TaggedDiffEntry[] {
   // Line numbers (1-based) in output1 that change in pass 2 — serialize-unstable.
   const unstableOutput1Lines = new Set<number>();
   for (const d of diffs2) {
@@ -223,10 +219,7 @@ function computeDiff(original: string, output: string): DiffEntry[] {
       if (origLines[i] === outLines[j]) {
         dp[i * stride + j] = dp[(i + 1) * stride + (j + 1)] + 1;
       } else {
-        dp[i * stride + j] = Math.max(
-          dp[(i + 1) * stride + j],
-          dp[i * stride + (j + 1)]
-        );
+        dp[i * stride + j] = Math.max(dp[(i + 1) * stride + j], dp[i * stride + (j + 1)]);
       }
     }
   }
@@ -241,14 +234,10 @@ function computeDiff(original: string, output: string): DiffEntry[] {
       // Lines match — no diff
       i++;
       j++;
-    } else if (
-      j < n &&
-      (i >= m || dp[(i + 1) * stride + j] >= dp[i * stride + (j + 1)])
-    ) {
+    } else if (j < n && (i >= m || dp[(i + 1) * stride + j] >= dp[i * stride + (j + 1)])) {
       // Line added in output (not in original)
       // Use origLabels for context if within range, else BODY-TEXT
-      const contextLabel: ConstructType =
-        i < m ? origLabels[i] : '[BODY-TEXT]';
+      const contextLabel: ConstructType = i < m ? origLabels[i] : '[BODY-TEXT]';
       diffs.push({
         type: 'added',
         outLine: j + 1,
@@ -276,21 +265,21 @@ function computeDiff(original: string, output: string): DiffEntry[] {
 // ---------------------------------------------------------------------------
 
 const FIX_HINTS: Partial<Record<ConstructType, string>> = {
-  '[FRONTMATTER]':     'check frontmatter extraction in MarkdownEditorProvider.ts',
-  '[HTML-BLOCK]':      'check htmlPreservation.ts / GenericHTMLBlock parseHTML()',
-  '[CSS-DIRECTIVE]':   'check htmlComment.ts / HtmlCommentBlock parseHTML()',
-  '[CODE-BLOCK]':      'check CodeBlock / IndentedImageCodeBlock extension',
-  '[TABLE]':           'check renderTableToMarkdownWithBreaks / Table extension',
-  '[BLOCKQUOTE]':      'check StarterKit blockquote / GitHubAlerts parseHTML()',
-  '[LIST]':            'check ListKit / OrderedListMarkdownFix extension',
-  '[TASK-LIST]':       'check TaskItemClipboardFix / TaskList extension',
-  '[HEADING]':         'check StarterKit heading serialization',
-  '[IMAGE]':           'check CustomImage / SpaceFriendlyImagePaths extension',
+  '[FRONTMATTER]': 'check frontmatter extraction in MarkdownEditorProvider.ts',
+  '[HTML-BLOCK]': 'check htmlPreservation.ts / GenericHTMLBlock parseHTML()',
+  '[CSS-DIRECTIVE]': 'check htmlComment.ts / HtmlCommentBlock parseHTML()',
+  '[CODE-BLOCK]': 'check CodeBlock / IndentedImageCodeBlock extension',
+  '[TABLE]': 'check renderTableToMarkdownWithBreaks / Table extension',
+  '[BLOCKQUOTE]': 'check StarterKit blockquote / GitHubAlerts parseHTML()',
+  '[LIST]': 'check ListKit / OrderedListMarkdownFix extension',
+  '[TASK-LIST]': 'check TaskItemClipboardFix / TaskList extension',
+  '[HEADING]': 'check StarterKit heading serialization',
+  '[IMAGE]': 'check CustomImage / SpaceFriendlyImagePaths extension',
   '[SLIDE-SEPARATOR]': 'check MARP slide separator handling in editor',
-  '[THEMATIC-BREAK]':  'check thematic break serialization in StarterKit',
-  '[LINK-REF]':        'check link reference definitions (may not be supported)',
-  '[FOOTNOTE]':        'check footnote extension (may not be supported)',
-  '[BODY-TEXT]':       'check paragraph / inline mark serialization',
+  '[THEMATIC-BREAK]': 'check thematic break serialization in StarterKit',
+  '[LINK-REF]': 'check link reference definitions (may not be supported)',
+  '[FOOTNOTE]': 'check footnote extension (may not be supported)',
+  '[BODY-TEXT]': 'check paragraph / inline mark serialization',
 };
 
 function formatReport(
@@ -299,7 +288,7 @@ function formatReport(
   origLineCount: number,
   out1LineCount: number,
   out2LineCount: number,
-  serializeStable: boolean,
+  serializeStable: boolean
 ): string {
   const SEP = '══════════════════════════════════════════════════════════════';
   const lines: string[] = [''];
@@ -307,17 +296,21 @@ function formatReport(
   // ── Header ────────────────────────────────────────────────────────────────
   lines.push(SEP);
   lines.push(`  ROUND-TRIP FAILURES: ${filename}  (${tagged.length} total)`);
-  lines.push(`  Original: ${origLineCount} lines  →  Pass1: ${out1LineCount} lines  →  Pass2: ${out2LineCount} lines`);
-  lines.push(`  Serializer idempotent: ${serializeStable ? 'YES — all issues are LOAD bugs' : 'NO — mix of LOAD and SERIALIZE bugs'}`);
+  lines.push(
+    `  Original: ${origLineCount} lines  →  Pass1: ${out1LineCount} lines  →  Pass2: ${out2LineCount} lines`
+  );
+  lines.push(
+    `  Serializer idempotent: ${serializeStable ? 'YES — all issues are LOAD bugs' : 'NO — mix of LOAD and SERIALIZE bugs'}`
+  );
   lines.push(SEP);
   lines.push('');
 
   // ── Summary table ──────────────────────────────────────────────────────────
   const loadCounts: Record<string, number> = {};
-  const serCounts:  Record<string, number> = {};
+  const serCounts: Record<string, number> = {};
   for (const d of tagged) {
     if (d.stage === 'LOAD') loadCounts[d.label] = (loadCounts[d.label] ?? 0) + 1;
-    else                    serCounts[d.label]  = (serCounts[d.label]  ?? 0) + 1;
+    else serCounts[d.label] = (serCounts[d.label] ?? 0) + 1;
   }
   const allLabels = [...new Set(tagged.map(d => d.label))].sort();
 
@@ -327,7 +320,7 @@ function formatReport(
   lines.push('  ├──────────────────────────┼───────┼───────────┤');
   for (const lbl of allLabels) {
     const l = String(loadCounts[lbl] ?? 0).padStart(5);
-    const s = String(serCounts[lbl]  ?? 0).padStart(9);
+    const s = String(serCounts[lbl] ?? 0).padStart(9);
     lines.push(`  │ ${lbl.padEnd(24)} │ ${l} │ ${s} │`);
   }
   lines.push('  └──────────────────────────┴───────┴───────────┘');
@@ -336,13 +329,15 @@ function formatReport(
   // ── Where to look ──────────────────────────────────────────────────────────
   const worstFirst = allLabels
     .map(lbl => ({ lbl, load: loadCounts[lbl] ?? 0, ser: serCounts[lbl] ?? 0 }))
-    .sort((a, b) => (b.load + b.ser) - (a.load + a.ser));
+    .sort((a, b) => b.load + b.ser - (a.load + a.ser));
 
   lines.push('  WHERE TO LOOK:');
   for (const { lbl, load, ser } of worstFirst) {
     const hint = FIX_HINTS[lbl as ConstructType] ?? '';
-    if (load > 0) lines.push(`    → ${String(load).padStart(3)} LOAD      ${lbl.padEnd(22)}  ${hint}`);
-    if (ser  > 0) lines.push(`    → ${String(ser).padStart(3)} SERIALIZE ${lbl.padEnd(22)}  ${hint}`);
+    if (load > 0)
+      lines.push(`    → ${String(load).padStart(3)} LOAD      ${lbl.padEnd(22)}  ${hint}`);
+    if (ser > 0)
+      lines.push(`    → ${String(ser).padStart(3)} SERIALIZE ${lbl.padEnd(22)}  ${hint}`);
   }
   lines.push('');
   lines.push(SEP);
@@ -350,12 +345,16 @@ function formatReport(
 
   // ── Per-entry detail ───────────────────────────────────────────────────────
   tagged.forEach((d, idx) => {
-    const n   = String(idx + 1).padStart(3);
+    const n = String(idx + 1).padStart(3);
     const stg = `[${d.stage}]`.padEnd(11);
     if (d.type === 'missing') {
-      lines.push(`[${n}] MISSING  ${stg} orig:${String(d.origLine).padEnd(4)} ${d.label.padEnd(20)} ${JSON.stringify(d.content)}`);
+      lines.push(
+        `[${n}] MISSING  ${stg} orig:${String(d.origLine).padEnd(4)} ${d.label.padEnd(20)} ${JSON.stringify(d.content)}`
+      );
     } else if (d.type === 'added') {
-      lines.push(`[${n}] ADDED    ${stg} out:${String(d.outLine).padEnd(5)} ${d.label.padEnd(20)} ${JSON.stringify(d.content)}`);
+      lines.push(
+        `[${n}] ADDED    ${stg} out:${String(d.outLine).padEnd(5)} ${d.label.padEnd(20)} ${JSON.stringify(d.content)}`
+      );
     } else {
       lines.push(`[${n}] CHANGED  ${stg} orig:${String(d.origLine).padEnd(4)} ${d.label}`);
       lines.push(`       ORIGINAL: ${JSON.stringify(d.origContent)}`);
@@ -375,7 +374,8 @@ function formatReport(
 // ---------------------------------------------------------------------------
 
 const ROUNDTRIP_FIXTURE_DIR = path.join(__dirname, '../fixtures/roundtrip');
-const fixtureFiles = fs.readdirSync(ROUNDTRIP_FIXTURE_DIR)
+const fixtureFiles = fs
+  .readdirSync(ROUNDTRIP_FIXTURE_DIR)
   .filter(f => f.endsWith('.md'))
   .sort();
 
@@ -430,7 +430,7 @@ test.describe('Round-Trip Fidelity', () => {
         normalised.split('\n').length,
         output1.split('\n').length,
         output2.split('\n').length,
-        serializeStable,
+        serializeStable
       );
 
       // Fail with structured report so an AI coding agent can identify root causes

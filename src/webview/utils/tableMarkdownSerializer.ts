@@ -54,11 +54,11 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers, depth = 
       const marker = BULLET_MARKERS[depth % BULLET_MARKERS.length];
       const indent = '  '.repeat(depth);
       const lines: string[] = [];
-      for (const item of (node.content || [])) {
+      for (const item of node.content || []) {
         // item is a listItem — separate its paragraph text from nested lists
         let mainText = '';
         const nested: string[] = [];
-        for (const child of (item.content || [])) {
+        for (const child of item.content || []) {
           if (child.type === 'bulletList' || child.type === 'orderedList') {
             nested.push(renderBlockNode(child, h, depth + 1));
           } else {
@@ -76,10 +76,10 @@ function renderBlockNode(node: JSONContent, h: MarkdownRendererHelpers, depth = 
       const indent = '  '.repeat(depth);
       let index = node.attrs?.start || 1;
       const lines: string[] = [];
-      for (const item of (node.content || [])) {
+      for (const item of node.content || []) {
         let mainText = '';
         const nested: string[] = [];
-        for (const child of (item.content || [])) {
+        for (const child of item.content || []) {
           if (child.type === 'bulletList' || child.type === 'orderedList') {
             nested.push(renderBlockNode(child, h, depth + 1));
           } else {
@@ -152,15 +152,16 @@ export function renderTableToMarkdownWithBreaks(
     return '';
   }
 
-  const rows: { text: string; isHeader: boolean }[][] = [];
+  const rows: { text: string; isHeader: boolean; align: string | null }[][] = [];
 
   node.content.forEach(rowNode => {
-    const cells: { text: string; isHeader: boolean }[] = [];
+    const cells: { text: string; isHeader: boolean; align: string | null }[] = [];
     if (rowNode.content) {
       rowNode.content.forEach(cellNode => {
         const text = renderCellContent(cellNode, h);
         const isHeader = cellNode.type === 'tableHeader';
-        cells.push({ text, isHeader });
+        const align = (cellNode.attrs?.align as string | null | undefined) ?? null;
+        cells.push({ text, isHeader, align });
       });
     }
     rows.push(cells);
@@ -190,14 +191,31 @@ export function renderTableToMarkdownWithBreaks(
   const headerRow = rows[0];
   const hasHeader = headerRow.some(c => c.isHeader);
 
-  let out = '\n';
+  // Collect per-column alignment from the first row that has it (prefer header)
+  const colAlignments: Array<string | null> = new Array(columnCount).fill(null);
+  rows.forEach(r => {
+    r.forEach((c, i) => {
+      if (!colAlignments[i] && c.align) colAlignments[i] = c.align;
+    });
+  });
+
+  let out = '';
 
   const headerTexts = new Array(columnCount)
     .fill(0)
     .map((_, i) => (hasHeader ? (headerRow[i] && headerRow[i].text) || '' : ''));
 
   out += `| ${headerTexts.map((t, i) => pad(t, colWidths[i])).join(' | ')} |\n`;
-  out += `| ${colWidths.map(w => '-'.repeat(Math.max(3, w))).join(' | ')} |\n`;
+  out += `| ${colWidths
+    .map((w, i) => {
+      const align = colAlignments[i];
+      const dashes = '-'.repeat(Math.max(3, w));
+      if (align === 'center') return `:${dashes}:`;
+      if (align === 'right') return `${dashes}:`;
+      if (align === 'left') return `:${dashes}`;
+      return dashes;
+    })
+    .join(' | ')} |\n`;
 
   const body = hasHeader ? rows.slice(1) : rows;
   body.forEach(r => {
@@ -207,5 +225,5 @@ export function renderTableToMarkdownWithBreaks(
       .join(' | ')} |\n`;
   });
 
-  return out;
+  return out.trimEnd();
 }

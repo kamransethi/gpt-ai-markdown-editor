@@ -1,4 +1,4 @@
-﻿---
+---
 marp: true
 theme: gaia
 class: invert
@@ -158,7 +158,7 @@ Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedLis
 ## 4. Blockquotes
 
 > "The only way to do great work is to love what you do."— Steve Jobs
-> > This is a nested blockquote.  
+> > This is a nested blockquote.
 > > It can go deeper if needed.
 
 ---
@@ -169,7 +169,6 @@ Note: Parenthesis style `1)` is normalized to `1.` by TipTap, proving OrderedLis
 
 This table contains cells with bullet points separated by `<br>-` elements as requested.
 
-
 | Feature Type   | Description / Details    | Status |
 | -------------- | ------------------------ | ------ |
 | **Formatting** | - Bold<br>- Italic<br>- <mark>Highlight</mark> | ✅      |
@@ -177,14 +176,12 @@ This table contains cells with bullet points separated by `<br>-` elements as re
 | **Media**      | - Images<br>- Videos<br>- Audio files            | 🎬     |
 | **Advanced**   | - Mermaid Charts<br>- LaTeX Formulas<br>- Footnotes         | 🚀     |
 
-
 | Feature Type | Description / Details                                | Status |
 | ------------ | ---------------------------------------------------- | ------ |
 | Formatting   | - Bold- Italic- Highlight                            | ✅      |
 | Logic        | - Logical operators- Bitwise shifts- Boolean algebra | 🌀     |
 | Media        | - Images- Videos- Audio files                        | 🎬     |
 | Advanced     | - Mermaid Charts- LaTeX Formulas- Footnotes          | 🚀     |
-
 
 ---
 
@@ -204,7 +201,7 @@ Below are the generated images for aesthetic testing.
 
 <img src="./multiple_layers_of_silhouette__mountains___with_silhouette_of__big_rocket_in_sky___sharp_edges__at_sunset__with_heavy_fog_in_air__vector_style__horizon_silhouette_landscape_wallpaper_by_2300941809.png" alt="Abstract Pattern" width="463" height="463" />
 
-*Figure 2: A minimalist study in color and shape.* 
+*Figure 2: A minimalist study in color and shape.*
 
 *Another Image*
 
@@ -257,7 +254,7 @@ gantt
 
 ## 9. Mathematical Expressions
 
-When $a \ne 0$, there are two solutions to ax^2 + bx + c = 0 and they are  
+When $a \ne 0$, there are two solutions to ax^2 + bx + c = 0 and they are
 $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 
 ---
@@ -300,12 +297,10 @@ Inside this collapsible section, we can have more content:
 
 ---
 
-
 | Feature Type | Description / Details | Status |
 | ------------ | --------------------- | ------ |
 | Formatting   | - Test Highlight      | qwewq  |
 | Logic        | - Logical operators   |        |
-
 
 | Heading                   | Second | Third |
 | ------------------------- | ------ | ----- |

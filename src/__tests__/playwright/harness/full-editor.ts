@@ -108,6 +108,32 @@ const bubbleMenuEl = document.getElementById('bubble-menu')!;
 // User-words list managed by spellAPI for addToDictionary / removeFromDictionary
 const userDictionary: string[] = [];
 
+// Frontmatter stored separately so TipTap never sees raw YAML (mirrors editor.ts behaviour)
+let harnessStoredFrontmatter: string | null = null;
+/** The exact newline sequence that followed the closing --- in the original document. */
+let harnessStoredFmTrail: string = '\n';
+
+/**
+ * Strip YAML frontmatter from markdown and return the body + the extracted YAML.
+ * Also captures the trailing newlines after the closing --- so they can be
+ * restored exactly by getMarkdown(), preventing line-shift diffs.
+ * Mirrors extractAndStoreFrontmatter() in editor.ts.
+ */
+function harnessSplitFrontmatter(md: string): { body: string; frontmatter: string | null } {
+  if (!md.startsWith('---')) return { body: md, frontmatter: null };
+  // Capture the YAML between the delimiters AND all trailing newlines after closing ---
+  const match = md.match(/^---\r?\n([\s\S]*?)\r?\n---((?:\r?\n)+)/);
+  if (match) {
+    harnessStoredFmTrail = match[2];
+    return { body: md.substring(match[0].length), frontmatter: match[1] };
+  }
+  // Fallback: closing --- at very end of file with single newline
+  const minimal = md.match(/^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/);
+  if (!minimal) return { body: md, frontmatter: null };
+  harnessStoredFmTrail = minimal[2] || '\n';
+  return { body: md.substring(minimal[0].length), frontmatter: minimal[1] };
+}
+
 const editor = new Editor({
   element: mountEl,
   extensions: [
@@ -119,8 +145,12 @@ const editor = new Editor({
 
     Highlight.extend({
       markdownTokenizer: undefined,
-      addInputRules() { return []; },
-      addPasteRules() { return []; },
+      addInputRules() {
+        return [];
+      },
+      addPasteRules() {
+        return [];
+      },
       renderMarkdown(node: any, h: any) {
         return `<mark>${h.renderChildren(node)}</mark>`;
       },
@@ -179,7 +209,57 @@ const editor = new Editor({
 
     // ── Lists ──
     BulletList.extend({
-      addInputRules() { return []; },
+      addInputRules() {
+        return [];
+      },
+      // Override parseMarkdown to fix pure task list parsing.
+      // @tiptap/markdown's parseListToken only handles MIXED lists (some task,
+      // some non-task). For PURE task lists (!hasNonTask), it falls back to the
+      // BulletList handler which creates listItem nodes (losing checkboxes).
+      // This override detects pure task lists and creates taskList+taskItem nodes.
+      parseMarkdown(token: any, helpers: any) {
+        if (token.type !== 'list' || token.ordered) return [];
+        const items: any[] = token.items || [];
+        const allTask = items.length > 0 && items.every((item: any) => item.task === true);
+        if (allTask) {
+          const taskItemNodes = items.map((item: any) => {
+            const tokens: any[] = item.tokens || [];
+            const textToken = tokens.find((t: any) => t.type === 'text');
+            const nestedTokens = tokens.filter(
+              (t: any) => t.type !== 'checkbox' && t.type !== 'text'
+            );
+            // Tight list: inline content from text token's sub-tokens
+            const hasParagraph = tokens.some((t: any) => t.type === 'paragraph');
+            let paragraphContent: any[];
+            if (hasParagraph) {
+              paragraphContent = helpers.parseChildren(
+                tokens.filter((t: any) => t.type !== 'checkbox')
+              );
+            } else {
+              const inlineTokens = textToken?.tokens || [];
+              const inlineContent =
+                inlineTokens.length > 0
+                  ? helpers.parseInline(inlineTokens)
+                  : textToken?.text
+                    ? [{ type: 'text', text: textToken.text }]
+                    : [];
+              paragraphContent = [{ type: 'paragraph', content: inlineContent }];
+            }
+            const nestedContent =
+              nestedTokens.length > 0 ? helpers.parseChildren(nestedTokens) : [];
+            return {
+              type: 'taskItem',
+              attrs: { checked: item.checked === true },
+              content: [...paragraphContent, ...nestedContent],
+            };
+          });
+          return { type: 'taskList', content: taskItemNodes };
+        }
+        return {
+          type: 'bulletList',
+          content: items.length > 0 ? helpers.parseChildren(items) : [],
+        };
+      },
     }),
     ListKit.configure({
       bulletList: false,
@@ -201,7 +281,9 @@ const editor = new Editor({
       HTMLAttributes: { class: 'markdown-link' },
       shouldAutoLink,
     }).extend({
-      inclusive() { return false; },
+      inclusive() {
+        return false;
+      },
     }),
 
     // ── Images ──
@@ -276,11 +358,18 @@ interface EditorAPI {
   },
 
   setMarkdown(md: string): void {
-    editor.commands.setContent(md, { contentType: 'markdown' } as any);
+    const { body, frontmatter } = harnessSplitFrontmatter(md);
+    harnessStoredFrontmatter = frontmatter;
+    editor.commands.setContent(body, { contentType: 'markdown' } as any);
   },
 
   getMarkdown(): string {
-    return getEditorMarkdownForSync(editor);
+    const body = getEditorMarkdownForSync(editor);
+    if (!harnessStoredFrontmatter) return body;
+    // Trim any leading newlines that the serializer may produce before the first block
+    const trimmedBody = body.replace(/^\n+/, '');
+    // Restore frontmatter with the exact trailing newline(s) from the original document
+    return `---\n${harnessStoredFrontmatter}\n---${harnessStoredFmTrail}${trimmedBody}`;
   },
 
   runCommand(name: string, ...args: unknown[]): boolean {
@@ -354,14 +443,21 @@ interface EditorAPI {
 
   indentBulletLine(): boolean {
     const event = new KeyboardEvent('keydown', {
-      key: 'Tab', code: 'Tab', bubbles: true, cancelable: true,
+      key: 'Tab',
+      code: 'Tab',
+      bubbles: true,
+      cancelable: true,
     });
     return editor.view.dom.dispatchEvent(event);
   },
 
   dedentBulletLine(): boolean {
     const event = new KeyboardEvent('keydown', {
-      key: 'Tab', code: 'Tab', shiftKey: true, bubbles: true, cancelable: true,
+      key: 'Tab',
+      code: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
     });
     return editor.view.dom.dispatchEvent(event);
   },
@@ -409,10 +505,8 @@ interface SpellAPI {
   getSuggestions(word: string): string[] {
     const state = spellCheckKey.getState(editor.state);
     if (!state) return [];
-    const dec = state.decorations
-      .find()
-      .find((d: any) => (d.spec as any).word === word);
-    return dec ? ((dec as any).spec as any).suggestions ?? [] : [];
+    const dec = state.decorations.find().find((d: any) => (d.spec as any).word === word);
+    return dec ? (((dec as any).spec as any).suggestions ?? []) : [];
   },
 
   addToDictionary(word: string): void {
