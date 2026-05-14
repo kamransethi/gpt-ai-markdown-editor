@@ -54,9 +54,10 @@ export async function collectExportContent(editor: Editor): Promise<ExportConten
     if (pos === undefined) continue;
 
     const domNode = editor.view.nodeDOM(pos);
-    const renderBlock = (domNode instanceof HTMLElement)
-      ? domNode.querySelector('.mermaid-render-block') as HTMLElement | null
-      : null;
+    const renderBlock =
+      domNode instanceof HTMLElement
+        ? (domNode.querySelector('.mermaid-render-block') as HTMLElement | null)
+        : null;
 
     if (!renderBlock) continue;
 

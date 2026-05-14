@@ -70,7 +70,11 @@ export const CodeBlockWithUi = CodeBlockLowlight.extend({
     if (token.type !== 'code') return [];
     const raw = (token.raw as string) ?? '';
     const trimmed = raw.trimStart();
-    if (!trimmed.startsWith('```') && !trimmed.startsWith('~~~') && token.codeBlockStyle !== 'indented') {
+    if (
+      !trimmed.startsWith('```') &&
+      !trimmed.startsWith('~~~') &&
+      token.codeBlockStyle !== 'indented'
+    ) {
       return [];
     }
     const text = (token.text as string) ?? '';

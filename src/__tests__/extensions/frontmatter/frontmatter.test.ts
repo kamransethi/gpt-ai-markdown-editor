@@ -128,7 +128,9 @@ jest.mock('../../../webview/utils/pasteHandler', () => ({
 jest.mock('../../../webview/utils/copyMarkdown', () => ({ copySelectionAsMarkdown: jest.fn() }));
 jest.mock('../../../webview/utils/outline', () => ({ buildOutlineFromEditor: jest.fn(() => []) }));
 jest.mock('../../../webview/utils/scrollToHeading', () => ({ scrollToHeading: jest.fn() }));
-jest.mock('../../../webview/utils/linkValidation', () => ({ shouldAutoLink: jest.fn(() => false) }));
+jest.mock('../../../webview/utils/linkValidation', () => ({
+  shouldAutoLink: jest.fn(() => false),
+}));
 jest.mock('../../../webview/features/linkDialog', () => ({ showLinkDialog: jest.fn() }));
 jest.mock('../../../webview/features/imageRenameDialog', () => ({}));
 
@@ -398,5 +400,3 @@ describe('frontmatter extraction & restoration', () => {
     });
   });
 });
-
-

@@ -8,7 +8,8 @@ let ImageEnterSpacing: Extension;
 beforeEach(async () => {
   jest.resetModules();
   // ImageEnterSpacing was replaced by ImageBoundaryNav — cast to any for API compatibility
-  ({ ImageBoundaryNav: ImageEnterSpacing } = (await import('../../../webview/extensions/imageBoundaryNav')) as any);
+  ({ ImageBoundaryNav: ImageEnterSpacing } =
+    (await import('../../../webview/extensions/imageBoundaryNav')) as any);
 });
 
 describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
@@ -186,4 +187,3 @@ describe('ImageEnterSpacing crash repro (Enter after image line)', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
-

@@ -9,7 +9,14 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { FULL_HARNESS_URL, waitForEditor, setContent, getContent, getActiveMarks, runEditorCommand } from './helpers/index';
+import {
+  FULL_HARNESS_URL,
+  waitForEditor,
+  setContent,
+  getContent,
+  getActiveMarks,
+  runEditorCommand,
+} from './helpers/index';
 
 test.describe('Editor Core', () => {
   test.beforeEach(async ({ page }) => {
@@ -220,7 +227,11 @@ test.describe('Editor Core', () => {
     await page.evaluate(() => {
       const dataTransfer = new DataTransfer();
       dataTransfer.setData('text/plain', 'Pasted text');
-      const event = new ClipboardEvent('paste', { clipboardData: dataTransfer, bubbles: true, cancelable: true });
+      const event = new ClipboardEvent('paste', {
+        clipboardData: dataTransfer,
+        bubbles: true,
+        cancelable: true,
+      });
       document.querySelector('.ProseMirror')!.dispatchEvent(event);
     });
     // Give TipTap time to process

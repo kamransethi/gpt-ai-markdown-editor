@@ -21,11 +21,7 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
-import {
-  SpellCheck,
-  initSpellCheck,
-  spellCheckKey,
-} from '../../../webview/extensions/spellCheck';
+import { SpellCheck, initSpellCheck, spellCheckKey } from '../../../webview/extensions/spellCheck';
 
 // ── Editor ────────────────────────────────────────────────────────────────────
 

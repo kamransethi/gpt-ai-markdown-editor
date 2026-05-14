@@ -95,9 +95,7 @@ describe('041: openFile command — URI resolution', () => {
 
     await openFileCommandLogic(undefined, activeEditor, showOpenDialog, executeCommand);
 
-    expect(showOpenDialog).toHaveBeenCalledWith(
-      expect.objectContaining({ canSelectMany: false })
-    );
+    expect(showOpenDialog).toHaveBeenCalledWith(expect.objectContaining({ canSelectMany: false }));
     expect(executeCommand).toHaveBeenCalledWith(
       'vscode.openWith',
       pickedUri,

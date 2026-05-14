@@ -9,12 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  getContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, getContent } from './helpers/index';
 
 const FRONTMATTER_MD = `---
 title: My Note
@@ -57,7 +52,9 @@ test.describe('Frontmatter', () => {
 
   test('frontmatter view button is present @smoke', async ({ page }) => {
     await setContent(page, FRONTMATTER_MD);
-    const btn = page.locator('.frontmatter-view-btn, [class*="frontmatter"] button, [data-testid*="frontmatter"]');
+    const btn = page.locator(
+      '.frontmatter-view-btn, [class*="frontmatter"] button, [data-testid*="frontmatter"]'
+    );
     const count = await btn.count();
     // Either a button is present or the frontmatter is rendered inline
     expect(count).toBeGreaterThanOrEqual(0); // Relaxed — UI may vary
@@ -112,11 +109,15 @@ test.describe('Frontmatter', () => {
 
   test('empty frontmatter block does not crash', async ({ page }) => {
     const errors: string[] = [];
-    page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+    page.on('console', msg => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
     await setContent(page, '---\n---\n\nContent here\n');
     const output = await getContent(page);
     expect(output).toContain('Content here');
-    expect(errors.filter(e => !e.includes('ResizeObserver') && !e.includes('favicon'))).toHaveLength(0);
+    expect(
+      errors.filter(e => !e.includes('ResizeObserver') && !e.includes('favicon'))
+    ).toHaveLength(0);
   });
 
   test('frontmatter with special characters roundtrips correctly', async ({ page }) => {

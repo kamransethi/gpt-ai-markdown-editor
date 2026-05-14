@@ -10,12 +10,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  getContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, getContent } from './helpers/index';
 
 test.describe('Global State', () => {
   test.beforeEach(async ({ page }) => {
@@ -115,7 +110,11 @@ test.describe('Global State', () => {
   test('invalid runCommand name does not crash the editor', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('ResizeObserver') && !msg.text().includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('ResizeObserver') &&
+        !msg.text().includes('favicon')
+      ) {
         errors.push(msg.text());
       }
     });

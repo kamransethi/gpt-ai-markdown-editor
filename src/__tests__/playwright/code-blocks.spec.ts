@@ -52,9 +52,13 @@ test.describe('Code Blocks', () => {
     await expect(page.locator('.ProseMirror pre')).toBeVisible();
   });
 
-  test('code block has .code-block-highlighted class for syntax-highlighted blocks', async ({ page }) => {
+  test('code block has .code-block-highlighted class for syntax-highlighted blocks', async ({
+    page,
+  }) => {
     await setContent(page, TYPESCRIPT_BLOCK);
-    const highlighted = page.locator('.ProseMirror .code-block-highlighted, .ProseMirror [class*="code-block"]');
+    const highlighted = page.locator(
+      '.ProseMirror .code-block-highlighted, .ProseMirror [class*="code-block"]'
+    );
     await expect(highlighted.first()).toBeVisible({ timeout: 3000 });
   });
 
@@ -102,7 +106,7 @@ test.describe('Code Blocks', () => {
     // Language label shows in a UI element
     const label = page.locator('.code-block-lang, [class*="language-label"], [data-language]');
     // If not present, fall back to checking the DOM for "typescript" string in attr
-    const hasLabel = await label.count() > 0;
+    const hasLabel = (await label.count()) > 0;
     if (hasLabel) {
       await expect(label.first()).toBeVisible();
     }
@@ -153,7 +157,11 @@ test.describe('Code Blocks', () => {
   test('no console errors when rendering TypeScript block', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('ResizeObserver') && !msg.text().includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('ResizeObserver') &&
+        !msg.text().includes('favicon')
+      ) {
         errors.push(msg.text());
       }
     });

@@ -23,12 +23,7 @@
  */
 
 import { Extension } from '@tiptap/core';
-import {
-  Plugin,
-  PluginKey,
-  type EditorState,
-  type Transaction,
-} from '@tiptap/pm/state';
+import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Node as PmNode } from '@tiptap/pm/model';
 
@@ -52,9 +47,7 @@ interface WorkerResultsMessage {
   results: WorkerResult[];
 }
 
-type WorkerMessage =
-  | { type: 'READY' }
-  | WorkerResultsMessage;
+type WorkerMessage = { type: 'READY' } | WorkerResultsMessage;
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -94,9 +87,8 @@ export function normaliseQuotes(text: string): string {
  */
 export function maskUrls(text: string): string {
   // Match http(s)/ftp URLs and bare www.* patterns
-  return text.replace(
-    /https?:\/\/\S+|ftp:\/\/\S+|www\.\S+|\S+@\S+\.\S+/gi,
-    m => ' '.repeat(m.length)
+  return text.replace(/https?:\/\/\S+|ftp:\/\/\S+|www\.\S+|\S+@\S+\.\S+/gi, m =>
+    ' '.repeat(m.length)
   );
 }
 
@@ -168,7 +160,7 @@ export const spellCheckKey = new PluginKey<PluginStateData>('spellCheck');
 // ── Singleton worker ──────────────────────────────────────────────────────────
 
 let worker: Worker | null = null;
-let pendingCallbacks = new Map<string, (results: WorkerResult[]) => void>();
+const pendingCallbacks = new Map<string, (results: WorkerResult[]) => void>();
 let reqIdCounter = 0;
 let editorViewRef: import('@tiptap/pm/view').EditorView | null = null;
 
@@ -221,7 +213,7 @@ async function getOrCreateWorker(): Promise<Worker | null> {
     }
   });
 
-  worker.addEventListener('error', (err) => {
+  worker.addEventListener('error', err => {
     console.error('[SpellCheck] Worker error:', err);
   });
 
@@ -257,10 +249,7 @@ function scheduleInitialScan(view: import('@tiptap/pm/view').EditorView): void {
 
 // ── Check helpers ─────────────────────────────────────────────────────────────
 
-function checkFragments(
-  _view: import('@tiptap/pm/view').EditorView,
-  frags: Fragment[]
-): void {
+function checkFragments(_view: import('@tiptap/pm/view').EditorView, frags: Fragment[]): void {
   if (frags.length === 0) return;
 
   const id = String(++reqIdCounter);
@@ -297,7 +286,10 @@ function checkFragments(
     if (!current) return;
 
     // Keep decorations that are NOT in the checked position ranges, add fresh ones
-    const checkedRanges = frags.map(f => ({ start: f.docFrom, end: f.docFrom + f.text.length + 50 }));
+    const checkedRanges = frags.map(f => ({
+      start: f.docFrom,
+      end: f.docFrom + f.text.length + 50,
+    }));
     const surviving = current.decorations.find().filter(d => {
       return !checkedRanges.some(r => d.from >= r.start && d.to <= r.end);
     });
@@ -339,7 +331,12 @@ function createSpellCheckPlugin(): Plugin<PluginStateData> {
         return { decorations: DecorationSet.empty, workerReady: false };
       },
 
-      apply(tr: Transaction, value: PluginStateData, _old: EditorState, newState: EditorState): PluginStateData {
+      apply(
+        tr: Transaction,
+        value: PluginStateData,
+        _old: EditorState,
+        newState: EditorState
+      ): PluginStateData {
         const meta = tr.getMeta(spellCheckKey) as Partial<PluginStateData> | undefined;
 
         if (meta?.decorations) {
@@ -347,7 +344,10 @@ function createSpellCheckPlugin(): Plugin<PluginStateData> {
         }
 
         if (meta?.workerReady) {
-          return { decorations: value.decorations.map(tr.mapping, newState.doc), workerReady: true };
+          return {
+            decorations: value.decorations.map(tr.mapping, newState.doc),
+            workerReady: true,
+          };
         }
 
         // Map existing decorations through document changes
@@ -414,10 +414,7 @@ export async function initSpellCheck(payload: {
   if (!w) return;
   if (!w) return;
 
-  const [affRes, dicRes] = await Promise.all([
-    fetch(payload.affUrl),
-    fetch(payload.dicUrl),
-  ]);
+  const [affRes, dicRes] = await Promise.all([fetch(payload.affUrl), fetch(payload.dicUrl)]);
 
   if (!affRes.ok || !dicRes.ok) {
     console.error('[SpellCheck] Failed to fetch dictionary files');

@@ -13,7 +13,13 @@ import { showImageAskLoading } from '../extensions/aiExplain';
 
 interface ImageContextMenuController {
   element: HTMLElement;
-  show: (x: number, y: number, img: HTMLImageElement, contextPos: number, isExternal: boolean) => void;
+  show: (
+    x: number,
+    y: number,
+    img: HTMLImageElement,
+    contextPos: number,
+    isExternal: boolean
+  ) => void;
   hide: () => void;
   destroy: () => void;
 }
@@ -209,7 +215,10 @@ export function isExternalImage(src: string): boolean {
   return src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:');
 }
 
-export function createImageContextMenu(editor: Editor, vscodeApi: unknown): ImageContextMenuController {
+export function createImageContextMenu(
+  editor: Editor,
+  vscodeApi: unknown
+): ImageContextMenuController {
   const localMenu = new MenuBuilder('context-menu image-context-menu', 'Image context menu');
   const externalMenu = new MenuBuilder('context-menu image-context-menu', 'Image context menu');
 
@@ -239,9 +248,13 @@ export function createImageContextMenu(editor: Editor, vscodeApi: unknown): Imag
 
   const cutBtn = localMenu.addItem('Cut', () => runClipboardAction('cut'), { shortcut: `${mod}X` });
   addItemIcon(cutBtn, 'codicon-cut');
-  const copyBtn = localMenu.addItem('Copy', () => runClipboardAction('copy'), { shortcut: `${mod}C` });
+  const copyBtn = localMenu.addItem('Copy', () => runClipboardAction('copy'), {
+    shortcut: `${mod}C`,
+  });
   addItemIcon(copyBtn, 'codicon-copy');
-  const pasteBtn = localMenu.addItem('Paste', () => runClipboardAction('paste'), { shortcut: `${mod}V` });
+  const pasteBtn = localMenu.addItem('Paste', () => runClipboardAction('paste'), {
+    shortcut: `${mod}V`,
+  });
   addItemIcon(pasteBtn, 'codicon-clippy');
   const deleteBtn = localMenu.addItem(
     'Delete',

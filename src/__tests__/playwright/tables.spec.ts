@@ -244,7 +244,11 @@ test.describe('Tables', () => {
     await runEditorCommand(page, 'insertTable', { rows: 2, cols: 2, withHeaderRow: true });
     const firstCell = page.locator('.ProseMirror table td').first();
     await firstCell.click();
-    const initialCols = await page.locator('.ProseMirror table tr').first().locator('td, th').count();
+    const initialCols = await page
+      .locator('.ProseMirror table tr')
+      .first()
+      .locator('td, th')
+      .count();
     await runEditorCommand(page, 'addColumnAfter');
     const newCols = await page.locator('.ProseMirror table tr').first().locator('td, th').count();
     expect(newCols).toBe(initialCols + 1);
@@ -254,7 +258,11 @@ test.describe('Tables', () => {
     await runEditorCommand(page, 'insertTable', { rows: 2, cols: 2, withHeaderRow: true });
     const firstCell = page.locator('.ProseMirror table td').first();
     await firstCell.click();
-    const initialCols = await page.locator('.ProseMirror table tr').first().locator('td, th').count();
+    const initialCols = await page
+      .locator('.ProseMirror table tr')
+      .first()
+      .locator('td, th')
+      .count();
     await runEditorCommand(page, 'addColumnBefore');
     const newCols = await page.locator('.ProseMirror table tr').first().locator('td, th').count();
     expect(newCols).toBe(initialCols + 1);
@@ -264,7 +272,11 @@ test.describe('Tables', () => {
     await runEditorCommand(page, 'insertTable', { rows: 2, cols: 3, withHeaderRow: true });
     const firstCell = page.locator('.ProseMirror table td').first();
     await firstCell.click();
-    const initialCols = await page.locator('.ProseMirror table tr').first().locator('td, th').count();
+    const initialCols = await page
+      .locator('.ProseMirror table tr')
+      .first()
+      .locator('td, th')
+      .count();
     await runEditorCommand(page, 'deleteColumn');
     const newCols = await page.locator('.ProseMirror table tr').first().locator('td, th').count();
     expect(newCols).toBe(initialCols - 1);
@@ -274,7 +286,9 @@ test.describe('Tables', () => {
   // Roundtrip fidelity
   // ---------------------------------------------------------------------------
 
-  test('roundtrip fidelity — load table fixture, serialize, reload, re-serialize must match', async ({ page }) => {
+  test('roundtrip fidelity — load table fixture, serialize, reload, re-serialize must match', async ({
+    page,
+  }) => {
     const fixture = `| Name | Age | Notes |\n|------|-----|-------|\n| Alice | 30 | Has **bold** note |\n| Bob | 25 | First<br>Second |\n`;
     await setContent(page, fixture);
     const firstPass = await getContent(page);

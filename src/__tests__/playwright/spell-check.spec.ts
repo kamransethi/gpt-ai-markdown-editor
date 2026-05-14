@@ -148,7 +148,7 @@ test.describe('Spell Check — live decorations', () => {
   test('common English contractions are not flagged', async ({ page }) => {
     // Smart-quote apostrophes (U+2019) come from TipTap's typography extension.
     // The spell-check plugin normalises them to ASCII ' before sending to nspell.
-    await setMarkdown(page, "Don\u2019t isn\u2019t you\u2019re they\u2019re");
+    await setMarkdown(page, 'Don\u2019t isn\u2019t you\u2019re they\u2019re');
 
     // Pipeline must be running — seed with a known bad word first so we know
     // a scan completed (otherwise a 0-count could mean "not yet checked").
@@ -172,13 +172,12 @@ test.describe('Spell Check — live decorations', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('only paragraph words flagged when same bad word appears in code block too', async ({ page }) => {
+  test('only paragraph words flagged when same bad word appears in code block too', async ({
+    page,
+  }) => {
     // "asdasdsa" in both a paragraph AND a code block.
     // Only the paragraph instance should be decorated.
-    await setMarkdown(
-      page,
-      'asdasdsa is misspelled\n\n```\nasdasdsa not flagged\n```'
-    );
+    await setMarkdown(page, 'asdasdsa is misspelled\n\n```\nasdasdsa not flagged\n```');
 
     await expect(page.locator('.spell-error').first()).toBeVisible({
       timeout: DECORATION_TIMEOUT,

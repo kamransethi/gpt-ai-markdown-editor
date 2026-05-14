@@ -28,11 +28,7 @@ import { CustomImage } from '../../../webview/extensions/customImage';
 
 function createEditor(initialHtml = '<p>Hello</p>') {
   return new Editor({
-    extensions: [
-      StarterKit,
-      CustomImage.configure({ allowBase64: true }),
-      ImageUploadPlugin,
-    ],
+    extensions: [StarterKit, CustomImage.configure({ allowBase64: true }), ImageUploadPlugin],
     content: initialHtml,
   });
 }

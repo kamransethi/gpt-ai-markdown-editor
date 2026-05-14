@@ -1,10 +1,7 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { TableKit, Table, TableCell } from '@tiptap/extension-table';
-import {
-  hasOnlyImageContent,
-  processPasteContent,
-} from '../../webview/utils/pasteHandler';
+import { hasOnlyImageContent, processPasteContent } from '../../webview/utils/pasteHandler';
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal DataTransfer-like object for unit tests
@@ -46,7 +43,9 @@ describe('US5: Paste Handling & Nested Tables', () => {
                 tag: 'table',
                 contentElement(node: HTMLElement) {
                   node.querySelectorAll(':scope > colgroup').forEach(el => el.remove());
-                  const sections = node.querySelectorAll(':scope > thead, :scope > tbody, :scope > tfoot');
+                  const sections = node.querySelectorAll(
+                    ':scope > thead, :scope > tbody, :scope > tfoot'
+                  );
                   for (const section of Array.from(sections)) {
                     while (section.firstChild) {
                       node.insertBefore(section.firstChild, section);
@@ -80,7 +79,7 @@ describe('US5: Paste Handling & Nested Tables', () => {
         </tbody>
       </table>
     `);
-    
+
     // Tiptap's schema should parse the table and strip the tbody.
     // The serialized HTML via getHTML() doesn't include tbody for standard TipTap tables.
     const html = editor.getHTML();
@@ -95,10 +94,9 @@ describe('US5: Paste Handling & Nested Tables', () => {
 // ---------------------------------------------------------------------------
 describe('FR-006: hasOnlyImageContent', () => {
   it('returns false when clipboard has both text/html and image/png', () => {
-    const clipboard = makeClipboard(
-      [{ type: 'text/html' }, { type: 'image/png' }],
-      { 'text/html': '<p>Hello <img src="https://example.com/x.png"></p>' }
-    );
+    const clipboard = makeClipboard([{ type: 'text/html' }, { type: 'image/png' }], {
+      'text/html': '<p>Hello <img src="https://example.com/x.png"></p>',
+    });
     expect(hasOnlyImageContent(clipboard)).toBe(false);
   });
 
@@ -114,10 +112,10 @@ describe('FR-006: hasOnlyImageContent', () => {
 
   it('processPasteContent does NOT short-circuit when both text/html and image/* present', () => {
     const htmlContent = '<p>Hello from webpage</p>';
-    const clipboard = makeClipboard(
-      [{ type: 'text/html' }, { type: 'image/png' }],
-      { 'text/html': htmlContent, 'text/plain': 'Hello from webpage' }
-    );
+    const clipboard = makeClipboard([{ type: 'text/html' }, { type: 'image/png' }], {
+      'text/html': htmlContent,
+      'text/plain': 'Hello from webpage',
+    });
     const result = processPasteContent(clipboard);
     // Should NOT return isImage:true — should process the HTML instead
     expect(result.isImage).toBe(false);
@@ -141,10 +139,7 @@ describe('FR-004: imagePasteHandler / imageDragDropHandler contracts', () => {
 
   it('imagePasteHandler returns false when clipboard has no image content', () => {
     const { imagePasteHandler } = require('../../webview/features/imageDragDrop');
-    const mockClipboard = makeClipboard(
-      [{ type: 'text/plain' }],
-      { 'text/plain': 'just text' }
-    );
+    const mockClipboard = makeClipboard([{ type: 'text/plain' }], { 'text/plain': 'just text' });
     const mockEvent = { clipboardData: mockClipboard } as unknown as ClipboardEvent;
     const result = imagePasteHandler(null, mockEvent, null);
     // No image items → returns false, letting clipboardHandling.ts process it

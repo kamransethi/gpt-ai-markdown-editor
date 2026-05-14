@@ -1238,10 +1238,8 @@ function initializeEditor(initialContent: string) {
         },
         // Route file/image drops and pastes through the image drop handler (FR-004).
         // Returns true when the handler owns the event (prevents ProseMirror default).
-        handleDrop: (view, event, slice, moved) =>
-          imageDragDropHandler(view, event, slice, moved),
-        handlePaste: (view, event, slice) =>
-          imagePasteHandler(view, event, slice),
+        handleDrop: (view, event, slice, moved) => imageDragDropHandler(view, event, slice, moved),
+        handlePaste: (view, event, slice) => imagePasteHandler(view, event, slice),
       },
       onUpdate: ({ editor: _editor }) => {
         if (isUpdating) return;
@@ -1851,7 +1849,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         devLog('[DK-AI] Front matter error:', message.error);
         break;
       case MessageType.SPELL_INIT:
-        void initSpellCheck(message as unknown as { affUrl: string; dicUrl: string; userWords: string[] });
+        void initSpellCheck(
+          message as unknown as { affUrl: string; dicUrl: string; userWords: string[] }
+        );
         break;
       case MessageType.SPELL_RELOAD:
         reloadUserWords((message.userWords as string[]) ?? []);
@@ -2044,7 +2044,11 @@ window.addEventListener('openExtensionSettings', handleOpenExtensionSettings);
 const handleUpdateSetting = (event: Event) => {
   const detail = (event as CustomEvent).detail;
   if (detail?.key && detail?.value !== undefined) {
-    getActiveBridge().postMessage({ type: MessageType.UPDATE_SETTING, key: detail.key, value: detail.value });
+    getActiveBridge().postMessage({
+      type: MessageType.UPDATE_SETTING,
+      key: detail.key,
+      value: detail.value,
+    });
   }
 };
 window.addEventListener('updateSetting', handleUpdateSetting);

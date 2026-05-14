@@ -97,7 +97,8 @@ describe('ImageEnterSpacing extension', () => {
 
   beforeEach(async () => {
     jest.resetModules();
-    ({ ImageBoundaryNav: ImageEnterSpacing } = await import('../../../webview/extensions/imageBoundaryNav') as any);
+    ({ ImageBoundaryNav: ImageEnterSpacing } =
+      (await import('../../../webview/extensions/imageBoundaryNav')) as any);
   });
 
   it('inserts paragraph after a selected image node', () => {
@@ -596,9 +597,8 @@ describe('ImageEnterSpacing - Real-world multi-image scenarios', () => {
       props: {
         handleKeyDown: (view: any, event: KeyboardEvent) => {
           if (event.key === 'Enter') {
-            const addKeyboardShortcuts = (
-              ImageEnterSpacing as unknown as any
-            ).config.addKeyboardShortcuts;
+            const addKeyboardShortcuts = (ImageEnterSpacing as unknown as any).config
+              .addKeyboardShortcuts;
 
             if (typeof addKeyboardShortcuts !== 'function') {
               return false;
@@ -655,7 +655,8 @@ describe('ImageEnterSpacing - Real-world multi-image scenarios', () => {
 
   beforeEach(async () => {
     jest.resetModules();
-    ({ ImageBoundaryNav: ImageEnterSpacing } = await import('../../../webview/extensions/imageBoundaryNav') as any);
+    ({ ImageBoundaryNav: ImageEnterSpacing } =
+      (await import('../../../webview/extensions/imageBoundaryNav')) as any);
   });
 
   /**
@@ -1210,4 +1211,3 @@ describe('ImageEnterSpacing - Real-world multi-image scenarios', () => {
     });
   });
 });
-

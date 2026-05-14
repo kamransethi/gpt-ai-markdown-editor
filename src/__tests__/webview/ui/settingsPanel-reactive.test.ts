@@ -154,4 +154,3 @@ describe('FR-001: Empty-state reload', () => {
     expect(settingsRequests).toHaveLength(1);
   });
 });
-

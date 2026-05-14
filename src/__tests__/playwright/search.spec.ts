@@ -9,12 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  runEditorCommand,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, runEditorCommand } from './helpers/index';
 
 const SAMPLE_MD = `Hello world. Hello again. Say hello.\n\nAnother paragraph here.\n`;
 
@@ -188,7 +183,9 @@ test.describe('Search & Replace', () => {
     await expect(highlights).toHaveCount(0);
     // No console errors
     const errors: string[] = [];
-    page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+    page.on('console', msg => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
     expect(errors.length).toBe(0);
   });
 });

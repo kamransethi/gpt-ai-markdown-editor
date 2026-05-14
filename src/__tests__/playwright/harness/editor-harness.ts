@@ -144,14 +144,21 @@ interface EditorAPI {
   indentBulletLine(): boolean {
     // Simulate Tab key by dispatching a keydown event directly to the editor view
     const event = new KeyboardEvent('keydown', {
-      key: 'Tab', code: 'Tab', bubbles: true, cancelable: true,
+      key: 'Tab',
+      code: 'Tab',
+      bubbles: true,
+      cancelable: true,
     });
     return editor.view.dom.dispatchEvent(event);
   },
 
   dedentBulletLine(): boolean {
     const event = new KeyboardEvent('keydown', {
-      key: 'Tab', code: 'Tab', shiftKey: true, bubbles: true, cancelable: true,
+      key: 'Tab',
+      code: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
     });
     return editor.view.dom.dispatchEvent(event);
   },

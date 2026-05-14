@@ -241,5 +241,3 @@ describe('webview undo/redo guards', () => {
     expect(mockEditor.commands.setTextSelection).toHaveBeenCalledWith({ from: 2, to: 4 });
   });
 });
-
-

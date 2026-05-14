@@ -40,34 +40,34 @@ describe('Inline Formatting', () => {
 
   it('highlights a section of text and applies bold', () => {
     editor = createEditor();
-    
+
     // Insert initial text
     editor.commands.setContent('<p>This is a test paragraph.</p>');
-    
+
     // Select "test" (starts at pos 11, length 4)
-    // In TipTap, position 1 is inside the paragraph. 
+    // In TipTap, position 1 is inside the paragraph.
     // "This is a test paragraph."
     // 12345678901234
     // "test" is at pos 11 to 15
     editor.commands.setTextSelection({ from: 11, to: 15 });
-    
+
     // Apply bold
     editor.commands.toggleBold();
-    
+
     const markdown = editor.getMarkdown();
     expect(markdown).toContain('This is a **test** paragraph.');
   });
 
   it('applies bold to text inside a bullet list', () => {
     editor = createEditor();
-    
+
     // Insert a bullet list
     editor.commands.setContent('<ul><li>List item one</li></ul>');
-    
+
     // Select "item" (starts around pos 8)
     editor.commands.setTextSelection({ from: 8, to: 12 });
     editor.commands.toggleBold();
-    
+
     const markdown = editor.getMarkdown();
     expect(markdown).toContain('- List **item** one');
   });

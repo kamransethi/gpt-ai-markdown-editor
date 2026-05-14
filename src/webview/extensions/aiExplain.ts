@@ -91,8 +91,7 @@ function showExplainPanel() {
     // Abort in-flight stream
     getVscodeApi()?.postMessage({ type: MessageType.AI_EXPLAIN_STOP });
     if (activeStreamHandler) {
-      const currentText =
-        panelEl?.querySelector('.ai-explain-markdown')?.textContent ?? '';
+      const currentText = panelEl?.querySelector('.ai-explain-markdown')?.textContent ?? '';
       activeStreamHandler.onDone(currentText);
       activeStreamHandler = null;
     }

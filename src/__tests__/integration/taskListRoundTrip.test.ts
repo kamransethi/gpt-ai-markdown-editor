@@ -240,4 +240,3 @@ describe('Task list copy-paste round-trip', () => {
     expect(jsonStr).toContain('Third task');
   });
 });
-

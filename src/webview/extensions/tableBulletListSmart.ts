@@ -60,7 +60,9 @@ function markerForDepth(depth: number): string {
  * deletion in Tab/Shift-Tab.  Do NOT substitute `indent * 2 + marker.length + 1` here:
  * the trailing space in the regex is optional, so the formula can be off by one.
  */
-function parseBulletLine(text: string): { indent: number; marker: string; prefixLen: number } | null {
+function parseBulletLine(
+  text: string
+): { indent: number; marker: string; prefixLen: number } | null {
   const m = TABLE_BULLET_RE.exec(text);
   if (!m) return null;
   const indent = Math.floor(m[1].length / 2);
@@ -200,4 +202,3 @@ export const TableBulletListSmart = Extension.create({
     };
   },
 });
-

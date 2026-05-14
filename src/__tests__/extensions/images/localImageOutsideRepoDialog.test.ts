@@ -1,7 +1,10 @@
 ﻿/** @jest-environment jsdom */
 
 import { showLocalImageOutsideRepoDialog } from '../../../webview/features/localImageOutsideRepoDialog';
-import { getRememberedFolder, setRememberedFolder } from '../../../webview/features/imageConfirmation';
+import {
+  getRememberedFolder,
+  setRememberedFolder,
+} from '../../../webview/features/imageConfirmation';
 
 jest.mock('../../../webview/features/imageConfirmation', () => ({
   getRememberedFolder: jest.fn(),

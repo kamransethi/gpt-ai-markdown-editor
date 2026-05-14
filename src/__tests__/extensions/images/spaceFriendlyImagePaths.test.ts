@@ -47,4 +47,3 @@ describe('SpaceFriendlyImagePaths', () => {
     expect(manager.serialize(doc)).toBe('![image in vs-code](<./image in vs-code.png>)');
   });
 });
-

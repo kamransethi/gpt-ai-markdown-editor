@@ -58,16 +58,18 @@ describe('Robot Data Entry E2E', () => {
 
   it('automates document generation: headers, tables, lists, and mermaid', () => {
     editor = createEditor();
-    
+
     // 1. Insert a header
     editor.commands.insertContent('<h1>Project Overview</h1>');
-    
+
     // 2. Insert a paragraph
-    editor.commands.insertContent('<p>This is an automated entry testing the editor serialization capabilities.</p>');
-    
+    editor.commands.insertContent(
+      '<p>This is an automated entry testing the editor serialization capabilities.</p>'
+    );
+
     // 3. Insert a 2x2 table
     editor.commands.insertTable({ rows: 2, cols: 2, withHeaderRow: true });
-    
+
     // Insert content into the table manually (TipTap moves selection to table on create)
     editor.commands.insertContent('Feature');
     editor.commands.goToNextCell();
@@ -76,11 +78,11 @@ describe('Robot Data Entry E2E', () => {
     editor.commands.insertContent('E2E Tests');
     editor.commands.goToNextCell();
     editor.commands.insertContent('Passing');
-    
+
     // Step out of table
     editor.commands.focus('end');
     editor.commands.insertContent('<p></p>'); // break
-    
+
     // 4. Insert a bulleted list
     editor.commands.toggleBulletList();
     editor.commands.insertContent('First bullet');
@@ -88,15 +90,15 @@ describe('Robot Data Entry E2E', () => {
     editor.commands.insertContent('Second bullet');
     // Exit list
     editor.commands.toggleBulletList();
-    
+
     // 5. Insert Mermaid
     editor.commands.insertContent({
       type: 'mermaid',
-      attrs: { code: 'graph TD;\nA-->B;' }
+      attrs: { code: 'graph TD;\nA-->B;' },
     });
 
     const markdown = editor.getMarkdown();
-    
+
     // Assertions
     expect(markdown).toContain('# Project Overview');
     expect(markdown).toContain('This is an automated entry');

@@ -118,9 +118,9 @@ export const MessageType = {
   OPEN_GRAPH_CHAT: 'openGraphChat',
 
   // ── Spell Check ──
-  SPELL_INIT: 'spellInit',       // Host → Webview: { affUrl: string, dicUrl: string, userWords: string[] }
+  SPELL_INIT: 'spellInit', // Host → Webview: { affUrl: string, dicUrl: string, userWords: string[] }
   SPELL_ADD_WORD: 'spellAddWord', // Webview → Host: { word: string }
-  SPELL_RELOAD: 'spellReload',   // Host → Webview: { userWords: string[] }
+  SPELL_RELOAD: 'spellReload', // Host → Webview: { userWords: string[] }
 } as const;
 
 /** Union of all valid message type string values. */

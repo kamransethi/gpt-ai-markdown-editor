@@ -8,11 +8,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent } from './helpers/index';
 
 test.describe('Slash Commands', () => {
   test.beforeEach(async ({ page }) => {
@@ -35,10 +31,14 @@ test.describe('Slash Commands', () => {
     await page.locator('.ProseMirror').click();
     await page.keyboard.type('/');
     await expect(page.locator(SUGGESTION_LIST).first()).toBeVisible({ timeout: 3000 });
-    const allCount = await page.locator(`${SUGGESTION_LIST} li, ${SUGGESTION_LIST} [class*="item"]`).count();
+    const allCount = await page
+      .locator(`${SUGGESTION_LIST} li, ${SUGGESTION_LIST} [class*="item"]`)
+      .count();
     await page.keyboard.type('hea');
     await page.waitForTimeout(200);
-    const filteredCount = await page.locator(`${SUGGESTION_LIST} li, ${SUGGESTION_LIST} [class*="item"]`).count();
+    const filteredCount = await page
+      .locator(`${SUGGESTION_LIST} li, ${SUGGESTION_LIST} [class*="item"]`)
+      .count();
     // After filtering there should be fewer items
     expect(filteredCount).toBeLessThanOrEqual(allCount);
   });
@@ -61,7 +61,9 @@ test.describe('Slash Commands', () => {
     await page.keyboard.type('code');
     await page.waitForTimeout(200);
     await page.keyboard.press('Enter');
-    await expect(page.locator('.ProseMirror pre, .ProseMirror .code-block-highlighted')).toBeVisible({ timeout: 2000 });
+    await expect(
+      page.locator('.ProseMirror pre, .ProseMirror .code-block-highlighted')
+    ).toBeVisible({ timeout: 2000 });
   });
 
   test('Table command inserts table', async ({ page }) => {
@@ -101,6 +103,8 @@ test.describe('Slash Commands', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator(SUGGESTION_LIST).first()).toBeHidden({ timeout: 2000 });
     // No special nodes should have been inserted
-    await expect(page.locator('.ProseMirror h1, .ProseMirror h2, .ProseMirror table')).toHaveCount(0);
+    await expect(page.locator('.ProseMirror h1, .ProseMirror h2, .ProseMirror table')).toHaveCount(
+      0
+    );
   });
 });

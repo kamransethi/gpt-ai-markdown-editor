@@ -10,7 +10,12 @@
  * No Worker, no DOM, no TipTap editor required.
  */
 
-import { normaliseQuotes, maskUrls, prepareText, isNoScanNode } from '../../webview/extensions/spellCheck';
+import {
+  normaliseQuotes,
+  maskUrls,
+  prepareText,
+  isNoScanNode,
+} from '../../webview/extensions/spellCheck';
 import type { Node as PmNode } from '@tiptap/pm/model';
 
 // ── Helper: create a minimal fake PmNode ─────────────────────────────────────
@@ -127,19 +132,14 @@ describe('isNoScanNode', () => {
     'frontmatterBlock',
     'mermaidBlock',
     'drawioBlock',
-  ])('returns true for no-scan type: %s', (typeName) => {
+  ])('returns true for no-scan type: %s', typeName => {
     expect(isNoScanNode(fakeNode(typeName))).toBe(true);
   });
 
-  it.each([
-    'paragraph',
-    'heading',
-    'blockquote',
-    'bulletList',
-    'listItem',
-    'text',
-    'doc',
-  ])('returns false for scannable type: %s', (typeName) => {
-    expect(isNoScanNode(fakeNode(typeName))).toBe(false);
-  });
+  it.each(['paragraph', 'heading', 'blockquote', 'bulletList', 'listItem', 'text', 'doc'])(
+    'returns false for scannable type: %s',
+    typeName => {
+      expect(isNoScanNode(fakeNode(typeName))).toBe(false);
+    }
+  );
 });

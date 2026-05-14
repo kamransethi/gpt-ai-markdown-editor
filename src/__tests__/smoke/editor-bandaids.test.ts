@@ -28,11 +28,15 @@ describe('Editor Bandaids Removal Tests', () => {
       editor.commands.setTextSelection(1);
 
       // Trigger Enter
-      const handled = editor.view.someProp('handleKeyDown', f => f(editor.view, new KeyboardEvent('keydown', { key: 'Enter' })));
+      const handled = editor.view.someProp('handleKeyDown', f =>
+        f(editor.view, new KeyboardEvent('keydown', { key: 'Enter' }))
+      );
       expect(handled).toBe(true);
 
       // Should have inserted a paragraph before
-      expect(editor.getHTML()).toContain('<p></p><p><img src="test.jpg" data-markdown-src="test.jpg">Text</p>');
+      expect(editor.getHTML()).toContain(
+        '<p></p><p><img src="test.jpg" data-markdown-src="test.jpg">Text</p>'
+      );
     });
 
     it('creates an empty paragraph when Enter is pressed at the end of a paragraph next to an image', () => {
@@ -48,11 +52,15 @@ describe('Editor Bandaids Removal Tests', () => {
       editor.commands.setTextSelection(endPos);
 
       // Trigger Enter
-      const handled = editor.view.someProp('handleKeyDown', f => f(editor.view, new KeyboardEvent('keydown', { key: 'Enter' })));
+      const handled = editor.view.someProp('handleKeyDown', f =>
+        f(editor.view, new KeyboardEvent('keydown', { key: 'Enter' }))
+      );
       expect(handled).toBe(true);
 
       // Should have inserted a paragraph after
-      expect(editor.getHTML()).toContain('<p>Text<img src="test.jpg" data-markdown-src="test.jpg"></p><p></p>');
+      expect(editor.getHTML()).toContain(
+        '<p>Text<img src="test.jpg" data-markdown-src="test.jpg"></p><p></p>'
+      );
     });
   });
 
@@ -73,7 +81,7 @@ describe('Editor Bandaids Removal Tests', () => {
       // Need TableKit and ListKit to test this properly
       const { TableKit, TableCell } = await import('@tiptap/extension-table');
       const { BulletList, ListItem } = await import('@tiptap/extension-list');
-      
+
       const TestTableCell = TableCell.extend({
         content: 'block+',
       });
@@ -84,7 +92,7 @@ describe('Editor Bandaids Removal Tests', () => {
           TableKit.configure({ tableCell: false }),
           TestTableCell,
           BulletList,
-          ListItem
+          ListItem,
         ],
         content: `
           <table>
@@ -107,10 +115,10 @@ describe('Editor Bandaids Removal Tests', () => {
 
       // Select inside the cell
       editor.commands.setTextSelection(cellPos + 2); // Inside the paragraph
-      
+
       // Toggle bullet list
       editor.commands.toggleBulletList();
-      
+
       // Verify bullet list was created inside the cell
       const html = editor.getHTML();
       expect(html).toContain('<ul>');
@@ -121,7 +129,7 @@ describe('Editor Bandaids Removal Tests', () => {
   describe('US3: Fix Link Absorption', () => {
     it('does not absorb typing immediately after a link', async () => {
       const { Link } = await import('@tiptap/extension-link');
-      
+
       editor = new Editor({
         extensions: [
           StarterKit,
@@ -129,20 +137,22 @@ describe('Editor Bandaids Removal Tests', () => {
             inclusive() {
               return false;
             },
-          })
+          }),
         ],
         content: '<p><a href="https://example.com">Link</a></p>',
       });
 
       // Position cursor at the very end of the link
       editor.commands.setTextSelection(5);
-      
+
       // Type something
       editor.commands.insertContent('x');
 
       const html = editor.getHTML();
       // The 'x' should be outside the link tag
-      expect(html).toContain('<a target="_blank" rel="noopener noreferrer nofollow" href="https://example.com">Link</a>x');
+      expect(html).toContain(
+        '<a target="_blank" rel="noopener noreferrer nofollow" href="https://example.com">Link</a>x'
+      );
     });
   });
 
@@ -150,12 +160,9 @@ describe('Editor Bandaids Removal Tests', () => {
     it('preserves empty paragraphs natively without using data-blank-line hacks', async () => {
       // Need Markdown extension to test this properly
       const { Markdown } = await import('@tiptap/markdown');
-      
+
       editor = new Editor({
-        extensions: [
-          StarterKit.configure({ paragraph: {} }),
-          Markdown
-        ],
+        extensions: [StarterKit.configure({ paragraph: {} }), Markdown],
         content: '<p>Line 1</p><p></p><p>Line 3</p>',
       });
 

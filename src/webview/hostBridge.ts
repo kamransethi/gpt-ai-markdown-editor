@@ -110,7 +110,9 @@ export function createWebMockAdapter(): HostBridge {
       }
       console.log('[Standalone] postMessage:', type, msg);
     },
-    getState() { return {}; },
+    getState() {
+      return {};
+    },
     setState(_state: unknown) {},
   };
   (window as any).vscode = vscodeLike;

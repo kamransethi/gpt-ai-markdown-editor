@@ -61,3 +61,4 @@ CLAUDE.md
 # Package manager cache
 .npm-cache/
 **/.DS_Store
+test-results/navigation-Navigation-five-alert-types-all-render-release/error-context.md

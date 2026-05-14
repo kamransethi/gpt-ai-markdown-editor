@@ -3,7 +3,10 @@
  */
 
 import type { Editor } from '@tiptap/core';
-import { hideTableInsertDialog, showTableInsertDialog } from '../../../webview/features/tableInsert';
+import {
+  hideTableInsertDialog,
+  showTableInsertDialog,
+} from '../../../webview/features/tableInsert';
 
 const createMockEditor = () => {
   const insertTable = jest.fn(() => ({ run: jest.fn() }));

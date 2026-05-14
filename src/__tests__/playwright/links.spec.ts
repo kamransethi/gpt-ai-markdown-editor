@@ -34,7 +34,9 @@ test.describe('Links', () => {
     // The link toolbar button calls window.editorAPI.openLinkDialog?.()
     // Test that it doesn't throw
     const errors: string[] = [];
-    page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+    page.on('console', msg => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
     await page.locator('[data-testid="toolbar-link"]').click();
     await page.waitForTimeout(300);
     expect(errors.filter(e => !e.includes('ResizeObserver'))).toHaveLength(0);

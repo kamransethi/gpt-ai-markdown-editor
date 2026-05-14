@@ -18,12 +18,7 @@ import { getSuggestionsAtPos } from '../extensions/spellCheck';
 
 /** Replace the misspelled word at [from, to] with `replacement`. */
 function applyCorrection(editor: Editor, from: number, to: number, replacement: string): void {
-  editor
-    .chain()
-    .focus()
-    .deleteRange({ from, to })
-    .insertContentAt(from, replacement)
-    .run();
+  editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, replacement).run();
 }
 
 /** Send SPELL_ADD_WORD to the host. */
@@ -82,7 +77,7 @@ export function tryShowSpellMenu(
   // Simplest reliable approach: search for the word boundaries around the cursor
   const $pos = editor.state.doc.resolve(docPos);
   const textNode = $pos.parent.textContent ?? '';
-  let textOffset = $pos.parentOffset;
+  const textOffset = $pos.parentOffset;
   // Walk left to word start
   let wStart = textOffset;
   while (wStart > 0 && !/\s/.test(textNode[wStart - 1])) wStart--;
@@ -123,7 +118,7 @@ export function tryShowSpellMenu(
       lbl.textContent = sug;
       btn.style.fontWeight = '600';
       btn.appendChild(lbl);
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', e => {
         e.stopPropagation();
         removeSpellMenu();
         applyCorrection(editor, from, to, sug);
@@ -160,7 +155,7 @@ export function tryShowSpellMenu(
     lbl.className = 'context-menu-label';
     lbl.textContent = `Add "${word}" to dictionary`;
     btn.appendChild(lbl);
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', e => {
       e.stopPropagation();
       removeSpellMenu();
       addToDictionary(word, vscode);

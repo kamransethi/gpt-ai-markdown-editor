@@ -511,4 +511,3 @@ describe('Tab Indentation Extension', () => {
     });
   });
 });
-

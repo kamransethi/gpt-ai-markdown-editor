@@ -232,7 +232,7 @@ describe('markdownSerialization', () => {
 
   it('preserves fenced code blocks while compressing surrounding markdown', () => {
     const content =
-      '# Title\n\n| Value | Note |\n| --- | --- |\n| A | 1 |\n\n```\nfunction example() {\n  return \'code | block\';\n}\n```\n';
+      "# Title\n\n| Value | Note |\n| --- | --- |\n| A | 1 |\n\n```\nfunction example() {\n  return 'code | block';\n}\n```\n";
     const editor = {
       getJSON: jest.fn(() => ({ type: 'doc', content: [] })),
       markdown: {
@@ -241,9 +241,12 @@ describe('markdownSerialization', () => {
       getMarkdown: jest.fn(() => ''),
     } as unknown as import('@tiptap/core').Editor;
 
-    const markdown = getEditorMarkdownForSync(editor, { compressTables: true, trimBlankLines: true });
+    const markdown = getEditorMarkdownForSync(editor, {
+      compressTables: true,
+      trimBlankLines: true,
+    });
 
-    expect(markdown).toContain('```\nfunction example() {\n  return \'code | block\';\n}\n```');
+    expect(markdown).toContain("```\nfunction example() {\n  return 'code | block';\n}\n```");
     expect(markdown).toContain('|A|1|');
     expect(markdown).toContain('|---|---|');
   });
@@ -258,7 +261,10 @@ describe('markdownSerialization', () => {
       getMarkdown: jest.fn(() => ''),
     } as unknown as import('@tiptap/core').Editor;
 
-    const markdown = getEditorMarkdownForSync(editor, { compressTables: true, trimBlankLines: true });
+    const markdown = getEditorMarkdownForSync(editor, {
+      compressTables: true,
+      trimBlankLines: true,
+    });
 
     expect(markdown).toContain('    indented code\n    line 2');
   });

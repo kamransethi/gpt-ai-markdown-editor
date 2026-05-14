@@ -131,7 +131,8 @@ export function serializeDocToHtml(
   // Rebuild HTML: serialize the document via DOMSerializer but patch positions
   // that have custom overrides by replacing their DOM output afterwards.
   // We create a scratch container from the browser document.
-  const tmpDoc: Document = (typeof document !== 'undefined') ? document : (null as unknown as Document);
+  const tmpDoc: Document =
+    typeof document !== 'undefined' ? document : (null as unknown as Document);
 
   if (!tmpDoc) {
     // Fallback for environments without DOM (should not happen in webview)

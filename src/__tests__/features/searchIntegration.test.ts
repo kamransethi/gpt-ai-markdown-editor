@@ -17,16 +17,24 @@ describe('Search and LLM Integration Tests', () => {
 
     it('streams responses correctly from mocked Ollama endpoint', async () => {
       const provider = new OllamaProvider('http://localhost:11434', 'test-model');
-      
+
       // Mock the fetch response with a ReadableStream
       global.fetch = jest.fn().mockImplementation(() => {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
           start(controller) {
-            controller.enqueue(encoder.encode(JSON.stringify({ message: { content: 'Mocked ' }, done: false }) + '\n'));
-            controller.enqueue(encoder.encode(JSON.stringify({ message: { content: 'response' }, done: true }) + '\n'));
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({ message: { content: 'Mocked ' }, done: false }) + '\n'
+              )
+            );
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({ message: { content: 'response' }, done: true }) + '\n'
+              )
+            );
             controller.close();
-          }
+          },
         });
 
         return Promise.resolve(new Response(stream, { status: 200 }));
@@ -34,24 +42,24 @@ describe('Search and LLM Integration Tests', () => {
 
       const messages: LlmMessage[] = [{ role: 'user', content: 'hello' }];
       const chunks: string[] = [];
-      
+
       for await (const chunk of provider.generate(messages)) {
         chunks.push(chunk);
       }
-      
+
       expect(chunks.join('')).toBe('Mocked response');
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:11434/api/chat',
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('"model":"test-model"')
+          body: expect.stringContaining('"model":"test-model"'),
         })
       );
     });
 
     it('handles 404 model not found errors gracefully', async () => {
       const provider = new OllamaProvider('http://localhost:11434', 'missing-model');
-      
+
       global.fetch = jest.fn().mockImplementation(() => {
         const resp = new Response('model not found', { status: 404 });
         // The ollamaProvider calls response.text() which is fine, Response handles it natively
@@ -59,7 +67,7 @@ describe('Search and LLM Integration Tests', () => {
       });
 
       const messages: LlmMessage[] = [{ role: 'user', content: 'hello' }];
-      
+
       await expect(async () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for await (const _chunk of provider.generate(messages)) {
@@ -73,7 +81,7 @@ describe('Search and LLM Integration Tests', () => {
     it('sets up watchers for all provided file patterns', () => {
       vscode.workspace.createFileSystemWatcher = jest.fn();
       const createFileSystemWatcherMock = vscode.workspace.createFileSystemWatcher as jest.Mock;
-      
+
       const mockDisposable = { dispose: jest.fn() };
       const watcherObj = {
         onDidChange: jest.fn().mockReturnValue(mockDisposable),
@@ -85,13 +93,13 @@ describe('Search and LLM Integration Tests', () => {
 
       const patterns = ['**/*.md', '**/*.csv'];
       const watcher = new FluxFlowWatcher(patterns, jest.fn(), jest.fn());
-      
+
       watcher.start();
-      
+
       expect(createFileSystemWatcherMock).toHaveBeenCalledTimes(2);
       expect(createFileSystemWatcherMock).toHaveBeenCalledWith('**/*.md');
       expect(createFileSystemWatcherMock).toHaveBeenCalledWith('**/*.csv');
-      
+
       watcher.dispose();
       createFileSystemWatcherMock.mockRestore();
     });

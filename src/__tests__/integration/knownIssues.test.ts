@@ -871,4 +871,3 @@ describe('DOC-C1: Indented table after numbered list (acceptable extra line)', (
     // This test just documents it.
   });
 });
-

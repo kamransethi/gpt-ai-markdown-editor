@@ -9,11 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent } from './helpers/index';
 
 // A simple base64 1×1 transparent PNG to embed in markdown without a real file
 const TINY_PNG_BASE64 =
@@ -125,7 +121,9 @@ test.describe('Images', () => {
   // Draw.io detection
   // ---------------------------------------------------------------------------
 
-  test('draw.io: .drawio.svg filename recognized — context menu shows "Open diagram" not "Resize"', async ({ page }) => {
+  test('draw.io: .drawio.svg filename recognized — context menu shows "Open diagram" not "Resize"', async ({
+    page,
+  }) => {
     await setContent(page, DRAWIO_MD);
     // The image might render as a placeholder
     const img = page.locator('.ProseMirror img').first();
@@ -139,10 +137,14 @@ test.describe('Images', () => {
         const openItem = menu.locator('li, [role=menuitem]').filter({ hasText: /open|diagram/i });
         const resizeItem = menu.locator('li, [role=menuitem]').filter({ hasText: /resize/i });
         // If "open diagram" exists, that's the draw.io item
-        if (await openItem.count() > 0) {
+        if ((await openItem.count()) > 0) {
           await expect(openItem.first()).toBeVisible();
           // resize should not be the primary action
-          await expect(resizeItem.first()).toBeHidden().catch(() => {/* OK if absent */});
+          await expect(resizeItem.first())
+            .toBeHidden()
+            .catch(() => {
+              /* OK if absent */
+            });
         }
       }
     }

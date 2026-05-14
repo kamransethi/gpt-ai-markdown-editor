@@ -21,9 +21,7 @@ import type { Transaction } from '@tiptap/pm/state';
 /** Plugin state: placeholder ID → current doc position of the image node */
 type UploadState = Map<string, number>;
 
-type UploadMeta =
-  | { type: 'add'; id: string; pos: number }
-  | { type: 'remove'; id: string };
+type UploadMeta = { type: 'add'; id: string; pos: number } | { type: 'remove'; id: string };
 
 export const imageUploadPluginKey = new PluginKey<UploadState>('imageUpload');
 
@@ -92,10 +90,7 @@ export function addUploadTracking(editor: Editor, placeholderId: string): void {
   let foundPos: number | undefined;
   editor.state.doc.descendants((node, pos): boolean | void => {
     if (foundPos !== undefined) return false;
-    if (
-      node.type.name === 'image' &&
-      node.attrs['data-placeholder-id'] === placeholderId
-    ) {
+    if (node.type.name === 'image' && node.attrs['data-placeholder-id'] === placeholderId) {
       foundPos = pos;
       return false;
     }

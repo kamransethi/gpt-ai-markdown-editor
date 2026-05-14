@@ -15,7 +15,6 @@
  * @module aiExplain-unified
  */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const MarkdownIt = require('markdown-it') as typeof import('markdown-it');
 
 /** Singleton markdown-it instance configured for GFM-style tables. */
@@ -132,9 +131,7 @@ export function createStreamingHandler(onComplete?: () => void): {
     if (pendingFrame !== null) return;
     pendingFrame = requestAnimationFrame(() => {
       pendingFrame = null;
-      setBodyContent(
-        `<div class="ai-explain-markdown">${renderMarkdown(latestFullText)}</div>`
-      );
+      setBodyContent(`<div class="ai-explain-markdown">${renderMarkdown(latestFullText)}</div>`);
     });
   }
 
@@ -149,9 +146,7 @@ export function createStreamingHandler(onComplete?: () => void): {
         cancelAnimationFrame(pendingFrame);
         pendingFrame = null;
       }
-      setBodyContent(
-        `<div class="ai-explain-markdown">${renderMarkdown(fullText.trim())}</div>`
-      );
+      setBodyContent(`<div class="ai-explain-markdown">${renderMarkdown(fullText.trim())}</div>`);
       setStopButtonVisible(false);
       onComplete?.();
     },

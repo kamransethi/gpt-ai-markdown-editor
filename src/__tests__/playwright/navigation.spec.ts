@@ -9,12 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  getContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, getContent } from './helpers/index';
 
 const HEADINGS_MD = `# Chapter One
 
@@ -71,7 +66,9 @@ test.describe('Navigation', () => {
 
   test('TOC toolbar button exists @smoke', async ({ page }) => {
     await setContent(page, HEADINGS_MD);
-    const tocBtn = page.locator('[data-testid="toolbar-toc"], [data-testid*="toc"], [data-action*="toc"]');
+    const tocBtn = page.locator(
+      '[data-testid="toolbar-toc"], [data-testid*="toc"], [data-action*="toc"]'
+    );
     const count = await tocBtn.count();
     expect(count).toBeGreaterThanOrEqual(0); // Present if TOC feature enabled
   });
@@ -145,7 +142,11 @@ test.describe('Navigation', () => {
   test('document with headings and alerts has no console errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('ResizeObserver') && !msg.text().includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('ResizeObserver') &&
+        !msg.text().includes('favicon')
+      ) {
         errors.push(msg.text());
       }
     });

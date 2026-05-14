@@ -138,7 +138,12 @@ export async function handleImageAskRequest(
     const ollamaImageModel = vscode.workspace
       .getConfiguration('gptAiMarkdownEditor')
       .get<string>('ollamaImageModel', 'llama3.2-vision:latest');
-    console.log('[DK-AI] Image Ask: Vision settings - Provider:', visionProvider, 'Model:', ollamaImageModel);
+    console.log(
+      '[DK-AI] Image Ask: Vision settings - Provider:',
+      visionProvider,
+      'Model:',
+      ollamaImageModel
+    );
 
     if (selectedProvider === 'GitHub Copilot' && !availability.copilotAvailable) {
       webview.postMessage({
@@ -194,7 +199,11 @@ export async function handleImageAskRequest(
     }
 
     if (imageBase64.length < 100) {
-      console.warn('[DK-AI] Image Ask: Warning - Image data very small (', imageBase64.length, 'bytes). May be invalid.');
+      console.warn(
+        '[DK-AI] Image Ask: Warning - Image data very small (',
+        imageBase64.length,
+        'bytes). May be invalid.'
+      );
     }
 
     // Build prompt
@@ -224,7 +233,11 @@ export async function handleImageAskRequest(
       throw new Error('The configured LLM provider does not support vision inputs.');
     }
 
-    console.log('[DK-AI] Image Ask: Starting vision generation with', imageBase64.length, 'char base64');
+    console.log(
+      '[DK-AI] Image Ask: Starting vision generation with',
+      imageBase64.length,
+      'char base64'
+    );
     let result = '';
     for await (const chunk of provider.generateWithVision(
       messages,

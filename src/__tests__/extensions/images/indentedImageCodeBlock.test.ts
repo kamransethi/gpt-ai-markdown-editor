@@ -134,4 +134,3 @@ describe('IndentedImageCodeBlock', () => {
     expect(manager.serialize(doc)).toBe('    ![alt](./img.png)');
   });
 });
-

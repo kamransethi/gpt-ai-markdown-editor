@@ -543,8 +543,7 @@ export function createEmptyLineMenu(getEditor: () => Editor | null): HTMLElement
     {
       icon: 'codicon-table',
       title: 'Table',
-      run: ed =>
-        ed.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      run: ed => ed.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
     },
   ];
 
@@ -696,7 +695,9 @@ export function createFormattingToolbar(
         title: 'Bullet list',
         icon: { name: 'list-unordered', fallback: '•' },
         action: () => editor.chain().focus().toggleBulletListSmart().run(),
-        isActive: () => editor.isActive('bulletList') || (editor.commands as any)?.isTableBulletActive?.() === true,
+        isActive: () =>
+          editor.isActive('bulletList') ||
+          (editor.commands as any)?.isTableBulletActive?.() === true,
         requiresFocus: true,
       },
       {

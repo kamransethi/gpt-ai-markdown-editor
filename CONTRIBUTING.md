@@ -2,22 +2,31 @@
 
 Welcome! This guide will help you set up the project, understand its architecture, and start contributing.
 
----
+***
 
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
+
 2. [Prerequisites](#prerequisites)
+
 3. [Development Setup](#development-setup)
+
 4. [Project Architecture](#project-architecture)
+
 5. [Development Workflow](#development-workflow)
+
 6. [Testing](#testing)
+
 7. [Build & Package](#build--package)
+
 8. [Code Standards](#code-standards)
+
 9. [How to Contribute](#how-to-contribute)
+
 10. [Getting Help](#getting-help)
 
----
+***
 
 ## Quick Start
 
@@ -38,25 +47,26 @@ npm run watch:debug
 # In VS Code: Press F5 to launch Extension Development Host
 ```
 
----
+***
 
 ## Prerequisites
 
-| Requirement | Version | Notes |
-|-------------|---------|-------|
-| **Node.js** | 20+ LTS | Required for build tooling |
-| **npm** | 10+ | Comes with Node.js |
-| **VS Code** | 1.85.0+ | Extension host for development |
-| **Git** | Latest | Version control |
+| Requirement | Version | Notes                              |
+| ----------- | ------- | ---------------------------------- |
+| **Node.js** | 20+ LTS | Required for build tooling testing |
+| **npm**     | 10+     | Comes with Node.js                 |
+| **VS Code** | 1.85.0+ | Extension host for development     |
+| **Git**     | Latest  | Version control                    |
 
 **Verify your setup:**
+
 ```bash
 node --version   # Should be v20+
 npm --version    # Should be 10+
 code --version   # Should be 1.85+
 ```
 
----
+***
 
 ## Development Setup
 
@@ -81,24 +91,30 @@ npm run watch:debug
 ### 3. Launch Extension Development Host
 
 1. Open the project folder in VS Code
+
 2. Press **F5** (or Run → Start Debugging)
+
 3. A new VS Code window opens with the extension loaded
+
 4. Open any `.md` file
+
 5. Right-click → **"Open with Markdown for Humans"**
 
 ### 4. View Logs and Debug
 
-- **Extension logs**: View → Output → select "Markdown for Humans"
-- **Webview DevTools**: In the Extension Development Host, run command `Developer: Open Webview Developer Tools`
-- **Breakpoints**: Set breakpoints in `src/` files; they work in both extension and webview code
+* **Extension logs**: View → Output → select "Markdown for Humans"
 
----
+* **Webview DevTools**: In the Extension Development Host, run command `Developer: Open Webview Developer Tools`
+
+* **Breakpoints**: Set breakpoints in `src/` files; they work in both extension and webview code
+
+***
 
 ## Project Architecture
 
 ### High-Level Overview
 
-```
+```javascript
 ┌─────────────────────────────────────────────────────────────────┐
 │                        VS Code Extension                         │
 │  ┌─────────────────────────────────────────────────────────────┐│
@@ -119,19 +135,19 @@ npm run watch:debug
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/extension.ts` | Extension entry point, command registration |
-| `src/editor/MarkdownEditorProvider.ts` | Custom editor provider, document sync |
-| `src/webview/editor.ts` | TipTap editor setup, message handling |
-| `src/webview/BubbleMenuView.ts` | Toolbar UI and actions |
-| `src/webview/extensions/` | Custom TipTap extensions (mermaid, images, etc.) |
-| `src/webview/editor.css` | All editor styles |
-| `src/features/` | VS Code features (outline, export) |
+| File                                   | Purpose                                          |
+| -------------------------------------- | ------------------------------------------------ |
+| `src/extension.ts`                     | Extension entry point, command registration      |
+| `src/editor/MarkdownEditorProvider.ts` | Custom editor provider, document sync            |
+| `src/webview/editor.ts`                | TipTap editor setup, message handling            |
+| `src/webview/BubbleMenuView.ts`        | Toolbar UI and actions                           |
+| `src/webview/extensions/`              | Custom TipTap extensions (mermaid, images, etc.) |
+| `src/webview/editor.css`               | All editor styles                                |
+| `src/features/`                        | VS Code features (outline, export)               |
 
 ### Document Sync Flow
 
-```
+```javascript
 VS Code TextDocument (source of truth)
         │
         ▼ (on open/change)
@@ -152,40 +168,48 @@ MarkdownEditorProvider.applyEdit()
 VS Code TextDocument updated
 ```
 
----
+***
 
 ## Development Workflow
 
 ### Making Changes
 
 **Extension code** (`src/extension.ts`, `src/editor/*`, `src/features/*`):
-- Changes require reloading the Extension Development Host
-- Press `Ctrl+Shift+F5` (Cmd+Shift+F5 on Mac) to restart
+
+* Changes require reloading the Extension Development Host
+
+* Press `Ctrl+Shift+F5` (Cmd+Shift+F5 on Mac) to restart
 
 **Webview code** (`src/webview/*`):
-- With `npm run watch:debug`, changes auto-compile
-- Reload the webview: close and reopen the markdown file, or run command `Developer: Reload Webview`
+
+* With `npm run watch:debug`, changes auto-compile
+
+* Reload the webview: close and reopen the markdown file, or run command `Developer: Reload Webview`
 
 ### Adding a New Feature
 
 1. **Toolbar button**: Edit `src/webview/BubbleMenuView.ts`
+
 2. **Keyboard shortcut**: Add to `package.json` under `contributes.keybindings`
+
 3. **Command**: Add to `package.json` under `contributes.commands` and register in `src/extension.ts`
+
 4. **TipTap extension**: Create in `src/webview/extensions/` and import in `editor.ts`
+
 5. **Configuration option**: Add to `package.json` under `contributes.configuration`
 
 ### Common Tasks
 
-| Task | Command |
-|------|---------|
-| Add toolbar button | Edit `BubbleMenuView.ts` |
-| Add command | `package.json` + `extension.ts` |
-| Add keyboard shortcut | `package.json` keybindings |
-| Add config option | `package.json` configuration |
-| Style changes | `editor.css` |
-| TipTap extension | `src/webview/extensions/` |
+| Task                  | Command                         |
+| --------------------- | ------------------------------- |
+| Add toolbar button    | Edit `BubbleMenuView.ts`        |
+| Add command           | `package.json` + `extension.ts` |
+| Add keyboard shortcut | `package.json` keybindings      |
+| Add config option     | `package.json` configuration    |
+| Style changes         | `editor.css`                    |
+| TipTap extension      | `src/webview/extensions/`       |
 
----
+***
 
 ## Testing
 
@@ -204,7 +228,7 @@ npm test -- --coverage
 
 ### Test Structure
 
-```
+```javascript
 src/__tests__/
 ├── editor/           # Extension-side tests
 ├── webview/          # Webview/TipTap tests
@@ -216,7 +240,9 @@ src/__tests__/
 We use **Jest** with **TDD approach**:
 
 1. Write failing test first
+
 2. Implement feature to make it pass
+
 3. Refactor while keeping tests green
 
 ```typescript
@@ -229,7 +255,7 @@ describe('Feature', () => {
 });
 ```
 
----
+***
 
 ## Build & Package
 
@@ -257,22 +283,28 @@ npm run build:release && npm run package:release
 After packaging, install the `.vsix` file locally to test:
 
 **Via Command Line:**
+
 ```bash
 code --install-extension gpt-ai-markdown-editor-0.1.0.vsix
 ```
 
 **Via VS Code UI:**
+
 1. Open **Extensions** view (left sidebar or `View → Extensions`)
+
 2. Click the **⋮** (More Actions) button
+
 3. Choose **"Install from VSIX…"**
+
 4. Browse to the `.vsix` file and select it
+
 5. Reload VS Code if prompted
 
 ### Build Verification
 
 The `npm run verify-build` command checks that critical features weren't tree-shaken during bundling:
 
-```
+```javascript
 🔍 Verifying build outputs...
 📦 Checking webviewJs (dist/webview.js)
    ✅ Found 6/6 features
@@ -283,25 +315,32 @@ The `npm run verify-build` command checks that critical features weren't tree-sh
 
 See [docs/BUILD.md](./docs/BUILD.md) for complete build documentation.
 
----
+***
 
 ## Code Standards
 
 ### TypeScript
 
-- **Strict mode** enabled (see `tsconfig.json`)
-- **No `any`** without explicit justification
-- **Meaningful names** (avoid `x`, `temp`, `data`)
-- **Type all function parameters and returns**
+* **Strict mode** enabled (see `tsconfig.json`)
+
+* **No&#x20;**`any` without explicit justification
+
+* **Meaningful names** (avoid `x`, `temp`, `data`)
+
+* **Type all function parameters and returns**
 
 ### Formatting & Linting
 
 **Automatic Linting:**
-- Pre-commit hook automatically runs `npm run lint:fix` before each commit
-- If linting fails, the commit is blocked (you'll see helpful error messages)
-- To skip (not recommended): `git commit --no-verify`
+
+* Pre-commit hook automatically runs `npm run lint:fix` before each commit
+
+* If linting fails, the commit is blocked (you'll see helpful error messages)
+
+* To skip (not recommended): `git commit --no-verify`
 
 **Manual Commands:**
+
 ```bash
 # Fix linting issues
 npm run lint:fix
@@ -315,12 +354,18 @@ npm run lint
 ### Commit Messages
 
 Use conventional commits:
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation
-- `refactor:` - Code refactoring
-- `test:` - Adding tests
-- `chore:` - Build/tooling changes
+
+* `feat:` - New feature
+
+* `fix:` - Bug fix
+
+* `docs:` - Documentation
+
+* `refactor:` - Code refactoring
+
+* `test:` - Adding tests
+
+* `chore:` - Build/tooling changes
 
 ```bash
 git commit -m "feat: add slash command support"
@@ -329,33 +374,48 @@ git commit -m "fix: resolve cursor jump after image insert"
 
 ### Code Comments
 
-- ✅ Explain **WHY**, not **WHAT**
-- ✅ Document non-obvious decisions
-- ✅ Add JSDoc for public functions
-- ❌ Don't state the obvious
+* ✅ Explain **WHY**, not **WHAT**
 
----
+* ✅ Document non-obvious decisions
+
+* ✅ Add JSDoc for public functions
+
+* ❌ Don't state the obvious
+
+***
 
 ## How to Contribute
 
 ### 🐛 Report Bugs
 
 1. Check [existing issues](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
+
 2. Check [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) to see if it's a known issue
+
 3. **Record a screen video** using [Loom.com](https://www.loom.com) or similar tool showing the bug
+
 4. Create a new issue with:
-   - Clear title and description
-   - **Screen recording link (required)** - Makes it much easier to visualize and reproduce issues
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - VS Code version and OS
-   - Screenshots (optional, to supplement the video)
+
+   * Clear title and description
+
+   * **Screen recording link (required)** - Makes it much easier to visualize and reproduce issues
+
+   * Steps to reproduce
+
+   * Expected vs actual behavior
+
+   * VS Code version and OS
+
+   * Screenshots (optional, to supplement the video)
 
 ### 💡 Suggest Features
 
 1. Check existing feature requests
+
 2. Open a [GitHub Discussion](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
+
 3. Describe the problem it solves
+
 4. Provide examples/mockups if possible
 
 ### 📋 Planning Workflow
@@ -365,8 +425,11 @@ This project uses [GitHub Spec Kit](https://github.com/github/spec-kit) for Spec
 **For new features, use the spec-kit workflow:**
 
 1. `/speckit.specify` — Define what you want to build
+
 2. `/speckit.plan` — Create a technical implementation plan
+
 3. `/speckit.tasks` — Break down into actionable tasks
+
 4. `/speckit.implement` — Execute implementation
 
 See `.specify/memory/constitution.md` for project principles and constraints.
@@ -374,50 +437,73 @@ See `.specify/memory/constitution.md` for project principles and constraints.
 ### 🔧 Submit Code
 
 1. **Fork** the repository
+
 2. **Create a branch**: `git checkout -b feature/my-feature`
+
 3. **Plan first** (recommended): Use `/speckit.specify` and `/speckit.plan` to define and plan the feature
+
 4. **Write tests** for your changes
+
 5. **Make changes** following code standards
+
 6. **Run tests**: `npm test`
+
 7. **Run linter**: `npm run lint:fix`
+
 8. **Commit**: `git commit -m 'feat: add my feature'`
+
 9. **Push**: `git push origin feature/my-feature`
+
 10. **Open a Pull Request** (include plan file if helpful for context)
 
 ### Pull Request Checklist
 
-- [ ] Tests added/updated and passing
-- [ ] Linting passes (`npm run lint`)
-- [ ] Build succeeds (`npm run build:release`)
-- [ ] Documentation updated if needed
-- [ ] Commit messages follow conventions
-- [ ] PR description explains changes
-- [ ] **Screen recording included** (for UI changes, bug fixes, or new features):
-  - Before state (if fixing a bug)
-  - After state (showing the fix/feature working)
-  - Upload to [Loom.com](https://www.loom.com) or similar and paste link in PR
+* [ ] Tests added/updated and passing
 
----
+* [ ] Linting passes (`npm run lint`)
+
+* [ ] Build succeeds (`npm run build:release`)
+
+* [ ] Documentation updated if needed
+
+* [ ] Commit messages follow conventions
+
+* [ ] PR description explains changes
+
+* [ ] **Screen recording included** (for UI changes, bug fixes, or new features):
+
+  * Before state (if fixing a bug)
+
+  * After state (showing the fix/feature working)
+
+  * Upload to [Loom.com](https://www.loom.com) or similar and paste link in PR
+
+***
 
 ## Getting Help
 
-- **GitHub Repository**: [kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)
-- **GitHub Discussions**: [Ask questions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
-- **Issue Tracker**: [Report bugs](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
-- **Email**: dinaranam@gmail.com
+* **GitHub Repository**: [kamransethi/gpt-ai-markdown-editor](https://github.com/kamransethi/gpt-ai-markdown-editor)
+
+* **GitHub Discussions**: [Ask questions](https://github.com/kamransethi/gpt-ai-markdown-editor/discussions)
+
+* **Issue Tracker**: [Report bugs](https://github.com/kamransethi/gpt-ai-markdown-editor/issues)
+
+* **Email**: <dinaranam@gmail.com>
 
 ### Useful Resources
 
-- [VS Code Extension API](https://code.visualstudio.com/api)
-- [TipTap Documentation](https://tiptap.dev/docs)
-- [ProseMirror Guide](https://prosemirror.net/docs/guide/)
+* [VS Code Extension API](https://code.visualstudio.com/api)
 
----
+* [TipTap Documentation](https://tiptap.dev/docs)
+
+* [ProseMirror Guide](https://prosemirror.net/docs/guide/)
+
+***
 
 ## Code of Conduct
 
 Be respectful, inclusive, and professional. We're building a welcoming community for all contributors.
 
----
+***
 
 **Thank you for contributing!** 🎉

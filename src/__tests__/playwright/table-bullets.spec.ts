@@ -62,9 +62,7 @@ async function insertText(page: Page, text: string) {
  * A valid N-column GFM table row has N+1 pipes: `| a | b | c |`.
  */
 function assertTableStructure(md: string, minPipes = 2) {
-  const rows = md
-    .split('\n')
-    .filter(l => l.trim().startsWith('|') && !l.includes('---'));
+  const rows = md.split('\n').filter(l => l.trim().startsWith('|') && !l.includes('---'));
   expect(rows.length).toBeGreaterThan(0);
   for (const row of rows) {
     const count = (row.match(/\|/g) ?? []).length;
@@ -87,12 +85,7 @@ function assertNoEmbeddedNewlinesInRows(md: string) {
 // Fixture
 // ---------------------------------------------------------------------------
 
-const FIXTURE_PATH = path.join(
-  __dirname,
-  '..',
-  'fixtures',
-  'table-bullets.md'
-);
+const FIXTURE_PATH = path.join(__dirname, '..', 'fixtures', 'table-bullets.md');
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -152,7 +145,9 @@ test('bullet markers are preserved (not stripped)', async ({ page }) => {
 
 // ── 3. Add bullets via commands ─────────────────────────────────────────────
 
-test('toggleBulletListSmart adds bullet prefix to selected text in table cell', async ({ page }) => {
+test('toggleBulletListSmart adds bullet prefix to selected text in table cell', async ({
+  page,
+}) => {
   const md = `| Col 1 | Col 2 |\n| ----- | ----- |\n| Row 1<br>Row 2<br>NewBullet<br>Row 3 | Test |`;
   await setMarkdown(page, md);
 
@@ -198,7 +193,7 @@ test('depth-1 bullet uses "+" with 2-space indent', async ({ page }) => {
   await setMarkdown(page, md);
   const output = await getMarkdown(page);
 
-  expect(output).toMatch(/  \+ L2Item/);
+  expect(output).toMatch(/ {2}\+ L2Item/);
 });
 
 test('depth-2 bullet uses "*" with 4-space indent', async ({ page }) => {
@@ -206,7 +201,7 @@ test('depth-2 bullet uses "*" with 4-space indent', async ({ page }) => {
   await setMarkdown(page, md);
   const output = await getMarkdown(page);
 
-  expect(output).toMatch(/    \* L3Item/);
+  expect(output).toMatch(/ {4}\* L3Item/);
 });
 
 test('all three nesting levels present on same row without embedded newlines', async ({ page }) => {
@@ -234,7 +229,7 @@ test('TAB key increases nesting level on bullet line (- to +)', async ({ page })
 
   const output = await getMarkdown(page);
   // After Tab, "- TabTarget" should become "  + TabTarget"
-  expect(output).toMatch(/  \+ TabTarget/);
+  expect(output).toMatch(/ {2}\+ TabTarget/);
 });
 
 test('SHIFT+TAB key decreases nesting level on bullet line (+ to -)', async ({ page }) => {
@@ -252,7 +247,7 @@ test('SHIFT+TAB key decreases nesting level on bullet line (+ to -)', async ({ p
 
   const output = await getMarkdown(page);
   expect(output).toMatch(/- TabTarget/);
-  expect(output).not.toMatch(/  \+ TabTarget/);
+  expect(output).not.toMatch(/ {2}\+ TabTarget/);
 });
 
 // ── 5. Ordered lists in table ────────────────────────────────────────────────

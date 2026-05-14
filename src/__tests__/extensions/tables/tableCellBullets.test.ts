@@ -93,10 +93,15 @@ function getMd(editor: Editor): string {
 
 describe('SC-001 / SC-002: bullet list inside table cell serializes with <br>', () => {
   let editor: Editor;
-  beforeEach(() => { editor = makeEditor(); });
-  afterEach(() => { editor.destroy(); });
+  beforeEach(() => {
+    editor = makeEditor();
+  });
+  afterEach(() => {
+    editor.destroy();
+  });
 
-  it('serializes bullet list items with <br> separator, not raw newlines', () => {    // Load a table where one cell contains a bullet list
+  it('serializes bullet list items with <br> separator, not raw newlines', () => {
+    // Load a table where one cell contains a bullet list
     const input = `| Col 1 | Col 2 |
 | ----- | ----- |
 | Row 1<br>- Bullet 1<br>- Bullet 2 | Test |`;
@@ -108,8 +113,8 @@ describe('SC-001 / SC-002: bullet list inside table cell serializes with <br>', 
     const lines = output.split('\n');
     const dataRow = lines.find(l => l.includes('Bullet'));
     expect(dataRow).toBeDefined();
-    expect(dataRow).toContain('|');         // still a table row
-    expect(dataRow).not.toMatch(/\n/);      // no embedded newlines
+    expect(dataRow).toContain('|'); // still a table row
+    expect(dataRow).not.toMatch(/\n/); // no embedded newlines
     expect(output).toContain('- Bullet 1'); // bullet marker preserved
     expect(output).toContain('- Bullet 2');
   });
@@ -155,9 +160,9 @@ describe('SC-001 / SC-002: bullet list inside table cell serializes with <br>', 
     // L1 must use `-` (depth 0)
     expect(output).toMatch(/- L1/);
     // L2 must use `+` with 2-space indent (depth 1)
-    expect(output).toMatch(/  \+ L2/);
+    expect(output).toMatch(/ {2}\+ L2/);
     // L3 must use `*` with 4-space indent (depth 2)
-    expect(output).toMatch(/    \* L3/);
+    expect(output).toMatch(/ {4}\* L3/);
 
     // All on one table row (no embedded newlines)
     const dataRow = output.split('\n').find(l => l.includes('L1'));
@@ -168,8 +173,12 @@ describe('SC-001 / SC-002: bullet list inside table cell serializes with <br>', 
 
 describe('SC-001 / SC-002: ordered list inside table cell serializes with <br>', () => {
   let editor: Editor;
-  beforeEach(() => { editor = makeEditor(); });
-  afterEach(() => { editor.destroy(); });
+  beforeEach(() => {
+    editor = makeEditor();
+  });
+  afterEach(() => {
+    editor.destroy();
+  });
 
   it('serializes ordered list items with <br> separator, not raw newlines', () => {
     const input = `| Steps | Notes |
@@ -194,8 +203,12 @@ describe('SC-001 / SC-002: ordered list inside table cell serializes with <br>',
 
 describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells', () => {
   let editor: Editor;
-  beforeEach(() => { editor = makeEditor(); });
-  afterEach(() => { editor.destroy(); });
+  beforeEach(() => {
+    editor = makeEditor();
+  });
+  afterEach(() => {
+    editor.destroy();
+  });
 
   it('inserts "- " prefix on selected lines in a table cell', () => {
     const input = `| Col 1 | Col 2 |
@@ -209,7 +222,10 @@ describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells'
     let bulletStart = -1;
     let bulletEnd = -1;
     state.doc.descendants((node, pos) => {
-      if (node.isText && node.text === 'Bullet 1') { bulletStart = pos; bulletEnd = pos + node.nodeSize; }
+      if (node.isText && node.text === 'Bullet 1') {
+        bulletStart = pos;
+        bulletEnd = pos + node.nodeSize;
+      }
     });
     expect(bulletStart).toBeGreaterThan(0);
     editor.commands.setTextSelection({ from: bulletStart, to: bulletEnd });
@@ -235,7 +251,8 @@ describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells'
 
     // Select from "- Bullet 1" to "- Bullet 2"
     const state = editor.state;
-    let b1start = -1, b2end = -1;
+    let b1start = -1,
+      b2end = -1;
     state.doc.descendants((node, pos) => {
       if (node.isText && node.text === '- Bullet 1') b1start = pos;
       if (node.isText && node.text === '- Bullet 2') b2end = pos + node.nodeSize;
@@ -270,9 +287,13 @@ describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells'
   it('falls back to standard toggle when not in a table cell', () => {
     setMd(editor, 'Hello world');
     const state = editor.state;
-    let textStart = -1, textEnd = -1;
+    let textStart = -1,
+      textEnd = -1;
     state.doc.descendants((node, pos) => {
-      if (node.isText && node.text === 'Hello world') { textStart = pos; textEnd = pos + node.nodeSize; }
+      if (node.isText && node.text === 'Hello world') {
+        textStart = pos;
+        textEnd = pos + node.nodeSize;
+      }
     });
     editor.commands.setTextSelection({ from: textStart, to: textEnd });
     editor.commands.toggleBulletListSmart();
@@ -286,8 +307,12 @@ describe('toggleBulletListSmart: text-manipulation bullet toggle in table cells'
 
 describe('isTableBulletActive: toolbar state in table cells', () => {
   let editor: Editor;
-  beforeEach(() => { editor = makeEditor(); });
-  afterEach(() => { editor.destroy(); });
+  beforeEach(() => {
+    editor = makeEditor();
+  });
+  afterEach(() => {
+    editor.destroy();
+  });
 
   it('returns true when cursor is on a bullet line in a table cell', () => {
     setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);
@@ -318,8 +343,12 @@ describe('isTableBulletActive: toolbar state in table cells', () => {
 
 describe('Tab/Shift+Tab: indent and dedent bullet lines in table cells', () => {
   let editor: Editor;
-  beforeEach(() => { editor = makeEditor(); });
-  afterEach(() => { editor.destroy(); });
+  beforeEach(() => {
+    editor = makeEditor();
+  });
+  afterEach(() => {
+    editor.destroy();
+  });
 
   it('Tab increases indent depth and cycles marker: - → + ', () => {
     setMd(editor, `| A | B |\n| - | - |\n| - Bullet 1<br>Row 2 | ok |`);

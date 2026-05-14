@@ -21,7 +21,6 @@ function isEmbeddedEditorTarget(target: EventTarget | null): boolean {
   return !!target.closest('.mermaid-source-overlay, .code-block-editor');
 }
 
-
 /**
  * Extract all absolute http/https img src URLs from an HTML string.
  * Used before stripping img tags so we can queue each for upload.
@@ -99,7 +98,8 @@ export function setupClipboardHandlers(getEditor: () => Editor | null): () => vo
           vscode.postMessage({
             type: 'SHOW_NOTIFICATION',
             style: 'warning',
-            message: 'Nested tables detected. They will be flattened as Markdown does not support nested tables.',
+            message:
+              'Nested tables detected. They will be flattened as Markdown does not support nested tables.',
           });
         }
       }

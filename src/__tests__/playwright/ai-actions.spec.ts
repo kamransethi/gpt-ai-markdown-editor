@@ -10,11 +10,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent } from './helpers/index';
 
 test.describe('AI Actions', () => {
   test.beforeEach(async ({ page }) => {
@@ -70,7 +66,11 @@ test.describe('AI Actions', () => {
   test('AI explain does not produce console errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('ResizeObserver') && !msg.text().includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('ResizeObserver') &&
+        !msg.text().includes('favicon')
+      ) {
         errors.push(msg.text());
       }
     });
@@ -97,7 +97,11 @@ test.describe('AI Actions', () => {
   test('clicking AI refine without selection does not crash', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('ResizeObserver') && !msg.text().includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('ResizeObserver') &&
+        !msg.text().includes('favicon')
+      ) {
         errors.push(msg.text());
       }
     });

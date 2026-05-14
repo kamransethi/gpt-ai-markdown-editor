@@ -192,4 +192,3 @@ describe('renderMarkdown', () => {
     expect(out.trim()).toBe('<!-- block -->');
   });
 });
-

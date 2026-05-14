@@ -94,7 +94,10 @@ async function broadcastSpellReload(context: vscode.ExtensionContext): Promise<v
 }
 
 /** Register the SPELL_ADD_WORD handler with the message router. */
-export function registerSpellHandlers(router: MessageRouter, context: vscode.ExtensionContext): void {
+export function registerSpellHandlers(
+  router: MessageRouter,
+  context: vscode.ExtensionContext
+): void {
   router.register(
     MessageType.SPELL_ADD_WORD,
     async (message: { type: string; [key: string]: unknown }, _ctx: HandlerContext) => {
@@ -145,12 +148,16 @@ export async function sendSpellInit(
   // Resolve dictionary URIs — fall back to en-US if the requested locale file doesn't exist
   const tryLocale = (locale: string) => {
     return {
-      aff: webview.asWebviewUri(
-        vscode.Uri.joinPath(context.extensionUri, 'resources', 'dictionaries', `${locale}.aff`)
-      ).toString(),
-      dic: webview.asWebviewUri(
-        vscode.Uri.joinPath(context.extensionUri, 'resources', 'dictionaries', `${locale}.dic`)
-      ).toString(),
+      aff: webview
+        .asWebviewUri(
+          vscode.Uri.joinPath(context.extensionUri, 'resources', 'dictionaries', `${locale}.aff`)
+        )
+        .toString(),
+      dic: webview
+        .asWebviewUri(
+          vscode.Uri.joinPath(context.extensionUri, 'resources', 'dictionaries', `${locale}.dic`)
+        )
+        .toString(),
     };
   };
 

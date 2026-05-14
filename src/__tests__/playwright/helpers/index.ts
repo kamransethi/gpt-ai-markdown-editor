@@ -7,16 +7,13 @@
 import type { Page } from '@playwright/test';
 
 /** URL of the full-featured test harness (all production extensions). */
-export const FULL_HARNESS_URL =
-  '/src/__tests__/playwright/harness/full-editor.html';
+export const FULL_HARNESS_URL = '/src/__tests__/playwright/harness/full-editor.html';
 
 /** URL of the minimal table/list harness (legacy — used by table-bullets.spec.ts). */
-export const TABLE_HARNESS_URL =
-  '/src/__tests__/playwright/harness/index.html';
+export const TABLE_HARNESS_URL = '/src/__tests__/playwright/harness/index.html';
 
 /** URL of the spell-check harness (used by spell-check.spec.ts). */
-export const SPELL_HARNESS_URL =
-  '/src/__tests__/playwright/harness/spell-harness.html';
+export const SPELL_HARNESS_URL = '/src/__tests__/playwright/harness/spell-harness.html';
 
 // ---------------------------------------------------------------------------
 // Editor lifecycle
@@ -116,5 +113,9 @@ export async function clickContextMenuItem(
   label: string,
   menuSelector = '.context-menu, .table-context-menu'
 ): Promise<void> {
-  await page.locator(`${menuSelector} li, ${menuSelector} [role=menuitem]`).filter({ hasText: label }).first().click();
+  await page
+    .locator(`${menuSelector} li, ${menuSelector} [role=menuitem]`)
+    .filter({ hasText: label })
+    .first()
+    .click();
 }

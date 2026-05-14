@@ -9,12 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  getContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, getContent } from './helpers/index';
 
 const FLOW_MD = `\`\`\`mermaid
 graph TD
@@ -90,7 +85,11 @@ test.describe('Mermaid Diagrams', () => {
   test('mermaid render produces no console errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('ResizeObserver') && !msg.text().includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('ResizeObserver') &&
+        !msg.text().includes('favicon')
+      ) {
         errors.push(msg.text());
       }
     });
@@ -106,7 +105,9 @@ test.describe('Mermaid Diagrams', () => {
   test('two mermaid blocks in same document both render', async ({ page }) => {
     const twoMd = FLOW_MD + '\nSome text\n\n' + SEQUENCE_MD;
     await setContent(page, twoMd);
-    const nodes = page.locator('[data-type="mermaid"], .mermaid-diagram, .mermaid-wrapper, [class*="mermaid"]');
+    const nodes = page.locator(
+      '[data-type="mermaid"], .mermaid-diagram, .mermaid-wrapper, [class*="mermaid"]'
+    );
     await expect(nodes).toHaveCount(2, { timeout: 5000 });
   });
 

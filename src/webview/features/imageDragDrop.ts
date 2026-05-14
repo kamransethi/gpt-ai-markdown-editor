@@ -254,11 +254,7 @@ export function imageDragDropHandler(
  * clipboardHandling.ts and TipTap's native paste run for text/HTML.
  * Start the async paste logic as fire-and-forget and return synchronously.
  */
-export function imagePasteHandler(
-  _view: unknown,
-  event: Event,
-  _slice: unknown
-): boolean {
+export function imagePasteHandler(_view: unknown, event: Event, _slice: unknown): boolean {
   const editor = _moduleEditor;
   const vscodeApi = _moduleVscodeApi;
   if (!editor || !vscodeApi) return false;
@@ -973,7 +969,9 @@ function updateImageSrc(placeholderId: string, newSrc: string, editor: Editor): 
 
   const pos = getUploadPos(editor, placeholderId);
   if (pos === undefined) {
-    console.warn(`[DK-AI] updateImageSrc: placeholder ${placeholderId} not in plugin state — may have been deleted`);
+    console.warn(
+      `[DK-AI] updateImageSrc: placeholder ${placeholderId} not in plugin state — may have been deleted`
+    );
     return;
   }
 

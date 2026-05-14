@@ -92,7 +92,7 @@ class FileCache {
           resolve();
         }
       };
-      
+
       // Set a timeout - if refresh takes too long, proceed anyway
       this.refreshTimeoutId = window.setTimeout(() => {
         if (!resolved) {
@@ -103,7 +103,7 @@ class FileCache {
           resolve();
         }
       }, 500);
-      
+
       // Dispatch a postMessage to the extension to refresh workspace files
       const vscode = (window as any).vscode;
       if (vscode) {
