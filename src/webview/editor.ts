@@ -1763,6 +1763,9 @@ function applyZoomLevel(percent: number) {
     document.documentElement.style.setProperty(
       '--md-base-size-override',
       `calc(var(--vscode-editor-font-size, 14px) * ${clamped / 100})`
+    );
+  }
+}
 /**
  * Applies paragraph spacing and zoom settings from an incoming message.
  * Called from both the `update` and `settingsUpdate` handlers.
