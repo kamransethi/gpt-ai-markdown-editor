@@ -91,6 +91,24 @@ export async function runAudit(editor: Editor): Promise<AuditIssue[]> {
       generateHeadingSlug(text, existingSlugs);
     }
 
+    // Truly-empty image syntax `![]()` is rewritten to literal text by the
+    // marked lexer normaliser so it survives the parse round-trip (see
+    // markedLexerNormalizer.ts). The audit must scan text nodes for these
+    // patterns because they never appear as image nodes in the doc.
+    if (node.isText && typeof node.text === 'string' && node.text.includes('![')) {
+      const emptyImageRegex = /!\[\s*\]\(\s*\)/g;
+      let match;
+      while ((match = emptyImageRegex.exec(node.text)) !== null) {
+        issues.push({
+          type: 'image',
+          message: 'Image has no source path.',
+          pos: pos + match.index,
+          nodeSize: match[0].length,
+          target: '',
+        });
+      }
+    }
+
     if (node.type.name === 'image' || node.type.name === 'customImage') {
       const src = node.attrs.src;
       if (!src) {

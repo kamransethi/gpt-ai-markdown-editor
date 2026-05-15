@@ -15,6 +15,18 @@ import { isIP } from 'net';
 import { outlineViewProvider, type OutlineEntry } from '../features/outlineView';
 import { setActiveWebviewPanel, getActiveWebviewPanel } from '../activeWebview';
 import { buildResizeBackupLocation, resolveBackupPathWithCollisionDetection } from './imageBackups';
+import { hasSameBlankLineLayout, isMarkdownStructurallyEquivalent } from './markdownAstEquivalence';
+import { applyBlankLinePolicy, type BlankLineMode } from '../shared/blankLinePolicy';
+
+/**
+ * Coerce text to end with exactly one `\n` (markdownlint MD047). An empty
+ * string stays empty — we don't want to materialize a single-newline file from
+ * an empty webview state.
+ */
+export function ensureSingleTrailingNewline(text: string): string {
+  if (text === '') return text;
+  return text.replace(/\n*$/, '\n');
+}
 
 /**
  * Parse an image filename to extract source prefix
@@ -140,6 +152,66 @@ export function updateFilenameDimensions(
  * Provides WYSIWYG editing using TipTap in a webview
  */
 export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
+  private static readonly MD012_MANAGED_STATE_KEY = 'markdownForHumans.blankLines.managedMd012';
+
+  // Dedup the "Save the file to see the changes." prompt across panels.
+  // A single blank-line-mode change fires `onDidChangeConfiguration` for every
+  // open custom editor; without this we'd stack one toast per open .md file.
+  private static lastBlankLineSavePromptAt = 0;
+
+  private getBlankLineMode(): BlankLineMode {
+    const config = vscode.workspace.getConfiguration();
+    const value = config.get<string>('markdownForHumans.blankLines.mode', 'strip');
+    return value === 'preserve' ? 'preserve' : 'strip';
+  }
+
+  private async syncMarkdownlintMd012(mode: BlankLineMode): Promise<void> {
+    const markdownlintConfig = vscode.workspace.getConfiguration('markdownlint');
+    const existing =
+      (markdownlintConfig.get<Record<string, unknown>>('config') as Record<string, unknown>) ?? {};
+    const managed = this.context.globalState.get<boolean>(
+      MarkdownEditorProvider.MD012_MANAGED_STATE_KEY,
+      false
+    );
+
+    if (mode === 'preserve') {
+      if (existing.MD012 !== false) {
+        await markdownlintConfig.update(
+          'config',
+          {
+            ...existing,
+            MD012: false,
+          },
+          vscode.ConfigurationTarget.Workspace
+        );
+        await this.context.globalState.update(MarkdownEditorProvider.MD012_MANAGED_STATE_KEY, true);
+      }
+      return;
+    }
+
+    if (!managed) return;
+
+    if (existing.MD012 === false) {
+      const next = { ...existing };
+      delete next.MD012;
+      await markdownlintConfig.update('config', next, vscode.ConfigurationTarget.Workspace);
+    }
+    await this.context.globalState.update(MarkdownEditorProvider.MD012_MANAGED_STATE_KEY, false);
+  }
+
+  /**
+   * Re-apply the current blank-line policy to the backing `TextDocument`.
+   *
+   * When switching from preserve to strip, `updateWebview` can show stripped
+   * markdown while the document buffer still holds extra blank lines; the next
+   * save would persist the unstripped buffer. Pushing the policy through
+   * `applyEdit` keeps buffer, webview, and the following save aligned.
+   */
+  private async syncTextDocumentBlankLinePolicy(document: vscode.TextDocument): Promise<void> {
+    const raw = document.getText();
+    await this.applyEdit(raw, document, { editReason: 'save-policy-enforce' });
+  }
+
   private static readonly URL_CHECK_TIMEOUT_MS = 2000;
   private static readonly MAX_FILE_SEARCH_RESULTS = 2000;
 
@@ -148,6 +220,24 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   private pendingEdits = new Map<string, number>();
   // Remember last content sent from the webview so we can skip redundant updates
   private lastWebviewContent = new Map<string, string>();
+  // Most recent in-flight `applyEdit` per document. The autosave bridge awaits
+  // these before calling `document.save()` so VS Code doesn't persist a stale
+  // buffer when the user types and immediately switches focus.
+  // Key: document URI, Value: the latest applyEdit promise for that doc.
+  private inFlightApplyEdits = new Map<string, Promise<boolean>>();
+  // Resolvers for `flushPendingEdit` requests. Keyed by requestId. The webview
+  // replies with `flushPendingEditAck` and we resolve the matching promise.
+  private flushAckResolvers = new Map<string, () => void>();
+  // Panels keyed by document URI so the window-state listener can iterate
+  // every open custom editor instead of relying on the single active panel.
+  private openPanels = new Map<
+    string,
+    { panel: vscode.WebviewPanel; document: vscode.TextDocument }
+  >();
+  // One-shot subscription for `window.onDidChangeWindowState`. Registered the
+  // first time a custom editor opens so tests that never call `resolveCustomTextEditor`
+  // don't need this VS Code API on their mock.
+  private windowStateListener: vscode.Disposable | undefined;
   // --- Audit Search Tuning ---
   /**
    * Minimum length required to attempt ANY file suggestions.
@@ -377,6 +467,18 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Set webview HTML
     webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+    void this.syncMarkdownlintMd012(this.getBlankLineMode()).catch(error => {
+      console.warn('[MD4H] Failed syncing markdownlint MD012 rule:', error);
+    });
+
+    // Register this panel for the autosave bridge. The window-state listener
+    // iterates this map on focus changes; the view-state handler below reads
+    // its own panel/document from closure but registering here keeps lifetimes
+    // consistent.
+    const panelKey = document.uri.toString();
+    this.openPanels.set(panelKey, { panel: webviewPanel, document });
+    this.ensureWindowStateListener();
+
     // Update webview when document changes
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
       if (e.document.uri.toString() === document.uri.toString()) {
@@ -401,12 +503,21 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     const configChangeSubscription = vscode.workspace.onDidChangeConfiguration(e => {
       if (
         e.affectsConfiguration('markdownForHumans.imageResize.skipWarning') ||
+        e.affectsConfiguration('markdownForHumans.copyAiContextRef.skipSaveWarning') ||
         e.affectsConfiguration('markdownForHumans.imagePath') ||
         e.affectsConfiguration('markdownForHumans.imagePathBase') ||
-        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled')
+        e.affectsConfiguration('markdownForHumans.imagePreview.hover.enabled') ||
+        e.affectsConfiguration('markdownForHumans.blankLines.mode') ||
+        e.affectsConfiguration('markdownForHumans.paragraph.spacingBefore') ||
+        e.affectsConfiguration('markdownForHumans.paragraph.spacingAfter') ||
+        e.affectsConfiguration('markdownForHumans.zoom')
       ) {
         const config = vscode.workspace.getConfiguration();
         const skipWarning = config.get<boolean>('markdownForHumans.imageResize.skipWarning', false);
+        const skipAiContextSaveWarning = config.get<boolean>(
+          'markdownForHumans.copyAiContextRef.skipSaveWarning',
+          false
+        );
         const imagePath = config.get<string>('markdownForHumans.imagePath', 'images');
         const imagePathBase = config.get<string>(
           'markdownForHumans.imagePathBase',
@@ -416,12 +527,41 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePreview.hover.enabled',
           true
         );
+        const paragraphSpacingBefore = config.get<number>(
+          'markdownForHumans.paragraph.spacingBefore',
+          0
+        );
+        const paragraphSpacingAfter = config.get<number>(
+          'markdownForHumans.paragraph.spacingAfter',
+          0
+        );
+        const zoom = config.get<number>('markdownForHumans.zoom', 100);
+        const blankLineMode = this.getBlankLineMode();
+        if (e.affectsConfiguration('markdownForHumans.blankLines.mode')) {
+          void this.syncMarkdownlintMd012(blankLineMode).catch(error => {
+            console.warn('[MD4H] Failed syncing markdownlint MD012 rule:', error);
+          });
+          // After the policy rewrites the buffer, either persist the change
+          // (autosave on) or tell the user it's pending (autosave off). The
+          // policy sync is what made the doc dirty, so this branch is the
+          // right moment to act.
+          void this.syncTextDocumentBlankLinePolicy(document)
+            .then(() => this.handleBlankLineModeSavePolicy(document, webviewPanel))
+            .catch(error => {
+              console.error('[MD4H] Failed to sync blank-line policy to document buffer:', error);
+            });
+        }
         webviewPanel.webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
+          skipAiContextSaveWarning: skipAiContextSaveWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
           showImageHoverOverlay: showImageHoverOverlay,
+          paragraphSpacingBefore: paragraphSpacingBefore,
+          paragraphSpacingAfter: paragraphSpacingAfter,
+          zoom: zoom,
+          blankLineMode,
         });
       }
     });
@@ -432,6 +572,20 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       } else if (getActiveWebviewPanel() === webviewPanel) {
         setActiveWebviewPanel(undefined);
       }
+      // Autosave bridge: VS Code's built-in `onFocusChange` /
+      // `onWindowChange` autosave keys off `TextEditor` focus events, and a
+      // custom-editor webview never raises those. When the panel goes
+      // inactive (user switched tab, focused another pane, etc.) we save
+      // ourselves so the user's writing isn't held in an in-memory dirty
+      // buffer indefinitely.
+      if (!webviewPanel.active) {
+        const autoSave = vscode.workspace.getConfiguration('files').get<string>('autoSave', 'off');
+        if (autoSave === 'onFocusChange' || autoSave === 'onWindowChange') {
+          void this.flushAndSaveIfDirty(document, webviewPanel.webview).catch(error => {
+            console.error('[MD4H] Autosave on view-state change failed:', error);
+          });
+        }
+      }
     });
 
     // Cleanup
@@ -439,8 +593,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       changeDocumentSubscription.dispose();
       configChangeSubscription.dispose();
       // Clean up pending edits tracking for this document
-      this.pendingEdits.delete(document.uri.toString());
-      this.lastWebviewContent.delete(document.uri.toString());
+      const docUri = document.uri.toString();
+      this.pendingEdits.delete(docUri);
+      this.lastWebviewContent.delete(docUri);
+      this.inFlightApplyEdits.delete(docUri);
+      if (this.openPanels.get(docUri)?.panel === webviewPanel) {
+        this.openPanels.delete(docUri);
+      }
       if (getActiveWebviewPanel() === webviewPanel) {
         setActiveWebviewPanel(undefined);
       }
@@ -454,7 +613,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   private updateWebview(document: vscode.TextDocument, webview: vscode.Webview) {
     const docUri = document.uri.toString();
     const lastEditTime = this.pendingEdits.get(docUri);
-    const currentContent = document.getText();
+    const mode = this.getBlankLineMode();
+    const rawContent = document.getText();
+    const currentContent = applyBlankLinePolicy(rawContent, mode);
 
     // Skip update if content matches what we already sent from the webview
     const lastSentContent = this.lastWebviewContent.get(docUri);
@@ -478,6 +639,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     // Get skip warning setting
     const config = vscode.workspace.getConfiguration();
     const skipWarning = config.get<boolean>('markdownForHumans.imageResize.skipWarning', false);
+    const skipAiContextSaveWarning = config.get<boolean>(
+      'markdownForHumans.copyAiContextRef.skipSaveWarning',
+      false
+    );
     const imagePath = config.get<string>('markdownForHumans.imagePath', 'images');
     const imagePathBase = config.get<string>(
       'markdownForHumans.imagePathBase',
@@ -487,14 +652,26 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       'markdownForHumans.imagePreview.hover.enabled',
       true
     );
+    const paragraphSpacingBefore = config.get<number>(
+      'markdownForHumans.paragraph.spacingBefore',
+      0
+    );
+    const paragraphSpacingAfter = config.get<number>('markdownForHumans.paragraph.spacingAfter', 0);
+    const zoom = config.get<number>('markdownForHumans.zoom', 100);
+    const blankLineMode = this.getBlankLineMode();
 
     webview.postMessage({
       type: 'update',
       content: transformedContent,
       skipResizeWarning: skipWarning,
+      skipAiContextSaveWarning: skipAiContextSaveWarning,
       imagePath: imagePath,
       imagePathBase: imagePathBase,
       showImageHoverOverlay: showImageHoverOverlay,
+      paragraphSpacingBefore: paragraphSpacingBefore,
+      paragraphSpacingAfter: paragraphSpacingAfter,
+      zoom: zoom,
+      blankLineMode,
     });
   }
 
@@ -507,20 +684,51 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webview: vscode.Webview
   ) {
     switch (message.type) {
-      case 'edit':
-        // Fire-and-forget: errors are handled inside applyEdit and shown to user
-        void this.applyEdit(message.content as string, document);
+      case 'edit': {
+        // Fire-and-forget: errors are handled inside applyEdit and shown to user.
+        // applyEdit only updates the in-memory TextDocument (via WorkspaceEdit) —
+        // it never writes to disk. The file is only persisted to disk on an
+        // explicit `save` message (Ctrl+S), when `copyAiContextRef` saves after
+        // user confirmation, or when the autosave bridge fires `document.save()`.
+        const docUri = document.uri.toString();
+        const editPromise = this.applyEdit(message.content as string, document, {
+          editReason:
+            (message.editReason as 'typing' | 'save-policy-enforce' | undefined) ?? 'typing',
+        });
+        // Track the latest in-flight edit so `flushAndSaveIfDirty` can await
+        // it before persisting; otherwise an in-flight WorkspaceEdit could
+        // land after save() and the saved bytes would be stale.
+        this.inFlightApplyEdits.set(docUri, editPromise);
+        void editPromise.finally(() => {
+          if (this.inFlightApplyEdits.get(docUri) === editPromise) {
+            this.inFlightApplyEdits.delete(docUri);
+          }
+        });
         break;
+      }
       case 'save':
-        // Trigger VS Code's save command
+        // Trigger VS Code's save command — only fired by Ctrl+S in the webview.
         vscode.commands.executeCommand('workbench.action.files.save');
         break;
+      case 'flushPendingEditAck': {
+        const requestId = message.requestId as string;
+        const resolve = this.flushAckResolvers.get(requestId);
+        if (resolve) {
+          this.flushAckResolvers.delete(requestId);
+          resolve();
+        }
+        break;
+      }
       case 'ready': {
         // Webview is ready, send initial content and settings
         this.updateWebview(document, webview);
         // Also send settings separately
         const config = vscode.workspace.getConfiguration();
         const skipWarning = config.get<boolean>('markdownForHumans.imageResize.skipWarning', false);
+        const skipAiContextSaveWarning = config.get<boolean>(
+          'markdownForHumans.copyAiContextRef.skipSaveWarning',
+          false
+        );
         const imagePath = config.get<string>('markdownForHumans.imagePath', 'images');
         const imagePathBase = config.get<string>(
           'markdownForHumans.imagePathBase',
@@ -530,12 +738,27 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           'markdownForHumans.imagePreview.hover.enabled',
           true
         );
+        const paragraphSpacingBefore = config.get<number>(
+          'markdownForHumans.paragraph.spacingBefore',
+          0
+        );
+        const paragraphSpacingAfter = config.get<number>(
+          'markdownForHumans.paragraph.spacingAfter',
+          0
+        );
+        const zoom = config.get<number>('markdownForHumans.zoom', 100);
+        const blankLineMode = this.getBlankLineMode();
         webview.postMessage({
           type: 'settingsUpdate',
           skipResizeWarning: skipWarning,
+          skipAiContextSaveWarning: skipAiContextSaveWarning,
           imagePath: imagePath,
           imagePathBase: imagePathBase,
           showImageHoverOverlay: showImageHoverOverlay,
+          paragraphSpacingBefore: paragraphSpacingBefore,
+          paragraphSpacingAfter: paragraphSpacingAfter,
+          zoom: zoom,
+          blankLineMode,
         });
         break;
       }
@@ -642,6 +865,20 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       case 'getAiContextRef':
         void this.handleGetAiContextRef(message, document, webview);
         break;
+      case 'queryDocumentDirty': {
+        // The webview's pending edits land in the TextDocument via WorkspaceEdit
+        // (see `applyEdit`), so `document.isDirty` is the authoritative answer
+        // even when the user has typed but not yet saved.
+        const requestId = message.requestId as string;
+        if (typeof requestId === 'string') {
+          webview.postMessage({
+            type: 'documentDirtyResponse',
+            requestId,
+            isDirty: document.isDirty,
+          });
+        }
+        break;
+      }
     }
   }
 
@@ -660,8 +897,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webview: vscode.Webview
   ): Promise<void> {
     const requestId = message.requestId as string;
-    const startLine = message.startLine as number;
-    const endLine = message.endLine as number;
+    const rawStart = message.startLine;
+    const rawEnd = message.endLine;
+    // Both line numbers are optional: when the webview couldn't map the
+    // selection to any block (empty doc, all-blank paragraphs, out-of-range
+    // cursor) it omits them and we return the bare `@path`.
+    const hasRange = typeof rawStart === 'number' && typeof rawEnd === 'number';
 
     const reply = (payload: { ref?: string; relPath?: string; error?: string }) => {
       webview.postMessage({
@@ -672,7 +913,9 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     };
 
     if (typeof requestId !== 'string') return;
-    if (typeof startLine !== 'number' || typeof endLine !== 'number') {
+    if (!hasRange && (rawStart !== undefined || rawEnd !== undefined)) {
+      // Partial line info is always a webview bug — fail loudly rather than
+      // silently dropping it.
       reply({ error: 'Invalid line range' });
       return;
     }
@@ -692,6 +935,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         ? path.relative(workspaceFolder.uri.fsPath, filePath)
         : filePath;
       const relPath = relRaw.replace(/\\/g, '/');
+      if (!hasRange) {
+        reply({ ref: `@${relPath}`, relPath });
+        return;
+      }
+      const startLine = rawStart as number;
+      const endLine = rawEnd as number;
       const suffix = startLine === endLine ? `#${startLine}` : `#${startLine}-${endLine}`;
       reply({ ref: `@${relPath}${suffix}`, relPath });
     } catch (error) {
@@ -1358,6 +1607,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       return;
     }
     const imagesDir = path.join(saveBasePath, imageFolderName);
+    if (!isPathContainedWithin(imagesDir, saveBasePath)) {
+      const errorMessage = `Refusing to save image outside the base directory: ${imageFolderName}`;
+      vscode.window.showErrorMessage(errorMessage);
+      webview.postMessage({ type: 'imageError', placeholderId, error: errorMessage });
+      return;
+    }
 
     console.warn(`[MD4H] Saving image "${name}" to folder: ${imagesDir}`);
 
@@ -1366,11 +1621,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       await vscode.workspace.fs.createDirectory(vscode.Uri.file(imagesDir));
 
       // Save image (collision-safe: never overwrite silently)
-      const parsedName = path.parse(name);
+      const safeName = path.basename(name) || 'image';
+      const parsedName = path.parse(safeName);
       const baseFilename = parsedName.name || 'image';
       const extension = parsedName.ext || '';
 
-      let finalFilename = name;
+      let finalFilename = safeName;
       let imagePath = path.join(imagesDir, finalFilename);
       let imageUri = vscode.Uri.file(imagePath);
 
@@ -1603,6 +1859,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       const absoluteImagePath = path.resolve(basePath, normalizedImagePath);
       const absoluteBackupPath = path.resolve(basePath, normalizedBackupPath);
 
+      const allowedRoots = this.getAllowedFileRoots(document);
+      if (!allowedRoots.some(root => isPathContainedWithin(absoluteImagePath, root))) {
+        throw new Error(
+          `Refusing to undo resize for image outside the document/workspace: ${imagePath}`
+        );
+      }
+
       const imageUri = vscode.Uri.file(absoluteImagePath);
       const backupUri = vscode.Uri.file(absoluteBackupPath);
 
@@ -1659,6 +1922,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
       const normalizedPath = normalizeImagePath(imagePath);
       const absolutePath = path.resolve(basePath, normalizedPath);
+
+      const allowedRoots = this.getAllowedFileRoots(document);
+      if (!allowedRoots.some(root => isPathContainedWithin(absolutePath, root))) {
+        throw new Error(
+          `Refusing to redo resize for image outside the document/workspace: ${imagePath}`
+        );
+      }
+
       const imageUri = vscode.Uri.file(absolutePath);
 
       // Convert base64 to buffer
@@ -2869,6 +3140,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         return;
       }
       const imagesDir = path.join(saveBasePath, targetFolder);
+      if (!isPathContainedWithin(imagesDir, saveBasePath)) {
+        const errorMessage = `Refusing to copy image outside the base directory: ${targetFolder}`;
+        vscode.window.showErrorMessage(errorMessage);
+        webview.postMessage({ type: 'localImageCopyError', placeholderId, error: errorMessage });
+        return;
+      }
 
       // Create folder if needed
       await vscode.workspace.fs.createDirectory(vscode.Uri.file(imagesDir));
@@ -2981,6 +3258,111 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
   }
 
   /**
+   * After a Preserve↔Strip switch rewrites the document buffer, either save
+   * the file automatically (if VS Code's `files.autoSave` is enabled) or tell
+   * the user why their on-disk file doesn't yet reflect the new mode.
+   *
+   * Untitled documents are skipped — saving them would open a Save As dialog,
+   * which isn't the behavior the setting change implies.
+   */
+  private async handleBlankLineModeSavePolicy(
+    document: vscode.TextDocument,
+    webviewPanel: vscode.WebviewPanel
+  ): Promise<void> {
+    if (document.uri.scheme === 'untitled') return;
+    if (!document.isDirty) return;
+
+    const autoSave = vscode.workspace.getConfiguration('files').get<string>('autoSave', 'off');
+
+    if (autoSave !== 'off') {
+      // Autosave is on in any mode — VS Code may or may not actually fire it
+      // for a custom-editor focus change, so persist it ourselves to be sure.
+      await this.flushAndSaveIfDirty(document, webviewPanel.webview);
+      return;
+    }
+
+    // Autosave is off. Show the prompt once globally, not once per open panel.
+    const now = Date.now();
+    if (now - MarkdownEditorProvider.lastBlankLineSavePromptAt < 1000) return;
+    MarkdownEditorProvider.lastBlankLineSavePromptAt = now;
+    void vscode.window.showInformationMessage('Save the file to see the changes.');
+  }
+
+  /**
+   * Flush any pending webview-side debounce, await in-flight edits, then save
+   * the document if it's dirty. Called by the autosave bridge whenever VS Code
+   * would normally fire autosave but can't see the custom editor's focus/state
+   * transitions (the webview is an iframe, not a `TextEditor`).
+   *
+   * No-ops for untitled documents — saving those would pop a "Save As" dialog,
+   * which isn't autosave behavior.
+   */
+  private async flushAndSaveIfDirty(
+    document: vscode.TextDocument,
+    webview: vscode.Webview
+  ): Promise<void> {
+    if (document.uri.scheme === 'untitled') return;
+
+    // 1. Ask the webview to fire any debounced edit synchronously so the
+    //    latest content lands in our message queue *before* we save.
+    const requestId = `flush-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const ack = new Promise<void>(resolve => {
+      this.flushAckResolvers.set(requestId, resolve);
+      // Defensive: don't block save forever if the ack never arrives
+      // (webview unloading, message channel torn down, etc.).
+      setTimeout(() => {
+        if (this.flushAckResolvers.delete(requestId)) resolve();
+      }, 250);
+    });
+    webview.postMessage({ type: 'flushPendingEdit', requestId });
+    await ack;
+
+    // 2. The `edit` message (if the webview sent one) reaches `handleWebviewMessage`
+    //    before the ack, so by now its applyEdit Promise is in-flight. Await it
+    //    so save() sees the post-edit buffer.
+    const inFlight = this.inFlightApplyEdits.get(document.uri.toString());
+    if (inFlight) {
+      try {
+        await inFlight;
+      } catch {
+        // applyEdit handles its own errors; ignore here.
+      }
+    }
+
+    if (!document.isDirty) return;
+
+    try {
+      await document.save();
+    } catch (error) {
+      console.error('[MD4H] Autosave document.save() failed:', error);
+    }
+  }
+
+  /**
+   * Lazily register the global `window.onDidChangeWindowState` listener that
+   * drives `onWindowChange` autosave. Guarded with a `typeof` check so unit-test
+   * mocks of `vscode.window` that don't include this API don't crash.
+   */
+  private ensureWindowStateListener(): void {
+    if (this.windowStateListener) return;
+    const onWindowStateChange = vscode.window.onDidChangeWindowState;
+    if (typeof onWindowStateChange !== 'function') return;
+    this.windowStateListener = onWindowStateChange(state => {
+      if (state.focused) return;
+      const autoSave = vscode.workspace.getConfiguration('files').get<string>('autoSave', 'off');
+      if (autoSave !== 'onWindowChange') return;
+      for (const { panel, document } of this.openPanels.values()) {
+        void this.flushAndSaveIfDirty(document, panel.webview).catch(error => {
+          console.error('[MD4H] Autosave on window-state change failed:', error);
+        });
+      }
+    });
+    if (this.context.subscriptions && Array.isArray(this.context.subscriptions)) {
+      this.context.subscriptions.push(this.windowStateListener);
+    }
+  }
+
+  /**
    * Apply edits from webview to TextDocument
    * Marks the edit with a timestamp to prevent feedback loops
    *
@@ -2989,17 +3371,63 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
    * @returns Promise resolving to true if edit succeeded, false otherwise
    * @throws Never - errors are caught and shown to user
    */
-  private async applyEdit(content: string, document: vscode.TextDocument): Promise<boolean> {
+  private async applyEdit(
+    content: string,
+    document: vscode.TextDocument,
+    options?: { editReason?: 'typing' | 'save-policy-enforce' }
+  ): Promise<boolean> {
     // Skip if content unchanged (avoid redundant edits)
     const unwrappedContent = this.unwrapFrontmatterFromWebview(content);
-    if (unwrappedContent === document.getText()) {
+    const blankLineMode = this.getBlankLineMode();
+    const policyContent = applyBlankLinePolicy(unwrappedContent, blankLineMode);
+    // Normalize the inbound text to exactly one trailing newline (markdownlint
+    // MD047). Done up-front so the equality and AST checks below compare the
+    // form we'd actually write — a doc on disk that already ends with `\n`
+    // matches a no-newline serialization and is short-circuited as a no-op.
+    const normalizedContent = ensureSingleTrailingNewline(policyContent);
+    const currentText = document.getText();
+    if (normalizedContent === currentText) {
+      return true;
+    }
+
+    // Suppress writes whose only difference is the WYSIWYG serializer's house
+    // style — bullet marker swaps, ordered-list renumbering, blank-line
+    // collapsing, soft-wrap reflow, etc. When the inbound text renders to the
+    // same document as what's already on disk, leave the original bytes alone
+    // so files authored against `markdownlint` stay lint-clean across opens.
+    // Real edits (any change to rendered content) are detected and fall through.
+    //
+    // In `preserve` mode, blank-line layout is part of the document the user
+    // is editing — markdown-it renders identical HTML regardless of how many
+    // blank lines sit between blocks, so we additionally require the blank-line
+    // signatures to match. Without this, adding or removing blank lines in the
+    // WYSIWYG would never reach the TextDocument and the file would stay clean.
+    const shouldEnforcePolicy = options?.editReason === 'save-policy-enforce';
+    const renderEquivalent =
+      !shouldEnforcePolicy && isMarkdownStructurallyEquivalent(normalizedContent, currentText);
+    const blankLineLayoutMatters = blankLineMode === 'preserve';
+    const blankLineLayoutMatches =
+      !blankLineLayoutMatters || hasSameBlankLineLayout(normalizedContent, currentText);
+    if (renderEquivalent && blankLineLayoutMatches) {
+      // Update the cache so updateWebview() doesn't loop the canonical form
+      // back to the webview as if it were an external change.
+      this.lastWebviewContent.set(document.uri.toString(), currentText);
       return true;
     }
 
     // Mark this edit to prevent feedback loop
     const docUri = document.uri.toString();
     this.pendingEdits.set(docUri, Date.now());
-    this.lastWebviewContent.set(docUri, unwrappedContent);
+    // When policy enforcement modifies the content (e.g., stripping blank lines),
+    // set lastWebviewContent to the ORIGINAL content so that updateWebview()
+    // will detect a mismatch and refresh the webview with the stripped content.
+    // Otherwise, the webview would never refresh to show the policy-enforced state.
+    const contentWasModified = normalizedContent !== unwrappedContent;
+    if (shouldEnforcePolicy && contentWasModified) {
+      this.lastWebviewContent.set(docUri, unwrappedContent);
+    } else {
+      this.lastWebviewContent.set(docUri, normalizedContent);
+    }
 
     const edit = new vscode.WorkspaceEdit();
 
@@ -3009,7 +3437,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       document.positionAt(document.getText().length)
     );
 
-    edit.replace(document.uri, fullRange, unwrappedContent);
+    edit.replace(document.uri, fullRange, normalizedContent);
 
     try {
       const success = await vscode.workspace.applyEdit(edit);

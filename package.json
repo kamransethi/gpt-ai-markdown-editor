@@ -190,11 +190,46 @@
           "default": false,
           "description": "Skip the warning dialog when resizing images. When enabled, images will be resized immediately without confirmation."
         },
+        "markdownForHumans.copyAiContextRef.skipSaveWarning": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip the warning dialog when 'Copy AI Context Reference' needs to save the file first. When enabled, the document is saved silently before copying the reference."
+        },
+        "markdownForHumans.blankLines.mode": {
+          "type": "string",
+          "enum": [
+            "preserve",
+            "strip"
+          ],
+          "default": "strip",
+          "description": "Controls whether extra blank lines are preserved or removed in the editor and saved file."
+        },
         "markdownForHumans.imagePreview.hover.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable the image hover overlay that shades images and displays metadata (resolution, file size, etc.) on hover.",
           "scope": "application"
+        },
+        "markdownForHumans.paragraph.spacingBefore": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 72,
+          "description": "Space before paragraphs in points (margin-top). Default: 0pt"
+        },
+        "markdownForHumans.paragraph.spacingAfter": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 72,
+          "description": "Space after paragraphs in points (margin-bottom). Default: 0pt"
+        },
+        "markdownForHumans.zoom": {
+          "type": "number",
+          "default": 100,
+          "minimum": 50,
+          "maximum": 200,
+          "description": "Zoom level for the editor as a percentage. 100 = default size, 150 = 50% larger, etc."
         }
       }
     }

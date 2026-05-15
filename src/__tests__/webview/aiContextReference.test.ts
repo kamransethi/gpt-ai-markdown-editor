@@ -10,6 +10,8 @@ import {
   formatAiContextRef,
   findContainingBlockIndex,
   getSelectionBlockRange,
+  copyAiContextReference,
+  type SelectionBlockRange,
 } from '../../webview/utils/aiContextReference';
 
 describe('countLines', () => {
@@ -58,6 +60,15 @@ describe('formatAiContextRef', () => {
 
   it('does not collapse a true range when start === end - 0 (sanity)', () => {
     expect(formatAiContextRef('a.md', 5, 6)).toBe('@a.md#5-6');
+  });
+
+  it('omits the #N suffix entirely when no line numbers are supplied', () => {
+    expect(formatAiContextRef('src/foo.md')).toBe('@src/foo.md');
+  });
+
+  it('omits the #N suffix when only startLine is supplied', () => {
+    // Partial line info is not a valid reference — fall back to bare path.
+    expect(formatAiContextRef('src/foo.md', 42)).toBe('@src/foo.md');
   });
 });
 
@@ -313,6 +324,42 @@ describe('getSelectionBlockRange', () => {
     expect(getSelectionBlockRange(editor as any)).toEqual({ startLine: 5, endLine: 5 });
   });
 
+  it('ignores extra blank paragraphs in strip mode', () => {
+    const blocks = [
+      { typeName: 'paragraph', text: 'A', nodeSize: 3 },
+      { typeName: 'paragraph', text: '', nodeSize: 2 },
+      { typeName: 'paragraph', text: '', nodeSize: 2 },
+      { typeName: 'paragraph', text: 'B', nodeSize: 3 },
+    ];
+    const serialize = (json: { type: string; content: unknown[] }) => {
+      const items = json.content as Array<{ type: string; content?: Array<{ text: string }> }>;
+      const isEmpty = (n: { type: string; content?: Array<{ text: string }> }) =>
+        n.type === 'paragraph' &&
+        (!n.content || n.content.length === 0 || (n.content[0]?.text ?? '').trim() === '');
+      let s = 0;
+      while (s < items.length && isEmpty(items[s])) s++;
+      let e = items.length;
+      while (e > s && isEmpty(items[e - 1])) e--;
+      if (s >= e) return '';
+      let result = '';
+      for (let i = s; i < e; i++) {
+        const n = items[i];
+        if (isEmpty(n)) continue;
+        const text = n.content?.[0]?.text ?? '';
+        if (result !== '') result += '\n\n';
+        result += text;
+      }
+      return result + '\n';
+    };
+    const editor = buildStubEditor({
+      blocks,
+      selection: { from: 9, to: 9, empty: true },
+      serialize,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getSelectionBlockRange(editor as any, 'strip')).toEqual({ startLine: 3, endLine: 3 });
+  });
+
   it('skips empty leading paragraphs when computing the start line', () => {
     // The editor has an empty paragraph at the top that the save pipeline will strip
     // (stripEmptyDocParagraphsFromJson). The serialized file therefore starts at the
@@ -334,5 +381,165 @@ describe('getSelectionBlockRange', () => {
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(getSelectionBlockRange(editor as any)).toEqual({ startLine: 1, endLine: 1 });
+  });
+});
+
+// Orchestration-level tests: when the cursor/selection can't be mapped to a
+// concrete line range (empty doc, all-blank paragraphs, out-of-range cursor),
+// the high-level `copyAiContextReference` should still succeed by falling back
+// to a filename-only `@path` reference rather than refusing the copy.
+describe('copyAiContextReference filename-only fallback', () => {
+  const mockWriteText = jest.fn();
+
+  beforeAll(() => {
+    Object.defineProperty(global, 'navigator', {
+      value: { clipboard: { writeText: mockWriteText } },
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  beforeEach(() => {
+    mockWriteText.mockReset();
+    mockWriteText.mockResolvedValue(undefined);
+  });
+
+  function buildEmptyDocEditor() {
+    // Editor that returns no JSON content — exercises the `empty-doc-json`
+    // failure path inside computeSelectionBlockRange.
+    return {
+      state: {
+        selection: { from: 0, to: 0, empty: true },
+        doc: { content: { forEach: () => {} } },
+      },
+      getJSON: () => ({ type: 'doc', content: [] }),
+      markdown: { serialize: () => '' },
+    };
+  }
+
+  it('passes a null range to the host and copies @path when the doc is empty', async () => {
+    const editor = buildEmptyDocEditor();
+    let receivedRange: SelectionBlockRange | null | 'unset' = 'unset';
+
+    const result = await copyAiContextReference(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editor as any,
+      'preserve',
+      async range => {
+        receivedRange = range;
+        return { ref: '@docs/empty.md', relPath: 'docs/empty.md' };
+      }
+    );
+
+    expect(receivedRange).toBeNull();
+    expect(result.success).toBe(true);
+    expect(result.ref).toBe('@docs/empty.md');
+    expect(mockWriteText).toHaveBeenCalledWith('@docs/empty.md');
+  });
+
+  it('builds @path from relPath alone when the host omits a pre-built ref', async () => {
+    const editor = buildEmptyDocEditor();
+    const result = await copyAiContextReference(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editor as any,
+      'preserve',
+      async () => ({ relPath: 'docs/empty.md' })
+    );
+    expect(result.success).toBe(true);
+    expect(result.ref).toBe('@docs/empty.md');
+  });
+
+  it('still reports host errors verbatim in the fallback path', async () => {
+    const editor = buildEmptyDocEditor();
+    const result = await copyAiContextReference(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editor as any,
+      'preserve',
+      async () => ({ error: 'No active document' })
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('No active document');
+  });
+
+  // A stub editor that LOOKS valid to `computeSelectionBlockRange` — it would
+  // happily report a line range — but the caller indicates the cursor isn't
+  // really active. This mirrors the real production scenario where ProseMirror
+  // keeps a stale selection after the editor blurs.
+  function buildValidLookingEditor() {
+    return {
+      state: {
+        selection: { from: 4, to: 4, empty: true },
+        doc: {
+          content: {
+            forEach(cb: (node: unknown, offset: number, idx: number) => void) {
+              const node = { type: { name: 'paragraph' }, nodeSize: 13 };
+              cb(node, 0, 0);
+            },
+          },
+        },
+      },
+      getJSON: () => ({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello world' }] }],
+      }),
+      markdown: { serialize: () => 'Hello world\n' },
+    };
+  }
+
+  it('passes the resolved range when the selection maps to a real block', async () => {
+    // Sanity check that the happy path still sends the line numbers — the
+    // fallback should only trigger on failure, not for every selection.
+    const editor = buildValidLookingEditor();
+    let receivedRange: SelectionBlockRange | null | 'unset' = 'unset';
+    const result = await copyAiContextReference(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editor as any,
+      'preserve',
+      async range => {
+        receivedRange = range;
+        return { relPath: 'docs/hello.md' };
+      }
+    );
+
+    expect(receivedRange).toEqual({ startLine: 1, endLine: 1 });
+    expect(result.success).toBe(true);
+    expect(result.ref).toBe('@docs/hello.md#1');
+  });
+
+  it('skips line numbers when the caller says the selection is not active', async () => {
+    // Even though the editor has a perfectly valid selection (ProseMirror's
+    // stale post-blur state), the caller telling us `selectionIsActive: false`
+    // should produce `@path` only — exactly the case the user reported where
+    // a blurred editor was still copying `#N` of the last-touched line.
+    const editor = buildValidLookingEditor();
+    let receivedRange: SelectionBlockRange | null | 'unset' = 'unset';
+    const result = await copyAiContextReference(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editor as any,
+      'preserve',
+      async range => {
+        receivedRange = range;
+        return { relPath: 'docs/hello.md' };
+      },
+      { selectionIsActive: false }
+    );
+
+    expect(receivedRange).toBeNull();
+    expect(result.success).toBe(true);
+    expect(result.ref).toBe('@docs/hello.md');
+  });
+
+  it('uses the line range when selectionIsActive is true and the selection maps cleanly', async () => {
+    const editor = buildValidLookingEditor();
+    const result = await copyAiContextReference(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editor as any,
+      'preserve',
+      async () => ({ relPath: 'docs/hello.md' }),
+      { selectionIsActive: true }
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.ref).toBe('@docs/hello.md#1');
   });
 });

@@ -313,10 +313,11 @@ _(To be filled during task refinement)_
 - `DragHandleController` class manages the six-dot handle element and drop-indicator line:
   - Attached to `view.dom.parentElement` (scrolls with content, positioned absolutely).
   - `mousemove` over the editor: resolves the top-level block at cursor, positions handle vertically centred.
-  - Handle is `draggable=true`; on `dragstart` stores `draggedPos`, sets blank ghost image, dims the dragged block.
-  - `dragover` recomputes best-fit insert position, snaps indicator to block boundaries, validates drop target.
+  - Handle uses Pointer Events (not HTML5 drag-and-drop): `pointerdown` captures the pointer via `setPointerCapture` and records a pending drag; the drag actually starts once movement exceeds `DRAG_START_DISTANCE`. The handle is left non-draggable (`draggable=false`) so the browser's native drag machinery stays out of the way.
+  - On drag start a clone of the block DOM is appended to `document.body` as a custom ghost element (positioned manually on `pointermove`), and the source block is dimmed.
+  - `pointermove` recomputes best-fit insert position, snaps indicator to block boundaries, validates drop target.
   - Auto-scroll using `requestAnimationFrame` when cursor is within 60px of viewport edge (up to 16px/frame).
-  - Invalid drops (inside `codeBlock` or `mathBlock`) turn the indicator red and abort the move on `drop`.
+  - Invalid drops (inside `codeBlock` or `mathBlock`) turn the indicator red and abort the move on `pointerup`; `pointercancel` and `Escape` cancel the drag.
   - `moveBlockUp` / `moveBlockDown` commands swap current top-level block with its sibling via a single ProseMirror transaction (single undo step).
 - Registered `DraggableBlocks` in `src/webview/editor.ts` extensions list.
 - Added keyboard shortcuts: `Alt+↑` / `Alt+↓` via `addKeyboardShortcuts()`.

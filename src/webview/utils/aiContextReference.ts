@@ -17,6 +17,7 @@
 import type { Editor, JSONContent } from '@tiptap/core';
 import { copyToClipboard } from './copyMarkdown';
 import { serializeBlockMarkdown } from './markdownSerialization';
+import type { BlankLineMode } from '../../shared/blankLinePolicy';
 
 export interface AiContextRefResult {
   success: boolean;
@@ -57,8 +58,13 @@ export function countLines(s: string): number {
 /**
  * Format the final clipboard string.
  * Single-line selections collapse to `#42`; multi-line use `#42-58`.
+ * When no line range is supplied (e.g. empty doc, cursor on no content),
+ * the suffix is omitted and the bare `@path` is returned.
  */
-export function formatAiContextRef(relPath: string, startLine: number, endLine: number): string {
+export function formatAiContextRef(relPath: string, startLine?: number, endLine?: number): string {
+  if (typeof startLine !== 'number' || typeof endLine !== 'number') {
+    return `@${relPath}`;
+  }
   const suffix = startLine === endLine ? `#${startLine}` : `#${startLine}-${endLine}`;
   return `@${relPath}${suffix}`;
 }
@@ -112,7 +118,8 @@ interface BlockLineRange {
  */
 function computeBlockLineRanges(
   content: JSONContent[],
-  serialize: (json: JSONContent) => string
+  serialize: (json: JSONContent) => string,
+  blankLineMode: BlankLineMode
 ): BlockLineRange[] {
   let firstIdx = 0;
   while (firstIdx < content.length && isEmptyParagraphJsonNode(content[firstIdx])) firstIdx++;
@@ -129,7 +136,9 @@ function computeBlockLineRanges(
   for (let i = firstIdx; i < lastIdxExclusive; i++) {
     const node = content[i];
     if (isEmptyParagraphJsonNode(node)) {
-      pendingBlanks++;
+      if (blankLineMode === 'preserve') {
+        pendingBlanks++;
+      }
       continue;
     }
 
@@ -141,7 +150,9 @@ function computeBlockLineRanges(
     if (nodeMarkdown === '') {
       // A node that serialises to nothing (and has no structural placeholder)
       // is treated like an empty paragraph, matching the saver's fallback.
-      pendingBlanks++;
+      if (blankLineMode === 'preserve') {
+        pendingBlanks++;
+      }
       continue;
     }
 
@@ -150,7 +161,7 @@ function computeBlockLineRanges(
       cursorLine = 1;
       seenContent = true;
     } else {
-      cursorLine += 2 + pendingBlanks;
+      cursorLine += 2 + (blankLineMode === 'preserve' ? pendingBlanks : 0);
     }
     const startLine = cursorLine;
     const endLine = startLine + blockLines - 1;
@@ -217,7 +228,10 @@ export type SelectionBlockRangeResult =
  * actionable error messages and console diagnostics; the public wrapper below
  * reduces this to `SelectionBlockRange | null` for backwards-compat with tests.
  */
-export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeResult {
+export function computeSelectionBlockRange(
+  editor: Editor,
+  blankLineMode: BlankLineMode = 'preserve'
+): SelectionBlockRangeResult {
   const { from, to, empty } = editor.state.selection;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -264,7 +278,7 @@ export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeR
 
   let ranges: BlockLineRange[];
   try {
-    ranges = computeBlockLineRanges(liveJson.content, serialize);
+    ranges = computeBlockLineRanges(liveJson.content, serialize, blankLineMode);
   } catch (err) {
     return {
       ok: false,
@@ -301,8 +315,11 @@ export function computeSelectionBlockRange(editor: Editor): SelectionBlockRangeR
   return { ok: true, range: { startLine, endLine } };
 }
 
-export function getSelectionBlockRange(editor: Editor): SelectionBlockRange | null {
-  const result = computeSelectionBlockRange(editor);
+export function getSelectionBlockRange(
+  editor: Editor,
+  blankLineMode: BlankLineMode = 'preserve'
+): SelectionBlockRange | null {
+  const result = computeSelectionBlockRange(editor, blankLineMode);
   return result.ok ? result.range : null;
 }
 
@@ -316,23 +333,46 @@ export function getSelectionBlockRange(editor: Editor): SelectionBlockRange | nu
  * The host round-trip is abstracted behind `requestPathFromHost` so the function
  * can be exercised without a real `vscode` webview API in tests if needed later.
  */
+export interface CopyAiContextReferenceOptions {
+  /**
+   * Whether the caller believes the editor has an active cursor/selection.
+   * ProseMirror keeps a stale selection in place after the editor blurs, so
+   * `editor.state.selection` alone can't tell us whether the user is engaged.
+   * The caller (the webview shell) is in a better position to know — typically
+   * by snapshotting `editor.isFocused` synchronously at command-trigger time.
+   *
+   * When `false`, the line-range computation is skipped entirely and the copy
+   * produces a bare `@path` reference. Defaults to `true` for backwards compat.
+   */
+  selectionIsActive?: boolean;
+}
+
 export async function copyAiContextReference(
   editor: Editor,
+  blankLineMode: BlankLineMode,
   requestPathFromHost: (
-    range: SelectionBlockRange
-  ) => Promise<{ ref?: string; relPath?: string; error?: string }>
+    range: SelectionBlockRange | null
+  ) => Promise<{ ref?: string; relPath?: string; error?: string }>,
+  options: CopyAiContextReferenceOptions = {}
 ): Promise<AiContextRefResult> {
-  const result = computeSelectionBlockRange(editor);
-  if (!result.ok) {
-    const message = result.detail
-      ? `AI ref unavailable (${result.reason}: ${result.detail})`
-      : `AI ref unavailable (${result.reason})`;
-    // Surface to the dev console so the user can grab the exact reason if the
-    // toast text is truncated. Keeps host/webview separation — no PII leaves the box.
-    console.warn('[MD4H][aiContextRef]', result);
-    return { success: false, error: message };
+  // When the caller tells us the selection isn't active, skip the block-range
+  // math entirely — ProseMirror's stale post-blur selection would otherwise
+  // produce a misleading `#N` pointing at the last-touched line.
+  // When it IS active and the math can't map to a concrete range (empty doc,
+  // all-blank paragraphs, out-of-range cursor, setup-level failures), we also
+  // fall back to a filename-only reference rather than refusing the copy.
+  let range: SelectionBlockRange | null;
+  if (options.selectionIsActive === false) {
+    range = null;
+  } else {
+    const result = computeSelectionBlockRange(editor, blankLineMode);
+    if (result.ok) {
+      range = result.range;
+    } else {
+      console.warn('[MD4H][aiContextRef]', result);
+      range = null;
+    }
   }
-  const range = result.range;
 
   let response: { ref?: string; relPath?: string; error?: string };
   try {
@@ -347,7 +387,7 @@ export async function copyAiContextReference(
   const ref =
     response.ref ??
     (response.relPath
-      ? formatAiContextRef(response.relPath, range.startLine, range.endLine)
+      ? formatAiContextRef(response.relPath, range?.startLine, range?.endLine)
       : undefined);
   if (!ref) {
     return { success: false, error: 'Host did not return a path' };
