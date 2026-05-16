@@ -114,19 +114,24 @@
     font-size: var(--md-base-size);
   }
 
+  /* Respect user-configured spacingBefore on the first paragraph too (default 0pt
+     keeps existing behaviour when the setting is untouched). */
   .markdown-editor p:first-child {
-    margin-top: 0;
+    margin-top: var(--md-paragraph-spacing-before, 0pt);
   }
 
   /* Paragraph-to-paragraph spacing mirrors the blank line written to disk,
-     so the editor view stays visually consistent with a text editor. */
+     so the editor view stays visually consistent with a text editor.
+     max() ensures the user setting wins when it exceeds the baseline 1em. */
   .markdown-editor p + p {
-    margin-top: 1em;
+    margin-top: max(1em, var(--md-paragraph-spacing-before, 0pt));
   }
 
-  /* Consistent spacing after headings */
+  /* Consistent spacing after headings.
+     max() preserves the minimum 0.5em gap while honouring spacingBefore
+     when the user has set a larger value. */
   .markdown-editor :is(h1, h2, h3, h4, h5, h6) + p {
-    margin-top: var(--md-paragraph-spacing-before, 0.5em);
+    margin-top: max(0.5em, var(--md-paragraph-spacing-before, 0pt));
   }
   
   /* ============================================

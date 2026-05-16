@@ -20,7 +20,10 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
 
   it('should mark document clean when undo returns to original content', async () => {
     const provider = new MarkdownEditorProvider({} as unknown as vscode.ExtensionContext);
-    const originalContent = 'alpha';
+    // applyEdit normalizes inbound content to one trailing newline (MD047),
+    // so the original-on-disk content here is the post-normalization form
+    // (which is what a file-backed VS Code document would actually contain).
+    const originalContent = 'alpha\n';
     let content = originalContent;
     const document = {
       getText: jest.fn(() => content),
@@ -55,7 +58,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
 
   it('should return to clean state after multiple edits are fully undone', async () => {
     const provider = new MarkdownEditorProvider({} as unknown as vscode.ExtensionContext);
-    const originalContent = 'start';
+    // Content carries the MD047 trailing newline so undo back to "original"
+    // produces a byte-identical match.
+    const originalContent = 'start\n';
     let content = originalContent;
     const document = {
       getText: jest.fn(() => content),
@@ -73,7 +78,8 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       return true;
     });
 
-    // Apply multiple edits
+    // Apply multiple edits — inbound text without a trailing newline is
+    // normalized on write, so the document content gains one each time.
     await (
       provider as unknown as {
         applyEdit: (content: string, doc: vscode.TextDocument) => Promise<boolean>;
@@ -90,7 +96,7 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
       }
     ).applyEdit('edit3', document as unknown as vscode.TextDocument);
     expect(document.isDirty).toBe(true);
-    expect(content).toBe('edit3');
+    expect(content).toBe('edit3\n');
 
     // Undo sequence back to original
     await (
@@ -148,7 +154,8 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
 
     const replaces = (lastCall as unknown as { replaces?: Array<{ text: string }> }).replaces;
     expect(replaces).toHaveLength(1);
-    expect(replaces?.[0]?.text).toBe('hi world');
+    // applyEdit adds an MD047 trailing newline before writing.
+    expect(replaces?.[0]?.text).toBe('hi world\n');
     expect((provider as unknown as { pendingEdits: Map<unknown, unknown> }).pendingEdits.size).toBe(
       1
     );
@@ -194,7 +201,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
+      blankLineMode: 'strip',
       skipResizeWarning: false,
+      skipAiContextSaveWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: true,
@@ -235,7 +244,9 @@ describe('MarkdownEditorProvider undo/redo safety', () => {
     expect(payload).toEqual({
       type: 'update',
       content: 'fresh content',
+      blankLineMode: 'strip',
       skipResizeWarning: false,
+      skipAiContextSaveWarning: false,
       imagePath: 'images',
       imagePathBase: 'relativeToDocument',
       showImageHoverOverlay: false,

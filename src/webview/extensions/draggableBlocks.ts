@@ -60,6 +60,27 @@ export function isDraggableBlock(node: ProsemirrorNode): boolean {
   return true;
 }
 
+/**
+ * Position immediately after the last non-empty top-level block — i.e. the
+ * highest doc position that is not inside (or after) a trailing empty
+ * paragraph. `getEditorMarkdownForSync` strips trailing empty paragraphs at
+ * serialization time, so anything dropped past this position lands AFTER the
+ * empties; on save those empties no longer trail and survive as a phantom
+ * blank line in the middle of the markdown.
+ */
+function lastInsertablePos(doc: ProsemirrorNode): number {
+  let pos = doc.content.size;
+  for (let i = doc.childCount - 1; i >= 0; i--) {
+    const child = doc.child(i);
+    if (child.type.name === 'paragraph' && child.content.size === 0) {
+      pos -= child.nodeSize;
+    } else {
+      break;
+    }
+  }
+  return pos;
+}
+
 function topLevelBlockAt(
   view: EditorView,
   pos: number
@@ -135,8 +156,11 @@ function computeDropTarget(
   const editorRect = view.dom.getBoundingClientRect();
   const doc = view.state.doc;
 
+  // Drops past the last non-empty block would survive serialization as a
+  // phantom blank line — clamp to the position before any trailing empties.
+  const maxInsertable = lastInsertablePos(doc);
   const validate = (insertPos: number): { insertPos: number; valid: boolean } => {
-    const clamped = Math.max(0, Math.min(insertPos, doc.content.size));
+    const clamped = Math.max(0, Math.min(insertPos, maxInsertable));
     const $insert = doc.resolve(clamped);
     // Top-level insertion only — parent must be the doc node. Guards against
     // accidentally landing inside a codeBlock/mathBlock.
@@ -214,6 +238,12 @@ class DragHandleController {
   private ghost: HTMLElement | null = null;
   private scrollRafId: number | null = null;
   private _autoScrollSpeed = 0;
+  // Last pointer coords seen while dragging — used by the auto-scroll RAF to
+  // re-evaluate the drop target after each scroll step (the cursor's clientY
+  // is constant while the page moves under it, so dropInsertPos otherwise
+  // becomes stale and the element lands at the pre-scroll position).
+  private _lastPointerX = 0;
+  private _lastPointerY = 0;
 
   private readonly _onMouseMove: (e: MouseEvent) => void;
   private readonly _onMouseLeave: (e: MouseEvent) => void;
@@ -447,13 +477,28 @@ class DragHandleController {
   }
 
   private updateDrag(clientX: number, clientY: number): void {
+    this._lastPointerX = clientX;
+    this._lastPointerY = clientY;
+    // Recompute auto-scroll first so its direction is current when we decide
+    // which side of the indicator to render the ghost on.
+    this.maybeAutoScroll(clientY);
+    this.refreshDropTarget();
+  }
+
+  /**
+   * Recompute drop position, indicator, and ghost placement using the last
+   * known pointer coords. Called from `updateDrag` (on every pointer move)
+   * and from the auto-scroll RAF (so the drop target tracks the content as
+   * it scrolls under a stationary cursor).
+   */
+  private refreshDropTarget(): void {
+    if (!this.isDragging) return;
+    const clientX = this._lastPointerX;
+    const clientY = this._lastPointerY;
     const { insertPos, valid } = computeDropTarget(this.view, clientX, clientY, this.draggedPos);
     this.dropInsertPos = insertPos;
     this.dropValid = valid;
     const indicatorPos = this.positionIndicator(clientY, insertPos, valid);
-    // Recompute auto-scroll first so its direction is current when we decide
-    // which side of the indicator to render the ghost on.
-    this.maybeAutoScroll(clientY);
     if (this.ghost && indicatorPos) {
       // Ghost is pinned to the blue indicator (not the cursor) — so the
       // cursor leaving the window can't drag the ghost off-screen with it.
@@ -520,6 +565,10 @@ class DragHandleController {
           return;
         }
         window.scrollBy(0, this._autoScrollSpeed);
+        // Cursor's clientY hasn't moved but the doc has — recompute against
+        // the newly-visible content so the indicator and dropInsertPos
+        // track what the user sees under the cursor.
+        this.refreshDropTarget();
         this.scrollRafId = requestAnimationFrame(scroll);
       };
       this.scrollRafId = requestAnimationFrame(scroll);
