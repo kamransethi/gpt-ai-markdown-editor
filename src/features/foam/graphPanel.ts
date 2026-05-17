@@ -34,7 +34,14 @@ export function openGraphPanel(context: vscode.ExtensionContext): void {
   // Send snapshot as soon as the webview is ready
   _panel.webview.onDidReceiveMessage(msg => {
     if (msg.type === 'ready') {
-      sendSnapshot(_panel!);
+      const snapshot = getFoamSnapshot();
+      if (snapshot) {
+        sendSnapshot(_panel!);
+      } else {
+        // Foam hasn't finished indexing — send empty data so the webview
+        // shows a loading state instead of a black screen.
+        void _panel!.webview.postMessage({ type: 'graphData', nodes: [], edges: [], loading: true });
+      }
     } else if (msg.type === 'openFile') {
       const uri = vscode.Uri.file(msg.path as string);
       void vscode.commands.executeCommand('vscode.open', uri);

@@ -217,6 +217,11 @@ function draw() {
 // ── Animation loop ─────────────────────────────────────────────────────────
 
 function loop() {
+  if (nodes.length === 0) {
+    drawEmptyState();
+    animHandle = requestAnimationFrame(loop);
+    return;
+  }
   tick();
   draw();
   animHandle = requestAnimationFrame(loop);
@@ -282,14 +287,15 @@ interface NodeData { id: string; label: string; tags: string[] }
 interface EdgeData { source: string; target: string }
 
 window.addEventListener('message', (event: MessageEvent) => {
-  const msg = event.data as { type: string; nodes?: NodeData[]; edges?: EdgeData[] };
+  const msg = event.data as { type: string; nodes?: NodeData[]; edges?: EdgeData[]; loading?: boolean };
   if (msg.type === 'graphData' && msg.nodes && msg.edges) {
-    loadGraph(msg.nodes, msg.edges);
+    loadGraph(msg.nodes, msg.edges, msg.loading ?? false);
   }
 });
 
-function loadGraph(rawNodes: NodeData[], rawEdges: EdgeData[]) {
+function loadGraph(rawNodes: NodeData[], rawEdges: EdgeData[], loading = false) {
   cancelAnimationFrame(animHandle);
+  _loadingFlag = loading;
 
   // Degree map for sizing nodes
   const degree = new Map<string, number>();
@@ -319,6 +325,27 @@ function loadGraph(rawNodes: NodeData[], rawEdges: EdgeData[]) {
   loop();
 }
 
+// ── Empty / loading state overlay ─────────────────────────────────────────
+
+let _loadingFlag = false;
+
+function drawEmptyState() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '14px var(--vscode-font-family, sans-serif)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(
+    _loadingFlag ? 'Indexing workspace…' : 'No notes found. Open a workspace with .md files.',
+    W / 2, H / 2
+  );
+}
+
 // ── Boot ───────────────────────────────────────────────────────────────────
+
+// Start rendering an empty state immediately so the canvas isn't black
+loadGraph([], [], true);
 
 vscode.postMessage({ type: 'ready' });
