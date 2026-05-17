@@ -9,7 +9,8 @@ import { InspectorPanel } from './inspector/InspectorPanel';
 
 function restoreInspectorState(): boolean {
   try {
-    return localStorage.getItem('gptAiInspectorOpen') !== 'false';
+    // Default to CLOSED — only open if explicitly saved as 'true'
+    return localStorage.getItem('gptAiInspectorOpen') === 'true';
   } catch {
     return false;
   }
@@ -19,6 +20,11 @@ export function EditorApp(): React.ReactElement {
   const [inspectorOpen, setInspectorOpen] = useState(restoreInspectorState);
   const [frontmatter, setFrontmatter] = useState<string | null>(null);
   const [wordCount, setWordCount] = useState(0);
+
+  // Sync body class with initial state
+  useEffect(() => {
+    document.body.classList.toggle('inspector-open', inspectorOpen);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for frontmatter updates broadcast by editor.ts
   useEffect(() => {
@@ -66,6 +72,8 @@ export function EditorApp(): React.ReactElement {
       } catch {
         // storage unavailable
       }
+      // Push a body class so the editor can add right padding via CSS
+      document.body.classList.toggle('inspector-open', next);
       return next;
     });
   }

@@ -286,6 +286,11 @@ body[data-theme="dark"] {
   overflow-x: clip;
 }
 
+/* When the Inspector panel is open, shift the editor layout left to avoid overlap */
+body.inspector-open .editor-layout {
+  padding-right: 264px;
+}
+
 .toc-pane-mount {
   display: flex;
   order: 2;

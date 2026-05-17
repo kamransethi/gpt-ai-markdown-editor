@@ -11,9 +11,13 @@ import { EditorApp } from './EditorApp';
 
 const inspectorRoot = document.getElementById('react-inspector');
 if (inspectorRoot) {
-  ReactDOM.createRoot(inspectorRoot).render(
-    <React.StrictMode>
-      <EditorApp />
-    </React.StrictMode>
-  );
+  try {
+    ReactDOM.createRoot(inspectorRoot).render(
+      <React.StrictMode>
+        <EditorApp />
+      </React.StrictMode>
+    );
+  } catch (e) {
+    console.error('[Inspector] React mount failed:', e);
+  }
 }
