@@ -116,6 +116,7 @@ export const MessageType = {
 
   // ── Knowledge Graph ──
   OPEN_GRAPH_CHAT: 'openGraphChat',
+  FOAM_BACKLINKS_UPDATE: 'foamBacklinksUpdate',
 
   // ── Spell Check ──
   SPELL_INIT: 'spellInit', // Host → Webview: { affUrl: string, dicUrl: string, userWords: string[] }

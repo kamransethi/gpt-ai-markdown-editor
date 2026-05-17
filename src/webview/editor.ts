@@ -1758,6 +1758,9 @@ window.addEventListener('message', (event: MessageEvent) => {
           });
         }
         break;
+      case MessageType.FOAM_BACKLINKS_UPDATE:
+        window.dispatchEvent(new CustomEvent('gptAiBacklinksUpdate', { detail: { backlinks: message.backlinks } }));
+        break;
       case MessageType.SAVED:
         if (typeof message.requestId === 'string') {
           devLog(`[DK-AI][SAVE][${message.requestId}] Received "saved" signal from extension`);

@@ -109,25 +109,15 @@ async function buildSnapshot(
     })
   );
 
-  // Build title → path index for resolving wikilinks
-  const titleToPath = new Map<string, string>();
-  const fileNameToPath = new Map<string, string>();
-  for (const note of notes) {
-    if (note.title) titleToPath.set(note.title.toLowerCase(), note.path);
-    const stem = note.path.split('/').pop()?.replace(/\.md$/i, '').toLowerCase();
-    if (stem) fileNameToPath.set(stem, note.path);
-  }
-
-  // Build backlinks index
+  // Build backlinks index using multi-strategy resolution
   const backlinks: Record<string, FoamBacklink[]> = {};
   for (const [sourcePath, links] of outboundLinks) {
     const sourceNote = notes.find(n => n.path === sourcePath);
     for (const link of links) {
-      const targetPath =
-        titleToPath.get(link.toLowerCase()) ?? fileNameToPath.get(link.toLowerCase());
-      if (targetPath) {
-        if (!backlinks[targetPath]) backlinks[targetPath] = [];
-        backlinks[targetPath].push({
+      const targetNote = resolveNote(notes, link);
+      if (targetNote) {
+        if (!backlinks[targetNote.path]) backlinks[targetNote.path] = [];
+        backlinks[targetNote.path].push({
           sourcePath,
           sourceTitle: sourceNote?.title ?? sourcePath.split('/').pop() ?? sourcePath,
         });
@@ -146,9 +136,42 @@ async function buildSnapshot(
 
 function parseNote(uri: vscode.Uri, content: string): FoamNote {
   const path = uri.fsPath;
-  const title = extractTitle(content) ?? uri.fsPath.split('/').pop()?.replace(/\.md$/i, '') ?? '';
+  const filename = (path.split('/').pop() ?? path).replace(/\.md$/i, '');
+  const title = extractTitle(content) ?? filename;
   const tags = extractTags(content);
-  return { path, title, uri: uri.toString(), tags };
+  const aliases = extractAliases(content);
+  return { path, filename, title, uri: uri.toString(), tags, aliases };
+}
+
+// ── Tolaria-inspired 5-strategy wikilink resolution ───────────────────────
+
+/**
+ * Resolve a wikilink target to a FoamNote using 5 strategies (in priority order):
+ * 1. Path-suffix match  (e.g. "docs/adr/foo" matches ".../docs/adr/foo.md")
+ * 2. Filename stem      (e.g. "my-note" matches "my-note.md")
+ * 3. Alias             (from frontmatter aliases: field)
+ * 4. Exact title match
+ * 5. Humanized title   ("my-note" → "my note" title comparison)
+ */
+function resolveNote(notes: FoamNote[], rawTarget: string): FoamNote | undefined {
+  const target = rawTarget.includes('|') ? rawTarget.split('|')[0] : rawTarget;
+  const norm = target.toLowerCase();
+  const lastSegment = norm.includes('/') ? (norm.split('/').pop() ?? norm) : norm;
+  const pathSuffix = norm.includes('/') ? `/${norm}.md` : null;
+  const humanized = lastSegment.replace(/-/g, ' ');
+
+  return (
+    // 1. Path-suffix match
+    (pathSuffix ? notes.find(n => n.path.toLowerCase().endsWith(pathSuffix)) : undefined) ??
+    // 2. Filename stem match
+    notes.find(n => n.filename.toLowerCase() === norm || n.filename.toLowerCase() === lastSegment) ??
+    // 3. Alias match
+    notes.find(n => n.aliases.some(a => a.toLowerCase() === norm || a.toLowerCase() === lastSegment)) ??
+    // 4. Exact title match
+    notes.find(n => n.title.toLowerCase() === norm || n.title.toLowerCase() === lastSegment) ??
+    // 5. Humanized title
+    (humanized !== norm ? notes.find(n => n.title.toLowerCase() === humanized) : undefined)
+  );
 }
 
 function extractTitle(content: string): string | null {
@@ -159,6 +182,25 @@ function extractTitle(content: string): string | null {
   const h1Match = content.match(/^#\s+(.+)$/m);
   if (h1Match) return h1Match[1].trim();
   return null;
+}
+
+function extractAliases(content: string): string[] {
+  const aliases: string[] = [];
+  // aliases: [a, b] inline array
+  const inlineMatch = content.match(/^aliases:\s*\[([^\]]+)\]/m);
+  if (inlineMatch) {
+    aliases.push(...inlineMatch[1].split(',').map(a => a.trim().replace(/["']/g, '')).filter(Boolean));
+  }
+  // aliases:\n  - value list
+  const fmEnd = content.indexOf('\n---\n', 4);
+  const fmSection = fmEnd > -1 ? content.slice(0, fmEnd) : '';
+  const aliasesListStart = fmSection.search(/^aliases:\s*$/m);
+  if (aliasesListStart > -1) {
+    const afterKey = fmSection.slice(aliasesListStart);
+    const items = [...afterKey.matchAll(/^ {2}-\s+(.+)$/gm)];
+    aliases.push(...items.map(m => m[1].trim()));
+  }
+  return [...new Set(aliases)];
 }
 
 function extractTags(content: string): string[] {

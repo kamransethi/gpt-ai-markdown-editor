@@ -8,12 +8,16 @@
 export interface FoamNote {
   /** Absolute path to the file */
   path: string;
+  /** Filename without extension (last path segment, no .md) */
+  filename: string;
   /** Display title (from frontmatter or first heading) */
   title: string;
   /** Raw file URI */
   uri: string;
   /** Tags extracted from frontmatter or inline #tags */
   tags: string[];
+  /** Aliases from frontmatter aliases: field */
+  aliases: string[];
 }
 
 export interface FoamBacklink {

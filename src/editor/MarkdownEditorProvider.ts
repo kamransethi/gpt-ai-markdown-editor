@@ -21,6 +21,7 @@ import { handleImageAskRequest } from '../features/imageAsk';
 import { getModelDisplayName, getImageModelDisplayName } from '../features/llm/providerFactory';
 import { getNonce } from './utils';
 import { MessageType } from '../shared/messageTypes';
+import { getBacklinks } from '../features/foam/foamAdapter';
 import { toErrorMessage } from '../shared/errorUtils';
 import { createMessageRouter, type MessageRouter, type HandlerContext } from './messageRouter';
 import { registerImageHandlers } from './handlers/imageHandlers';
@@ -363,6 +364,12 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       if (webviewPanel.active) {
         setActiveWebviewPanel(webviewPanel);
         setActiveDocumentUri(document.uri);
+        // Send backlinks for the current file to update the Inspector panel
+        const backlinks = getBacklinks(document.uri.fsPath);
+        void webviewPanel.webview.postMessage({
+          type: MessageType.FOAM_BACKLINKS_UPDATE,
+          backlinks,
+        });
       } else if (getActiveWebviewPanel() === webviewPanel) {
         setActiveWebviewPanel(undefined);
       }
