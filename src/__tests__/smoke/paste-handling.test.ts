@@ -126,10 +126,10 @@ describe('FR-006: hasOnlyImageContent', () => {
 // FR-004: Unified event pipeline — editorProps handler contracts
 // ---------------------------------------------------------------------------
 describe('FR-004: imagePasteHandler / imageDragDropHandler contracts', () => {
-  it('imageDragDropHandler returns false when no files or image paths in dataTransfer', () => {
+  it('imageDragDropHandler returns false when no files or image paths in dataTransfer', async () => {
     // Import the exported handler — it relies on _moduleEditor/_moduleVscodeApi being null
     // at this point so it should return false
-    const { imageDragDropHandler } = require('../../webview/features/imageDragDrop');
+    const { imageDragDropHandler } = await import('../../webview/features/imageDragDrop');
     const mockDt = { files: [], getData: () => '' } as unknown as DataTransfer;
     const mockEvent = { dataTransfer: mockDt } as unknown as DragEvent;
     const result = imageDragDropHandler(null, mockEvent, null, false);
@@ -137,8 +137,8 @@ describe('FR-004: imagePasteHandler / imageDragDropHandler contracts', () => {
     expect(result).toBe(false);
   });
 
-  it('imagePasteHandler returns false when clipboard has no image content', () => {
-    const { imagePasteHandler } = require('../../webview/features/imageDragDrop');
+  it('imagePasteHandler returns false when clipboard has no image content', async () => {
+    const { imagePasteHandler } = await import('../../webview/features/imageDragDrop');
     const mockClipboard = makeClipboard([{ type: 'text/plain' }], { 'text/plain': 'just text' });
     const mockEvent = { clipboardData: mockClipboard } as unknown as ClipboardEvent;
     const result = imagePasteHandler(null, mockEvent, null);

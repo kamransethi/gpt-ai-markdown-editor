@@ -65,7 +65,8 @@ async function loadLocalImage(imagePath: string, document: vscode.TextDocument):
       console.error('[DK-AI] Image Ask: Failed to load webview image:', err);
       throw new Error(
         `Unable to load webview image. This can happen if the image is still being uploaded. ` +
-          `Please wait for the image to fully load before analyzing it.`
+          `Please wait for the image to fully load before analyzing it.`,
+        { cause: err }
       );
     }
   }

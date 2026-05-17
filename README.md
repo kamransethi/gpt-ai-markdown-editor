@@ -146,10 +146,12 @@ Use the `</>` toolbar button any time you want to jump to source.
 
 ### Recommended Companion Extensions
 
-| Extension | Why |
-|-----------|-----|
+
+| Extension                                                                                                                | Why                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | [Draw.io Integration](https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio) (`hediet.vscode-drawio`) | Double-click any embedded `.drawio.svg` image to open it in the diagram editor |
-| [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) | Powers AI text refinement, image vision analysis, and document summarization |
+| [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)                                     | Powers AI text refinement, image vision analysis, and document summarization   |
+
 
 ---
 

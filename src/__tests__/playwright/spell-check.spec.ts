@@ -119,9 +119,6 @@ test.describe('Spell Check — live decorations', () => {
 
     // The plugin state stores suggestions alongside the word
     const errorDetails = await page.evaluate(() => {
-      const { spellCheckKey } = (window as any).__spellCheckKey
-        ? { spellCheckKey: (window as any).__spellCheckKey }
-        : { spellCheckKey: null };
       // Access via DOM data-attribute isn't available — use the API
       return (window as any).spellAPI.getSpellErrorWords();
     });

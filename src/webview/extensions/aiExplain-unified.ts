@@ -15,7 +15,7 @@
  * @module aiExplain-unified
  */
 
-const MarkdownIt = require('markdown-it') as typeof import('markdown-it');
+import MarkdownIt from 'markdown-it';
 
 /** Singleton markdown-it instance configured for GFM-style tables. */
 const md = new MarkdownIt({

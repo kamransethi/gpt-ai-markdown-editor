@@ -284,6 +284,7 @@ type VsCodeApi = {
   setState: (state: unknown) => void;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare const acquireVsCodeApi: () => VsCodeApi;
 
 // Extended window interface for DK-AI globals
@@ -619,6 +620,9 @@ function updateFrontmatterPanel(frontmatter: string | null): void {
 
   // Update the VIEW FRONTMATTER button
   updateFrontmatterViewButton(frontmatter);
+
+  // Broadcast to React Inspector
+  window.dispatchEvent(new CustomEvent('gptAiFrontmatterSync', { detail: { frontmatter } }));
 }
 
 /**
@@ -824,6 +828,11 @@ async function openFrontmatterEditor(): Promise<void> {
 
 // Expose globally for toolbar button
 (window as any).openFrontmatterEditor = openFrontmatterEditor;
+
+// Allow React Inspector to open the frontmatter modal via custom event
+window.addEventListener('gptAiOpenFrontmatterEditor', () => {
+  void openFrontmatterEditor();
+});
 
 /**
  * Show or create the inline frontmatter block in the editor.

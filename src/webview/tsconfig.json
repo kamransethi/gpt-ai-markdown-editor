@@ -9,7 +9,9 @@
         "module": "ESNext",
         "moduleResolution": "bundler",
         "outDir": "../../dist",
-        "noEmit": true
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "react"
     },
     "include": [
         "./**/*"

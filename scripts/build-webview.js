@@ -60,14 +60,16 @@ const shimOptionalDependenciesPlugin = {
 
 const buildOptions = {
   entryPoints: [
-    { in: 'src/webview/editor.ts', out: 'webview' },
+    { in: 'src/webview/editor.tsx', out: 'webview' },
     { in: 'src/webview/settings/settingsPanel.ts', out: 'settings' },
-    { in: 'src/webview/chat/chatWebview.ts', out: 'chat' },
+    { in: 'src/webview/chat/chatWebview.tsx', out: 'chat' },
     { in: 'src/webview/spellchecker.worker.ts', out: 'spellcheck-worker' },
   ],
   bundle: true,
   outdir: 'dist',
   format: 'iife',
+  jsx: 'automatic',
+  jsxImportSource: 'react',
   sourcemap: !noSourcemap && !isProduction, // Disable for marketplace builds
   minify: isProduction,
   treeShaking: true,

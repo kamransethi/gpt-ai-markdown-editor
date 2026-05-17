@@ -176,7 +176,7 @@ async function getOrCreateWorker(): Promise<Worker | null> {
   try {
     // Try direct Worker creation first (works in standalone browser)
     worker = new Worker(workerUrl, { type: 'module' });
-  } catch (e1) {
+  } catch {
     try {
       // Fallback: fetch script as blob and create Worker from blob URL
       // This bypasses CORS issues in VS Code webviews

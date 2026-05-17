@@ -4,7 +4,7 @@ All notable changes to DK-AI Markdown Editor will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0/).
 
-**Note:** This is the ONLY changelog file. Use this content for GitHub releases (copy and polish as needed with emojis and user-friendly sections).
+**Note:** This is the ONLY changelog file. Use this content for GitHub releases (copy and polish as needed with emojis and user-friendly sections).[[god]]
 
 ## [3.0.0] - 2026-04-19
 
@@ -81,7 +81,7 @@ This is the major launch baseline for the current generation of Flux Flow Markdo
 - **Cleaner Display**: Shows only the filename or heading name in the input field, while storing the full path correctly
 - **Better Navigation**: Fixed image and file link clicking - images now open in VS Code's preview, files open correctly in both development and packaged builds
 
-#### Documentation & Discovery
+#### Documentation &amp; Discovery
 
 - **Enhanced README** — Added comparison table showing how DK-AI Markdown Editor differs from other markdown editors
 - **Improved Marketplace Listing** — Better keywords and descriptions to help users discover the extension more easily

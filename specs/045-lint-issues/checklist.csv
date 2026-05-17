@@ -1,0 +1,369 @@
+id,file,line,column,rule,message,status
+1,src/__tests__/playwright/harness/spell-harness.js,93,11,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+2,src/__tests__/playwright/harness/spell-harness.js,574,16,@typescript-eslint/no-unused-vars,'_2' is assigned a value but never used.,done
+3,src/__tests__/playwright/harness/spell-harness.js,1346,16,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+4,src/__tests__/playwright/harness/spell-harness.js,1527,16,@typescript-eslint/no-unused-vars,'_2' is assigned a value but never used.,done
+5,src/__tests__/playwright/harness/spell-harness.js,1637,11,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+6,src/__tests__/playwright/harness/spell-harness.js,1743,16,no-irregular-whitespace,Irregular whitespace not allowed.,done
+7,src/__tests__/playwright/harness/spell-harness.js,2008,44,@typescript-eslint/no-unused-vars,'name' is defined but never used. Allowed unused args must match /^_/u.,done
+8,src/__tests__/playwright/harness/spell-harness.js,2209,16,@typescript-eslint/no-unused-vars,'_2' is assigned a value but never used.,done
+9,src/__tests__/playwright/harness/spell-harness.js,2310,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+10,src/__tests__/playwright/harness/spell-harness.js,2638,42,no-control-regex,Unexpected control character(s) in regular expression: \x0c.,done
+11,src/__tests__/playwright/harness/spell-harness.js,2655,44,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+12,src/__tests__/playwright/harness/spell-harness.js,2710,62,no-control-regex,Unexpected control character(s) in regular expression: \x0c.,done
+13,src/__tests__/playwright/harness/spell-harness.js,2712,33,no-control-regex,Unexpected control character(s) in regular expression: \x0c.,done
+14,src/__tests__/playwright/harness/spell-harness.js,2713,15,no-control-regex,Unexpected control character(s) in regular expression: \x0c.,done
+15,src/__tests__/playwright/harness/spell-harness.js,2719,37,no-control-regex,Unexpected control character(s) in regular expression: \x0c.,done
+16,src/__tests__/playwright/harness/spell-harness.js,2754,20,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+17,src/__tests__/playwright/harness/spell-harness.js,2758,48,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+18,src/__tests__/playwright/harness/spell-harness.js,2766,23,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+19,src/__tests__/playwright/harness/spell-harness.js,3066,28,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+20,src/__tests__/playwright/harness/spell-harness.js,3241,32,no-undef,'window' is not defined.,done
+21,src/__tests__/playwright/harness/spell-harness.js,3633,11,@typescript-eslint/no-unused-vars,'other' is defined but never used. Allowed unused args must match /^_/u.,done
+22,src/__tests__/playwright/harness/spell-harness.js,4603,11,no-useless-assignment,The value assigned to 'fits' is not used in subsequent statements.,done
+23,src/__tests__/playwright/harness/spell-harness.js,4654,14,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+24,src/__tests__/playwright/harness/spell-harness.js,5141,9,@typescript-eslint/no-unused-vars,'mapping' is defined but never used. Allowed unused args must match /^_/u.,done
+25,src/__tests__/playwright/harness/spell-harness.js,5635,7,no-undef,'console' is not defined.,done
+26,src/__tests__/playwright/harness/spell-harness.js,6271,31,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+27,src/__tests__/playwright/harness/spell-harness.js,6709,9,no-useless-assignment,The value assigned to 'atEnd' is not used in subsequent statements.,done
+28,src/__tests__/playwright/harness/spell-harness.js,6710,9,no-useless-assignment,The value assigned to 'atStart' is not used in subsequent statements.,done
+29,src/__tests__/playwright/harness/spell-harness.js,6959,7,@typescript-eslint/no-unused-vars,'mac' is assigned a value but never used.,done
+30,src/__tests__/playwright/harness/spell-harness.js,6961,35,no-undef,'navigator' is not defined.,done
+31,src/__tests__/playwright/harness/spell-harness.js,6962,37,no-undef,'os' is not defined.,done
+32,src/__tests__/playwright/harness/spell-harness.js,6963,11,no-undef,'os' is not defined.,done
+33,src/__tests__/playwright/harness/spell-harness.js,7172,47,no-undef,'document' is not defined.,done
+34,src/__tests__/playwright/harness/spell-harness.js,7279,17,no-undef,'document' is not defined.,done
+35,src/__tests__/playwright/harness/spell-harness.js,7296,16,@typescript-eslint/no-unused-vars,'_2' is defined but never used.,done
+36,src/__tests__/playwright/harness/spell-harness.js,7296,20,no-empty,Empty block statement.,done
+37,src/__tests__/playwright/harness/spell-harness.js,7307,47,no-undef,'navigator' is not defined.,done
+38,src/__tests__/playwright/harness/spell-harness.js,7308,47,no-undef,'document' is not defined.,done
+39,src/__tests__/playwright/harness/spell-harness.js,7315,7,no-undef,'document' is not defined.,done
+40,src/__tests__/playwright/harness/spell-harness.js,7322,3,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+41,src/__tests__/playwright/harness/spell-harness.js,7333,37,no-undef,'navigator' is not defined.,done
+42,src/__tests__/playwright/harness/spell-harness.js,7409,35,no-undef,'getComputedStyle' is not defined.,done
+43,src/__tests__/playwright/harness/spell-harness.js,7420,21,no-undef,'innerHeight' is not defined.,done
+44,src/__tests__/playwright/harness/spell-harness.js,7547,17,no-undef,'document' is not defined.,done
+45,src/__tests__/playwright/harness/spell-harness.js,7876,16,@typescript-eslint/no-unused-vars,'_2' is defined but never used.,done
+46,src/__tests__/playwright/harness/spell-harness.js,7876,20,no-empty,Empty block statement.,done
+47,src/__tests__/playwright/harness/spell-harness.js,7908,19,@typescript-eslint/no-unused-vars,'widget' is defined but never used. Allowed unused args must match /^_/u.,done
+48,src/__tests__/playwright/harness/spell-harness.js,7911,17,@typescript-eslint/no-unused-vars,'mark' is defined but never used. Allowed unused args must match /^_/u.,done
+49,src/__tests__/playwright/harness/spell-harness.js,7914,17,@typescript-eslint/no-unused-vars,'node' is defined but never used. Allowed unused args must match /^_/u.,done
+50,src/__tests__/playwright/harness/spell-harness.js,7914,23,@typescript-eslint/no-unused-vars,'outerDeco' is defined but never used. Allowed unused args must match /^_/u.,done
+51,src/__tests__/playwright/harness/spell-harness.js,7914,34,@typescript-eslint/no-unused-vars,'innerDeco' is defined but never used. Allowed unused args must match /^_/u.,done
+52,src/__tests__/playwright/harness/spell-harness.js,7917,17,@typescript-eslint/no-unused-vars,'nodeName' is defined but never used. Allowed unused args must match /^_/u.,done
+53,src/__tests__/playwright/harness/spell-harness.js,7928,15,@typescript-eslint/no-unused-vars,'event' is defined but never used. Allowed unused args must match /^_/u.,done
+54,src/__tests__/playwright/harness/spell-harness.js,8092,9,no-empty,Empty block statement.,done
+55,src/__tests__/playwright/harness/spell-harness.js,8253,18,@typescript-eslint/no-unused-vars,'_2' is defined but never used.,done
+56,src/__tests__/playwright/harness/spell-harness.js,8253,22,no-empty,Empty block statement.,done
+57,src/__tests__/playwright/harness/spell-harness.js,8261,21,no-undef,'document' is not defined.,done
+58,src/__tests__/playwright/harness/spell-harness.js,8322,12,@typescript-eslint/no-unused-vars,'text' is defined but never used. Allowed unused args must match /^_/u.,done
+59,src/__tests__/playwright/harness/spell-harness.js,8337,23,no-undef,'document' is not defined.,done
+60,src/__tests__/playwright/harness/spell-harness.js,8347,7,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+61,src/__tests__/playwright/harness/spell-harness.js,8407,11,no-undef,'document' is not defined.,done
+62,src/__tests__/playwright/harness/spell-harness.js,8451,79,@typescript-eslint/no-unused-vars,'view' is defined but never used. Allowed unused args must match /^_/u.,done
+63,src/__tests__/playwright/harness/spell-harness.js,8451,85,@typescript-eslint/no-unused-vars,'pos' is defined but never used. Allowed unused args must match /^_/u.,done
+64,src/__tests__/playwright/harness/spell-harness.js,8485,25,no-undef,'document' is not defined.,done
+65,src/__tests__/playwright/harness/spell-harness.js,8490,11,no-undef,'document' is not defined.,done
+66,src/__tests__/playwright/harness/spell-harness.js,8748,15,no-undef,'document' is not defined.,done
+67,src/__tests__/playwright/harness/spell-harness.js,8798,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+68,src/__tests__/playwright/harness/spell-harness.js,8801,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+69,src/__tests__/playwright/harness/spell-harness.js,8804,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+70,src/__tests__/playwright/harness/spell-harness.js,8891,20,no-undef,'document' is not defined.,done
+71,src/__tests__/playwright/harness/spell-harness.js,9172,19,no-undef,'document' is not defined.,done
+72,src/__tests__/playwright/harness/spell-harness.js,9303,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+73,src/__tests__/playwright/harness/spell-harness.js,9303,7,no-undef,'window' is not defined.,done
+74,src/__tests__/playwright/harness/spell-harness.js,9410,31,no-undef,'document' is not defined.,done
+75,src/__tests__/playwright/harness/spell-harness.js,9410,57,no-undef,'document' is not defined.,done
+76,src/__tests__/playwright/harness/spell-harness.js,9456,36,no-undef,'document' is not defined.,done
+77,src/__tests__/playwright/harness/spell-harness.js,9502,11,no-undef,'setTimeout' is not defined.,done
+78,src/__tests__/playwright/harness/spell-harness.js,9561,14,@typescript-eslint/no-unused-vars,'_2' is defined but never used.,done
+79,src/__tests__/playwright/harness/spell-harness.js,9776,19,no-undef,'document' is not defined.,done
+80,src/__tests__/playwright/harness/spell-harness.js,9786,5,no-undef,'setTimeout' is not defined.,done
+81,src/__tests__/playwright/harness/spell-harness.js,9807,20,no-undef,'getComputedStyle' is not defined.,done
+82,src/__tests__/playwright/harness/spell-harness.js,9860,7,no-undef,'setTimeout' is not defined.,done
+83,src/__tests__/playwright/harness/spell-harness.js,9978,15,no-undef,'document' is not defined.,done
+84,src/__tests__/playwright/harness/spell-harness.js,9980,35,no-undef,'document' is not defined.,done
+85,src/__tests__/playwright/harness/spell-harness.js,10033,11,no-empty,Empty block statement.,done
+86,src/__tests__/playwright/harness/spell-harness.js,10038,11,no-empty,Empty block statement.,done
+87,src/__tests__/playwright/harness/spell-harness.js,10149,44,no-undef,'document' is not defined.,done
+88,src/__tests__/playwright/harness/spell-harness.js,10153,24,no-undef,'window' is not defined.,done
+89,src/__tests__/playwright/harness/spell-harness.js,10195,14,@typescript-eslint/no-unused-vars,'e' is defined but never used.,done
+90,src/__tests__/playwright/harness/spell-harness.js,10265,5,no-undef,'clearTimeout' is not defined.,done
+91,src/__tests__/playwright/harness/spell-harness.js,10266,5,no-undef,'clearTimeout' is not defined.,done
+92,src/__tests__/playwright/harness/spell-harness.js,10311,48,no-undef,'setTimeout' is not defined.,done
+93,src/__tests__/playwright/harness/spell-harness.js,10555,11,no-undef,'setTimeout' is not defined.,done
+94,src/__tests__/playwright/harness/spell-harness.js,10574,38,no-undef,'setTimeout' is not defined.,done
+95,src/__tests__/playwright/harness/spell-harness.js,10712,5,no-undef,'clearTimeout' is not defined.,done
+96,src/__tests__/playwright/harness/spell-harness.js,10713,51,no-undef,'setTimeout' is not defined.,done
+97,src/__tests__/playwright/harness/spell-harness.js,10742,17,no-undef,'document' is not defined.,done
+98,src/__tests__/playwright/harness/spell-harness.js,10766,49,no-undef,'document' is not defined.,done
+99,src/__tests__/playwright/harness/spell-harness.js,10769,15,no-undef,'getSelection' is not defined.,done
+100,src/__tests__/playwright/harness/spell-harness.js,10770,15,no-undef,'document' is not defined.,done
+101,src/__tests__/playwright/harness/spell-harness.js,10775,5,no-undef,'setTimeout' is not defined.,done
+102,src/__tests__/playwright/harness/spell-harness.js,10809,7,no-undef,'document' is not defined.,done
+103,src/__tests__/playwright/harness/spell-harness.js,10815,5,no-undef,'setTimeout' is not defined.,done
+104,src/__tests__/playwright/harness/spell-harness.js,10891,5,no-undef,'window' is not defined.,done
+105,src/__tests__/playwright/harness/spell-harness.js,10968,7,no-undef,'setTimeout' is not defined.,done
+106,src/__tests__/playwright/harness/spell-harness.js,10994,7,no-undef,'setTimeout' is not defined.,done
+107,src/__tests__/playwright/harness/spell-harness.js,11717,9,no-undef,'window' is not defined.,done
+108,src/__tests__/playwright/harness/spell-harness.js,11718,13,no-undef,'window' is not defined.,done
+109,src/__tests__/playwright/harness/spell-harness.js,11751,29,no-undef,'window' is not defined.,done
+110,src/__tests__/playwright/harness/spell-harness.js,11758,9,no-undef,'window' is not defined.,done
+111,src/__tests__/playwright/harness/spell-harness.js,11777,11,no-undef,'window' is not defined.,done
+112,src/__tests__/playwright/harness/spell-harness.js,11793,7,no-undef,'setTimeout' is not defined.,done
+113,src/__tests__/playwright/harness/spell-harness.js,11896,11,no-useless-assignment,The value assigned to 'readSel' is not used in subsequent statements.,done
+114,src/__tests__/playwright/harness/spell-harness.js,11985,50,no-undef,'getComputedStyle' is not defined.,done
+115,src/__tests__/playwright/harness/spell-harness.js,11988,7,no-undef,'console' is not defined.,done
+116,src/__tests__/playwright/harness/spell-harness.js,12021,5,no-undef,'document' is not defined.,done
+117,src/__tests__/playwright/harness/spell-harness.js,12117,20,no-undef,'document' is not defined.,done
+118,src/__tests__/playwright/harness/spell-harness.js,12118,26,no-undef,'document' is not defined.,done
+119,src/__tests__/playwright/harness/spell-harness.js,12286,7,no-undef,'setTimeout' is not defined.,done
+120,src/__tests__/playwright/harness/spell-harness.js,12325,11,no-undef,'setTimeout' is not defined.,done
+121,src/__tests__/playwright/harness/spell-harness.js,12484,44,no-undef,'document' is not defined.,done
+122,src/__tests__/playwright/harness/spell-harness.js,12770,24,no-undef,'document' is not defined.,done
+123,src/__tests__/playwright/harness/spell-harness.js,12861,58,no-undef,'ClipboardEvent' is not defined.,done
+124,src/__tests__/playwright/harness/spell-harness.js,12867,59,no-undef,'ClipboardEvent' is not defined.,done
+125,src/__tests__/playwright/harness/spell-harness.js,12958,17,no-undef,'document' is not defined.,done
+126,src/__tests__/playwright/harness/spell-harness.js,12997,14,@typescript-eslint/no-unused-vars,'_2' is assigned a value but never used.,done
+127,src/__tests__/playwright/harness/spell-harness.js,13086,60,no-undef,'navigator' is not defined.,done
+128,src/__tests__/playwright/harness/spell-harness.js,13089,58,no-undef,'navigator' is not defined.,done
+129,src/__tests__/playwright/harness/spell-harness.js,13093,7,no-redeclare,'i' is already defined.,done
+130,src/__tests__/playwright/harness/spell-harness.js,13098,7,no-redeclare,'i' is already defined.,done
+131,src/__tests__/playwright/harness/spell-harness.js,13099,33,no-prototype-builtins,Do not access Object.prototype method 'hasOwnProperty' from target object.,done
+132,src/__tests__/playwright/harness/spell-harness.js,13121,75,no-undef,'navigator' is not defined.,done
+133,src/__tests__/playwright/harness/spell-harness.js,13122,64,no-undef,'navigator' is not defined.,done
+134,src/__tests__/playwright/harness/spell-harness.js,13396,7,no-undef,'requestAnimationFrame' is not defined.,done
+135,src/__tests__/playwright/harness/spell-harness.js,13400,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+136,src/__tests__/playwright/harness/spell-harness.js,13400,17,no-undef,'window' is not defined.,done
+137,src/__tests__/playwright/harness/spell-harness.js,13400,43,no-undef,'window' is not defined.,done
+138,src/__tests__/playwright/harness/spell-harness.js,13684,12,no-undef,'navigator' is not defined.,done
+139,src/__tests__/playwright/harness/spell-harness.js,13684,64,no-undef,'navigator' is not defined.,done
+140,src/__tests__/playwright/harness/spell-harness.js,13689,9,no-undef,'navigator' is not defined.,done
+141,src/__tests__/playwright/harness/spell-harness.js,13691,8,no-undef,'navigator' is not defined.,done
+142,src/__tests__/playwright/harness/spell-harness.js,13691,63,no-undef,'document' is not defined.,done
+143,src/__tests__/playwright/harness/spell-harness.js,13696,47,no-undef,'navigator' is not defined.,done
+144,src/__tests__/playwright/harness/spell-harness.js,13713,9,no-undef,'requestAnimationFrame' is not defined.,done
+145,src/__tests__/playwright/harness/spell-harness.js,13777,22,no-undef,'window' is not defined.,done
+146,src/__tests__/playwright/harness/spell-harness.js,13806,9,no-undef,'console' is not defined.,done
+147,src/__tests__/playwright/harness/spell-harness.js,14068,58,no-undef,'navigator' is not defined.,done
+148,src/__tests__/playwright/harness/spell-harness.js,14119,25,no-undef,'KeyboardEvent' is not defined.,done
+149,src/__tests__/playwright/harness/spell-harness.js,14131,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+150,src/__tests__/playwright/harness/spell-harness.js,14437,31,no-undef,'document' is not defined.,done
+151,src/__tests__/playwright/harness/spell-harness.js,14710,7,@typescript-eslint/ban-ts-comment,"Use ""@ts-expect-error"" instead of ""@ts-ignore"", as ""@ts-ignore"" will do nothing if the following line is error-free.",done
+152,src/__tests__/playwright/harness/spell-harness.js,14876,7,no-undef,'console' is not defined.,done
+153,src/__tests__/playwright/harness/spell-harness.js,15397,9,no-undef,'console' is not defined.,done
+154,src/__tests__/playwright/harness/spell-harness.js,16112,9,no-undef,'console' is not defined.,done
+155,src/__tests__/playwright/harness/spell-harness.js,16199,13,no-undef,'setTimeout' is not defined.,done
+156,src/__tests__/playwright/harness/spell-harness.js,16202,24,no-self-assign,'text' is assigned to itself.,done
+157,src/__tests__/playwright/harness/spell-harness.js,16234,13,no-undef,'setTimeout' is not defined.,done
+158,src/__tests__/playwright/harness/spell-harness.js,16270,7,@typescript-eslint/ban-ts-comment,"Use ""@ts-expect-error"" instead of ""@ts-ignore"", as ""@ts-ignore"" will do nothing if the following line is error-free.",done
+159,src/__tests__/playwright/harness/spell-harness.js,16421,11,no-undef,'console' is not defined.,done
+160,src/__tests__/playwright/harness/spell-harness.js,16489,23,no-undef,'ClipboardEvent' is not defined.,done
+161,src/__tests__/playwright/harness/spell-harness.js,16490,26,no-undef,'DataTransfer' is not defined.,done
+162,src/__tests__/playwright/harness/spell-harness.js,16492,5,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+163,src/__tests__/playwright/harness/spell-harness.js,16500,66,no-undef,'ClipboardEvent' is not defined.,done
+164,src/__tests__/playwright/harness/spell-harness.js,16503,58,no-undef,'DragEvent' is not defined.,done
+165,src/__tests__/playwright/harness/spell-harness.js,16526,60,no-undef,'DragEvent' is not defined.,done
+166,src/__tests__/playwright/harness/spell-harness.js,16530,64,no-undef,'ClipboardEvent' is not defined.,done
+167,src/__tests__/playwright/harness/spell-harness.js,16553,11,no-undef,'window' is not defined.,done
+168,src/__tests__/playwright/harness/spell-harness.js,16554,11,no-undef,'window' is not defined.,done
+169,src/__tests__/playwright/harness/spell-harness.js,16557,15,no-undef,'window' is not defined.,done
+170,src/__tests__/playwright/harness/spell-harness.js,16558,15,no-undef,'window' is not defined.,done
+171,src/__tests__/playwright/harness/spell-harness.js,16570,19,no-undef,'setTimeout' is not defined.,done
+172,src/__tests__/playwright/harness/spell-harness.js,16604,22,no-self-assign,'text' is assigned to itself.,done
+173,src/__tests__/playwright/harness/spell-harness.js,17158,9,no-undef,'setTimeout' is not defined.,done
+174,src/__tests__/playwright/harness/spell-harness.js,17494,11,no-undef,'console' is not defined.,done
+175,src/__tests__/playwright/harness/spell-harness.js,17718,28,no-undef,'document' is not defined.,done
+176,src/__tests__/playwright/harness/spell-harness.js,17724,23,no-undef,'document' is not defined.,done
+177,src/__tests__/playwright/harness/spell-harness.js,17730,5,no-undef,'document' is not defined.,done
+178,src/__tests__/playwright/harness/spell-harness.js,17745,52,no-undef,'document' is not defined.,done
+179,src/__tests__/playwright/harness/spell-harness.js,17828,24,no-undef,'document' is not defined.,done
+180,src/__tests__/playwright/harness/spell-harness.js,17829,9,no-undef,'document' is not defined.,done
+181,src/__tests__/playwright/harness/spell-harness.js,17831,7,no-undef,'window' is not defined.,done
+182,src/__tests__/playwright/harness/spell-harness.js,17855,24,no-undef,'document' is not defined.,done
+183,src/__tests__/playwright/harness/spell-harness.js,17863,11,no-undef,'console' is not defined.,done
+184,src/__tests__/playwright/harness/spell-harness.js,18711,15,no-useless-assignment,The value assigned to 'matchedContent' is not used in subsequent statements.,done
+185,src/__tests__/playwright/harness/spell-harness.js,18870,15,no-useless-assignment,The value assigned to 'attrString' is not used in subsequent statements.,done
+186,src/__tests__/playwright/harness/spell-harness.js,19098,13,no-useless-assignment,The value assigned to 'markEnd' is not used in subsequent statements.,done
+187,src/__tests__/playwright/harness/spell-harness.js,19496,11,no-useless-assignment,The value assigned to 'output' is not used in subsequent statements.,done
+188,src/__tests__/playwright/harness/spell-harness.js,20174,13,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+189,src/__tests__/playwright/harness/spell-harness.js,20245,11,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+190,src/__tests__/playwright/harness/spell-harness.js,20283,13,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+191,src/__tests__/playwright/harness/spell-harness.js,20644,11,no-useless-assignment,The value assigned to 'nextState' is not used in subsequent statements.,done
+192,src/__tests__/playwright/harness/spell-harness.js,20877,12,@typescript-eslint/no-unused-vars,'scheme2' is defined but never used. Allowed unused args must match /^_/u.,done
+193,src/__tests__/playwright/harness/spell-harness.js,20961,13,@typescript-eslint/no-this-alias,Unexpected aliasing of 'this' to local variable.,done
+194,src/__tests__/playwright/harness/spell-harness.js,21232,11,no-useless-assignment,The value assigned to 'nextState' is not used in subsequent statements.,done
+195,src/__tests__/playwright/harness/spell-harness.js,21280,49,no-undef,'console' is not defined.,done
+196,src/__tests__/playwright/harness/spell-harness.js,21280,60,no-undef,'console' is not defined.,done
+197,src/__tests__/playwright/harness/spell-harness.js,21489,15,no-useless-assignment,The value assigned to 'link' is not used in subsequent statements.,done
+198,src/__tests__/playwright/harness/spell-harness.js,21490,39,no-undef,'HTMLAnchorElement' is not defined.,done
+199,src/__tests__/playwright/harness/spell-harness.js,21516,15,no-undef,'window' is not defined.,done
+200,src/__tests__/playwright/harness/spell-harness.js,21595,9,no-undef,'console' is not defined.,done
+201,src/__tests__/playwright/harness/spell-harness.js,22091,9,no-useless-assignment,The value assigned to 'currentNode' is not used in subsequent statements.,done
+202,src/__tests__/playwright/harness/spell-harness.js,22744,26,no-undef,'document' is not defined.,done
+203,src/__tests__/playwright/harness/spell-harness.js,22745,33,no-undef,'document' is not defined.,done
+204,src/__tests__/playwright/harness/spell-harness.js,22746,32,no-undef,'document' is not defined.,done
+205,src/__tests__/playwright/harness/spell-harness.js,22747,26,no-undef,'document' is not defined.,done
+206,src/__tests__/playwright/harness/spell-harness.js,22748,25,no-undef,'document' is not defined.,done
+207,src/__tests__/playwright/harness/spell-harness.js,22987,7,@typescript-eslint/no-unused-vars,'ListKit' is assigned a value but never used.,done
+208,src/__tests__/playwright/harness/spell-harness.js,23347,43,no-undef,'document' is not defined.,done
+209,src/__tests__/playwright/harness/spell-harness.js,23357,33,no-undef,'document' is not defined.,done
+210,src/__tests__/playwright/harness/spell-harness.js,23357,50,no-undef,'getComputedStyle' is not defined.,done
+211,src/__tests__/playwright/harness/spell-harness.js,23358,23,no-undef,'pageXOffset' is not defined.,done
+212,src/__tests__/playwright/harness/spell-harness.js,23359,22,no-undef,'pageYOffset' is not defined.,done
+213,src/__tests__/playwright/harness/spell-harness.js,23373,7,no-undef,'clearTimeout' is not defined.,done
+214,src/__tests__/playwright/harness/spell-harness.js,23374,22,no-undef,'setTimeout' is not defined.,done
+215,src/__tests__/playwright/harness/spell-harness.js,23458,11,no-useless-assignment,The value assigned to 'next' is not used in subsequent statements.,done
+216,src/__tests__/playwright/harness/spell-harness.js,23606,16,no-undef,'document' is not defined.,done
+217,src/__tests__/playwright/harness/spell-harness.js,24238,7,@typescript-eslint/no-unused-vars,'undoNoScroll' is assigned a value but never used.,done
+218,src/__tests__/playwright/harness/spell-harness.js,24239,7,@typescript-eslint/no-unused-vars,'redoNoScroll' is assigned a value but never used.,done
+219,src/__tests__/playwright/harness/spell-harness.js,24242,7,@typescript-eslint/no-unused-vars,'CharacterCount' is assigned a value but never used.,done
+220,src/__tests__/playwright/harness/spell-harness.js,24293,15,no-undef,'console' is not defined.,done
+221,src/__tests__/playwright/harness/spell-harness.js,24350,7,@typescript-eslint/no-unused-vars,'Focus' is assigned a value but never used.,done
+222,src/__tests__/playwright/harness/spell-harness.js,24441,7,@typescript-eslint/no-unused-vars,'Placeholder' is assigned a value but never used.,done
+223,src/__tests__/playwright/harness/spell-harness.js,24504,7,@typescript-eslint/no-unused-vars,'Selection2' is assigned a value but never used.,done
+224,src/__tests__/playwright/harness/spell-harness.js,24757,29,no-useless-escape,Unnecessary escape character: \[.,done
+225,src/__tests__/playwright/harness/spell-harness.js,24796,18,no-useless-escape,Unnecessary escape character: \[.,done
+226,src/__tests__/playwright/harness/spell-harness.js,24840,49,no-useless-escape,Unnecessary escape character: \:.,done
+227,src/__tests__/playwright/harness/spell-harness.js,24844,35,no-useless-escape,Unnecessary escape character: \[.,done
+228,src/__tests__/playwright/harness/spell-harness.js,24956,41,no-useless-escape,Unnecessary escape character: \[.,done
+229,src/__tests__/playwright/harness/spell-harness.js,24959,57,no-useless-escape,Unnecessary escape character: \[.,done
+230,src/__tests__/playwright/harness/spell-harness.js,24972,15,no-useless-escape,Unnecessary escape character: \[.,done
+231,src/__tests__/playwright/harness/spell-harness.js,24972,68,no-useless-escape,Unnecessary escape character: \(.,done
+232,src/__tests__/playwright/harness/spell-harness.js,24972,70,no-useless-escape,Unnecessary escape character: \).,done
+233,src/__tests__/playwright/harness/spell-harness.js,24972,92,no-useless-escape,Unnecessary escape character: \(.,done
+234,src/__tests__/playwright/harness/spell-harness.js,24972,94,no-useless-escape,Unnecessary escape character: \).,done
+235,src/__tests__/playwright/harness/spell-harness.js,25014,14,no-control-regex,"Unexpected control character(s) in regular expression: \x00, \x1f.",done
+236,src/__tests__/playwright/harness/spell-harness.js,25031,31,no-useless-escape,Unnecessary escape character: \[.,done
+237,src/__tests__/playwright/harness/spell-harness.js,25031,85,no-useless-escape,Unnecessary escape character: \[.,done
+238,src/__tests__/playwright/harness/spell-harness.js,25034,22,no-control-regex,"Unexpected control character(s) in regular expression: \x00, \x1f.",done
+239,src/__tests__/playwright/harness/spell-harness.js,25084,52,no-useless-escape,Unnecessary escape character: \-.,done
+240,src/__tests__/playwright/harness/spell-harness.js,25091,59,no-useless-escape,Unnecessary escape character: \/.,done
+241,src/__tests__/playwright/harness/spell-harness.js,25091,66,no-useless-escape,Unnecessary escape character: \|.,done
+242,src/__tests__/playwright/harness/spell-harness.js,25091,95,no-useless-escape,Unnecessary escape character: \[.,done
+243,src/__tests__/playwright/harness/spell-harness.js,25091,166,no-useless-escape,Unnecessary escape character: \/.,done
+244,src/__tests__/playwright/harness/spell-harness.js,25091,173,no-useless-escape,Unnecessary escape character: \|.,done
+245,src/__tests__/playwright/harness/spell-harness.js,25091,201,no-useless-escape,Unnecessary escape character: \/.,done
+246,src/__tests__/playwright/harness/spell-harness.js,25091,208,no-useless-escape,Unnecessary escape character: \|.,done
+247,src/__tests__/playwright/harness/spell-harness.js,25164,9,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+248,src/__tests__/playwright/harness/spell-harness.js,25165,14,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+249,src/__tests__/playwright/harness/spell-harness.js,25248,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+250,src/__tests__/playwright/harness/spell-harness.js,25289,62,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+251,src/__tests__/playwright/harness/spell-harness.js,25302,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+252,src/__tests__/playwright/harness/spell-harness.js,25329,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+253,src/__tests__/playwright/harness/spell-harness.js,25342,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+254,src/__tests__/playwright/harness/spell-harness.js,25366,9,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+255,src/__tests__/playwright/harness/spell-harness.js,25372,13,no-useless-assignment,The value assigned to 'p' is not used in subsequent statements.,done
+256,src/__tests__/playwright/harness/spell-harness.js,25375,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+257,src/__tests__/playwright/harness/spell-harness.js,25390,13,no-useless-assignment,The value assigned to 'f' is not used in subsequent statements.,done
+258,src/__tests__/playwright/harness/spell-harness.js,25455,15,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+259,src/__tests__/playwright/harness/spell-harness.js,25464,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+260,src/__tests__/playwright/harness/spell-harness.js,25477,16,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+261,src/__tests__/playwright/harness/spell-harness.js,25490,15,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+262,src/__tests__/playwright/harness/spell-harness.js,25507,15,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+263,src/__tests__/playwright/harness/spell-harness.js,25529,37,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+264,src/__tests__/playwright/harness/spell-harness.js,25572,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+265,src/__tests__/playwright/harness/spell-harness.js,25668,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+266,src/__tests__/playwright/harness/spell-harness.js,25675,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+267,src/__tests__/playwright/harness/spell-harness.js,25807,27,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+268,src/__tests__/playwright/harness/spell-harness.js,25810,14,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+269,src/__tests__/playwright/harness/spell-harness.js,25812,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+270,src/__tests__/playwright/harness/spell-harness.js,25838,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+271,src/__tests__/playwright/harness/spell-harness.js,25848,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+272,src/__tests__/playwright/harness/spell-harness.js,25864,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+273,src/__tests__/playwright/harness/spell-harness.js,25886,14,no-cond-assign,Expected a conditional expression and instead saw an assignment.,done
+274,src/__tests__/playwright/harness/spell-harness.js,25895,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+275,src/__tests__/playwright/harness/spell-harness.js,25904,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+276,src/__tests__/playwright/harness/spell-harness.js,25919,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+277,src/__tests__/playwright/harness/spell-harness.js,25923,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+278,src/__tests__/playwright/harness/spell-harness.js,25927,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+279,src/__tests__/playwright/harness/spell-harness.js,25931,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+280,src/__tests__/playwright/harness/spell-harness.js,25935,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+281,src/__tests__/playwright/harness/spell-harness.js,25939,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+282,src/__tests__/playwright/harness/spell-harness.js,25945,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+283,src/__tests__/playwright/harness/spell-harness.js,25961,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+284,src/__tests__/playwright/harness/spell-harness.js,25965,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+285,src/__tests__/playwright/harness/spell-harness.js,25973,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+286,src/__tests__/playwright/harness/spell-harness.js,25974,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+287,src/__tests__/playwright/harness/spell-harness.js,25981,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+288,src/__tests__/playwright/harness/spell-harness.js,26001,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+289,src/__tests__/playwright/harness/spell-harness.js,26019,13,no-undef,'console' is not defined.,done
+290,src/__tests__/playwright/harness/spell-harness.js,26032,9,no-useless-assignment,The value assigned to 'r' is not used in subsequent statements.,done
+291,src/__tests__/playwright/harness/spell-harness.js,26037,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+292,src/__tests__/playwright/harness/spell-harness.js,26052,9,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+293,src/__tests__/playwright/harness/spell-harness.js,26063,9,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+294,src/__tests__/playwright/harness/spell-harness.js,26067,14,no-cond-assign,Expected a conditional expression and instead saw an assignment.,done
+295,src/__tests__/playwright/harness/spell-harness.js,26074,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+296,src/__tests__/playwright/harness/spell-harness.js,26078,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+297,src/__tests__/playwright/harness/spell-harness.js,26082,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+298,src/__tests__/playwright/harness/spell-harness.js,26088,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+299,src/__tests__/playwright/harness/spell-harness.js,26094,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+300,src/__tests__/playwright/harness/spell-harness.js,26098,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+301,src/__tests__/playwright/harness/spell-harness.js,26102,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+302,src/__tests__/playwright/harness/spell-harness.js,26106,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+303,src/__tests__/playwright/harness/spell-harness.js,26110,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+304,src/__tests__/playwright/harness/spell-harness.js,26114,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+305,src/__tests__/playwright/harness/spell-harness.js,26122,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+306,src/__tests__/playwright/harness/spell-harness.js,26123,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+307,src/__tests__/playwright/harness/spell-harness.js,26129,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+308,src/__tests__/playwright/harness/spell-harness.js,26133,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+309,src/__tests__/playwright/harness/spell-harness.js,26139,13,no-undef,'console' is not defined.,done
+310,src/__tests__/playwright/harness/spell-harness.js,26153,11,@typescript-eslint/no-unused-vars,'e' is defined but never used. Allowed unused args must match /^_/u.,done
+311,src/__tests__/playwright/harness/spell-harness.js,26182,9,@typescript-eslint/no-unused-vars,'e' is defined but never used. Allowed unused args must match /^_/u.,done
+312,src/__tests__/playwright/harness/spell-harness.js,26189,8,@typescript-eslint/no-unused-vars,'e' is defined but never used. Allowed unused args must match /^_/u.,done
+313,src/__tests__/playwright/harness/spell-harness.js,26276,8,@typescript-eslint/no-unused-vars,'e' is defined but never used. Allowed unused args must match /^_/u.,done
+314,src/__tests__/playwright/harness/spell-harness.js,26291,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+315,src/__tests__/playwright/harness/spell-harness.js,26343,7,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+316,src/__tests__/playwright/harness/spell-harness.js,26436,46,no-undef,'console' is not defined.,done
+317,src/__tests__/playwright/harness/spell-harness.js,26517,46,no-undef,'console' is not defined.,done
+318,src/__tests__/playwright/harness/spell-harness.js,26592,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+319,src/__tests__/playwright/harness/spell-harness.js,26614,19,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+320,src/__tests__/playwright/harness/spell-harness.js,26625,19,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+321,src/__tests__/playwright/harness/spell-harness.js,26636,17,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+322,src/__tests__/playwright/harness/spell-harness.js,26678,15,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+323,src/__tests__/playwright/harness/spell-harness.js,26748,13,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+324,src/__tests__/playwright/harness/spell-harness.js,26756,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+325,src/__tests__/playwright/harness/spell-harness.js,26758,11,@typescript-eslint/no-unused-expressions,Expected an assignment or function call and instead saw an expression.,done
+326,src/__tests__/playwright/harness/spell-harness.js,26807,7,@typescript-eslint/no-unused-vars,'Qt' is assigned a value but never used.,done
+327,src/__tests__/playwright/harness/spell-harness.js,26808,7,@typescript-eslint/no-unused-vars,'jt' is assigned a value but never used.,done
+328,src/__tests__/playwright/harness/spell-harness.js,26809,7,@typescript-eslint/no-unused-vars,'Ft' is assigned a value but never used.,done
+329,src/__tests__/playwright/harness/spell-harness.js,26810,7,@typescript-eslint/no-unused-vars,'Ut' is assigned a value but never used.,done
+330,src/__tests__/playwright/harness/spell-harness.js,26811,7,@typescript-eslint/no-unused-vars,'Kt' is assigned a value but never used.,done
+331,src/__tests__/playwright/harness/spell-harness.js,26812,7,@typescript-eslint/no-unused-vars,'Xt' is assigned a value but never used.,done
+332,src/__tests__/playwright/harness/spell-harness.js,26813,7,@typescript-eslint/no-unused-vars,'Jt' is assigned a value but never used.,done
+333,src/__tests__/playwright/harness/spell-harness.js,27607,9,preserve-caught-error,There is no `cause` attached to the symptom error being thrown.,done
+334,src/__tests__/playwright/harness/spell-harness.js,27874,9,preserve-caught-error,There is no `cause` attached to the symptom error being thrown.,done
+335,src/__tests__/playwright/harness/spell-harness.js,27911,9,preserve-caught-error,There is no `cause` attached to the symptom error being thrown.,done
+336,src/__tests__/playwright/harness/spell-harness.js,28046,9,no-undef,'console' is not defined.,done
+337,src/__tests__/playwright/harness/spell-harness.js,28142,23,no-undef,'window' is not defined.,done
+338,src/__tests__/playwright/harness/spell-harness.js,28144,7,no-undef,'console' is not defined.,done
+339,src/__tests__/playwright/harness/spell-harness.js,28148,20,no-undef,'Worker' is not defined.,done
+340,src/__tests__/playwright/harness/spell-harness.js,28149,14,@typescript-eslint/no-unused-vars,'e1' is defined but never used.,done
+341,src/__tests__/playwright/harness/spell-harness.js,28151,32,no-undef,'fetch' is not defined.,done
+342,src/__tests__/playwright/harness/spell-harness.js,28153,25,no-undef,'URL' is not defined.,done
+343,src/__tests__/playwright/harness/spell-harness.js,28154,22,no-undef,'Worker' is not defined.,done
+344,src/__tests__/playwright/harness/spell-harness.js,28156,9,no-undef,'console' is not defined.,done
+345,src/__tests__/playwright/harness/spell-harness.js,28180,7,no-undef,'console' is not defined.,done
+346,src/__tests__/playwright/harness/spell-harness.js,28199,9,no-undef,'setTimeout' is not defined.,done
+347,src/__tests__/playwright/harness/spell-harness.js,28202,5,no-undef,'setTimeout' is not defined.,done
+348,src/__tests__/playwright/harness/spell-harness.js,28307,49,no-undef,'fetch' is not defined.,done
+349,src/__tests__/playwright/harness/spell-harness.js,28307,72,no-undef,'fetch' is not defined.,done
+350,src/__tests__/playwright/harness/spell-harness.js,28309,7,no-undef,'console' is not defined.,done
+351,src/__tests__/playwright/harness/spell-harness.js,28328,17,no-undef,'document' is not defined.,done
+352,src/__tests__/playwright/harness/spell-harness.js,28338,16,no-undef,'window' is not defined.,done
+353,src/__tests__/playwright/harness/spell-harness.js,28339,16,no-undef,'window' is not defined.,done
+354,src/__tests__/playwright/harness/spell-harness.js,28341,3,no-undef,'window' is not defined.,done
+355,src/__tests__/playwright/harness/spell-harness.js,28375,3,no-undef,'document' is not defined.,done
+356,src/__tests__/playwright/harness/spell-harness.js,28375,30,no-undef,'CustomEvent' is not defined.,done
+357,src/__tests__/playwright/spell-check.spec.ts,122,15,@typescript-eslint/no-unused-vars,'spellCheckKey' is assigned a value but never used.,done
+358,src/__tests__/smoke/paste-handling.test.ts,132,38,@typescript-eslint/no-require-imports,A `require()` style import is forbidden.,done
+359,src/__tests__/smoke/paste-handling.test.ts,141,35,@typescript-eslint/no-require-imports,A `require()` style import is forbidden.,done
+360,src/__tests__/webview/ui/settingsPanel-reactive.test.ts,103,37,@typescript-eslint/no-require-imports,A `require()` style import is forbidden.,done
+361,src/__tests__/webview/ui/settingsPanel-reactive.test.ts,145,5,@typescript-eslint/no-require-imports,A `require()` style import is forbidden.,done
+362,src/features/imageAsk.ts,66,7,preserve-caught-error,There is no `cause` attached to the symptom error being thrown.,done
+363,src/webview/editor.ts,287,15,@typescript-eslint/no-unused-vars,'acquireVsCodeApi' is defined but never used.,done
+364,src/webview/extensions/aiExplain-unified.ts,18,20,@typescript-eslint/no-require-imports,A `require()` style import is forbidden.,done
+365,src/webview/extensions/spellCheck.ts,179,12,@typescript-eslint/no-unused-vars,'e1' is defined but never used.,done
+366,src/webview/features/spellCheckMenu.ts,68,11,@typescript-eslint/no-unused-vars,'decorations' is assigned a value but never used.,done
+367,src/webview/features/spellCheckMenu.ts,70,9,@typescript-eslint/no-unused-vars,'pluginDecos' is assigned a value but never used.,done
+368,src/webview/features/spellCheckMenu.ts,76,9,@typescript-eslint/no-unused-vars,'stateDecos' is assigned a value but never used.,done

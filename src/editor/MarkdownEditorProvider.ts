@@ -29,7 +29,7 @@ import { registerUiHandlers } from './handlers/uiHandlers';
 import { DocumentSync } from './handlers/documentSync';
 import { getImageBasePath } from './utils/pathUtils';
 import { openSettingsPanel } from './SettingsPanel';
-import { getGraphCallbacks } from '../features/fluxflow/index';
+
 import {
   registerSpellHandlers,
   createDictionaryWatcher,
@@ -513,8 +513,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         );
         break;
       case MessageType.OPEN_EXTENSION_SETTINGS: {
-        const graphCbs = getGraphCallbacks();
-        openSettingsPanel(this.context, graphCbs ? { graph: graphCbs } : undefined);
+        openSettingsPanel(this.context);
         break;
       }
 
@@ -652,6 +651,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           <div class="frontmatter-panel-inner"></div>
         </div>
         <div id="editor" data-testid="tiptap-editor"></div>
+        <div id="react-inspector"></div>
         <script nonce="${nonce}" src="${scriptUriWithVersion}"></script>
       </body>
       </html>

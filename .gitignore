@@ -14,6 +14,10 @@ coverage/
 test-results/
 playwright-report/
 
+# Generated Playwright harness bundles
+src/__tests__/playwright/harness/*.js
+src/__tests__/playwright/harness/*.js.map
+
 # Environment
 .env
 .env.local

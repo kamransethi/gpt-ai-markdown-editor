@@ -65,15 +65,11 @@ export function tryShowSpellMenu(
   const { word, suggestions } = spellResult;
 
   // Find the decoration span's from/to in the document
-  const { decorations } = (editor.view.state as any).__spellCheckPlugin ?? {};
   // Fallback: find the range by scanning decorations around the pos
-  const pluginDecos = editor.view.state.tr.getMeta?.('spellCheck');
-  // Use plugin state via key — resolve decoration bounds
   const docPos = hit.pos;
 
   // We need the from/to of the decoration. We search around the pos.
   // The decoration 'find' returns {from, to, spec} objects from DecorationSet.
-  const stateDecos = (editor.view as any).docView?.dom;
   // Simplest reliable approach: search for the word boundaries around the cursor
   const $pos = editor.state.doc.resolve(docPos);
   const textNode = $pos.parent.textContent ?? '';

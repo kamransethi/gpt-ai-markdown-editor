@@ -117,21 +117,6 @@
         "title": "Flux Flow Markdown Editor: Get Selected Text"
       },
       {
-        "command": "gptAiMarkdownEditor.knowledgeGraph.rebuildIndex",
-        "title": "Knowledge Graph: Rebuild Index",
-        "category": "Flux Flow"
-      },
-      {
-        "command": "gptAiMarkdownEditor.knowledgeGraph.search",
-        "title": "Knowledge Graph: Search All Documents",
-        "category": "Flux Flow"
-      },
-      {
-        "command": "gptAiMarkdownEditor.knowledgeGraph.stats",
-        "title": "Knowledge Graph: Show Stats",
-        "category": "Flux Flow"
-      },
-      {
         "command": "gptAiMarkdownEditor.openUserDictionary",
         "title": "Spell Check: Open User Dictionary",
         "category": "Flux Flow"
@@ -144,12 +129,6 @@
           "name": "Flux Flow Markdown Editor: Outline",
           "when": "gptAiMarkdownEditor.isActive",
           "icon": "$(layout-sidebar-right)"
-        },
-        {
-          "id": "gptAiMarkdownEditorBacklinks",
-          "name": "Flux Flow: Backlinks",
-          "when": "gptAiMarkdownEditor.knowledgeGraph.active",
-          "icon": "$(references)"
         }
       ]
     },
@@ -358,65 +337,10 @@
           "default": "llama3.2-vision:latest",
           "description": "The Ollama image model used for image creation when Ollama is selected."
         },
-        "gptAiMarkdownEditor.knowledgeGraph.embeddingModel": {
-          "type": "string",
-          "enum": [
-            "Disabled",
-            "nomic-embed-text"
-          ],
-          "default": "nomic-embed-text",
-          "description": "The embedding model used for knowledge graph semantic indexing and search. Set to Disabled to use lexical search only."
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.rag.topK": {
-          "type": "number",
-          "default": 8,
-          "minimum": 1,
-          "maximum": 20,
-          "description": "Number of knowledge graph results used for retrieval-augmented generation."
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.rag.charsPerDoc": {
-          "type": "number",
-          "default": 2500,
-          "minimum": 500,
-          "maximum": 10000,
-          "description": "The number of characters to include from each document when building RAG context."
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.rag.ftsSnippetTokens": {
-          "type": "number",
-          "default": 40,
-          "minimum": 10,
-          "maximum": 160,
-          "description": "Number of tokens used when generating full-text search snippets."
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.rag.historyTurns": {
-          "type": "number",
-          "default": 4,
-          "minimum": 0,
-          "maximum": 20,
-          "description": "The number of RAG history turns to keep for retrieval-augmented generation."
-        },
         "gptAiMarkdownEditor.showSelectionToolbar": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "**Selection Toolbar (Beta)**: Show a floating formatting toolbar when text is selected. Provides quick access to Bold, Italic, Highlight, and other formatting options."
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.enabled": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "**Knowledge Graph (Experimental)**: Enable workspace indexing, backlinks panel, and hybrid search for configured file types. Requires reload after changing.",
-          "order": 50
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.indexedFileTypes": {
-          "type": "string",
-          "default": ".md, .csv, .html, .drawio.svg, .bpmn",
-          "markdownDescription": "Comma-separated file extensions to include in Knowledge Graph indexing and vectorization. Split on commas and trim spaces; each extension should start with a dot.",
-          "order": 51
-        },
-        "gptAiMarkdownEditor.knowledgeGraph.dataDir": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Custom directory for Knowledge Graph data. Defaults to `~/.fluxflow`. Data persists across extension reinstalls.",
-          "order": 52
         },
         "gptAiMarkdownEditor.developerMode": {
           "type": "boolean",
@@ -486,7 +410,6 @@
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.5.0",
-    "@types/sql.js": "^1.4.11",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
@@ -526,13 +449,17 @@
     "@tiptap/extension-underline": "^3.23.2",
     "@tiptap/markdown": "^3.23.2",
     "@tiptap/pm": "^3.23.2",
+    "@tiptap/react": "^3.23.4",
     "@tiptap/starter-kit": "^3.23.2",
     "@tiptap/suggestion": "^3.23.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/turndown": "^5.0.6",
     "cheerio": "^1.2.0",
     "dictionary-en": "^4.0.0",
     "docx": "^9.6.1",
     "emoji-picker-element": "^1.29.1",
+    "foam-core": "^0.41.1",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
     "image-size": "^2.0.2",
@@ -543,8 +470,9 @@
     "mermaid": "^11.13.0",
     "nspell": "^2.1.5",
     "prosemirror-tables": "^1.8.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "shiki": "^3.23.0",
-    "sql.js": "^1.14.1",
     "tiptap-extension-code-block-shiki": "^1.1.0",
     "tiptap-extension-global-drag-handle": "^0.1.18",
     "turndown": "^7.2.2",

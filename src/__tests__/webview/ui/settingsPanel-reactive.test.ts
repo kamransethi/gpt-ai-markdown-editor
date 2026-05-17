@@ -97,10 +97,10 @@ describe('FR-001: render() does not read state from DOM', () => {
     jest.resetModules();
   });
 
-  it('render() reads state from settings object, not document.querySelector', () => {
+  it('render() reads state from settings object, not document.querySelector', async () => {
     // Import render — module re-evaluation registers DOMContentLoaded but doesn't call render yet
     // We call render manually through the exported function
-    const { renderSelect, pages } = require('../../../webview/settings/settingsPanel');
+    const { renderSelect, pages } = await import('../../../webview/settings/settingsPanel');
 
     // Reset spy counts after module load (module init may call querySelector)
     querySelectorSpy.mockClear();
@@ -130,7 +130,7 @@ describe('FR-001: Empty-state reload', () => {
     jest.resetModules();
   });
 
-  it('dispatches exactly one GET_ALL_SETTINGS message on DOMContentLoaded', () => {
+  it('dispatches exactly one GET_ALL_SETTINGS message on DOMContentLoaded', async () => {
     const postMessage = jest.fn();
     (global as any).acquireVsCodeApi = () => ({
       postMessage,
@@ -142,7 +142,7 @@ describe('FR-001: Empty-state reload', () => {
     document.body.setAttribute('data-theme', 'dark');
 
     // Load the module — it registers a DOMContentLoaded listener
-    require('../../../webview/settings/settingsPanel');
+    await import('../../../webview/settings/settingsPanel');
 
     // Fire DOMContentLoaded
     document.dispatchEvent(new Event('DOMContentLoaded'));

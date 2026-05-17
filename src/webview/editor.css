@@ -788,10 +788,13 @@ body[data-theme="dark"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 0 2px 4px;
+  gap: 2px;
+  padding: 2px 4px 0;
+  margin-bottom: -4px;
   background: none;
   border: none;
+  position: relative;
+  z-index: 1;
 }
 
 .mermaid-code-header {
@@ -807,46 +810,33 @@ body[data-theme="dark"] {
 }
 
 /* Language dropdown — bold menu style, no box */
-.code-block-ui-language {
-  border: none;
-  background: none;
-  color: var(--md-muted);
-  font: inherit;
-  font-family: var(--md-font-sans);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0;
-  cursor: pointer;
-  /* Suppress native arrow so it looks like a plain label until interacted with */
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.code-block-ui-language:hover,
-.code-block-ui-language:focus {
-  color: var(--md-foreground);
-  outline: none;
-}
-
-/* Copy button — bold menu style, no box */
+.code-block-ui-language,
 .code-block-ui-copy {
   border: none;
   background: none;
   color: var(--md-muted);
   font: inherit;
   font-family: var(--md-font-sans);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0;
   cursor: pointer;
+  white-space: nowrap;
 }
 
+.code-block-ui-language {
+  /* Suppress native arrow so it looks like a plain label until interacted with */
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.code-block-ui-language:hover,
+.code-block-ui-language:focus,
 .code-block-ui-copy:hover {
   color: var(--md-foreground);
+  outline: none;
 }
 
 /* Mermaid edit button keeps its bordered style */
@@ -893,7 +883,7 @@ body[data-theme="dark"] {
   background-color: var(--md-code-bg) !important;
   border: 1px solid var(--md-border);
   border-radius: var(--ui-radius-md);
-  padding: 20px;
+  padding: 14px;
   margin: var(--content-spacing-block) 0;
   font-family: var(--md-mono-font);
 

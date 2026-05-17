@@ -44,6 +44,13 @@
 - **Tests** = add regression test when fixing bugs
 - **Git** = commit to main directly: `spec(NNN)`, `plan(NNN)`, `feat(NNN)`, `fix(NNN)` — no branching
 
+## Agent Behavior Notes
+
+- Verify the actual tool output before marking checklist items as done.
+- Do not update lint or issue tracking state unless the code is re-checked and the issues are truly fixed.
+- When a checklist file is used, synchronize it only after confirming every item with a real lint/test run.
+- Prefer adding a comment or note in the checklist if any automated step is uncertain rather than falsely marking completion.
+
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan: specs/041-open-as-rich-text-button/plan.md

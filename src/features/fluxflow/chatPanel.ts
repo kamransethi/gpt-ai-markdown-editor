@@ -1,15 +1,11 @@
 ﻿/**
- * Chat Panel — Extension-side WebviewPanel host for the RAG chat interface.
+ * Chat Panel — Extension-side WebviewPanel host for the Graph Chat interface.
  *
  * Creates and manages the webview, handles message routing between
- * the webview UI and the graphChat orchestrator.
+ * the webview UI and the graphChat orchestrator (powered by Foam).
  */
 
 import * as vscode from 'vscode';
-import * as path from 'path';
-import type { GraphDatabase } from './database';
-import type { VectorStore } from './vectorStore';
-import type { EmbeddingEngine } from './embeddingEngine';
 import { streamAnswer, type ChatMessage } from './graphChat';
 import { getModelDisplayName } from '../llm/providerFactory';
 
@@ -35,10 +31,7 @@ let currentAbort: AbortController | null = null;
 
 export function openChatPanel(
   context: vscode.ExtensionContext,
-  getDb: () => GraphDatabase | null,
-  getWorkspacePath: () => string | null,
-  getVectorStore?: () => VectorStore | null,
-  getEmbeddingEngine?: () => EmbeddingEngine | null
+  getWorkspacePath: () => string | null
 ): void {
   if (currentPanel) {
     currentPanel.reveal(vscode.ViewColumn.Beside);
@@ -64,8 +57,7 @@ export function openChatPanel(
   panel.webview.html = getChatHtml(panel.webview, context, themeOverride);
 
   panel.webview.onDidReceiveMessage(
-    msg =>
-      handleChatMessage(msg, panel, getDb, getWorkspacePath, getVectorStore, getEmbeddingEngine),
+    msg => handleChatMessage(msg, panel, getWorkspacePath),
     undefined,
     context.subscriptions
   );
@@ -135,22 +127,18 @@ let conversationHistory: ChatMessage[] = [];
 async function handleChatMessage(
   msg: { type: string; [key: string]: unknown },
   panel: vscode.WebviewPanel,
-  getDb: () => GraphDatabase | null,
-  getWorkspacePath: () => string | null,
-  getVectorStore?: () => VectorStore | null,
-  getEmbeddingEngine?: () => EmbeddingEngine | null
+  getWorkspacePath: () => string | null
 ): Promise<void> {
   switch (msg.type) {
     case MSG.SEND: {
       const query = ((msg.query as string) || '').trim();
       if (!query) return;
 
-      const db = getDb();
       const workspacePath = getWorkspacePath();
-      if (!db || !workspacePath) {
+      if (!workspacePath) {
         panel.webview.postMessage({
           type: MSG.ERROR,
-          error: 'Knowledge Graph is not active. Enable it in settings and reload.',
+          error: 'Workspace not initialized. Please reload.',
         });
         return;
       }
@@ -163,15 +151,7 @@ async function handleChatMessage(
       const signal = currentAbort.signal;
 
       try {
-        const stream = streamAnswer(
-          db,
-          workspacePath,
-          query,
-          conversationHistory,
-          signal,
-          getVectorStore?.() ?? null,
-          getEmbeddingEngine?.() ?? null
-        );
+        const stream = streamAnswer(workspacePath, query, conversationHistory, signal);
 
         let fullText = '';
         for await (const event of stream) {
@@ -243,7 +223,7 @@ async function handleChatMessage(
       if (!filePath || !workspacePath) return;
 
       try {
-        const uri = vscode.Uri.file(path.join(workspacePath, filePath));
+        const uri = vscode.Uri.file(filePath);
         await vscode.window.showTextDocument(uri, { preview: true });
       } catch {
         vscode.window.showErrorMessage(`Could not open file: ${filePath}`);

@@ -9,7 +9,6 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { isOllamaAvailable } from '../features/llm/providerAvailability';
-import { setProgressPushCallback } from '../features/fluxflow/index';
 
 const PANEL_ID = 'gptAiMarkdownEditor.settingsPanel';
 
@@ -26,11 +25,6 @@ const MSG = {
   OPEN_FILE: 'settings.openFile',
   CHECK_COPILOT_MODELS: 'settings.checkCopilotModels',
   COPILOT_MODELS_RESULT: 'settings.copilotModelsResult',
-  GRAPH_GET_STATS: 'graph.getStats',
-  GRAPH_STATS_RESULT: 'graph.statsResult',
-  GRAPH_REBUILD: 'graph.rebuild',
-  GRAPH_REBUILD_RESULT: 'graph.rebuildResult',
-  GRAPH_PROGRESS: 'graph.progress', // host → webview: live progress push
   THEME_UPDATE: 'theme.update',
 } as const;
 
@@ -59,43 +53,11 @@ export const SETTING_KEYS = [
   'pandocPath',
   'pandocTemplatePath',
   'customPromptsFile',
-  'knowledgeGraph.enabled',
-  'knowledgeGraph.dataDir',
-  'knowledgeGraph.embeddingModel',
-  'knowledgeGraph.rag.topK',
-  'knowledgeGraph.rag.charsPerDoc',
-  'knowledgeGraph.rag.ftsSnippetTokens',
-  'knowledgeGraph.rag.historyTurns',
 ] as const;
-
-export interface GraphCallbacks {
-  getStats: () => {
-    docCount: number;
-    tagCount: number;
-    dbSizeKb: number;
-    chunkCount: number;
-    vectorCount: number;
-    embeddingModel: string | null;
-    embeddingStatus: 'ready' | 'server-unavailable' | 'model-missing';
-    embeddingError?: string | null;
-    phase: 'idle' | 'indexing' | 'embedding' | 'ready';
-    indexTotal: number;
-    indexDone: number;
-    embedTotal: number;
-    embedDone: number;
-  } | null;
-  rebuild: () => Promise<{ docCount: number; elapsedS: string }>;
-}
-
-let graphCallbacks: GraphCallbacks | undefined;
 
 let currentPanel: vscode.WebviewPanel | undefined;
 
-export function openSettingsPanel(
-  context: vscode.ExtensionContext,
-  callbacks?: { graph?: GraphCallbacks }
-): void {
-  if (callbacks?.graph) graphCallbacks = callbacks.graph;
+export function openSettingsPanel(context: vscode.ExtensionContext): void {
   if (currentPanel) {
     currentPanel.reveal();
     return;
@@ -135,22 +97,6 @@ export function openSettingsPanel(
 
   panel.onDidDispose(() => {
     currentPanel = undefined;
-    // Remove the push callback so we don't call into a dead panel
-    setProgressPushCallback(() => {});
-  });
-
-  // Wire up live progress push: whenever the backend reports progress,
-  // send the latest stats to the webview immediately.
-  setProgressPushCallback(() => {
-    if (!currentPanel || !graphCallbacks) return;
-    try {
-      const stats = graphCallbacks.getStats();
-      if (stats) {
-        currentPanel.webview.postMessage({ type: MSG.GRAPH_STATS_RESULT, ...stats });
-      }
-    } catch {
-      /* ignore */
-    }
   });
 }
 
@@ -338,53 +284,6 @@ export async function handleSettingsMessage(
           type: MSG.COPILOT_MODELS_RESULT,
           available: false,
           error: errorMsg,
-        });
-      }
-      break;
-    }
-
-    case MSG.GRAPH_GET_STATS: {
-      if (!graphCallbacks) {
-        panel.webview.postMessage({
-          type: MSG.GRAPH_STATS_RESULT,
-          error: 'Knowledge Graph is not active. Enable it and reload.',
-        });
-        break;
-      }
-      try {
-        const stats = graphCallbacks.getStats();
-        if (!stats) {
-          panel.webview.postMessage({
-            type: MSG.GRAPH_STATS_RESULT,
-            error: 'Knowledge Graph is still initializing.',
-          });
-        } else {
-          panel.webview.postMessage({ type: MSG.GRAPH_STATS_RESULT, ...stats });
-        }
-      } catch (err) {
-        panel.webview.postMessage({
-          type: MSG.GRAPH_STATS_RESULT,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-      break;
-    }
-
-    case MSG.GRAPH_REBUILD: {
-      if (!graphCallbacks) {
-        panel.webview.postMessage({
-          type: MSG.GRAPH_REBUILD_RESULT,
-          error: 'Knowledge Graph is not active.',
-        });
-        break;
-      }
-      try {
-        const result = await graphCallbacks.rebuild();
-        panel.webview.postMessage({ type: MSG.GRAPH_REBUILD_RESULT, ...result });
-      } catch (err) {
-        panel.webview.postMessage({
-          type: MSG.GRAPH_REBUILD_RESULT,
-          error: err instanceof Error ? err.message : String(err),
         });
       }
       break;
