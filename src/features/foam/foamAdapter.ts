@@ -15,6 +15,28 @@ import type { FoamNote, FoamBacklink, FoamWorkspaceSnapshot } from './types';
 const WIKILINK_RE = /\[\[([^\]|#]+?)(?:[|#][^\]]*?)?\]\]/g;
 const TAG_RE = /#([\w/-]+)/g;
 
+/** Default globs to exclude from workspace indexing. */
+const DEFAULT_EXCLUDE_GLOBS = [
+  '**/node_modules/**',
+  '**/.git/**',
+  '**/.vscode/**',
+  '**/dist/**',
+  '**/build/**',
+  '**/out/**',
+  '**/.specify/**',
+  '**/specs/**',
+  '**/coverage/**',
+  '**/playwright-report/**',
+  '**/test-results/**',
+  '**/.next/**',
+  '**/.agents/**',
+  '**/.github/**',
+  '**/docs/**',
+  '**/releases/**',
+  '**/userscripts/**',
+  '**/src/__tests__/**',
+];
+
 // ── Public API ────────────────────────────────────────────────────────────
 
 export interface FoamAdapterOptions {
@@ -36,20 +58,7 @@ export async function initFoamAdapter(
   onUpdate?: (snapshot: FoamWorkspaceSnapshot) => void
 ): Promise<FoamWorkspaceSnapshot> {
   const includeGlobs = options.includeGlobs ?? ['**/*.md'];
-  const excludeGlobs = options.excludeGlobs ?? [
-    '**/node_modules/**',
-    '**/.git/**',
-    '**/.vscode/**',
-    '**/dist/**',
-    '**/build/**',
-    '**/out/**',
-    '**/.specify/**',
-    '**/specs/**',
-    '**/coverage/**',
-    '**/playwright-report/**',
-    '**/test-results/**',
-    '**/.next/**',
-  ];
+  const excludeGlobs = options.excludeGlobs ?? DEFAULT_EXCLUDE_GLOBS;
 
   _snapshot = await buildSnapshot(includeGlobs, excludeGlobs);
 
@@ -95,20 +104,7 @@ export function getBacklinks(filePath: string): FoamBacklink[] {
 export async function reindexWorkspace(): Promise<void> {
   if (!_snapshot) return; // not yet initialized
   const includeGlobs = ['**/*.md'];
-  const excludeGlobs = [
-    '**/node_modules/**',
-    '**/.git/**',
-    '**/.vscode/**',
-    '**/dist/**',
-    '**/build/**',
-    '**/out/**',
-    '**/.specify/**',
-    '**/specs/**',
-    '**/coverage/**',
-    '**/playwright-report/**',
-    '**/test-results/**',
-    '**/.next/**',
-  ];
+  const excludeGlobs = DEFAULT_EXCLUDE_GLOBS;
   _snapshot = await buildSnapshot(includeGlobs, excludeGlobs);
 }
 

@@ -35,9 +35,16 @@ interface GraphEdge {
 
 // ── State ──────────────────────────────────────────────────────────────────
 
+let allNodes: GraphNode[] = [];
+let allEdges: GraphEdge[] = [];
 let nodes: GraphNode[] = [];
 let edges: GraphEdge[] = [];
 let nodeMap = new Map<string, GraphNode>();
+
+// View Settings
+let showLabels = true;
+let showOrphans = true;
+let searchQuery = '';
 
 const canvas = document.getElementById('graph') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -108,8 +115,8 @@ function nodeAt(sx: number, sy: number): GraphNode | null {
 
 // ── Force simulation ───────────────────────────────────────────────────────
 
-const REPULSION = 3000;
-const SPRING_LEN = 120;
+let REPULSION = 3000;
+let SPRING_LEN = 120;
 const SPRING_K = 0.04;
 const GRAVITY = 0.02;
 const DAMPING = 0.85;
@@ -208,7 +215,7 @@ function draw() {
     ctx.fill();
 
     // Label (only when zoom is large enough)
-    if (zoom > 0.5) {
+    if (showLabels && zoom > 0.5) {
       ctx.fillStyle = '#ffffff';
       ctx.font = `${Math.max(9, 11 * zoom)}px var(--vscode-font-family, sans-serif)`;
       ctx.textAlign = 'center';
@@ -328,7 +335,20 @@ function loadGraph(rawNodes: NodeData[], rawEdges: EdgeData[], loading = false) 
     degree.set(e.target, (degree.get(e.target) ?? 0) + 1);
   }
 
-  nodes = rawNodes.map(n => {
+  // Update allNodes, preserving positions if they already exist
+  const existingMap = new Map(allNodes.map(n => [n.id, n]));
+
+  allNodes = rawNodes.map(n => {
+    const existing = existingMap.get(n.id);
+    if (existing) {
+      // Update label/tags/radius but preserve position and velocity
+      existing.label = n.label;
+      existing.tags = n.tags;
+      existing.radius = 6 + Math.min(degree.get(n.id) ?? 0, 10);
+      return existing;
+    }
+
+    // New node: initialize random position
     const angle = Math.random() * Math.PI * 2;
     const dist = Math.random() * 300;
     return {
@@ -343,10 +363,33 @@ function loadGraph(rawNodes: NodeData[], rawEdges: EdgeData[], loading = false) 
     };
   });
 
-  nodeMap = new Map(nodes.map(n => [n.id, n]));
-  edges = rawEdges.filter(e => nodeMap.has(e.source) && nodeMap.has(e.target));
+  const fullNodeMap = new Map(allNodes.map(n => [n.id, n]));
+  allEdges = rawEdges.filter(e => fullNodeMap.has(e.source) && fullNodeMap.has(e.target));
 
+  applyFilters();
   loop();
+}
+
+function applyFilters() {
+  nodes = allNodes.filter(n => {
+    if (!showOrphans) {
+      const isOrphan = !allEdges.some(e => e.source === n.id || e.target === n.id);
+      if (isOrphan) return false;
+    }
+
+    if (searchQuery) {
+      const inLabel = n.label.toLowerCase().includes(searchQuery);
+      const inPath = n.id.toLowerCase().includes(searchQuery);
+      const inTags = n.tags.some(t => t.toLowerCase().includes(searchQuery));
+      if (!inLabel && !inPath && !inTags) return false;
+    }
+
+    return true;
+  });
+
+  const activeNodeIds = new Set(nodes.map(n => n.id));
+  edges = allEdges.filter(e => activeNodeIds.has(e.source) && activeNodeIds.has(e.target));
+  nodeMap = new Map(nodes.map(n => [n.id, n]));
 }
 
 // ── Empty / loading state overlay ─────────────────────────────────────────
@@ -372,5 +415,40 @@ function drawEmptyState() {
 
 // Start rendering an empty state immediately so the canvas isn't black
 loadGraph([], [], true);
+
+// Setup UI Listeners
+const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+const repulsionSlider = document.getElementById('repulsionSlider') as HTMLInputElement;
+const springSlider = document.getElementById('springSlider') as HTMLInputElement;
+const showLabelsCheck = document.getElementById('showLabelsCheck') as HTMLInputElement;
+const showOrphansCheck = document.getElementById('showOrphansCheck') as HTMLInputElement;
+
+if (searchInput) {
+  searchInput.addEventListener('input', e => {
+    searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+    applyFilters();
+  });
+}
+if (repulsionSlider) {
+  repulsionSlider.addEventListener('input', e => {
+    REPULSION = parseInt((e.target as HTMLInputElement).value, 10);
+  });
+}
+if (springSlider) {
+  springSlider.addEventListener('input', e => {
+    SPRING_LEN = parseInt((e.target as HTMLInputElement).value, 10);
+  });
+}
+if (showLabelsCheck) {
+  showLabelsCheck.addEventListener('change', e => {
+    showLabels = (e.target as HTMLInputElement).checked;
+  });
+}
+if (showOrphansCheck) {
+  showOrphansCheck.addEventListener('change', e => {
+    showOrphans = (e.target as HTMLInputElement).checked;
+    applyFilters();
+  });
+}
 
 vscode.postMessage({ type: 'ready' });
