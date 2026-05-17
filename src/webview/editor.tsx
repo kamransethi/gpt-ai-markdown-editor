@@ -10,7 +10,7 @@
 import 'prosemirror-tables/style/tables.css';
 import './editor.css';
 import './codicon.css';
-import './editor'; // side-effect: bootstraps TipTap into #editor
+import './editor.ts'; // side-effect: bootstraps TipTap into #editor
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { EditorApp } from './EditorApp';

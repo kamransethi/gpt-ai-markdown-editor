@@ -24,7 +24,7 @@ export function EditorApp(): React.ReactElement {
   // Sync body class with initial state
   useEffect(() => {
     document.body.classList.toggle('inspector-open', inspectorOpen);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // intentional: sync body class once on mount with initial inspector state
 
   // Listen for frontmatter updates broadcast by editor.ts
   useEffect(() => {

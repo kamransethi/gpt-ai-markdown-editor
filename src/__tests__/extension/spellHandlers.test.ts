@@ -36,9 +36,11 @@ function makeWebview() {
 }
 
 function makeRouter() {
-  const handlers = new Map<string, Function>();
+  const handlers = new Map<string, (...args: unknown[]) => unknown>();
   return {
-    register: jest.fn((type: string, fn: Function) => handlers.set(type, fn)),
+    register: jest.fn((type: string, fn: (...args: unknown[]) => unknown) =>
+      handlers.set(type, fn)
+    ),
     route: jest.fn(() => false),
     _dispatch: async (type: string, msg: object) => handlers.get(type)?.(msg, {}),
   };
@@ -182,7 +184,8 @@ describe('createDictionaryWatcher', () => {
 
     createDictionaryWatcher(makeContext());
 
-    const changeCallback: Function = localWatcher.onDidChange.mock.calls[0]?.[0];
+    const changeCallback: (() => Promise<void>) | undefined =
+      localWatcher.onDidChange.mock.calls[0]?.[0];
     expect(changeCallback).toBeDefined();
     await changeCallback();
 

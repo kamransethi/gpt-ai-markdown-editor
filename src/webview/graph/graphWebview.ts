@@ -67,8 +67,14 @@ resize();
 // ── Color palette (deterministic by tag) ──────────────────────────────────
 
 const PALETTE = [
-  '#4ea8de', '#56cfe1', '#72efdd', '#80ffdb',
-  '#c77dff', '#e77d7d', '#f4a261', '#e9c46a',
+  '#4ea8de',
+  '#56cfe1',
+  '#72efdd',
+  '#80ffdb',
+  '#c77dff',
+  '#e77d7d',
+  '#f4a261',
+  '#e9c46a',
 ];
 
 function colorForNode(node: GraphNode): string {
@@ -109,13 +115,11 @@ const GRAVITY = 0.02;
 const DAMPING = 0.85;
 
 function tick() {
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-
   // Repulsion
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
-      const a = nodes[i], b = nodes[j];
+      const a = nodes[i],
+        b = nodes[j];
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const dist2 = dx * dx + dy * dy + 1;
@@ -123,8 +127,10 @@ function tick() {
       const force = REPULSION / dist2;
       const fx = (dx / dist) * force;
       const fy = (dy / dist) * force;
-      a.vx -= fx; a.vy -= fy;
-      b.vx += fx; b.vy += fy;
+      a.vx -= fx;
+      a.vy -= fy;
+      b.vx += fx;
+      b.vy += fy;
     }
   }
 
@@ -140,8 +146,10 @@ function tick() {
     const force = SPRING_K * stretch;
     const fx = (dx / dist) * force;
     const fy = (dy / dist) * force;
-    src.vx += fx; src.vy += fy;
-    tgt.vx -= fx; tgt.vy -= fy;
+    src.vx += fx;
+    src.vy += fy;
+    tgt.vx -= fx;
+    tgt.vy -= fy;
   }
 
   // Center gravity + integrate
@@ -154,16 +162,12 @@ function tick() {
     n.x += n.vx;
     n.y += n.vy;
   }
-
-  _ = W; _ = H; // suppress unused
 }
-
-let _: unknown;
 
 // ── Render ─────────────────────────────────────────────────────────────────
 
 const W_EDGE = 'rgba(255,255,255,0.12)';
-const W_EDGE_HL = 'rgba(255,255,255,0.35)';
+const _W_EDGE_HL = 'rgba(255,255,255,0.35)'; // reserved for hover highlight
 
 function draw() {
   const W = window.innerWidth;
@@ -229,11 +233,15 @@ function loop() {
 
 // ── Interaction ────────────────────────────────────────────────────────────
 
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.1 : 0.9;
-  zoom = Math.max(0.1, Math.min(5, zoom * factor));
-}, { passive: false });
+canvas.addEventListener(
+  'wheel',
+  e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    zoom = Math.max(0.1, Math.min(5, zoom * factor));
+  },
+  { passive: false }
+);
 
 canvas.addEventListener('mousedown', e => {
   const hit = nodeAt(e.clientX, e.clientY);
@@ -276,18 +284,34 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 // Track mousedown position for click detection
-canvas.addEventListener('mousedown', e => {
-  panStart.x = e.clientX;
-  panStart.y = e.clientY;
-}, { capture: true });
+canvas.addEventListener(
+  'mousedown',
+  e => {
+    panStart.x = e.clientX;
+    panStart.y = e.clientY;
+  },
+  { capture: true }
+);
 
 // ── Message handling ───────────────────────────────────────────────────────
 
-interface NodeData { id: string; label: string; tags: string[] }
-interface EdgeData { source: string; target: string }
+interface NodeData {
+  id: string;
+  label: string;
+  tags: string[];
+}
+interface EdgeData {
+  source: string;
+  target: string;
+}
 
 window.addEventListener('message', (event: MessageEvent) => {
-  const msg = event.data as { type: string; nodes?: NodeData[]; edges?: EdgeData[]; loading?: boolean };
+  const msg = event.data as {
+    type: string;
+    nodes?: NodeData[];
+    edges?: EdgeData[];
+    loading?: boolean;
+  };
   if (msg.type === 'graphData' && msg.nodes && msg.edges) {
     loadGraph(msg.nodes, msg.edges, msg.loading ?? false);
   }
@@ -339,7 +363,8 @@ function drawEmptyState() {
   ctx.textBaseline = 'middle';
   ctx.fillText(
     _loadingFlag ? 'Indexing workspace…' : 'No notes found. Open a workspace with .md files.',
-    W / 2, H / 2
+    W / 2,
+    H / 2
   );
 }
 

@@ -21,14 +21,22 @@ module.exports = [
             sourceType: 'module'
         },
         rules: {
-            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
             'no-console': 'off'
         }
     }),
     {
-        ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'eslint.config.js']
+        ignores: [
+            'dist/**',
+            'coverage/**',
+            'node_modules/**',
+            'eslint.config.js',
+            // Generated Playwright harness bundles (same as .gitignore)
+            'src/__tests__/playwright/harness/**/*.js',
+            'src/__tests__/playwright/harness/**/*.js.map',
+        ]
     },
     {
         files: ['scripts/**/*.js'],

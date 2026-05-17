@@ -1,3 +1,0 @@
-# Ignore generated Playwright harness bundles
-src/__tests__/playwright/harness/*.js
-src/__tests__/playwright/harness/*.js.map
