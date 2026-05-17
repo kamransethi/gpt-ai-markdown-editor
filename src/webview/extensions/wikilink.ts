@@ -18,6 +18,8 @@ import { Suggestion } from '@tiptap/suggestion';
 import { MessageType } from '../../shared/messageTypes';
 import { getActiveBridge } from '../hostBridge';
 import { SuggestionList } from '../components/SuggestionList';
+import type { EditorView } from '@tiptap/pm/view';
+import type { Node as ProsemirrorNode } from '@tiptap/pm/model';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -161,11 +163,50 @@ export const WikiLink = Node.create<WikiLinkOptions>({
             const noteName = link.dataset.wikilink;
             if (!noteName) return false;
 
-            // Navigate to the linked note via extension host
-            getActiveBridge().postMessage({
-              type: MessageType.OPEN_FILE_LINK,
-              href: noteName, // extension host resolves by note name
+            // Robust node lookup containing the clicked position
+            let node: ProsemirrorNode | null = null;
+            let nodePos = -1;
+
+            view.state.doc.descendants((child, childPos) => {
+              if (
+                child.type.name === 'wikilink' &&
+                pos >= childPos &&
+                pos <= childPos + child.nodeSize
+              ) {
+                node = child;
+                nodePos = childPos;
+                return false; // stop traversal
+              }
+              return true;
             });
+
+            if (!node || nodePos === -1) {
+              // Fallback to simple pos check
+              nodePos = pos;
+              node = view.state.doc.nodeAt(pos);
+              if (!node || node.type.name !== 'wikilink') {
+                nodePos = pos - 1;
+                if (nodePos >= 0) {
+                  node = view.state.doc.nodeAt(nodePos);
+                }
+              }
+            }
+
+            if (!node || node.type.name !== 'wikilink') {
+              return false;
+            }
+
+            const isMod = event.metaKey || event.ctrlKey;
+            if (isMod) {
+              // Navigate to the linked note via extension host
+              getActiveBridge().postMessage({
+                type: MessageType.OPEN_FILE_LINK,
+                path: noteName, // FIX: send 'path' instead of 'href' to match the host handler
+              });
+            } else {
+              // Regular click: open the premium edit dialog!
+              showWikiLinkEditDialog(view, nodePos, node);
+            }
 
             event.preventDefault();
             return true;
@@ -175,6 +216,160 @@ export const WikiLink = Node.create<WikiLinkOptions>({
     ];
   },
 });
+
+/**
+ * Premium floating edit dialog for WikiLink nodes.
+ * Inherits all VS Code theme CSS variables and look-and-feel natively.
+ */
+function showWikiLinkEditDialog(view: EditorView, pos: number, node: ProsemirrorNode) {
+  // Prevent duplicate dialogs
+  let dialog = document.getElementById('wikilink-edit-dialog');
+  if (dialog) dialog.remove();
+
+  dialog = document.createElement('div');
+  dialog.id = 'wikilink-edit-dialog';
+  dialog.className = 'link-dialog-popover';
+  dialog.style.position = 'fixed';
+  dialog.style.inset = '0';
+  dialog.style.zIndex = '6000';
+  dialog.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+  dialog.style.display = 'flex';
+  dialog.style.alignItems = 'center';
+  dialog.style.justifyContent = 'center';
+
+  const panel = document.createElement('div');
+  panel.className = 'export-settings-overlay-panel';
+  panel.style.maxWidth = '400px';
+  panel.style.width = '90%';
+  panel.style.boxShadow = '0 12px 32px rgba(0,0,0,0.24)';
+  panel.style.background = 'var(--vscode-editor-background, var(--md-bg))';
+  panel.style.border = '1px solid var(--md-border)';
+  panel.style.borderRadius = '6px';
+  panel.style.overflow = 'hidden';
+
+  const header = document.createElement('div');
+  header.className = 'export-settings-overlay-header';
+  header.innerHTML = `
+    <h2 class="export-settings-overlay-title">Edit WikiLink</h2>
+    <button class="export-settings-overlay-close" aria-label="Close dialog" title="Close (Esc)">×</button>
+  `;
+
+  const closeBtn = header.querySelector('.export-settings-overlay-close') as HTMLElement;
+
+  const content = document.createElement('div');
+  content.className = 'export-settings-content';
+  content.style.padding = '16px';
+  content.innerHTML = `
+    <div class="export-settings-section" style="margin-bottom: 12px;">
+      <label class="export-settings-label" for="wikilink-target-input">Target Note</label>
+      <input
+        type="text"
+        id="wikilink-target-input"
+        class="export-settings-select"
+        style="padding: 8px 12px; width: 100%; box-sizing: border-box;"
+        placeholder="e.g. note-name"
+      />
+    </div>
+    <div class="export-settings-section" style="margin-bottom: 16px;">
+      <label class="export-settings-label" for="wikilink-label-input">Display Label (Optional)</label>
+      <input
+        type="text"
+        id="wikilink-label-input"
+        class="export-settings-select"
+        style="padding: 8px 12px; width: 100%; box-sizing: border-box;"
+        placeholder="Custom text to show"
+      />
+    </div>
+    <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--md-border); padding-top: 12px;">
+      <button
+        id="wikilink-remove-btn"
+        class="export-settings-select"
+        style="width: auto; padding: 6px 14px; background: var(--vscode-button-secondaryBackground, var(--md-button-secondary-bg)); color: var(--vscode-button-secondaryForeground, var(--md-button-secondary-fg)); border: none; cursor: pointer; border-radius: 4px; margin-right: auto;"
+      >
+        Remove
+      </button>
+      <button
+        id="wikilink-cancel-btn"
+        class="export-settings-select"
+        style="width: auto; padding: 6px 16px; background: var(--vscode-button-secondaryBackground, var(--md-button-secondary-bg)); color: var(--vscode-button-secondaryForeground, var(--md-button-secondary-fg)); border: none; cursor: pointer; border-radius: 4px;"
+      >
+        Cancel
+      </button>
+      <button
+        id="wikilink-ok-btn"
+        class="export-settings-select"
+        style="width: auto; padding: 6px 16px; background: var(--vscode-button-background, var(--md-button-bg)); color: var(--vscode-button-foreground, var(--md-button-fg)); border: none; cursor: pointer; border-radius: 4px;"
+      >
+        Save
+      </button>
+    </div>
+  `;
+
+  const targetInput = content.querySelector('#wikilink-target-input') as HTMLInputElement;
+  const labelInput = content.querySelector('#wikilink-label-input') as HTMLInputElement;
+  const okBtn = content.querySelector('#wikilink-ok-btn') as HTMLButtonElement;
+  const cancelBtn = content.querySelector('#wikilink-cancel-btn') as HTMLButtonElement;
+  const removeBtn = content.querySelector('#wikilink-remove-btn') as HTMLButtonElement;
+
+  // Pre-populate values
+  targetInput.value = node.attrs.target || '';
+  labelInput.value = node.attrs.label || '';
+
+  const cleanup = () => {
+    dialog?.remove();
+    view.focus();
+  };
+
+  closeBtn.onclick = cleanup;
+  cancelBtn.onclick = cleanup;
+
+  okBtn.onclick = () => {
+    const targetVal = targetInput.value.trim();
+    if (!targetVal) {
+      targetInput.focus();
+      return;
+    }
+    const labelVal = labelInput.value.trim() || null;
+
+    const { tr } = view.state;
+    const newNode = view.state.schema.nodes.wikilink.create({
+      target: targetVal,
+      label: labelVal,
+    });
+    tr.replaceWith(pos, pos + node.nodeSize, newNode);
+    view.dispatch(tr);
+    cleanup();
+  };
+
+  removeBtn.onclick = () => {
+    const { tr } = view.state;
+    tr.delete(pos, pos + node.nodeSize);
+    view.dispatch(tr);
+    cleanup();
+  };
+
+  // Keyboard accessibility
+  dialog.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      okBtn.click();
+    }
+  });
+
+  panel.appendChild(header);
+  panel.appendChild(content);
+  dialog.appendChild(panel);
+  document.body.appendChild(dialog);
+
+  // Focus and select target text
+  requestAnimationFrame(() => {
+    targetInput.focus();
+    targetInput.select();
+  });
+}
 
 // ── Markdown input parsing ─────────────────────────────────────────────────
 

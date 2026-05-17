@@ -142,4 +142,72 @@ test.describe('WikiLinks', () => {
     const savedContent = await getContent(page);
     expect(savedContent.trim()).toBe('Check out [[api-specification|API Docs]] for details.');
   });
+
+  test('clicking wikilink opens inline edit dialog and can modify target/label', async ({
+    page,
+  }) => {
+    await setContent(page, 'Visit [[project-overview]] node.');
+
+    // Click the rendered wikilink
+    const link = page.locator('.ProseMirror a[data-wikilink]');
+    await expect(link).toBeVisible();
+    await link.click();
+
+    // Verify popover edit dialog is visible
+    const dialog = page.locator('#wikilink-edit-dialog');
+    await expect(dialog).toBeVisible();
+
+    const targetInput = dialog.locator('#wikilink-target-input');
+    const labelInput = dialog.locator('#wikilink-label-input');
+    const saveBtn = dialog.locator('#wikilink-ok-btn');
+
+    // Verify inputs pre-populated correctly
+    await expect(targetInput).toHaveValue('project-overview');
+    await expect(labelInput).toHaveValue('');
+
+    // Modify values
+    await targetInput.fill('api-specification');
+    await labelInput.fill('Core API');
+    await saveBtn.click();
+
+    // Verify popover closed
+    await expect(dialog).toBeHidden();
+
+    // Verify updated node attributes in DOM
+    const updatedLink = page.locator('.ProseMirror a[data-wikilink]');
+    await expect(updatedLink).toBeVisible();
+    await expect(updatedLink).toHaveText('[[Core API]]');
+    const newTarget = await updatedLink.getAttribute('data-wikilink');
+    expect(newTarget).toBe('api-specification');
+    const newLabel = await updatedLink.getAttribute('data-label');
+    expect(newLabel).toBe('Core API');
+
+    // Verify roundtrip serialization is updated
+    const savedContent = await getContent(page);
+    expect(savedContent.trim()).toBe('Visit [[api-specification|Core API]] node.');
+  });
+
+  test('clicking remove button in edit dialog deletes the wikilink node', async ({ page }) => {
+    await setContent(page, 'Delete [[project-overview]] here.');
+
+    // Click link to open dialog
+    const link = page.locator('.ProseMirror a[data-wikilink]');
+    await expect(link).toBeVisible();
+    await link.click();
+
+    const dialog = page.locator('#wikilink-edit-dialog');
+    await expect(dialog).toBeVisible();
+
+    // Click remove
+    const removeBtn = dialog.locator('#wikilink-remove-btn');
+    await removeBtn.click();
+
+    // Dialog closed and link removed
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ProseMirror a[data-wikilink]')).toHaveCount(0);
+
+    // Verify raw text in editor
+    const savedContent = await getContent(page);
+    expect(savedContent.trim()).toBe('Delete  here.'); // Double space left where the leaf node was
+  });
 });

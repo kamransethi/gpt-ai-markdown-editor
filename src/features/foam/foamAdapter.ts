@@ -36,7 +36,20 @@ export async function initFoamAdapter(
   onUpdate?: (snapshot: FoamWorkspaceSnapshot) => void
 ): Promise<FoamWorkspaceSnapshot> {
   const includeGlobs = options.includeGlobs ?? ['**/*.md'];
-  const excludeGlobs = options.excludeGlobs ?? ['**/node_modules/**', '**/.git/**'];
+  const excludeGlobs = options.excludeGlobs ?? [
+    '**/node_modules/**',
+    '**/.git/**',
+    '**/.vscode/**',
+    '**/dist/**',
+    '**/build/**',
+    '**/out/**',
+    '**/.specify/**',
+    '**/specs/**',
+    '**/coverage/**',
+    '**/playwright-report/**',
+    '**/test-results/**',
+    '**/.next/**',
+  ];
 
   _snapshot = await buildSnapshot(includeGlobs, excludeGlobs);
 
@@ -82,7 +95,20 @@ export function getBacklinks(filePath: string): FoamBacklink[] {
 export async function reindexWorkspace(): Promise<void> {
   if (!_snapshot) return; // not yet initialized
   const includeGlobs = ['**/*.md'];
-  const excludeGlobs = ['**/node_modules/**', '**/.git/**'];
+  const excludeGlobs = [
+    '**/node_modules/**',
+    '**/.git/**',
+    '**/.vscode/**',
+    '**/dist/**',
+    '**/build/**',
+    '**/out/**',
+    '**/.specify/**',
+    '**/specs/**',
+    '**/coverage/**',
+    '**/playwright-report/**',
+    '**/test-results/**',
+    '**/.next/**',
+  ];
   _snapshot = await buildSnapshot(includeGlobs, excludeGlobs);
 }
 

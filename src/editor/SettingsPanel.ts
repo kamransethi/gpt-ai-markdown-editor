@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { isOllamaAvailable } from '../features/llm/providerAvailability';
+import { getFoamSnapshot, reindexWorkspace } from '../features/foam/foamAdapter';
 
 const PANEL_ID = 'gptAiMarkdownEditor.settingsPanel';
 
@@ -26,6 +27,10 @@ const MSG = {
   CHECK_COPILOT_MODELS: 'settings.checkCopilotModels',
   COPILOT_MODELS_RESULT: 'settings.copilotModelsResult',
   THEME_UPDATE: 'theme.update',
+  GRAPH_GET_STATS: 'graph.getStats',
+  GRAPH_STATS_RESULT: 'graph.statsResult',
+  GRAPH_REBUILD: 'graph.rebuild',
+  GRAPH_REBUILD_RESULT: 'graph.rebuildResult',
 } as const;
 
 /** All setting keys (without the gptAiMarkdownEditor. prefix) */
@@ -284,6 +289,65 @@ export async function handleSettingsMessage(
           type: MSG.COPILOT_MODELS_RESULT,
           available: false,
           error: errorMsg,
+        });
+      }
+      break;
+    }
+
+    case MSG.GRAPH_GET_STATS: {
+      const snapshot = getFoamSnapshot();
+      if (snapshot) {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_STATS_RESULT,
+          phase: 'ready',
+          docCount: snapshot.notes.length,
+          tagCount: snapshot.allTags.length,
+          dbSizeKb: 0,
+          chunkCount: snapshot.notes.length,
+          vectorCount: 0,
+          embeddingModel: 'Disabled',
+          embeddingStatus: 'ready',
+          indexDone: snapshot.notes.length,
+          indexTotal: snapshot.notes.length,
+          embedDone: 0,
+          embedTotal: 0,
+        });
+      } else {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_STATS_RESULT,
+          phase: 'idle',
+          docCount: 0,
+          tagCount: 0,
+          dbSizeKb: 0,
+          chunkCount: 0,
+          vectorCount: 0,
+          embeddingModel: 'Disabled',
+          embeddingStatus: 'ready',
+          indexDone: 0,
+          indexTotal: 0,
+          embedDone: 0,
+          embedTotal: 0,
+        });
+      }
+      break;
+    }
+
+    case MSG.GRAPH_REBUILD: {
+      try {
+        const startTime = Date.now();
+        await reindexWorkspace();
+        const elapsedS = ((Date.now() - startTime) / 1000).toFixed(2);
+        const snapshot = getFoamSnapshot();
+        const docCount = snapshot ? snapshot.notes.length : 0;
+        panel.webview.postMessage({
+          type: MSG.GRAPH_REBUILD_RESULT,
+          docCount,
+          elapsedS,
+        });
+      } catch (err: any) {
+        panel.webview.postMessage({
+          type: MSG.GRAPH_REBUILD_RESULT,
+          error: err.message || String(err),
         });
       }
       break;

@@ -10,6 +10,7 @@ import * as path from 'path';
 import { MessageType } from '../../shared/messageTypes';
 import { toErrorMessage } from '../../shared/errorUtils';
 import { type HandlerContext, type MessageRouter } from '../messageRouter';
+import { getFoamSnapshot } from '../../features/foam/foamAdapter';
 import {
   getRelativePath,
   formatFileLinkLabel,
@@ -447,33 +448,103 @@ export async function handleOpenFileLink(
 
     // Normalize path: remove ./ prefix if present for path resolution
     const normalizedFilePath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
-    const absolutePath = path.resolve(basePath, normalizedFilePath);
+    let absolutePath = path.resolve(basePath, normalizedFilePath);
     let fileUri = vscode.Uri.file(absolutePath);
     console.log('[DK-AI] Resolved file URI (document-relative):', fileUri.fsPath);
 
-    // Check if file exists
+    // Check if the path is a wikilink stem (no extension)
+    const hasExtension = path.extname(normalizedFilePath) !== '';
+
     let fileExists = false;
-    try {
-      await vscode.workspace.fs.stat(fileUri);
-      fileExists = true;
-      console.log('[DK-AI] File exists (document-relative):', fileUri.fsPath);
-    } catch {
-      // File doesn't exist, try to find it in workspace
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (workspaceFolders && workspaceFolders.length > 0) {
-        // Try relative to workspace root
-        const workspacePath = workspaceFolders[0].uri.fsPath;
-        // Use normalized path (already normalized above)
-        const workspaceFileUri = vscode.Uri.file(path.resolve(workspacePath, normalizedFilePath));
-        console.log('[DK-AI] Trying workspace-relative path:', workspaceFileUri.fsPath);
+
+    if (!hasExtension) {
+      // 1. Try to find a matching note in Foam snapshot first (handles deep directory resolution, lowercase, etc.)
+      const snapshot = getFoamSnapshot();
+      const matchedNote = snapshot?.notes.find(
+        n =>
+          (n.filename && n.filename.toLowerCase() === normalizedFilePath.toLowerCase()) ||
+          (n.title && n.title.toLowerCase() === normalizedFilePath.toLowerCase())
+      );
+
+      if (matchedNote) {
+        absolutePath = matchedNote.path;
+        fileUri = vscode.Uri.file(absolutePath);
+        fileExists = true;
+        console.log('[DK-AI] Resolved wikilink stem in Foam snapshot:', absolutePath);
+      } else {
+        // 2. Try appending .md and checking document-relative/workspace-relative existence
+        const mdPath = absolutePath + '.md';
+        const mdUri = vscode.Uri.file(mdPath);
         try {
-          await vscode.workspace.fs.stat(workspaceFileUri);
-          fileUri = workspaceFileUri;
+          await vscode.workspace.fs.stat(mdUri);
+          absolutePath = mdPath;
+          fileUri = mdUri;
           fileExists = true;
-          console.log('[DK-AI] File exists (workspace-relative):', fileUri.fsPath);
+          console.log('[DK-AI] Found .md file adjacent to current document:', mdPath);
         } catch {
-          // Not found in workspace either
-          console.log('[DK-AI] File not found in workspace-relative path');
+          // Try workspace relative
+          const workspaceFolders = vscode.workspace.workspaceFolders;
+          if (workspaceFolders && workspaceFolders.length > 0) {
+            const workspacePath = workspaceFolders[0].uri.fsPath;
+            const workspaceFileUri = vscode.Uri.file(
+              path.resolve(workspacePath, normalizedFilePath + '.md')
+            );
+            try {
+              await vscode.workspace.fs.stat(workspaceFileUri);
+              fileUri = workspaceFileUri;
+              absolutePath = fileUri.fsPath;
+              fileExists = true;
+              console.log('[DK-AI] Found .md file relative to workspace root:', absolutePath);
+            } catch {
+              // 3. Not found anywhere: Auto-create the note file!
+              const newNotePath = path.resolve(basePath, normalizedFilePath + '.md');
+              const newNoteUri = vscode.Uri.file(newNotePath);
+
+              // Generate a clean title from the filename stem
+              const title = normalizedFilePath
+                .replace(/[-_]/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+              const initialContent = `# ${title}\n\n`;
+
+              try {
+                await vscode.workspace.fs.writeFile(
+                  newNoteUri,
+                  new TextEncoder().encode(initialContent)
+                );
+                absolutePath = newNotePath;
+                fileUri = newNoteUri;
+                fileExists = true;
+                console.log('[DK-AI] Auto-created new note file:', newNotePath);
+              } catch (createErr) {
+                console.error('[DK-AI] Failed to auto-create note file:', createErr);
+              }
+            }
+          }
+        }
+      }
+    } else {
+      // Regular link with extension: standard resolution
+      try {
+        await vscode.workspace.fs.stat(fileUri);
+        fileExists = true;
+        console.log('[DK-AI] File exists (document-relative):', fileUri.fsPath);
+      } catch {
+        // File doesn't exist, try to find it in workspace
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+          // Try relative to workspace root
+          const workspacePath = workspaceFolders[0].uri.fsPath;
+          const workspaceFileUri = vscode.Uri.file(path.resolve(workspacePath, normalizedFilePath));
+          console.log('[DK-AI] Trying workspace-relative path:', workspaceFileUri.fsPath);
+          try {
+            await vscode.workspace.fs.stat(workspaceFileUri);
+            fileUri = workspaceFileUri;
+            absolutePath = fileUri.fsPath;
+            fileExists = true;
+            console.log('[DK-AI] File exists (workspace-relative):', fileUri.fsPath);
+          } catch {
+            console.log('[DK-AI] File not found in workspace-relative path');
+          }
         }
       }
     }
