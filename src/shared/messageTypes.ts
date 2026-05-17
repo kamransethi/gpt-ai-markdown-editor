@@ -119,9 +119,9 @@ export const MessageType = {
   FOAM_BACKLINKS_UPDATE: 'foamBacklinksUpdate',
 
   // ── WikiLinks ──
-  GET_NOTE_LIST: 'getNoteList',       // Webview → Host: request note list for autocomplete
+  GET_NOTE_LIST: 'getNoteList', // Webview → Host: request note list for autocomplete
   NOTE_LIST_RESULT: 'noteListResult', // Host → Webview: { notes: { title, filename, path }[] }
-  FOAM_REINDEX: 'foamReindex',        // Webview → Host: trigger manual workspace reindex
+  FOAM_REINDEX: 'foamReindex', // Webview → Host: trigger manual workspace reindex
 
   // ── Spell Check ──
   SPELL_INIT: 'spellInit', // Host → Webview: { affUrl: string, dicUrl: string, userWords: string[] }

@@ -8,12 +8,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  FULL_HARNESS_URL,
-  waitForEditor,
-  setContent,
-  getContent,
-} from './helpers/index';
+import { FULL_HARNESS_URL, waitForEditor, setContent, getContent } from './helpers/index';
 
 test.describe('WikiLinks', () => {
   test.beforeEach(async ({ page }) => {
@@ -24,8 +19,16 @@ test.describe('WikiLinks', () => {
     // Seed the note list cache with mock notes for testing autocomplete
     await page.evaluate(() => {
       (window as any).editorAPI.updateCachedNoteList([
-        { title: 'Project Overview', filename: 'project-overview', path: '/notes/project-overview.md' },
-        { title: 'API Specification', filename: 'api-specification', path: '/notes/api-specification.md' },
+        {
+          title: 'Project Overview',
+          filename: 'project-overview',
+          path: '/notes/project-overview.md',
+        },
+        {
+          title: 'API Specification',
+          filename: 'api-specification',
+          path: '/notes/api-specification.md',
+        },
         { title: 'Release Notes', filename: 'release-notes', path: '/notes/release-notes.md' },
       ]);
     });
@@ -108,10 +111,10 @@ test.describe('WikiLinks', () => {
 
   test('typing closing ]] manually converts to wikilink node @smoke', async ({ page }) => {
     await page.locator('.ProseMirror').click();
-    
+
     // Type manual syntax [[custom-link]]
     await page.keyboard.type('[[custom-link]]');
-    
+
     // The node inputRule should trigger on closing ]] and convert to a wikilink node
     const link = page.locator('.ProseMirror a[data-wikilink]');
     await expect(link).toBeVisible({ timeout: 2000 });

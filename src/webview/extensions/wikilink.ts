@@ -78,11 +78,7 @@ export const WikiLink = Node.create<WikiLinkOptions>({
     if (label) {
       attrs['data-label'] = label;
     }
-    return [
-      'a',
-      attrs,
-      `[[${displayText}]]`,
-    ];
+    return ['a', attrs, `[[${displayText}]]`];
   },
 
   // ── Markdown serialization ─────────────────────────────────────────────
@@ -266,9 +262,10 @@ export const WikiLinkSuggest = Extension.create({
 
         items: ({ query }: { query: string }) => {
           return getCachedNoteList()
-            .filter(n =>
-              (n.title ?? '').toLowerCase().includes(query.toLowerCase()) ||
-              (n.filename ?? '').toLowerCase().includes(query.toLowerCase())
+            .filter(
+              n =>
+                (n.title ?? '').toLowerCase().includes(query.toLowerCase()) ||
+                (n.filename ?? '').toLowerCase().includes(query.toLowerCase())
             )
             .slice(0, 20)
             .map(n => ({

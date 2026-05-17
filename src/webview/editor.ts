@@ -85,7 +85,12 @@ import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipbo
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
-import { WikiLink, WikiLinkSuggest, wikilinkMarkedExtension, updateCachedNoteList } from './extensions/wikilink';
+import {
+  WikiLink,
+  WikiLinkSuggest,
+  wikilinkMarkedExtension,
+  updateCachedNoteList,
+} from './extensions/wikilink';
 import { devLog } from './utils/devLog';
 import { collectExportContent, getDocumentTitle } from './utils/exportContent';
 import { MessageType } from '../shared/messageTypes';

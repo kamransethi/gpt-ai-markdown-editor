@@ -51,8 +51,18 @@ import { SearchAndReplace } from '../../../webview/extensions/searchAndReplace';
 import { CommandRegistry } from '../../../webview/extensions/CommandRegistry';
 import { TableBulletListSmart } from '../../../webview/extensions/tableBulletListSmart';
 import { AiExplain } from '../../../webview/extensions/aiExplain';
-import { SpellCheck, initSpellCheck, reloadUserWords, spellCheckKey } from '../../../webview/extensions/spellCheck';
-import { WikiLink, WikiLinkSuggest, wikilinkMarkedExtension, updateCachedNoteList } from '../../../webview/extensions/wikilink';
+import {
+  SpellCheck,
+  initSpellCheck,
+  reloadUserWords,
+  spellCheckKey,
+} from '../../../webview/extensions/spellCheck';
+import {
+  WikiLink,
+  WikiLinkSuggest,
+  wikilinkMarkedExtension,
+  updateCachedNoteList,
+} from '../../../webview/extensions/wikilink';
 
 // Utilities
 import { renderTableToMarkdownWithBreaks } from '../../../webview/utils/tableMarkdownSerializer';
