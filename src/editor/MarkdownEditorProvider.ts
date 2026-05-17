@@ -300,28 +300,32 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
     }
 
+    // Capture the webview reference once — accessing webviewPanel.webview after
+    // disposal (e.g. inside onDidDispose) throws "Webview is disposed".
+    const webview = webviewPanel.webview;
+
     // Set webview HTML
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+    webview.html = this.getHtmlForWebview(webview);
     // Update webview when document changes
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
       if (e.document.uri.toString() === document.uri.toString()) {
-        this.sync.updateWebview(document, webviewPanel.webview);
+        this.sync.updateWebview(document, webview);
       }
     });
 
     // Notify webview when document is successfully saved to disk
     const saveDocumentSubscription = vscode.workspace.onDidSaveTextDocument(e => {
       if (e.uri.toString() === document.uri.toString()) {
-        webviewPanel.webview.postMessage({ type: MessageType.SAVED });
+        webview.postMessage({ type: MessageType.SAVED });
       }
     });
 
     // Handle messages from webview
     // Register webview for SPELL_RELOAD fan-out
-    registerSpellWebview(webviewPanel.webview);
+    registerSpellWebview(webview);
 
-    webviewPanel.webview.onDidReceiveMessage(
-      e => this.handleWebviewMessage(e, document, webviewPanel.webview),
+    webview.onDidReceiveMessage(
+      e => this.handleWebviewMessage(e, document, webview),
       null,
       this.context.subscriptions
     );
@@ -331,7 +335,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     setActiveDocumentUri(document.uri);
 
     // Send initial content to webview
-    this.sync.updateWebview(document, webviewPanel.webview);
+    this.sync.updateWebview(document, webview);
 
     // Listen for configuration changes and update webview
     const configChangeSubscription = vscode.workspace.onDidChangeConfiguration(e => {
@@ -353,7 +357,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       ) {
         const settings = this.getWebviewSettings();
 
-        webviewPanel.webview.postMessage({
+        webview.postMessage({
           type: MessageType.SETTINGS_UPDATE,
           ...settings,
         });
@@ -366,7 +370,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
         setActiveDocumentUri(document.uri);
         // Send backlinks for the current file to update the Inspector panel
         const backlinks = getBacklinks(document.uri.fsPath);
-        void webviewPanel.webview.postMessage({
+        void webview.postMessage({
           type: MessageType.FOAM_BACKLINKS_UPDATE,
           backlinks,
         });
@@ -375,9 +379,10 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
       }
     });
 
-    // Cleanup
+    // Cleanup — use the captured `webview` reference; accessing
+    // webviewPanel.webview inside onDidDispose throws "Webview is disposed".
     webviewPanel.onDidDispose(() => {
-      unregisterSpellWebview(webviewPanel.webview);
+      unregisterSpellWebview(webview);
       changeDocumentSubscription.dispose();
       saveDocumentSubscription.dispose();
       configChangeSubscription.dispose();

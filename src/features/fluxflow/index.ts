@@ -12,6 +12,10 @@ import { openGraphPanel, updateGraphPanel } from '../foam/graphPanel';
 let currentWorkspacePath: string | null = null;
 let disposables: vscode.Disposable[] = [];
 
+// Debounce handle for updateGraphPanel — avoids hammering the webview on every
+// single file change during workspace indexing (can be 1000+ rapid fires).
+let _graphUpdateTimer: ReturnType<typeof setTimeout> | undefined;
+
 /**
  * Register Graph Chat command.
  * Called from extension.ts activate() unconditionally.
@@ -47,8 +51,14 @@ export async function initialize(_context: vscode.ExtensionContext): Promise<voi
     const includeGlobs = indexedFileTypes.map(ext => `**/*.${ext}`);
 
     await initFoamAdapter({ includeGlobs }, snapshot => {
-      console.log(`[Graph Chat] Foam index updated: ${snapshot.notes.length} notes`);
-      updateGraphPanel();
+      // Debounce graph panel updates — indexing fires onUpdate per file (1000+
+      // rapid calls during initial scan).  Coalesce into a single repaint.
+      if (_graphUpdateTimer) clearTimeout(_graphUpdateTimer);
+      _graphUpdateTimer = setTimeout(() => {
+        _graphUpdateTimer = undefined;
+        updateGraphPanel();
+        console.log(`[Graph Chat] Foam index ready: ${snapshot.notes.length} notes`);
+      }, 500);
     });
 
     const snapshot = getFoamSnapshot();

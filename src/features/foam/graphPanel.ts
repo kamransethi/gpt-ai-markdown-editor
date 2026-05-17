@@ -40,7 +40,11 @@ export function openGraphPanel(context: vscode.ExtensionContext): void {
       } else {
         // Foam hasn't finished indexing — send empty data so the webview
         // shows a loading state instead of a black screen.
-        void _panel!.webview.postMessage({ type: 'graphData', nodes: [], edges: [], loading: true });
+        try {
+          void _panel!.webview.postMessage({ type: 'graphData', nodes: [], edges: [], loading: true });
+        } catch {
+          // panel disposed before ready — safe to ignore
+        }
       }
     } else if (msg.type === 'openFile') {
       const uri = vscode.Uri.file(msg.path as string);
@@ -76,7 +80,12 @@ function sendSnapshot(panel: vscode.WebviewPanel): void {
     }
   }
 
-  void panel.webview.postMessage({ type: 'graphData', nodes, edges });
+  // Guard: panel may have been disposed between the caller's null-check and here
+  try {
+    void panel.webview.postMessage({ type: 'graphData', nodes, edges });
+  } catch {
+    // Panel disposed — safe to ignore
+  }
 }
 
 function buildHtml(webview: vscode.Webview, context: vscode.ExtensionContext): string {
