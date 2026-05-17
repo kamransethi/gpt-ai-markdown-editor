@@ -120,6 +120,12 @@
         "command": "gptAiMarkdownEditor.openUserDictionary",
         "title": "Spell Check: Open User Dictionary",
         "category": "Flux Flow"
+      },
+      {
+        "command": "gptAiMarkdownEditor.openKnowledgeGraph",
+        "title": "Open Knowledge Graph",
+        "category": "Flux Flow",
+        "icon": "$(type-hierarchy)"
       }
     ],
     "views": {

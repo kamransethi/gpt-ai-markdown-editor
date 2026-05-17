@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import { openChatPanel } from './chatPanel';
 import { initFoamAdapter, disposeFoamAdapter, getFoamSnapshot } from '../foam/foamAdapter';
+import { openGraphPanel, updateGraphPanel } from '../foam/graphPanel';
 
 let currentWorkspacePath: string | null = null;
 let disposables: vscode.Disposable[] = [];
@@ -19,6 +20,9 @@ export function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('gptAiMarkdownEditor.graphChat', () => {
       openChatPanel(context, () => currentWorkspacePath);
+    }),
+    vscode.commands.registerCommand('gptAiMarkdownEditor.openKnowledgeGraph', () => {
+      openGraphPanel(context);
     })
   );
 }
@@ -44,6 +48,7 @@ export async function initialize(_context: vscode.ExtensionContext): Promise<voi
 
     await initFoamAdapter({ includeGlobs }, snapshot => {
       console.log(`[Graph Chat] Foam index updated: ${snapshot.notes.length} notes`);
+      updateGraphPanel();
     });
 
     const snapshot = getFoamSnapshot();

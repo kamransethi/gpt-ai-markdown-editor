@@ -64,6 +64,7 @@ const buildOptions = {
     { in: 'src/webview/settings/settingsPanel.ts', out: 'settings' },
     { in: 'src/webview/chat/chatWebview.tsx', out: 'chat' },
     { in: 'src/webview/spellchecker.worker.ts', out: 'spellcheck-worker' },
+    { in: 'src/webview/graph/graphWebview.ts', out: 'graph' },
   ],
   bundle: true,
   outdir: 'dist',
