@@ -75,6 +75,17 @@ export function getBacklinks(filePath: string): FoamBacklink[] {
   return _snapshot.backlinks[filePath] ?? [];
 }
 
+/**
+ * Manually rebuild the workspace snapshot without resetting the file watcher.
+ * Use when files have been created/deleted outside VS Code (e.g., git checkout).
+ */
+export async function reindexWorkspace(): Promise<void> {
+  if (!_snapshot) return; // not yet initialized
+  const includeGlobs = ['**/*.md'];
+  const excludeGlobs = ['**/node_modules/**', '**/.git/**'];
+  _snapshot = await buildSnapshot(includeGlobs, excludeGlobs);
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 async function buildSnapshot(
@@ -164,9 +175,13 @@ function resolveNote(notes: FoamNote[], rawTarget: string): FoamNote | undefined
     // 1. Path-suffix match
     (pathSuffix ? notes.find(n => n.path.toLowerCase().endsWith(pathSuffix)) : undefined) ??
     // 2. Filename stem match
-    notes.find(n => n.filename.toLowerCase() === norm || n.filename.toLowerCase() === lastSegment) ??
+    notes.find(
+      n => n.filename.toLowerCase() === norm || n.filename.toLowerCase() === lastSegment
+    ) ??
     // 3. Alias match
-    notes.find(n => n.aliases.some(a => a.toLowerCase() === norm || a.toLowerCase() === lastSegment)) ??
+    notes.find(n =>
+      n.aliases.some(a => a.toLowerCase() === norm || a.toLowerCase() === lastSegment)
+    ) ??
     // 4. Exact title match
     notes.find(n => n.title.toLowerCase() === norm || n.title.toLowerCase() === lastSegment) ??
     // 5. Humanized title
@@ -189,7 +204,12 @@ function extractAliases(content: string): string[] {
   // aliases: [a, b] inline array
   const inlineMatch = content.match(/^aliases:\s*\[([^\]]+)\]/m);
   if (inlineMatch) {
-    aliases.push(...inlineMatch[1].split(',').map(a => a.trim().replace(/["']/g, '')).filter(Boolean));
+    aliases.push(
+      ...inlineMatch[1]
+        .split(',')
+        .map(a => a.trim().replace(/["']/g, ''))
+        .filter(Boolean)
+    );
   }
   // aliases:\n  - value list
   const fmEnd = content.indexOf('\n---\n', 4);

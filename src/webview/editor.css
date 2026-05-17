@@ -4856,3 +4856,44 @@ body[data-vscode-theme-kind="vscode-high-contrast"] .tiptap .shiki span {
 body[data-theme="dark"] .spell-error {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='M0 2.5 Q1.5 0 3 2.5 Q4.5 5 6 2.5' stroke='%23f07070' stroke-width='0.9' fill='none'/%3E%3C/svg%3E");
 }
+
+/* ============================================
+   WikiLink Nodes
+   ============================================ */
+.wikilink {
+  color: var(--vscode-textLink-foreground, var(--md-link-fg, #3794ff));
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px dashed var(--vscode-textLink-foreground, var(--md-link-fg, #3794ff));
+}
+.wikilink:hover {
+  text-decoration: underline;
+}
+
+/* WikiLink suggestion dropdown */
+.wikilink-dropdown {
+  position: absolute;
+  z-index: 1000;
+  background: var(--vscode-dropdown-background, var(--md-background));
+  border: 1px solid var(--vscode-widget-border, var(--md-border));
+  border-radius: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.wikilink-dropdown-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--vscode-foreground, var(--md-foreground));
+}
+.wikilink-dropdown-item.selected,
+.wikilink-dropdown-item:hover {
+  background: var(--vscode-list-activeSelectionBackground, var(--md-menu-selection-bg));
+  color: var(--vscode-list-activeSelectionForeground, var(--md-foreground));
+}
+.wikilink-dropdown-empty {
+  padding: 8px 12px;
+  color: var(--vscode-disabledForeground, var(--md-muted));
+  font-style: italic;
+}

@@ -59,7 +59,7 @@ const dropConsoleLogPlugin = {
 
       return {
         contents,
-        loader: args.path.endsWith('.ts') || args.path.endsWith('.tsx') ? 'ts' : 'js',
+        loader: args.path.endsWith('.tsx') ? 'tsx' : args.path.endsWith('.ts') ? 'ts' : args.path.endsWith('.jsx') ? 'jsx' : 'js',
       };
     });
   },

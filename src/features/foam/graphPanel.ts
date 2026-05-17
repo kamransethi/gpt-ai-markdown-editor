@@ -41,7 +41,12 @@ export function openGraphPanel(context: vscode.ExtensionContext): void {
         // Foam hasn't finished indexing — send empty data so the webview
         // shows a loading state instead of a black screen.
         try {
-          void _panel!.webview.postMessage({ type: 'graphData', nodes: [], edges: [], loading: true });
+          void _panel!.webview.postMessage({
+            type: 'graphData',
+            nodes: [],
+            edges: [],
+            loading: true,
+          });
         } catch {
           // panel disposed before ready — safe to ignore
         }

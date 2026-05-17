@@ -101,7 +101,6 @@ describe('OllamaProvider.generateWithVision', () => {
     const stream = buildOllamaStream([{ message: { content: 'ok' }, done: true }]);
     jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }));
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _chunk of provider.generateWithVision!(
       [
         { role: 'user', content: 'First question' },

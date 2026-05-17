@@ -69,7 +69,6 @@ describe('Search and LLM Integration Tests', () => {
       const messages: LlmMessage[] = [{ role: 'user', content: 'hello' }];
 
       await expect(async () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for await (const _chunk of provider.generate(messages)) {
           // stream
         }

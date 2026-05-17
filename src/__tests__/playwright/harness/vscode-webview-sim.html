@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<!--
+  VS Code Webview Simulator Harness
+  ──────────────────────────────────────────────────────────────────────────────
+  Reproduces the exact HTML structure that MarkdownEditorProvider.getHtmlForWebview()
+  generates, without the nonce / CSP constraints (those can't be applied in a
+  plain Playwright-served file).
+
+  Differences from the real extension webview that are intentionally kept:
+    • Loads dist/webview.js and dist/webview.css from the build output
+    • Provides a mock acquireVsCodeApi() so editor.ts can call postMessage()
+    • Exposes window.__vscodeSimBridge to let the test script:
+        – push messages INTO the webview (simulating extension → webview)
+        – inspect messages the webview sends OUT (webview → extension)
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VS Code Webview Sim</title>
+  <link href="/dist/webview.css" rel="stylesheet">
+
+  <script>
+    // ── VS Code API mock ────────────────────────────────────────────────────
+    // Must be defined BEFORE webview.js loads (same ordering as the real host).
+    const _sentMessages = [];
+    const _messageListeners = [];
+
+    window.acquireVsCodeApi = function () {
+      return {
+        postMessage: function (msg) { _sentMessages.push(msg); },
+        getState: function () { return {}; },
+        setState: function () {},
+      };
+    };
+
+    // Allow the test to dispatch messages into the webview
+    // (simulates postMessage from the extension host).
+    window.__vscodeSimBridge = {
+      /** Push a message from the "extension" into the webview. */
+      send: function (message) {
+        window.dispatchEvent(new MessageEvent('message', { data: message }));
+      },
+      /** Return all messages the webview has sent out. */
+      sentMessages: function () { return _sentMessages.slice(); },
+    };
+
+    // ── Theme helper (same as production HTML) ──────────────────────────────
+    window.gptAiApplyTheme = function (theme) {
+      try {
+        const body = document.body || document.documentElement;
+        const resolved = (theme === 'dark') ? 'dark' : 'light';
+        body.setAttribute('data-theme', resolved);
+        window.gptAiCurrentThemeOverride = resolved;
+        window.dispatchEvent(
+          new CustomEvent('gptAiThemeChanged', { detail: { theme: resolved } })
+        );
+      } catch (err) {
+        console.error('[SIM] Failed to apply theme:', err);
+      }
+    };
+
+    // Apply light theme on DOMContentLoaded (matches production default)
+    document.addEventListener('DOMContentLoaded', function () {
+      window.gptAiApplyTheme('light');
+    });
+
+    // Spell-check worker — not needed for this test, point to nowhere
+    window.SPELLCHECK_WORKER_URL = '/dist/spellcheck-worker.js';
+  </script>
+</head>
+<!--
+  body has NO data-theme yet (just like the real VS Code webview).
+  VS Code adds class="vscode-light" or "vscode-dark" automatically;
+  we simulate that via the test by adding the class before calling send().
+-->
+<body data-extension-version="test-sim">
+  <div id="frontmatter-panel" class="frontmatter-panel">
+    <div class="frontmatter-panel-inner"></div>
+  </div>
+  <div id="editor" data-testid="tiptap-editor"></div>
+  <div id="react-inspector"></div>
+
+  <!-- Production bundle — same file VS Code loads -->
+  <script src="/dist/webview.js"></script>
+</body>
+</html>

@@ -51,12 +51,8 @@ import { SearchAndReplace } from '../../../webview/extensions/searchAndReplace';
 import { CommandRegistry } from '../../../webview/extensions/CommandRegistry';
 import { TableBulletListSmart } from '../../../webview/extensions/tableBulletListSmart';
 import { AiExplain } from '../../../webview/extensions/aiExplain';
-import {
-  SpellCheck,
-  initSpellCheck,
-  reloadUserWords,
-  spellCheckKey,
-} from '../../../webview/extensions/spellCheck';
+import { SpellCheck, initSpellCheck, reloadUserWords, spellCheckKey } from '../../../webview/extensions/spellCheck';
+import { WikiLink, WikiLinkSuggest, wikilinkMarkedExtension, updateCachedNoteList } from '../../../webview/extensions/wikilink';
 
 // Utilities
 import { renderTableToMarkdownWithBreaks } from '../../../webview/utils/tableMarkdownSerializer';
@@ -196,9 +192,17 @@ const editor = new Editor({
       HTMLAttributes: { class: 'code-block-highlighted' },
     }),
 
+    // ── WikiLink ──
+    WikiLink,
+    WikiLinkSuggest,
+
     // ── Markdown ──
     Markdown.configure({
-      marked: new Marked() as any,
+      marked: (() => {
+        const m = new Marked();
+        m.use({ extensions: [wikilinkMarkedExtension] });
+        return m;
+      })() as any,
       markedOptions: { gfm: true, breaks: true },
     }),
 
@@ -350,11 +354,16 @@ interface EditorAPI {
   insertText(text: string): void;
   indentBulletLine(): boolean;
   dedentBulletLine(): boolean;
+  updateCachedNoteList(notes: any[]): void;
 }
 
 (window as any).editorAPI = {
   isReady(): boolean {
     return !editor.isDestroyed;
+  },
+
+  updateCachedNoteList(notes: any[]): void {
+    updateCachedNoteList(notes);
   },
 
   setMarkdown(md: string): void {

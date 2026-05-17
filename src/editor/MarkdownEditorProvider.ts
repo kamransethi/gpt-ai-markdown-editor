@@ -21,7 +21,7 @@ import { handleImageAskRequest } from '../features/imageAsk';
 import { getModelDisplayName, getImageModelDisplayName } from '../features/llm/providerFactory';
 import { getNonce } from './utils';
 import { MessageType } from '../shared/messageTypes';
-import { getBacklinks } from '../features/foam/foamAdapter';
+import { getBacklinks, getFoamSnapshot, reindexWorkspace } from '../features/foam/foamAdapter';
 import { toErrorMessage } from '../shared/errorUtils';
 import { createMessageRouter, type MessageRouter, type HandlerContext } from './messageRouter';
 import { registerImageHandlers } from './handlers/imageHandlers';
@@ -494,6 +494,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
         // Kick off spell check init
         void sendSpellInit(webview, this.context);
+
+        // Send initial backlinks for the current document
+        const backlinks = getBacklinks(document.uri.fsPath);
+        void webview.postMessage({
+          type: MessageType.FOAM_BACKLINKS_UPDATE,
+          backlinks,
+        });
         break;
       }
       case MessageType.OUTLINE_UPDATED: {
@@ -589,6 +596,28 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           document
         );
         break;
+
+      case MessageType.GET_NOTE_LIST: {
+        const snapshot = getFoamSnapshot();
+        const notes = (snapshot?.notes ?? []).map(n => ({
+          title: n.title,
+          filename: n.filename,
+          path: n.path,
+        }));
+        void webview.postMessage({ type: MessageType.NOTE_LIST_RESULT, notes });
+        break;
+      }
+
+      case MessageType.FOAM_REINDEX: {
+        void reindexWorkspace().then(() => {
+          const reindexBacklinks = getBacklinks(document.uri.fsPath);
+          void webview.postMessage({
+            type: MessageType.FOAM_BACKLINKS_UPDATE,
+            backlinks: reindexBacklinks,
+          });
+        });
+        break;
+      }
     }
   }
 

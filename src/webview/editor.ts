@@ -4,10 +4,8 @@
  * Licensed under the MIT License. See LICENSE file in the project root for details.
  */
 
-// Import CSS files (esbuild will bundle these)
-import 'prosemirror-tables/style/tables.css';
-import './editor.css';
-import './codicon.css';
+// CSS imports are in editor.tsx (the esbuild entry point) to avoid duplication.
+// Do NOT import .css files here — editor.tsx already imports them.
 
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -87,6 +85,7 @@ import { getCurrentTableMatrix, serializeTableMatrix } from './utils/tableClipbo
 import { shouldAutoLink } from './utils/linkValidation';
 import { buildOutlineFromEditor } from './utils/outline';
 import { scrollToHeading } from './utils/scrollToHeading';
+import { WikiLink, WikiLinkSuggest, wikilinkMarkedExtension, updateCachedNoteList } from './extensions/wikilink';
 import { devLog } from './utils/devLog';
 import { collectExportContent, getDocumentTitle } from './utils/exportContent';
 import { MessageType } from '../shared/messageTypes';
@@ -1054,6 +1053,8 @@ function initializeEditor(initialContent: string) {
           class: 'code-block-highlighted',
         },
       }),
+      WikiLink,
+      WikiLinkSuggest,
       Markdown.configure({
         // Pass a fresh isolated Marked instance to prevent marked@17 inline token
         // corruption. When the taskList block tokenizer (from @tiptap/extension-list)
@@ -1064,7 +1065,11 @@ function initializeEditor(initialContent: string) {
         // The Marked class instance satisfies all properties actually used by MarkdownManager
         // (setOptions, use, lexer, Lexer) but TypeScript doesn't see it as typeof marked
         // because marked is typed as a function+namespace, not a class instance.
-        marked: new Marked() as unknown as typeof markedInstance,
+        marked: (() => {
+          const m = new Marked();
+          m.use({ extensions: [wikilinkMarkedExtension] });
+          return m;
+        })() as unknown as typeof markedInstance,
         markedOptions: {
           gfm: true, // GitHub Flavored Markdown for tables, task lists
           breaks: true, // Preserve single newlines as <br>
@@ -1759,7 +1764,14 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
         break;
       case MessageType.FOAM_BACKLINKS_UPDATE:
-        window.dispatchEvent(new CustomEvent('gptAiBacklinksUpdate', { detail: { backlinks: message.backlinks } }));
+        window.dispatchEvent(
+          new CustomEvent('gptAiBacklinksUpdate', { detail: { backlinks: message.backlinks } })
+        );
+        break;
+      case MessageType.NOTE_LIST_RESULT:
+        if (Array.isArray(message.notes)) {
+          updateCachedNoteList(message.notes);
+        }
         break;
       case MessageType.SAVED:
         if (typeof message.requestId === 'string') {
@@ -1785,7 +1797,6 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case MessageType.AI_PROMPTS:
         (window as any).handleAiPromptsResult?.(message.prompts);
-        break;
         break;
       case MessageType.IMAGE_ASK_RESULT:
         handleImageAskResult(message as any);

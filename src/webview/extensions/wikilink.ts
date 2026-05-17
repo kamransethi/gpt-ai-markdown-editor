@@ -11,10 +11,13 @@
  * using a custom leaf node that stores the raw wikilink text.
  */
 
-import { Node, nodePasteRule } from '@tiptap/core';
+import { Node, Extension, nodePasteRule, InputRule } from '@tiptap/core';
+import { marked } from 'marked';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Suggestion } from '@tiptap/suggestion';
 import { MessageType } from '../../shared/messageTypes';
 import { getActiveBridge } from '../hostBridge';
+import { SuggestionList } from '../components/SuggestionList';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -45,8 +48,14 @@ export const WikiLink = Node.create<WikiLinkOptions>({
 
   addAttributes() {
     return {
-      target: { default: null },
-      label: { default: null },
+      target: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-wikilink'),
+      },
+      label: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-label'),
+      },
     };
   },
 
@@ -59,15 +68,19 @@ export const WikiLink = Node.create<WikiLinkOptions>({
   renderHTML({ node }) {
     const { target, label } = node.attrs as { target: string; label: string | null };
     const displayText = label ?? target;
+    const attrs: Record<string, string> = {
+      'data-wikilink': target,
+      class: 'wikilink',
+      href: '#',
+      title: `[[${target}]]`,
+      ...this.options.HTMLAttributes,
+    };
+    if (label) {
+      attrs['data-label'] = label;
+    }
     return [
       'a',
-      {
-        'data-wikilink': target,
-        class: 'wikilink',
-        href: '#',
-        title: `[[${target}]]`,
-        ...this.options.HTMLAttributes,
-      },
+      attrs,
       `[[${displayText}]]`,
     ];
   },
@@ -80,9 +93,25 @@ export const WikiLink = Node.create<WikiLinkOptions>({
     return {};
   },
 
+  // Match the token name produced by wikilinkMarkedExtension so the
+  // Markdown extension's token dispatcher routes 'wikilink' tokens here.
+  markdownTokenName: 'wikilink',
+
+  // Parse a wikilink token from Marked into a ProseMirror node.
+  parseMarkdown(token: any) {
+    return {
+      type: 'wikilink' as const,
+      attrs: {
+        target: token.target ?? token.text ?? '',
+        label: token.label ?? null,
+      },
+    };
+  },
+
   // Custom markdown renderer (used by @tiptap/extension-markdown)
-  renderMarkdown({ node }: { node: { attrs: { target: string; label: string | null } } }) {
-    const { target, label } = node.attrs;
+  renderMarkdown(node: any) {
+    const target = node.attrs?.target ?? '';
+    const label = node.attrs?.label;
     return label ? `[[${target}|${label}]]` : `[[${target}]]`;
   },
 
@@ -100,11 +129,25 @@ export const WikiLink = Node.create<WikiLinkOptions>({
     ];
   },
 
-  // ── Input rules ────────────────────────────────────────────────────────
-
   addInputRules() {
-    // Detect [[...]] as the user types and convert to wikilink node
-    return []; // handled by paste rules; typing creates wikilinks on ]] close
+    // Detect [[...]] as the user types and convert to wikilink node on closing ]]
+    return [
+      new InputRule({
+        find: /\[\[([^\]|#]+?)(?:\|([^\]]*?))?\]\]$/,
+        handler({ state, range, match }) {
+          const { tr } = state;
+          const start = range.from;
+          const end = range.to;
+
+          const target = match[1].trim();
+          const label = match[2]?.trim() ?? null;
+
+          const node = state.schema.nodes.wikilink.create({ target, label });
+          tr.replaceWith(start, end, node);
+          return tr;
+        },
+      }),
+    ];
   },
 
   // ── Click handler ──────────────────────────────────────────────────────
@@ -163,6 +206,111 @@ export const wikilinkMarkedExtension = {
   },
   renderer(token: { target: string; label: string | null }) {
     const display = token.label ?? token.target;
-    return `<a data-wikilink="${token.target}" class="wikilink" href="#" title="[[${token.target}]]">[[${display}]]</a>`;
+    const labelAttr = token.label ? ` data-label="${token.label}"` : '';
+    return `<a data-wikilink="${token.target}"${labelAttr} class="wikilink" href="#" title="[[${token.target}]]">[[${display}]]</a>`;
   },
 };
+
+// Register the extension globally on the marked singleton
+marked.use({ extensions: [wikilinkMarkedExtension as any] });
+
+// ── Note list cache for autocomplete ───────────────────────────────────────
+
+interface NoteEntry {
+  title: string;
+  filename: string;
+  path: string;
+}
+
+let _noteCache: NoteEntry[] = [];
+
+/** Called by editor.ts when a NOTE_LIST_RESULT message is received. */
+export function updateCachedNoteList(notes: NoteEntry[]): void {
+  _noteCache = notes;
+}
+
+/** Return the cached note list (for future autocomplete use). */
+export function getCachedNoteList(): NoteEntry[] {
+  return _noteCache;
+}
+
+// ── WikiLink Suggestion Dropdown Extension ─────────────────────────────────
+
+export const WikiLinkSuggest = Extension.create({
+  name: 'wikilinkSuggest',
+
+  addProseMirrorPlugins() {
+    return [
+      Suggestion({
+        editor: this.editor,
+        char: '[[',
+        pluginKey: new PluginKey('wikilinkSuggest'),
+
+        allow: ({ state, range }) => {
+          const $from = state.doc.resolve(range.from);
+          return $from.parent.inlineContent;
+        },
+
+        command: ({ editor, range, props }: any) => {
+          const note = props.note;
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .insertContent({
+              type: 'wikilink',
+              attrs: { target: note.filename, label: null },
+            })
+            .run();
+        },
+
+        items: ({ query }: { query: string }) => {
+          return getCachedNoteList()
+            .filter(n =>
+              (n.title ?? '').toLowerCase().includes(query.toLowerCase()) ||
+              (n.filename ?? '').toLowerCase().includes(query.toLowerCase())
+            )
+            .slice(0, 20)
+            .map(n => ({
+              title: n.title || n.filename,
+              description: n.path,
+              icon: '📄',
+              note: n, // attach original note object
+            }));
+        },
+
+        render: () => {
+          let component: SuggestionList | null = null;
+          let activeCommandCallback: ((item: any) => void) | null = null;
+
+          return {
+            onStart: (props: any) => {
+              // Fetch a fresh note list from the host when the user starts typing [[
+              getActiveBridge().postMessage({ type: MessageType.GET_NOTE_LIST });
+
+              activeCommandCallback = props.command;
+              component = new SuggestionList(item => {
+                if (activeCommandCallback) {
+                  activeCommandCallback(item);
+                }
+              });
+              component.mount(props);
+            },
+            onUpdate: (props: any) => {
+              activeCommandCallback = props.command;
+              component?.update(props);
+            },
+            onKeyDown: (props: any) => {
+              return component?.handleKeyDown(props.event) ?? false;
+            },
+            onExit: () => {
+              component?.destroy();
+              component = null;
+              activeCommandCallback = null;
+            },
+          };
+        },
+      }),
+    ];
+  },
+});

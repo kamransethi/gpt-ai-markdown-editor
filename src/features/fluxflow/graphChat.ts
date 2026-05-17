@@ -61,14 +61,19 @@ export async function* streamAnswer(
       const queryLower = query.toLowerCase();
       const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
 
-      const scored = snapshot.notes.map(note => {
-        let score = 0;
-        const haystack = `${note.title} ${note.tags.join(' ')} ${note.aliases.join(' ')}`.toLowerCase();
-        for (const word of queryWords) {
-          if (haystack.includes(word)) score += 2;
-        }
-        return { note, score };
-      }).filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, topK);
+      const scored = snapshot.notes
+        .map(note => {
+          let score = 0;
+          const haystack =
+            `${note.title} ${note.tags.join(' ')} ${note.aliases.join(' ')}`.toLowerCase();
+          for (const word of queryWords) {
+            if (haystack.includes(word)) score += 2;
+          }
+          return { note, score };
+        })
+        .filter(x => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, topK);
 
       for (const { note } of scored) {
         try {
